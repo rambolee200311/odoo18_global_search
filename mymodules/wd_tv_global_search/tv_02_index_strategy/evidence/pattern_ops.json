@@ -1,0 +1,569 @@
+{
+  "exact": {
+    "samples": 20,
+    "p50_ms": 0.024,
+    "p95_ms": 0.028,
+    "p99_ms": 0.03,
+    "max_ms": 0.03,
+    "plans": [
+      {
+        "execution_ms": 0.026,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.022,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.026,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.03,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.021,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.013,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.026,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.017,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.026,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.013,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.024,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.027,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.028,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.012,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.02,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.014,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.026,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.026,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.02,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.024,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      }
+    ]
+  },
+  "prefix": {
+    "samples": 20,
+    "p50_ms": 0.022,
+    "p95_ms": 0.029,
+    "p99_ms": 0.04,
+    "max_ms": 0.04,
+    "plans": [
+      {
+        "execution_ms": 0.011,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.024,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.021,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.026,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.012,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.026,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.013,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.028,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.011,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.04,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.019,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.026,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.028,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.025,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.017,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.021,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.011,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.012,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.022,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 0.029,
+        "planning_ms": null,
+        "nodes": [
+          "Index Scan"
+        ],
+        "shared_hit_blocks": 4,
+        "shared_read_blocks": 0
+      }
+    ]
+  },
+  "contains": {
+    "samples": 20,
+    "p50_ms": 15.002,
+    "p95_ms": 16.758,
+    "p99_ms": 17.336,
+    "max_ms": 17.336,
+    "plans": [
+      {
+        "execution_ms": 17.336,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 16.758,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 14.117,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 15.32,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 15.74,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 16.478,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 15.085,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 15.174,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 13.154,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 13.362,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 13.324,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 15.002,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 15.374,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 15.378,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 13.74,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 14.731,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 12.106,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 13.565,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 13.437,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 14.163,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      }
+    ]
+  }
+}

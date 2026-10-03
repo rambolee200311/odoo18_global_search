@@ -1,0 +1,569 @@
+{
+  "exact": {
+    "samples": 20,
+    "p50_ms": 12.877,
+    "p95_ms": 14.329,
+    "p99_ms": 14.624,
+    "max_ms": 14.624,
+    "plans": [
+      {
+        "execution_ms": 13.861,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4271,
+        "shared_read_blocks": 588
+      },
+      {
+        "execution_ms": 14.624,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4303,
+        "shared_read_blocks": 556
+      },
+      {
+        "execution_ms": 14.329,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4335,
+        "shared_read_blocks": 524
+      },
+      {
+        "execution_ms": 13.466,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4367,
+        "shared_read_blocks": 492
+      },
+      {
+        "execution_ms": 13.265,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4399,
+        "shared_read_blocks": 460
+      },
+      {
+        "execution_ms": 13.691,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4431,
+        "shared_read_blocks": 428
+      },
+      {
+        "execution_ms": 13.193,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4463,
+        "shared_read_blocks": 396
+      },
+      {
+        "execution_ms": 12.613,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4495,
+        "shared_read_blocks": 364
+      },
+      {
+        "execution_ms": 13.332,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4527,
+        "shared_read_blocks": 332
+      },
+      {
+        "execution_ms": 12.517,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4559,
+        "shared_read_blocks": 300
+      },
+      {
+        "execution_ms": 12.438,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4591,
+        "shared_read_blocks": 268
+      },
+      {
+        "execution_ms": 12.57,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4623,
+        "shared_read_blocks": 236
+      },
+      {
+        "execution_ms": 13.034,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4655,
+        "shared_read_blocks": 204
+      },
+      {
+        "execution_ms": 12.877,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4687,
+        "shared_read_blocks": 172
+      },
+      {
+        "execution_ms": 12.778,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4719,
+        "shared_read_blocks": 140
+      },
+      {
+        "execution_ms": 12.176,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4751,
+        "shared_read_blocks": 108
+      },
+      {
+        "execution_ms": 12.795,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4783,
+        "shared_read_blocks": 76
+      },
+      {
+        "execution_ms": 12.819,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4815,
+        "shared_read_blocks": 44
+      },
+      {
+        "execution_ms": 12.717,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4847,
+        "shared_read_blocks": 12
+      },
+      {
+        "execution_ms": 12.631,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      }
+    ]
+  },
+  "prefix": {
+    "samples": 20,
+    "p50_ms": 13.287,
+    "p95_ms": 14.179,
+    "p99_ms": 14.929,
+    "max_ms": 14.929,
+    "plans": [
+      {
+        "execution_ms": 13.811,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 12.345,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 13.428,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 13.715,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 13.354,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 14.929,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 13.265,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 13.865,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 13.803,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 11.545,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 14.179,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 13.078,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 13.101,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 13.287,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 11.306,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 11.693,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 11.668,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 13.422,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 12.253,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 12.803,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      }
+    ]
+  },
+  "contains": {
+    "samples": 20,
+    "p50_ms": 14.559,
+    "p95_ms": 15.631,
+    "p99_ms": 15.833,
+    "max_ms": 15.833,
+    "plans": [
+      {
+        "execution_ms": 15.631,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 15.283,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 14.559,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 14.689,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 14.512,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 12.475,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 12.033,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 14.283,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 14.362,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 15.439,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 13.252,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 13.114,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 12.787,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 15.181,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 14.755,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 13.366,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 15.429,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 15.093,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 15.833,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 14.176,
+        "planning_ms": null,
+        "nodes": [
+          "Seq Scan"
+        ],
+        "shared_hit_blocks": 4859,
+        "shared_read_blocks": 0
+      }
+    ]
+  }
+}

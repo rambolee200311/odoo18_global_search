@@ -1,0 +1,239 @@
+{
+  "spike": "SPIKE-GS-01",
+  "seed": 20261001,
+  "database": "odoo18ce",
+  "uid": 1,
+  "target_models": [
+    "res.partner",
+    "sale.order",
+    "purchase.order",
+    "stock.picking",
+    "account.move",
+    "product.product",
+    "project.task",
+    "stock.quant"
+  ],
+  "installed_models": {
+    "res.partner": true,
+    "sale.order": true,
+    "purchase.order": true,
+    "stock.picking": true,
+    "account.move": true,
+    "product.product": true,
+    "project.task": false,
+    "stock.quant": true
+  },
+  "model_counts": {
+    "res.partner": 5044,
+    "sale.order": 5024,
+    "purchase.order": 5011,
+    "stock.picking": 17,
+    "account.move": 48,
+    "product.product": 43,
+    "stock.quant": 38
+  },
+  "relation_paths": [
+    {
+      "source": "res.partner",
+      "target": "sale.order",
+      "status": "AVAILABLE"
+    },
+    {
+      "source": "res.partner",
+      "target": "purchase.order",
+      "status": "AVAILABLE"
+    }
+  ],
+  "serial_queries": [
+    {
+      "query": {
+        "name": "identifier_exact",
+        "model": "res.partner",
+        "field": "ref",
+        "operator": "=",
+        "value": "GS01-CUST-000001"
+      },
+      "status": "OK",
+      "result_count_min": 1,
+      "result_count_max": 1,
+      "timing": {
+        "count": 20,
+        "p50_ms": 0.235,
+        "p95_ms": 0.354,
+        "p99_ms": 0.435,
+        "max_ms": 0.435
+      }
+    },
+    {
+      "query": {
+        "name": "identifier_prefix",
+        "model": "res.partner",
+        "field": "ref",
+        "operator": "=ilike",
+        "value": "GS01-CUST-000001%"
+      },
+      "status": "OK",
+      "result_count_min": 1,
+      "result_count_max": 1,
+      "timing": {
+        "count": 20,
+        "p50_ms": 1.747,
+        "p95_ms": 2.613,
+        "p99_ms": 2.885,
+        "max_ms": 2.885
+      }
+    },
+    {
+      "query": {
+        "name": "identifier_contains",
+        "model": "res.partner",
+        "field": "ref",
+        "operator": "ilike",
+        "value": "%GS01-CUST%"
+      },
+      "status": "OK",
+      "result_count_min": 50,
+      "result_count_max": 50,
+      "timing": {
+        "count": 20,
+        "p50_ms": 0.217,
+        "p95_ms": 0.224,
+        "p99_ms": 0.26,
+        "max_ms": 0.26
+      }
+    },
+    {
+      "query": {
+        "name": "entity_exact",
+        "model": "res.partner",
+        "field": "name",
+        "operator": "=",
+        "value": "GS01 Customer 000001"
+      },
+      "status": "OK",
+      "result_count_min": 1,
+      "result_count_max": 1,
+      "timing": {
+        "count": 20,
+        "p50_ms": 0.174,
+        "p95_ms": 0.187,
+        "p99_ms": 0.193,
+        "max_ms": 0.193
+      }
+    },
+    {
+      "query": {
+        "name": "entity_contains",
+        "model": "res.partner",
+        "field": "name",
+        "operator": "ilike",
+        "value": "%GS01 Customer%"
+      },
+      "status": "OK",
+      "result_count_min": 50,
+      "result_count_max": 50,
+      "timing": {
+        "count": 20,
+        "p50_ms": 0.204,
+        "p95_ms": 0.221,
+        "p99_ms": 0.231,
+        "max_ms": 0.231
+      }
+    },
+    {
+      "query": {
+        "name": "product_identifier_contains",
+        "model": "product.product",
+        "field": "default_code",
+        "operator": "ilike",
+        "value": "%GS01%"
+      },
+      "status": "OK",
+      "result_count_min": 0,
+      "result_count_max": 0,
+      "timing": {
+        "count": 20,
+        "p50_ms": 0.205,
+        "p95_ms": 0.316,
+        "p99_ms": 1.674,
+        "max_ms": 1.674
+      }
+    },
+    {
+      "query": {
+        "name": "sale_identifier_contains",
+        "model": "sale.order",
+        "field": "client_order_ref",
+        "operator": "ilike",
+        "value": "%GS01-SALE%"
+      },
+      "status": "OK",
+      "result_count_min": 50,
+      "result_count_max": 50,
+      "timing": {
+        "count": 20,
+        "p50_ms": 0.155,
+        "p95_ms": 0.166,
+        "p99_ms": 0.427,
+        "max_ms": 0.427
+      }
+    },
+    {
+      "query": {
+        "name": "purchase_identifier_contains",
+        "model": "purchase.order",
+        "field": "partner_ref",
+        "operator": "ilike",
+        "value": "%GS01-PURCHASE%"
+      },
+      "status": "OK",
+      "result_count_min": 50,
+      "result_count_max": 50,
+      "timing": {
+        "count": 20,
+        "p50_ms": 1.66,
+        "p95_ms": 1.841,
+        "p99_ms": 2.426,
+        "max_ms": 2.426
+      }
+    }
+  ],
+  "concurrent_queries": {
+    "status": "OK",
+    "requests": 20,
+    "result_counts": [
+      0,
+      1,
+      50
+    ],
+    "timing": {
+      "count": 20,
+      "p50_ms": 2.464,
+      "p95_ms": 6.3,
+      "p99_ms": 6.618,
+      "max_ms": 6.618
+    }
+  },
+  "nfr_profile": {
+    "target_resources": 10,
+    "target_rows_per_resource": 1000000,
+    "target_concurrency": 20,
+    "target_first_result_p95_ms": 2000,
+    "target_complete_result_p95_ms": 5000,
+    "actual_business_data_writes": true,
+    "simulation": {
+      "spike": "SPIKE-GS-01",
+      "seed": 20261001,
+      "rows_requested_per_model": 5000,
+      "database": "odoo18ce",
+      "uid": 1,
+      "partner_total": 5000,
+      "sale_created": 5000,
+      "purchase_created": 5000,
+      "sale_total": 5000,
+      "purchase_total": 5000,
+      "data_marker": "GS01-",
+      "orm_write": true
+    }
+  }
+}

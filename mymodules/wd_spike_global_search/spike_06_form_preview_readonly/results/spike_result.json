@@ -1,0 +1,87 @@
+{
+  "spike": "SPIKE-GS-06",
+  "database": "odoo18ce",
+  "form_loads": [
+    {
+      "model": "res.partner",
+      "record_id": 6143,
+      "status": "LOADED",
+      "arch_loaded": true,
+      "view_id": 126,
+      "button_nodes": 7,
+      "chatter_nodes": 0,
+      "record_readable": true,
+      "onchange_invoked": false,
+      "orm_write_count": 0,
+      "policy": {
+        "create": false,
+        "edit": false,
+        "delete": false,
+        "save": false,
+        "business_buttons": false,
+        "chatter_post": false,
+        "attachment_upload": false,
+        "activity_actions": false
+      }
+    },
+    {
+      "model": "sale.order",
+      "record_id": 5050,
+      "status": "LOADED",
+      "arch_loaded": true,
+      "view_id": 1305,
+      "button_nodes": 17,
+      "chatter_nodes": 0,
+      "record_readable": true,
+      "onchange_invoked": false,
+      "orm_write_count": 0,
+      "policy": {
+        "create": false,
+        "edit": false,
+        "delete": false,
+        "save": false,
+        "business_buttons": false,
+        "chatter_post": false,
+        "attachment_upload": false,
+        "activity_actions": false
+      }
+    },
+    {
+      "model": "stock.picking",
+      "record_id": 31,
+      "status": "LOADED",
+      "arch_loaded": true,
+      "view_id": 700,
+      "button_nodes": 17,
+      "chatter_nodes": 0,
+      "record_readable": true,
+      "onchange_invoked": false,
+      "orm_write_count": 0,
+      "policy": {
+        "create": false,
+        "edit": false,
+        "delete": false,
+        "save": false,
+        "business_buttons": false,
+        "chatter_post": false,
+        "attachment_upload": false,
+        "activity_actions": false
+      }
+    }
+  ],
+  "all_forms_loaded": true,
+  "readonly_policies": true,
+  "no_onchange_or_write": true,
+  "deleted_or_permission_changed": {
+    "deleted_record_status": "PERMISSION_OR_DELETED",
+    "permission_changed_status": "PERMISSION_OR_DELETED",
+    "safe_message": "Record unavailable or permission changed"
+  },
+  "switch_preserves_query_state": true,
+  "narrow_screen_policy": {
+    "desktop": "split_results_and_preview",
+    "narrow": "single_pane_selected_preview",
+    "preview_stays_readonly": true,
+    "full_record_action": "open_standard_form_in_new_tab"
+  }
+}

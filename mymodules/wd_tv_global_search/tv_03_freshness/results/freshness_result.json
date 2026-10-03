@@ -1,0 +1,448 @@
+{
+  "tv": "TV-03",
+  "database": "wd_tv_gs01_20261002_100k",
+  "uid": 1,
+  "environment": {
+    "python": "3.11.9",
+    "cpu_count": 10
+  },
+  "target_ms": 5000,
+  "single": {
+    "create": {
+      "samples": [
+        {
+          "ref": "TV03-CREATE-0000",
+          "record_id": 110007,
+          "commit_to_search_ms": 16.458958,
+          "visible": true,
+          "operation_elapsed_ms": 48.671625
+        },
+        {
+          "ref": "TV03-CREATE-0001",
+          "record_id": 110008,
+          "commit_to_search_ms": 0.519959,
+          "visible": true,
+          "operation_elapsed_ms": 7.540667
+        },
+        {
+          "ref": "TV03-CREATE-0002",
+          "record_id": 110009,
+          "commit_to_search_ms": 0.511,
+          "visible": true,
+          "operation_elapsed_ms": 6.655458
+        },
+        {
+          "ref": "TV03-CREATE-0003",
+          "record_id": 110010,
+          "commit_to_search_ms": 0.661375,
+          "visible": true,
+          "operation_elapsed_ms": 5.930292
+        },
+        {
+          "ref": "TV03-CREATE-0004",
+          "record_id": 110011,
+          "commit_to_search_ms": 0.52075,
+          "visible": true,
+          "operation_elapsed_ms": 7.179833
+        },
+        {
+          "ref": "TV03-CREATE-0005",
+          "record_id": 110012,
+          "commit_to_search_ms": 0.501209,
+          "visible": true,
+          "operation_elapsed_ms": 6.33825
+        },
+        {
+          "ref": "TV03-CREATE-0006",
+          "record_id": 110013,
+          "commit_to_search_ms": 0.488083,
+          "visible": true,
+          "operation_elapsed_ms": 6.569917
+        },
+        {
+          "ref": "TV03-CREATE-0007",
+          "record_id": 110014,
+          "commit_to_search_ms": 0.627791,
+          "visible": true,
+          "operation_elapsed_ms": 6.363916
+        },
+        {
+          "ref": "TV03-CREATE-0008",
+          "record_id": 110015,
+          "commit_to_search_ms": 0.46725,
+          "visible": true,
+          "operation_elapsed_ms": 6.107083
+        },
+        {
+          "ref": "TV03-CREATE-0009",
+          "record_id": 110016,
+          "commit_to_search_ms": 0.464375,
+          "visible": true,
+          "operation_elapsed_ms": 6.058042
+        },
+        {
+          "ref": "TV03-CREATE-0010",
+          "record_id": 110017,
+          "commit_to_search_ms": 0.424459,
+          "visible": true,
+          "operation_elapsed_ms": 5.673375
+        },
+        {
+          "ref": "TV03-CREATE-0011",
+          "record_id": 110018,
+          "commit_to_search_ms": 0.586958,
+          "visible": true,
+          "operation_elapsed_ms": 6.423667
+        },
+        {
+          "ref": "TV03-CREATE-0012",
+          "record_id": 110019,
+          "commit_to_search_ms": 0.541041,
+          "visible": true,
+          "operation_elapsed_ms": 6.367291
+        },
+        {
+          "ref": "TV03-CREATE-0013",
+          "record_id": 110020,
+          "commit_to_search_ms": 0.57375,
+          "visible": true,
+          "operation_elapsed_ms": 6.383917
+        },
+        {
+          "ref": "TV03-CREATE-0014",
+          "record_id": 110021,
+          "commit_to_search_ms": 0.582917,
+          "visible": true,
+          "operation_elapsed_ms": 6.386125
+        },
+        {
+          "ref": "TV03-CREATE-0015",
+          "record_id": 110022,
+          "commit_to_search_ms": 0.549291,
+          "visible": true,
+          "operation_elapsed_ms": 7.079666
+        },
+        {
+          "ref": "TV03-CREATE-0016",
+          "record_id": 110023,
+          "commit_to_search_ms": 0.503583,
+          "visible": true,
+          "operation_elapsed_ms": 6.346292
+        },
+        {
+          "ref": "TV03-CREATE-0017",
+          "record_id": 110024,
+          "commit_to_search_ms": 0.535916,
+          "visible": true,
+          "operation_elapsed_ms": 6.412375
+        },
+        {
+          "ref": "TV03-CREATE-0018",
+          "record_id": 110025,
+          "commit_to_search_ms": 0.58225,
+          "visible": true,
+          "operation_elapsed_ms": 6.403791
+        },
+        {
+          "ref": "TV03-CREATE-0019",
+          "record_id": 110026,
+          "commit_to_search_ms": 0.62875,
+          "visible": true,
+          "operation_elapsed_ms": 6.703917
+        }
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 0.541,
+        "p95_ms": 0.661,
+        "p99_ms": 16.459,
+        "max_ms": 16.459
+      }
+    },
+    "update": {
+      "samples": [
+        {
+          "ref": "TV03-UPDATE-0000",
+          "commit_to_search_ms": 1.098917,
+          "new_value_visible": true,
+          "old_value_visible": false
+        },
+        {
+          "ref": "TV03-UPDATE-0001",
+          "commit_to_search_ms": 1.038417,
+          "new_value_visible": true,
+          "old_value_visible": false
+        },
+        {
+          "ref": "TV03-UPDATE-0002",
+          "commit_to_search_ms": 0.876792,
+          "new_value_visible": true,
+          "old_value_visible": false
+        },
+        {
+          "ref": "TV03-UPDATE-0003",
+          "commit_to_search_ms": 0.8255,
+          "new_value_visible": true,
+          "old_value_visible": false
+        },
+        {
+          "ref": "TV03-UPDATE-0004",
+          "commit_to_search_ms": 0.824417,
+          "new_value_visible": true,
+          "old_value_visible": false
+        },
+        {
+          "ref": "TV03-UPDATE-0005",
+          "commit_to_search_ms": 0.887584,
+          "new_value_visible": true,
+          "old_value_visible": false
+        },
+        {
+          "ref": "TV03-UPDATE-0006",
+          "commit_to_search_ms": 1.014292,
+          "new_value_visible": true,
+          "old_value_visible": false
+        },
+        {
+          "ref": "TV03-UPDATE-0007",
+          "commit_to_search_ms": 0.894083,
+          "new_value_visible": true,
+          "old_value_visible": false
+        },
+        {
+          "ref": "TV03-UPDATE-0008",
+          "commit_to_search_ms": 0.814083,
+          "new_value_visible": true,
+          "old_value_visible": false
+        },
+        {
+          "ref": "TV03-UPDATE-0009",
+          "commit_to_search_ms": 1.045375,
+          "new_value_visible": true,
+          "old_value_visible": false
+        },
+        {
+          "ref": "TV03-UPDATE-0010",
+          "commit_to_search_ms": 0.811333,
+          "new_value_visible": true,
+          "old_value_visible": false
+        },
+        {
+          "ref": "TV03-UPDATE-0011",
+          "commit_to_search_ms": 0.873791,
+          "new_value_visible": true,
+          "old_value_visible": false
+        },
+        {
+          "ref": "TV03-UPDATE-0012",
+          "commit_to_search_ms": 0.830833,
+          "new_value_visible": true,
+          "old_value_visible": false
+        },
+        {
+          "ref": "TV03-UPDATE-0013",
+          "commit_to_search_ms": 0.811625,
+          "new_value_visible": true,
+          "old_value_visible": false
+        },
+        {
+          "ref": "TV03-UPDATE-0014",
+          "commit_to_search_ms": 0.836375,
+          "new_value_visible": true,
+          "old_value_visible": false
+        },
+        {
+          "ref": "TV03-UPDATE-0015",
+          "commit_to_search_ms": 0.829042,
+          "new_value_visible": true,
+          "old_value_visible": false
+        },
+        {
+          "ref": "TV03-UPDATE-0016",
+          "commit_to_search_ms": 0.894,
+          "new_value_visible": true,
+          "old_value_visible": false
+        },
+        {
+          "ref": "TV03-UPDATE-0017",
+          "commit_to_search_ms": 0.861625,
+          "new_value_visible": true,
+          "old_value_visible": false
+        },
+        {
+          "ref": "TV03-UPDATE-0018",
+          "commit_to_search_ms": 0.924417,
+          "new_value_visible": true,
+          "old_value_visible": false
+        },
+        {
+          "ref": "TV03-UPDATE-0019",
+          "commit_to_search_ms": 0.82225,
+          "new_value_visible": true,
+          "old_value_visible": false
+        }
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 0.874,
+        "p95_ms": 1.045,
+        "p99_ms": 1.099,
+        "max_ms": 1.099
+      }
+    },
+    "delete": {
+      "samples": [
+        {
+          "ref": "TV03-DELETE-0000",
+          "commit_to_search_ms": 0.487333,
+          "still_visible": false
+        },
+        {
+          "ref": "TV03-DELETE-0001",
+          "commit_to_search_ms": 0.532667,
+          "still_visible": false
+        },
+        {
+          "ref": "TV03-DELETE-0002",
+          "commit_to_search_ms": 0.604,
+          "still_visible": false
+        },
+        {
+          "ref": "TV03-DELETE-0003",
+          "commit_to_search_ms": 0.539666,
+          "still_visible": false
+        },
+        {
+          "ref": "TV03-DELETE-0004",
+          "commit_to_search_ms": 0.47525,
+          "still_visible": false
+        },
+        {
+          "ref": "TV03-DELETE-0005",
+          "commit_to_search_ms": 0.582584,
+          "still_visible": false
+        },
+        {
+          "ref": "TV03-DELETE-0006",
+          "commit_to_search_ms": 0.631417,
+          "still_visible": false
+        },
+        {
+          "ref": "TV03-DELETE-0007",
+          "commit_to_search_ms": 0.442,
+          "still_visible": false
+        },
+        {
+          "ref": "TV03-DELETE-0008",
+          "commit_to_search_ms": 0.440125,
+          "still_visible": false
+        },
+        {
+          "ref": "TV03-DELETE-0009",
+          "commit_to_search_ms": 0.494292,
+          "still_visible": false
+        },
+        {
+          "ref": "TV03-DELETE-0010",
+          "commit_to_search_ms": 0.392291,
+          "still_visible": false
+        },
+        {
+          "ref": "TV03-DELETE-0011",
+          "commit_to_search_ms": 0.434292,
+          "still_visible": false
+        },
+        {
+          "ref": "TV03-DELETE-0012",
+          "commit_to_search_ms": 0.453583,
+          "still_visible": false
+        },
+        {
+          "ref": "TV03-DELETE-0013",
+          "commit_to_search_ms": 0.401459,
+          "still_visible": false
+        },
+        {
+          "ref": "TV03-DELETE-0014",
+          "commit_to_search_ms": 0.479542,
+          "still_visible": false
+        },
+        {
+          "ref": "TV03-DELETE-0015",
+          "commit_to_search_ms": 0.473542,
+          "still_visible": false
+        },
+        {
+          "ref": "TV03-DELETE-0016",
+          "commit_to_search_ms": 0.454458,
+          "still_visible": false
+        },
+        {
+          "ref": "TV03-DELETE-0017",
+          "commit_to_search_ms": 0.484166,
+          "still_visible": false
+        },
+        {
+          "ref": "TV03-DELETE-0018",
+          "commit_to_search_ms": 0.429625,
+          "still_visible": false
+        },
+        {
+          "ref": "TV03-DELETE-0019",
+          "commit_to_search_ms": 0.430042,
+          "still_visible": false
+        }
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 0.475,
+        "p95_ms": 0.604,
+        "p99_ms": 0.631,
+        "max_ms": 0.631
+      }
+    }
+  },
+  "batch": {
+    "create": {
+      "rows": 100,
+      "commit_to_search_ms": 0.486709,
+      "visible_rows": 100
+    },
+    "update": {
+      "rows": 100,
+      "commit_to_search_ms": 0.582417,
+      "visible_rows": 100
+    },
+    "delete": {
+      "rows": 100,
+      "commit_to_search_ms": 1.024542,
+      "visible_rows": 0
+    }
+  },
+  "concurrent": {
+    "requests": 20,
+    "errors": 0,
+    "error_rate": 0.0,
+    "visible_rows": 20,
+    "timing": {
+      "count": 20,
+      "p50_ms": 239.112,
+      "p95_ms": 239.615,
+      "p99_ms": 243.217,
+      "max_ms": 243.217
+    },
+    "commit_to_first_observation_ms": 578.82125
+  },
+  "configuration_publish": {
+    "status": "NOT_VERIFIED",
+    "module_installed": false,
+    "candidate_models": [],
+    "reason": "No wd_global_search configuration model or publish API is available"
+  },
+  "configuration_deactivate": {
+    "status": "NOT_VERIFIED",
+    "module_installed": false,
+    "candidate_models": [],
+    "reason": "No wd_global_search configuration model or publish API is available"
+  }
+}

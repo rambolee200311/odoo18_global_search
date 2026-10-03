@@ -1,0 +1,3498 @@
+{
+  "spike": "SPIKE-GS-07",
+  "case_count": 100,
+  "recognized_case_count": 100,
+  "recognition_rate": 1.0,
+  "free_text_safe_case_count": 100,
+  "free_text_safe": true,
+  "stable_repeat": true,
+  "examples": [
+    {
+      "id": "continuous-001",
+      "text": "A客户今年6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "continuous-002",
+      "text": "A客户今年6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "continuous-003",
+      "text": "A客户今年6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "continuous-004",
+      "text": "A客户今年6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    }
+  ],
+  "failed_cases": [],
+  "results": [
+    {
+      "id": "continuous-001",
+      "text": "A客户今年6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "continuous-002",
+      "text": "A客户今年6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "continuous-003",
+      "text": "A客户今年6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "continuous-004",
+      "text": "A客户今年6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "continuous-005",
+      "text": "A客户今年6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "continuous-006",
+      "text": "A客户今年6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "continuous-007",
+      "text": "A客户今年6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "continuous-008",
+      "text": "A客户今年6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "continuous-009",
+      "text": "A客户今年6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "continuous-010",
+      "text": "A客户今年6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "continuous-011",
+      "text": "A客户今年6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "continuous-012",
+      "text": "A客户今年6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "continuous-013",
+      "text": "A客户今年6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "continuous-014",
+      "text": "A客户今年6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "continuous-015",
+      "text": "A客户今年6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "continuous-016",
+      "text": "A客户今年6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "continuous-017",
+      "text": "A客户今年6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "continuous-018",
+      "text": "A客户今年6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "continuous-019",
+      "text": "A客户今年6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "continuous-020",
+      "text": "A客户今年6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "identifier-location-001",
+      "text": "MSCU1234567 Rotterdam",
+      "parsed": {
+        "units": [
+          [
+            "Identifier",
+            "MSCU1234567"
+          ],
+          [
+            "Location",
+            "Rotterdam"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Identifier",
+          "MSCU1234567"
+        ],
+        [
+          "Location",
+          "Rotterdam"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "identifier-location-002",
+      "text": "MSCU1234567 Rotterdam",
+      "parsed": {
+        "units": [
+          [
+            "Identifier",
+            "MSCU1234567"
+          ],
+          [
+            "Location",
+            "Rotterdam"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Identifier",
+          "MSCU1234567"
+        ],
+        [
+          "Location",
+          "Rotterdam"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "identifier-location-003",
+      "text": "MSCU1234567 Rotterdam",
+      "parsed": {
+        "units": [
+          [
+            "Identifier",
+            "MSCU1234567"
+          ],
+          [
+            "Location",
+            "Rotterdam"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Identifier",
+          "MSCU1234567"
+        ],
+        [
+          "Location",
+          "Rotterdam"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "identifier-location-004",
+      "text": "MSCU1234567 Rotterdam",
+      "parsed": {
+        "units": [
+          [
+            "Identifier",
+            "MSCU1234567"
+          ],
+          [
+            "Location",
+            "Rotterdam"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Identifier",
+          "MSCU1234567"
+        ],
+        [
+          "Location",
+          "Rotterdam"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "identifier-location-005",
+      "text": "MSCU1234567 Rotterdam",
+      "parsed": {
+        "units": [
+          [
+            "Identifier",
+            "MSCU1234567"
+          ],
+          [
+            "Location",
+            "Rotterdam"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Identifier",
+          "MSCU1234567"
+        ],
+        [
+          "Location",
+          "Rotterdam"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "identifier-location-006",
+      "text": "MSCU1234567 Rotterdam",
+      "parsed": {
+        "units": [
+          [
+            "Identifier",
+            "MSCU1234567"
+          ],
+          [
+            "Location",
+            "Rotterdam"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Identifier",
+          "MSCU1234567"
+        ],
+        [
+          "Location",
+          "Rotterdam"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "identifier-location-007",
+      "text": "MSCU1234567 Rotterdam",
+      "parsed": {
+        "units": [
+          [
+            "Identifier",
+            "MSCU1234567"
+          ],
+          [
+            "Location",
+            "Rotterdam"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Identifier",
+          "MSCU1234567"
+        ],
+        [
+          "Location",
+          "Rotterdam"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "identifier-location-008",
+      "text": "MSCU1234567 Rotterdam",
+      "parsed": {
+        "units": [
+          [
+            "Identifier",
+            "MSCU1234567"
+          ],
+          [
+            "Location",
+            "Rotterdam"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Identifier",
+          "MSCU1234567"
+        ],
+        [
+          "Location",
+          "Rotterdam"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "identifier-location-009",
+      "text": "MSCU1234567 Rotterdam",
+      "parsed": {
+        "units": [
+          [
+            "Identifier",
+            "MSCU1234567"
+          ],
+          [
+            "Location",
+            "Rotterdam"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Identifier",
+          "MSCU1234567"
+        ],
+        [
+          "Location",
+          "Rotterdam"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "identifier-location-010",
+      "text": "MSCU1234567 Rotterdam",
+      "parsed": {
+        "units": [
+          [
+            "Identifier",
+            "MSCU1234567"
+          ],
+          [
+            "Location",
+            "Rotterdam"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Identifier",
+          "MSCU1234567"
+        ],
+        [
+          "Location",
+          "Rotterdam"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "identifier-location-011",
+      "text": "MSCU1234567 Rotterdam",
+      "parsed": {
+        "units": [
+          [
+            "Identifier",
+            "MSCU1234567"
+          ],
+          [
+            "Location",
+            "Rotterdam"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Identifier",
+          "MSCU1234567"
+        ],
+        [
+          "Location",
+          "Rotterdam"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "identifier-location-012",
+      "text": "MSCU1234567 Rotterdam",
+      "parsed": {
+        "units": [
+          [
+            "Identifier",
+            "MSCU1234567"
+          ],
+          [
+            "Location",
+            "Rotterdam"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Identifier",
+          "MSCU1234567"
+        ],
+        [
+          "Location",
+          "Rotterdam"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "identifier-location-013",
+      "text": "MSCU1234567 Rotterdam",
+      "parsed": {
+        "units": [
+          [
+            "Identifier",
+            "MSCU1234567"
+          ],
+          [
+            "Location",
+            "Rotterdam"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Identifier",
+          "MSCU1234567"
+        ],
+        [
+          "Location",
+          "Rotterdam"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "identifier-location-014",
+      "text": "MSCU1234567 Rotterdam",
+      "parsed": {
+        "units": [
+          [
+            "Identifier",
+            "MSCU1234567"
+          ],
+          [
+            "Location",
+            "Rotterdam"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Identifier",
+          "MSCU1234567"
+        ],
+        [
+          "Location",
+          "Rotterdam"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "identifier-location-015",
+      "text": "MSCU1234567 Rotterdam",
+      "parsed": {
+        "units": [
+          [
+            "Identifier",
+            "MSCU1234567"
+          ],
+          [
+            "Location",
+            "Rotterdam"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Identifier",
+          "MSCU1234567"
+        ],
+        [
+          "Location",
+          "Rotterdam"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "identifier-location-016",
+      "text": "MSCU1234567 Rotterdam",
+      "parsed": {
+        "units": [
+          [
+            "Identifier",
+            "MSCU1234567"
+          ],
+          [
+            "Location",
+            "Rotterdam"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Identifier",
+          "MSCU1234567"
+        ],
+        [
+          "Location",
+          "Rotterdam"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "identifier-location-017",
+      "text": "MSCU1234567 Rotterdam",
+      "parsed": {
+        "units": [
+          [
+            "Identifier",
+            "MSCU1234567"
+          ],
+          [
+            "Location",
+            "Rotterdam"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Identifier",
+          "MSCU1234567"
+        ],
+        [
+          "Location",
+          "Rotterdam"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "identifier-location-018",
+      "text": "MSCU1234567 Rotterdam",
+      "parsed": {
+        "units": [
+          [
+            "Identifier",
+            "MSCU1234567"
+          ],
+          [
+            "Location",
+            "Rotterdam"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Identifier",
+          "MSCU1234567"
+        ],
+        [
+          "Location",
+          "Rotterdam"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "identifier-location-019",
+      "text": "MSCU1234567 Rotterdam",
+      "parsed": {
+        "units": [
+          [
+            "Identifier",
+            "MSCU1234567"
+          ],
+          [
+            "Location",
+            "Rotterdam"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Identifier",
+          "MSCU1234567"
+        ],
+        [
+          "Location",
+          "Rotterdam"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "identifier-location-020",
+      "text": "MSCU1234567 Rotterdam",
+      "parsed": {
+        "units": [
+          [
+            "Identifier",
+            "MSCU1234567"
+          ],
+          [
+            "Location",
+            "Rotterdam"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Identifier",
+          "MSCU1234567"
+        ],
+        [
+          "Location",
+          "Rotterdam"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "month-resource-001",
+      "text": "上个月 出库",
+      "parsed": {
+        "units": [
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "Time",
+            "上个月"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "Time",
+          "上个月"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "month-resource-002",
+      "text": "上个月 出库",
+      "parsed": {
+        "units": [
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "Time",
+            "上个月"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "Time",
+          "上个月"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "month-resource-003",
+      "text": "上个月 出库",
+      "parsed": {
+        "units": [
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "Time",
+            "上个月"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "Time",
+          "上个月"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "month-resource-004",
+      "text": "上个月 出库",
+      "parsed": {
+        "units": [
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "Time",
+            "上个月"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "Time",
+          "上个月"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "month-resource-005",
+      "text": "上个月 出库",
+      "parsed": {
+        "units": [
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "Time",
+            "上个月"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "Time",
+          "上个月"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "month-resource-006",
+      "text": "上个月 出库",
+      "parsed": {
+        "units": [
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "Time",
+            "上个月"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "Time",
+          "上个月"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "month-resource-007",
+      "text": "上个月 出库",
+      "parsed": {
+        "units": [
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "Time",
+            "上个月"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "Time",
+          "上个月"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "month-resource-008",
+      "text": "上个月 出库",
+      "parsed": {
+        "units": [
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "Time",
+            "上个月"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "Time",
+          "上个月"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "month-resource-009",
+      "text": "上个月 出库",
+      "parsed": {
+        "units": [
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "Time",
+            "上个月"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "Time",
+          "上个月"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "month-resource-010",
+      "text": "上个月 出库",
+      "parsed": {
+        "units": [
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "Time",
+            "上个月"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "Time",
+          "上个月"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "month-resource-011",
+      "text": "上个月 出库",
+      "parsed": {
+        "units": [
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "Time",
+            "上个月"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "Time",
+          "上个月"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "month-resource-012",
+      "text": "上个月 出库",
+      "parsed": {
+        "units": [
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "Time",
+            "上个月"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "Time",
+          "上个月"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "month-resource-013",
+      "text": "上个月 出库",
+      "parsed": {
+        "units": [
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "Time",
+            "上个月"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "Time",
+          "上个月"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "month-resource-014",
+      "text": "上个月 出库",
+      "parsed": {
+        "units": [
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "Time",
+            "上个月"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "Time",
+          "上个月"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "month-resource-015",
+      "text": "上个月 出库",
+      "parsed": {
+        "units": [
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "Time",
+            "上个月"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "Time",
+          "上个月"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "month-resource-016",
+      "text": "上个月 出库",
+      "parsed": {
+        "units": [
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "Time",
+            "上个月"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "Time",
+          "上个月"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "month-resource-017",
+      "text": "上个月 出库",
+      "parsed": {
+        "units": [
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "Time",
+            "上个月"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "Time",
+          "上个月"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "month-resource-018",
+      "text": "上个月 出库",
+      "parsed": {
+        "units": [
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "Time",
+            "上个月"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "Time",
+          "上个月"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "month-resource-019",
+      "text": "上个月 出库",
+      "parsed": {
+        "units": [
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "Time",
+            "上个月"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "Time",
+          "上个月"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "month-resource-020",
+      "text": "上个月 出库",
+      "parsed": {
+        "units": [
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "Time",
+            "上个月"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "Time",
+          "上个月"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "entity-week-001",
+      "text": "张三 本周",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "张三"
+          ],
+          [
+            "Time",
+            "本周"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "张三"
+        ],
+        [
+          "Time",
+          "本周"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "entity-week-002",
+      "text": "张三 本周",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "张三"
+          ],
+          [
+            "Time",
+            "本周"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "张三"
+        ],
+        [
+          "Time",
+          "本周"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "entity-week-003",
+      "text": "张三 本周",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "张三"
+          ],
+          [
+            "Time",
+            "本周"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "张三"
+        ],
+        [
+          "Time",
+          "本周"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "entity-week-004",
+      "text": "张三 本周",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "张三"
+          ],
+          [
+            "Time",
+            "本周"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "张三"
+        ],
+        [
+          "Time",
+          "本周"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "entity-week-005",
+      "text": "张三 本周",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "张三"
+          ],
+          [
+            "Time",
+            "本周"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "张三"
+        ],
+        [
+          "Time",
+          "本周"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "entity-week-006",
+      "text": "张三 本周",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "张三"
+          ],
+          [
+            "Time",
+            "本周"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "张三"
+        ],
+        [
+          "Time",
+          "本周"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "entity-week-007",
+      "text": "张三 本周",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "张三"
+          ],
+          [
+            "Time",
+            "本周"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "张三"
+        ],
+        [
+          "Time",
+          "本周"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "entity-week-008",
+      "text": "张三 本周",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "张三"
+          ],
+          [
+            "Time",
+            "本周"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "张三"
+        ],
+        [
+          "Time",
+          "本周"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "entity-week-009",
+      "text": "张三 本周",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "张三"
+          ],
+          [
+            "Time",
+            "本周"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "张三"
+        ],
+        [
+          "Time",
+          "本周"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "entity-week-010",
+      "text": "张三 本周",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "张三"
+          ],
+          [
+            "Time",
+            "本周"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "张三"
+        ],
+        [
+          "Time",
+          "本周"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "entity-week-011",
+      "text": "张三 本周",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "张三"
+          ],
+          [
+            "Time",
+            "本周"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "张三"
+        ],
+        [
+          "Time",
+          "本周"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "entity-week-012",
+      "text": "张三 本周",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "张三"
+          ],
+          [
+            "Time",
+            "本周"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "张三"
+        ],
+        [
+          "Time",
+          "本周"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "entity-week-013",
+      "text": "张三 本周",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "张三"
+          ],
+          [
+            "Time",
+            "本周"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "张三"
+        ],
+        [
+          "Time",
+          "本周"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "entity-week-014",
+      "text": "张三 本周",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "张三"
+          ],
+          [
+            "Time",
+            "本周"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "张三"
+        ],
+        [
+          "Time",
+          "本周"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "entity-week-015",
+      "text": "张三 本周",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "张三"
+          ],
+          [
+            "Time",
+            "本周"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "张三"
+        ],
+        [
+          "Time",
+          "本周"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "entity-week-016",
+      "text": "张三 本周",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "张三"
+          ],
+          [
+            "Time",
+            "本周"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "张三"
+        ],
+        [
+          "Time",
+          "本周"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "entity-week-017",
+      "text": "张三 本周",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "张三"
+          ],
+          [
+            "Time",
+            "本周"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "张三"
+        ],
+        [
+          "Time",
+          "本周"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "entity-week-018",
+      "text": "张三 本周",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "张三"
+          ],
+          [
+            "Time",
+            "本周"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "张三"
+        ],
+        [
+          "Time",
+          "本周"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "entity-week-019",
+      "text": "张三 本周",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "张三"
+          ],
+          [
+            "Time",
+            "本周"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "张三"
+        ],
+        [
+          "Time",
+          "本周"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "entity-week-020",
+      "text": "张三 本周",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "张三"
+          ],
+          [
+            "Time",
+            "本周"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "张三"
+        ],
+        [
+          "Time",
+          "本周"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "space-variant-001",
+      "text": "A客户 今年6月 没完成 的 出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "space-variant-002",
+      "text": "A客户今年 6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "space-variant-003",
+      "text": "A客户 今年6月 没完成 的 出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "space-variant-004",
+      "text": "A客户今年 6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "space-variant-005",
+      "text": "A客户 今年6月 没完成 的 出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "space-variant-006",
+      "text": "A客户今年 6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "space-variant-007",
+      "text": "A客户 今年6月 没完成 的 出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "space-variant-008",
+      "text": "A客户今年 6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "space-variant-009",
+      "text": "A客户 今年6月 没完成 的 出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "space-variant-010",
+      "text": "A客户今年 6月没完成的出库单",
+      "parsed": {
+        "units": [
+          [
+            "Entity",
+            "A客户"
+          ],
+          [
+            "Resource",
+            "出库"
+          ],
+          [
+            "State",
+            "未完成"
+          ],
+          [
+            "Time",
+            "2026-06"
+          ]
+        ],
+        "free_text": ""
+      },
+      "expected_units": [
+        [
+          "Entity",
+          "A客户"
+        ],
+        [
+          "Resource",
+          "出库"
+        ],
+        [
+          "State",
+          "未完成"
+        ],
+        [
+          "Time",
+          "2026-06"
+        ]
+      ],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "free-text-001",
+      "text": "不存在的自由文本01",
+      "parsed": {
+        "units": [],
+        "free_text": "不存在的自由文本01"
+      },
+      "expected_units": [],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "free-text-002",
+      "text": "不存在的自由文本02",
+      "parsed": {
+        "units": [],
+        "free_text": "不存在的自由文本02"
+      },
+      "expected_units": [],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "free-text-003",
+      "text": "不存在的自由文本03",
+      "parsed": {
+        "units": [],
+        "free_text": "不存在的自由文本03"
+      },
+      "expected_units": [],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "free-text-004",
+      "text": "不存在的自由文本04",
+      "parsed": {
+        "units": [],
+        "free_text": "不存在的自由文本04"
+      },
+      "expected_units": [],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "free-text-005",
+      "text": "不存在的自由文本05",
+      "parsed": {
+        "units": [],
+        "free_text": "不存在的自由文本05"
+      },
+      "expected_units": [],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "free-text-006",
+      "text": "不存在的自由文本06",
+      "parsed": {
+        "units": [],
+        "free_text": "不存在的自由文本06"
+      },
+      "expected_units": [],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "free-text-007",
+      "text": "不存在的自由文本07",
+      "parsed": {
+        "units": [],
+        "free_text": "不存在的自由文本07"
+      },
+      "expected_units": [],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "free-text-008",
+      "text": "不存在的自由文本08",
+      "parsed": {
+        "units": [],
+        "free_text": "不存在的自由文本08"
+      },
+      "expected_units": [],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "free-text-009",
+      "text": "不存在的自由文本09",
+      "parsed": {
+        "units": [],
+        "free_text": "不存在的自由文本09"
+      },
+      "expected_units": [],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    },
+    {
+      "id": "free-text-010",
+      "text": "不存在的自由文本10",
+      "parsed": {
+        "units": [],
+        "free_text": "不存在的自由文本10"
+      },
+      "expected_units": [],
+      "correct_units": true,
+      "safe_free_text": true,
+      "stable_repeat": true
+    }
+  ]
+}

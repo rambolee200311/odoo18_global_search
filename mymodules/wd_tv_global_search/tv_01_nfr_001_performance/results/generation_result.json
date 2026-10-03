@@ -1,0 +1,33 @@
+{
+  "tv": "TV-01",
+  "seed": 20261002,
+  "rows_target_per_logical_resource": 100000,
+  "database": "wd_tv_gs01_20261002_100k",
+  "uid": 1,
+  "orm_write": true,
+  "created": {
+    "res.partner": 0,
+    "sale.order": 0,
+    "purchase.order": 0,
+    "stock.picking.incoming": 0,
+    "stock.picking.outgoing": 0,
+    "stock.picking.internal": 0,
+    "account.move": 0,
+    "product.product": 0,
+    "project.task": 0,
+    "stock.quant": 100000
+  },
+  "counts": {
+    "res.partner": 100000,
+    "sale.order": 100000,
+    "purchase.order": 100000,
+    "stock.picking.incoming": 100000,
+    "stock.picking.outgoing": 100000,
+    "stock.picking.internal": 100000,
+    "account.move": 100000,
+    "product.product": 100000,
+    "project.task": 100000,
+    "stock.quant": 100000
+  },
+  "elapsed_seconds": 165.009
+}

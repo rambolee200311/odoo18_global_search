@@ -1,0 +1,388 @@
+{
+  "spike": "SPIKE-GS-08",
+  "seed": 20261008,
+  "rows_per_model": 100000,
+  "rows_total": 200000,
+  "composite_resource": {
+    "name": "订单",
+    "models": [
+      "sale.order",
+      "purchase.order"
+    ],
+    "priorities": {
+      "sale.order": 1,
+      "purchase.order": 2
+    }
+  },
+  "model_metadata": {
+    "sale.order": {
+      "title_field": true,
+      "business_date_field": true,
+      "state_field": true,
+      "snapshot_fields": true,
+      "field_names": [
+        "name",
+        "date_order",
+        "state",
+        "partner_id",
+        "amount_total"
+      ]
+    },
+    "purchase.order": {
+      "title_field": true,
+      "business_date_field": true,
+      "state_field": true,
+      "snapshot_fields": true,
+      "field_names": [
+        "name",
+        "date_order",
+        "state",
+        "partner_id",
+        "amount_total"
+      ]
+    }
+  },
+  "mapping_complete": true,
+  "priority_validation": {
+    "valid_unique": true,
+    "duplicate_rejected": true
+  },
+  "ordering": {
+    "sample_top_20": [
+      {
+        "business_resource": "订单",
+        "technical_model": "sale.order",
+        "record_id": 360,
+        "title": "sale.order Order 000360",
+        "business_date": "2026-12-27",
+        "system_state": "draft",
+        "business_state": "未完成",
+        "snapshot": {
+          "title": "sale.order Order 000360",
+          "partner": "Partner 0360",
+          "amount": 103.6
+        },
+        "relevance": 100
+      },
+      {
+        "business_resource": "订单",
+        "technical_model": "sale.order",
+        "record_id": 725,
+        "title": "sale.order Order 000725",
+        "business_date": "2026-12-27",
+        "system_state": "cancel",
+        "business_state": "已取消",
+        "snapshot": {
+          "title": "sale.order Order 000725",
+          "partner": "Partner 0725",
+          "amount": 107.25
+        },
+        "relevance": 100
+      },
+      {
+        "business_resource": "订单",
+        "technical_model": "sale.order",
+        "record_id": 1090,
+        "title": "sale.order Order 001090",
+        "business_date": "2026-12-27",
+        "system_state": "sale",
+        "business_state": "已完成",
+        "snapshot": {
+          "title": "sale.order Order 001090",
+          "partner": "Partner 0090",
+          "amount": 110.9
+        },
+        "relevance": 100
+      },
+      {
+        "business_resource": "订单",
+        "technical_model": "sale.order",
+        "record_id": 1455,
+        "title": "sale.order Order 001455",
+        "business_date": "2026-12-27",
+        "system_state": "draft",
+        "business_state": "未完成",
+        "snapshot": {
+          "title": "sale.order Order 001455",
+          "partner": "Partner 0455",
+          "amount": 114.55
+        },
+        "relevance": 100
+      },
+      {
+        "business_resource": "订单",
+        "technical_model": "sale.order",
+        "record_id": 1820,
+        "title": "sale.order Order 001820",
+        "business_date": "2026-12-27",
+        "system_state": "cancel",
+        "business_state": "已取消",
+        "snapshot": {
+          "title": "sale.order Order 001820",
+          "partner": "Partner 0820",
+          "amount": 118.2
+        },
+        "relevance": 100
+      },
+      {
+        "business_resource": "订单",
+        "technical_model": "sale.order",
+        "record_id": 2185,
+        "title": "sale.order Order 002185",
+        "business_date": "2026-12-27",
+        "system_state": "sale",
+        "business_state": "已完成",
+        "snapshot": {
+          "title": "sale.order Order 002185",
+          "partner": "Partner 0185",
+          "amount": 121.85
+        },
+        "relevance": 100
+      },
+      {
+        "business_resource": "订单",
+        "technical_model": "sale.order",
+        "record_id": 2550,
+        "title": "sale.order Order 002550",
+        "business_date": "2026-12-27",
+        "system_state": "draft",
+        "business_state": "未完成",
+        "snapshot": {
+          "title": "sale.order Order 002550",
+          "partner": "Partner 0550",
+          "amount": 125.5
+        },
+        "relevance": 100
+      },
+      {
+        "business_resource": "订单",
+        "technical_model": "sale.order",
+        "record_id": 2915,
+        "title": "sale.order Order 002915",
+        "business_date": "2026-12-27",
+        "system_state": "cancel",
+        "business_state": "已取消",
+        "snapshot": {
+          "title": "sale.order Order 002915",
+          "partner": "Partner 0915",
+          "amount": 129.15
+        },
+        "relevance": 100
+      },
+      {
+        "business_resource": "订单",
+        "technical_model": "sale.order",
+        "record_id": 3280,
+        "title": "sale.order Order 003280",
+        "business_date": "2026-12-27",
+        "system_state": "sale",
+        "business_state": "已完成",
+        "snapshot": {
+          "title": "sale.order Order 003280",
+          "partner": "Partner 0280",
+          "amount": 132.8
+        },
+        "relevance": 100
+      },
+      {
+        "business_resource": "订单",
+        "technical_model": "sale.order",
+        "record_id": 3645,
+        "title": "sale.order Order 003645",
+        "business_date": "2026-12-27",
+        "system_state": "draft",
+        "business_state": "未完成",
+        "snapshot": {
+          "title": "sale.order Order 003645",
+          "partner": "Partner 0645",
+          "amount": 136.45
+        },
+        "relevance": 100
+      },
+      {
+        "business_resource": "订单",
+        "technical_model": "sale.order",
+        "record_id": 4010,
+        "title": "sale.order Order 004010",
+        "business_date": "2026-12-27",
+        "system_state": "cancel",
+        "business_state": "已取消",
+        "snapshot": {
+          "title": "sale.order Order 004010",
+          "partner": "Partner 0010",
+          "amount": 140.1
+        },
+        "relevance": 100
+      },
+      {
+        "business_resource": "订单",
+        "technical_model": "sale.order",
+        "record_id": 4375,
+        "title": "sale.order Order 004375",
+        "business_date": "2026-12-27",
+        "system_state": "sale",
+        "business_state": "已完成",
+        "snapshot": {
+          "title": "sale.order Order 004375",
+          "partner": "Partner 0375",
+          "amount": 143.75
+        },
+        "relevance": 100
+      },
+      {
+        "business_resource": "订单",
+        "technical_model": "sale.order",
+        "record_id": 4740,
+        "title": "sale.order Order 004740",
+        "business_date": "2026-12-27",
+        "system_state": "draft",
+        "business_state": "未完成",
+        "snapshot": {
+          "title": "sale.order Order 004740",
+          "partner": "Partner 0740",
+          "amount": 147.4
+        },
+        "relevance": 100
+      },
+      {
+        "business_resource": "订单",
+        "technical_model": "sale.order",
+        "record_id": 5105,
+        "title": "sale.order Order 005105",
+        "business_date": "2026-12-27",
+        "system_state": "cancel",
+        "business_state": "已取消",
+        "snapshot": {
+          "title": "sale.order Order 005105",
+          "partner": "Partner 0105",
+          "amount": 151.05
+        },
+        "relevance": 100
+      },
+      {
+        "business_resource": "订单",
+        "technical_model": "sale.order",
+        "record_id": 5470,
+        "title": "sale.order Order 005470",
+        "business_date": "2026-12-27",
+        "system_state": "sale",
+        "business_state": "已完成",
+        "snapshot": {
+          "title": "sale.order Order 005470",
+          "partner": "Partner 0470",
+          "amount": 154.7
+        },
+        "relevance": 100
+      },
+      {
+        "business_resource": "订单",
+        "technical_model": "sale.order",
+        "record_id": 5835,
+        "title": "sale.order Order 005835",
+        "business_date": "2026-12-27",
+        "system_state": "draft",
+        "business_state": "未完成",
+        "snapshot": {
+          "title": "sale.order Order 005835",
+          "partner": "Partner 0835",
+          "amount": 158.35
+        },
+        "relevance": 100
+      },
+      {
+        "business_resource": "订单",
+        "technical_model": "sale.order",
+        "record_id": 6200,
+        "title": "sale.order Order 006200",
+        "business_date": "2026-12-27",
+        "system_state": "cancel",
+        "business_state": "已取消",
+        "snapshot": {
+          "title": "sale.order Order 006200",
+          "partner": "Partner 0200",
+          "amount": 162.0
+        },
+        "relevance": 100
+      },
+      {
+        "business_resource": "订单",
+        "technical_model": "sale.order",
+        "record_id": 6565,
+        "title": "sale.order Order 006565",
+        "business_date": "2026-12-27",
+        "system_state": "sale",
+        "business_state": "已完成",
+        "snapshot": {
+          "title": "sale.order Order 006565",
+          "partner": "Partner 0565",
+          "amount": 165.65
+        },
+        "relevance": 100
+      },
+      {
+        "business_resource": "订单",
+        "technical_model": "sale.order",
+        "record_id": 6930,
+        "title": "sale.order Order 006930",
+        "business_date": "2026-12-27",
+        "system_state": "draft",
+        "business_state": "未完成",
+        "snapshot": {
+          "title": "sale.order Order 006930",
+          "partner": "Partner 0930",
+          "amount": 169.3
+        },
+        "relevance": 100
+      },
+      {
+        "business_resource": "订单",
+        "technical_model": "sale.order",
+        "record_id": 7295,
+        "title": "sale.order Order 007295",
+        "business_date": "2026-12-27",
+        "system_state": "cancel",
+        "business_state": "已取消",
+        "snapshot": {
+          "title": "sale.order Order 007295",
+          "partner": "Partner 0295",
+          "amount": 172.95
+        },
+        "relevance": 100
+      }
+    ],
+    "stable_repeat": true,
+    "empty_date_first_index": 199980,
+    "non_empty_before_empty": true,
+    "same_score_group_record_ids": [
+      360,
+      725,
+      1090,
+      1455,
+      1820,
+      2185,
+      2550,
+      2915,
+      3280,
+      3645,
+      4010,
+      4375,
+      4740,
+      5105,
+      5470,
+      5835,
+      6200,
+      6565,
+      6930,
+      7295
+    ]
+  },
+  "counting": {
+    "sale_category_count": 100000,
+    "purchase_category_count": 100000,
+    "all_count": 200000,
+    "duplicate_path_hits": 200,
+    "unique_result_identity_count": 100,
+    "identity_dedup_correct": true,
+    "all_equals_category_sum": true
+  }
+}

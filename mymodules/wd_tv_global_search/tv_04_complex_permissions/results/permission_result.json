@@ -1,0 +1,193 @@
+{
+  "tv": "TV-04",
+  "database": "wd_tv_gs01_20261002_100k",
+  "fixture": {
+    "base_company": 1,
+    "companies": {
+      "a": 18,
+      "b": 19
+    },
+    "users": {
+      "a": 38,
+      "b": 39,
+      "multi": 40,
+      "portal": 41
+    },
+    "partners": {
+      "a": 110473,
+      "b": 110474,
+      "shared": 110475,
+      "blocked": 110476
+    },
+    "orders": {
+      "a": 100033,
+      "b": 100034,
+      "shared": 100035,
+      "blocked": 100036,
+      "future": 100037
+    },
+    "group": 76,
+    "rules": [
+      231,
+      232
+    ]
+  },
+  "scenarios": {
+    "a": {
+      "partners": {
+        "status": "OK",
+        "ids": [
+          110476,
+          110473,
+          110475
+        ],
+        "count": 3
+      },
+      "orders": {
+        "status": "OK",
+        "ids": [
+          100035,
+          100033
+        ],
+        "count": 2
+      }
+    },
+    "b": {
+      "partners": {
+        "status": "OK",
+        "ids": [
+          110474,
+          110475
+        ],
+        "count": 2
+      },
+      "orders": {
+        "status": "OK",
+        "ids": [
+          100034
+        ],
+        "count": 1
+      }
+    },
+    "multi": {
+      "partners": {
+        "status": "OK",
+        "ids": [
+          110476,
+          110473,
+          110474,
+          110475
+        ],
+        "count": 4
+      },
+      "orders": {
+        "status": "OK",
+        "ids": [
+          100035,
+          100034,
+          100033
+        ],
+        "count": 3
+      }
+    },
+    "portal": {
+      "partners": {
+        "status": "OK",
+        "ids": [],
+        "count": 0
+      },
+      "orders": {
+        "status": "OK",
+        "ids": [],
+        "count": 0
+      }
+    },
+    "shared_and_company_empty": {
+      "user_a_shared": {
+        "status": "OK",
+        "ids": [
+          110475
+        ],
+        "count": 1
+      },
+      "user_a_company_a": {
+        "status": "OK",
+        "ids": [
+          110473
+        ],
+        "count": 1
+      },
+      "user_a_company_b": {
+        "status": "OK",
+        "ids": [],
+        "count": 0
+      },
+      "multi_shared": {
+        "status": "OK",
+        "ids": [
+          110475
+        ],
+        "count": 1
+      }
+    },
+    "field_rule": {
+      "blocked_order_visible": {
+        "status": "OK",
+        "ids": [],
+        "count": 0
+      }
+    },
+    "time_rule": {
+      "past_order_visible": {
+        "status": "OK",
+        "ids": [
+          100033
+        ],
+        "count": 1
+      },
+      "future_order_visible": {
+        "status": "OK",
+        "ids": [],
+        "count": 0
+      }
+    },
+    "relation_depth_2": {
+      "user_a_order_by_partner_a": {
+        "status": "OK",
+        "ids": [
+          100033
+        ],
+        "count": 1
+      },
+      "user_a_order_by_partner_b": {
+        "status": "OK",
+        "ids": [],
+        "count": 0
+      }
+    },
+    "field_permission": {
+      "credit_limit_readable": false,
+      "name_readable": true,
+      "credit_limit_excluded": true
+    },
+    "runtime_permission_change": {
+      "after_switch_to_b": {
+        "status": "OK",
+        "ids": [
+          110474
+        ],
+        "count": 1
+      },
+      "company_a_hidden_after_switch": true,
+      "company_b_visible_after_switch": true
+    },
+    "failure_closed": {
+      "status": "PERMISSION_DENIED",
+      "ids": [],
+      "count": 0,
+      "error": "AccessError"
+    }
+  },
+  "no_leakage": true,
+  "failure_closed": true
+}

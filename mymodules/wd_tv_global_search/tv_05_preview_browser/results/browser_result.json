@@ -1,0 +1,38 @@
+{
+  "tv_id": "TV-05",
+  "status": "CONDITIONAL_PASS",
+  "database": "odoo18ce",
+  "url": "http://127.0.0.1:8092/wd_global_search",
+  "login_page_reachable": true,
+  "login_completed": true,
+  "preview_implementation_present": true,
+  "checks": {
+    "preview_exists": "PASS",
+    "preview_read_only": "PASS",
+    "edit_save_button_blocked": "PASS",
+    "chatter_blocked": "PASS_BY_DESIGN",
+    "attachment_blocked": "PASS_BY_DESIGN",
+    "activity_blocked": "PASS_BY_DESIGN",
+    "deleted_record_safe": "PASS",
+    "permission_change_safe": "NOT_VERIFIED",
+    "record_switch_state": "PASS",
+    "narrow_screen_degradation": "PASS",
+    "keyboard_safety": "PASS",
+    "browser_console": "PASS"
+  },
+  "evidence": [
+    "evidence/login-page.png",
+    "evidence/logged-in-apps.png",
+    "evidence/preview-desktop.png",
+    "evidence/preview-narrow.png"
+  ],
+  "notes": [
+    "The operator authorized a shared-database browser smoke verification.",
+    "Authentication completed with the user supplied by the operator.",
+    "res.partner, sale.order, and stock.picking loaded real Odoo form views.",
+    "A nonexistent record returned PERMISSION_OR_DELETED without exposing details.",
+    "The permission-change scenario still requires a dedicated browser fixture.",
+    "The result is conditional because it used shared data and one Chromium browser.",
+    "Backend Form View evidence from GS-06 is not browser evidence."
+  ]
+}

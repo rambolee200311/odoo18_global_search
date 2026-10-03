@@ -1,0 +1,247 @@
+{
+  "spike": "SPIKE-GS-04",
+  "database": "odoo18ce",
+  "uid": 1,
+  "source_spike": "SPIKE-GS-03",
+  "records": [
+    {
+      "resource": "销售订单",
+      "model": "sale.order",
+      "record_id": 5047,
+      "identity": [
+        "销售订单",
+        "sale.order",
+        5047
+      ],
+      "entity": "GS03 Partner",
+      "month": "2026-05",
+      "state": "draft",
+      "marker": "GS03-SALE-1"
+    },
+    {
+      "resource": "销售订单",
+      "model": "sale.order",
+      "record_id": 5048,
+      "identity": [
+        "销售订单",
+        "sale.order",
+        5048
+      ],
+      "entity": "GS03 Partner",
+      "month": "2026-06",
+      "state": "draft",
+      "marker": "GS03-SALE-2"
+    },
+    {
+      "resource": "销售订单",
+      "model": "sale.order",
+      "record_id": 5049,
+      "identity": [
+        "销售订单",
+        "sale.order",
+        5049
+      ],
+      "entity": "GS03 Partner",
+      "month": "2026-07",
+      "state": "draft",
+      "marker": "GS03-SALE-3"
+    },
+    {
+      "resource": "采购订单",
+      "model": "purchase.order",
+      "record_id": 5033,
+      "identity": [
+        "采购订单",
+        "purchase.order",
+        5033
+      ],
+      "entity": "GS03 Partner",
+      "month": "2026-05",
+      "state": "draft",
+      "marker": "GS03-PURCHASE-1"
+    },
+    {
+      "resource": "采购订单",
+      "model": "purchase.order",
+      "record_id": 5034,
+      "identity": [
+        "采购订单",
+        "purchase.order",
+        5034
+      ],
+      "entity": "GS03 Partner",
+      "month": "2026-06",
+      "state": "draft",
+      "marker": "GS03-PURCHASE-2"
+    },
+    {
+      "resource": "采购订单",
+      "model": "purchase.order",
+      "record_id": 5035,
+      "identity": [
+        "采购订单",
+        "purchase.order",
+        5035
+      ],
+      "entity": "GS03 Partner",
+      "month": "2026-07",
+      "state": "draft",
+      "marker": "GS03-PURCHASE-3"
+    },
+    {
+      "resource": "发票",
+      "model": "account.move",
+      "record_id": 65,
+      "identity": [
+        "发票",
+        "account.move",
+        65
+      ],
+      "entity": "GS03 Partner",
+      "month": "2026-05",
+      "state": "draft",
+      "marker": "GS03-INVOICE-1"
+    },
+    {
+      "resource": "发票",
+      "model": "account.move",
+      "record_id": 66,
+      "identity": [
+        "发票",
+        "account.move",
+        66
+      ],
+      "entity": "GS03 Partner",
+      "month": "2026-06",
+      "state": "draft",
+      "marker": "GS03-INVOICE-2"
+    },
+    {
+      "resource": "发票",
+      "model": "account.move",
+      "record_id": 67,
+      "identity": [
+        "发票",
+        "account.move",
+        67
+      ],
+      "entity": "GS03 Partner",
+      "month": "2026-07",
+      "state": "draft",
+      "marker": "GS03-INVOICE-3"
+    },
+    {
+      "resource": "发票",
+      "model": "account.move",
+      "record_id": 68,
+      "identity": [
+        "发票",
+        "account.move",
+        68
+      ],
+      "entity": "GS03 Partner",
+      "month": null,
+      "state": "draft",
+      "marker": "GS03-INVOICE-4"
+    },
+    {
+      "resource": "出库单",
+      "model": "stock.picking",
+      "record_id": 30,
+      "identity": [
+        "出库单",
+        "stock.picking",
+        30
+      ],
+      "entity": "GS03 Partner",
+      "month": "2026-05",
+      "state": "draft",
+      "marker": "GS03-PICKING-1"
+    },
+    {
+      "resource": "出库单",
+      "model": "stock.picking",
+      "record_id": 31,
+      "identity": [
+        "出库单",
+        "stock.picking",
+        31
+      ],
+      "entity": "GS03 Partner",
+      "month": "2026-06",
+      "state": "draft",
+      "marker": "GS03-PICKING-2"
+    },
+    {
+      "resource": "出库单",
+      "model": "stock.picking",
+      "record_id": 32,
+      "identity": [
+        "出库单",
+        "stock.picking",
+        32
+      ],
+      "entity": "GS03 Partner",
+      "month": "2026-07",
+      "state": "draft",
+      "marker": "GS03-PICKING-3"
+    },
+    {
+      "resource": "出库单",
+      "model": "stock.picking",
+      "record_id": 33,
+      "identity": [
+        "出库单",
+        "stock.picking",
+        33
+      ],
+      "entity": "GS03 Partner",
+      "month": null,
+      "state": "draft",
+      "marker": "GS03-PICKING-4"
+    },
+    {
+      "resource": "库存移动",
+      "model": "stock.move",
+      "record_id": 53,
+      "identity": [
+        "库存移动",
+        "stock.move",
+        53
+      ],
+      "entity": "GS03 Partner",
+      "month": "2026-05",
+      "state": "draft",
+      "marker": "GS03-MOVE-1"
+    },
+    {
+      "resource": "库存移动",
+      "model": "stock.move",
+      "record_id": 54,
+      "identity": [
+        "库存移动",
+        "stock.move",
+        54
+      ],
+      "entity": "GS03 Partner",
+      "month": "2026-06",
+      "state": "draft",
+      "marker": "GS03-MOVE-2"
+    },
+    {
+      "resource": "库存移动",
+      "model": "stock.move",
+      "record_id": 55,
+      "identity": [
+        "库存移动",
+        "stock.move",
+        55
+      ],
+      "entity": "GS03 Partner",
+      "month": "2026-07",
+      "state": "draft",
+      "marker": "GS03-MOVE-3"
+    }
+  ],
+  "orm_read": true
+}

@@ -1,0 +1,3094 @@
+{
+  "tv": "TV-02",
+  "database": "wd_tv_gs01_20261002_100k",
+  "table": "res_partner",
+  "column": "ref",
+  "rows": 100000,
+  "postgresql": "16.14",
+  "pg_trgm": "1.6",
+  "cache_mode": "warm",
+  "cold_cache": {
+    "status": "NOT_VERIFIED",
+    "reason": "Cache clearing is outside the authorized isolated index run"
+  },
+  "build_seconds": {
+    "btree": 0.054,
+    "pattern_ops": 0.056,
+    "gin_trgm": 0.231,
+    "gist_trgm": 0.43
+  },
+  "index_sizes": [
+    {
+      "index": "res_partner__ref_index",
+      "bytes": 4087808
+    }
+  ],
+  "strategy_index_sizes": {
+    "no_index": 0,
+    "btree": 4087808,
+    "pattern_ops": 4087808,
+    "gin_trgm": 3457024,
+    "gist_trgm": 11567104
+  },
+  "orm_write_benchmarks": {
+    "no_index": {
+      "rows": 1000,
+      "create_seconds": 1.633986,
+      "unlink_seconds": 12.533574
+    },
+    "btree": {
+      "rows": 1000,
+      "create_seconds": 1.513086,
+      "unlink_seconds": 12.136806
+    },
+    "pattern_ops": {
+      "rows": 1000,
+      "create_seconds": 1.56755,
+      "unlink_seconds": 12.186141
+    },
+    "gin_trgm": {
+      "rows": 1000,
+      "create_seconds": 1.645495,
+      "unlink_seconds": 12.46877
+    },
+    "gist_trgm": {
+      "rows": 1000,
+      "create_seconds": 1.548351,
+      "unlink_seconds": 12.557783
+    }
+  },
+  "strategies": {
+    "no_index": {
+      "exact": {
+        "samples": 20,
+        "p50_ms": 12.877,
+        "p95_ms": 14.329,
+        "p99_ms": 14.624,
+        "max_ms": 14.624,
+        "plans": [
+          {
+            "execution_ms": 13.861,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4271,
+            "shared_read_blocks": 588
+          },
+          {
+            "execution_ms": 14.624,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4303,
+            "shared_read_blocks": 556
+          },
+          {
+            "execution_ms": 14.329,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4335,
+            "shared_read_blocks": 524
+          },
+          {
+            "execution_ms": 13.466,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4367,
+            "shared_read_blocks": 492
+          },
+          {
+            "execution_ms": 13.265,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4399,
+            "shared_read_blocks": 460
+          },
+          {
+            "execution_ms": 13.691,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4431,
+            "shared_read_blocks": 428
+          },
+          {
+            "execution_ms": 13.193,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4463,
+            "shared_read_blocks": 396
+          },
+          {
+            "execution_ms": 12.613,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4495,
+            "shared_read_blocks": 364
+          },
+          {
+            "execution_ms": 13.332,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4527,
+            "shared_read_blocks": 332
+          },
+          {
+            "execution_ms": 12.517,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4559,
+            "shared_read_blocks": 300
+          },
+          {
+            "execution_ms": 12.438,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4591,
+            "shared_read_blocks": 268
+          },
+          {
+            "execution_ms": 12.57,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4623,
+            "shared_read_blocks": 236
+          },
+          {
+            "execution_ms": 13.034,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4655,
+            "shared_read_blocks": 204
+          },
+          {
+            "execution_ms": 12.877,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4687,
+            "shared_read_blocks": 172
+          },
+          {
+            "execution_ms": 12.778,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4719,
+            "shared_read_blocks": 140
+          },
+          {
+            "execution_ms": 12.176,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4751,
+            "shared_read_blocks": 108
+          },
+          {
+            "execution_ms": 12.795,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4783,
+            "shared_read_blocks": 76
+          },
+          {
+            "execution_ms": 12.819,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4815,
+            "shared_read_blocks": 44
+          },
+          {
+            "execution_ms": 12.717,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4847,
+            "shared_read_blocks": 12
+          },
+          {
+            "execution_ms": 12.631,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          }
+        ]
+      },
+      "prefix": {
+        "samples": 20,
+        "p50_ms": 13.287,
+        "p95_ms": 14.179,
+        "p99_ms": 14.929,
+        "max_ms": 14.929,
+        "plans": [
+          {
+            "execution_ms": 13.811,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 12.345,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 13.428,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 13.715,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 13.354,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 14.929,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 13.265,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 13.865,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 13.803,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 11.545,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 14.179,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 13.078,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 13.101,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 13.287,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 11.306,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 11.693,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 11.668,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 13.422,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 12.253,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 12.803,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          }
+        ]
+      },
+      "contains": {
+        "samples": 20,
+        "p50_ms": 14.559,
+        "p95_ms": 15.631,
+        "p99_ms": 15.833,
+        "max_ms": 15.833,
+        "plans": [
+          {
+            "execution_ms": 15.631,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 15.283,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 14.559,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 14.689,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 14.512,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 12.475,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 12.033,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 14.283,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 14.362,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 15.439,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 13.252,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 13.114,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 12.787,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 15.181,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 14.755,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 13.366,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 15.429,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 15.093,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 15.833,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 14.176,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          }
+        ]
+      }
+    },
+    "btree": {
+      "exact": {
+        "samples": 20,
+        "p50_ms": 0.023,
+        "p95_ms": 0.03,
+        "p99_ms": 0.035,
+        "max_ms": 0.035,
+        "plans": [
+          {
+            "execution_ms": 0.024,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.035,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.023,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.017,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.015,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.016,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.019,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.02,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.026,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.028,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.023,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.012,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.023,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.024,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.023,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.013,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.03,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.012,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.028,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.012,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          }
+        ]
+      },
+      "prefix": {
+        "samples": 20,
+        "p50_ms": 0.012,
+        "p95_ms": 0.014,
+        "p99_ms": 0.018,
+        "max_ms": 0.018,
+        "plans": [
+          {
+            "execution_ms": 0.008,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.008,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.006,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.013,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.01,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.014,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.012,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.013,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.013,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.009,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.006,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.007,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.012,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.012,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.009,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.012,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.013,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.007,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.018,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.013,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          }
+        ]
+      },
+      "contains": {
+        "samples": 20,
+        "p50_ms": 15.316,
+        "p95_ms": 17.433,
+        "p99_ms": 23.022,
+        "max_ms": 23.022,
+        "plans": [
+          {
+            "execution_ms": 14.05,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 17.433,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 16.593,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 14.568,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 15.824,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 14.926,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 15.316,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 15.79,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 14.657,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 14.788,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 14.325,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 15.453,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 15.637,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 14.2,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 15.149,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 13.88,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 15.414,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 15.258,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 15.62,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 23.022,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          }
+        ]
+      }
+    },
+    "pattern_ops": {
+      "exact": {
+        "samples": 20,
+        "p50_ms": 0.024,
+        "p95_ms": 0.028,
+        "p99_ms": 0.03,
+        "max_ms": 0.03,
+        "plans": [
+          {
+            "execution_ms": 0.026,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.022,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.026,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.03,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.021,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.013,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.026,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.017,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.026,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.013,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.024,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.027,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.028,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.012,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.02,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.014,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.026,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.026,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.02,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.024,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          }
+        ]
+      },
+      "prefix": {
+        "samples": 20,
+        "p50_ms": 0.022,
+        "p95_ms": 0.029,
+        "p99_ms": 0.04,
+        "max_ms": 0.04,
+        "plans": [
+          {
+            "execution_ms": 0.011,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.024,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.021,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.026,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.012,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.026,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.013,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.028,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.011,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.04,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.019,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.026,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.028,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.025,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.017,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.021,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.011,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.012,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.022,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 0.029,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 4,
+            "shared_read_blocks": 0
+          }
+        ]
+      },
+      "contains": {
+        "samples": 20,
+        "p50_ms": 15.002,
+        "p95_ms": 16.758,
+        "p99_ms": 17.336,
+        "max_ms": 17.336,
+        "plans": [
+          {
+            "execution_ms": 17.336,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 16.758,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 14.117,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 15.32,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 15.74,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 16.478,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 15.085,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 15.174,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 13.154,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 13.362,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 13.324,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 15.002,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 15.374,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 15.378,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 13.74,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 14.731,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 12.106,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 13.565,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 13.437,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 14.163,
+            "planning_ms": null,
+            "nodes": [
+              "Seq Scan"
+            ],
+            "shared_hit_blocks": 4859,
+            "shared_read_blocks": 0
+          }
+        ]
+      }
+    },
+    "gin_trgm": {
+      "exact": {
+        "samples": 20,
+        "p50_ms": 8.815,
+        "p95_ms": 10.28,
+        "p99_ms": 10.613,
+        "max_ms": 10.613,
+        "plans": [
+          {
+            "execution_ms": 9.502,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.442,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 9.133,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.549,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.673,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 7.796,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 10.613,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 9.176,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 10.28,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 9.141,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 10.202,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.815,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 6.357,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 6.039,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.474,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.71,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 7.576,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 10.127,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.303,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 10.231,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          }
+        ]
+      },
+      "prefix": {
+        "samples": 20,
+        "p50_ms": 9.157,
+        "p95_ms": 10.271,
+        "p99_ms": 10.497,
+        "max_ms": 10.497,
+        "plans": [
+          {
+            "execution_ms": 7.627,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.841,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 9.319,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 9.157,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 10.497,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 9.75,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.537,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 9.556,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 10.271,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 6.175,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.075,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 9.073,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.214,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 9.298,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 9.542,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.403,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 9.837,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.511,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.778,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 10.007,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 561,
+            "shared_read_blocks": 0
+          }
+        ]
+      },
+      "contains": {
+        "samples": 20,
+        "p50_ms": 8.127,
+        "p95_ms": 8.859,
+        "p99_ms": 8.929,
+        "max_ms": 8.929,
+        "plans": [
+          {
+            "execution_ms": 7.17,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 764,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.249,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 764,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 7.931,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 764,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.047,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 764,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 7.988,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 764,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.859,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 764,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 7.753,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 764,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 7.959,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 764,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.136,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 764,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.272,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 764,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 7.615,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 764,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.061,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 764,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 7.723,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 764,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 6.896,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 764,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.929,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 764,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.649,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 764,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.135,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 764,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.496,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 764,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.127,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 764,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.417,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 764,
+            "shared_read_blocks": 0
+          }
+        ]
+      }
+    },
+    "gist_trgm": {
+      "exact": {
+        "samples": 20,
+        "p50_ms": 6.203,
+        "p95_ms": 6.681,
+        "p99_ms": 6.844,
+        "max_ms": 6.844,
+        "plans": [
+          {
+            "execution_ms": 6.203,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 1504,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 6.604,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 1504,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 6.44,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 1504,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 6.102,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 1504,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 6.66,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 1504,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 6.639,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 1504,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 6.681,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 1504,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 6.508,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 1504,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 6.049,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 1504,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 5.377,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 1504,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 5.889,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 1504,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 6.29,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 1504,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 5.9,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 1504,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 5.361,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 1504,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 6.284,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 1504,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 6.166,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 1504,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 6.084,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 1504,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 6.844,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 1504,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 6.039,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 1504,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 5.946,
+            "planning_ms": null,
+            "nodes": [
+              "Index Scan"
+            ],
+            "shared_hit_blocks": 1504,
+            "shared_read_blocks": 0
+          }
+        ]
+      },
+      "prefix": {
+        "samples": 20,
+        "p50_ms": 5.545,
+        "p95_ms": 6.01,
+        "p99_ms": 6.091,
+        "max_ms": 6.091,
+        "plans": [
+          {
+            "execution_ms": 5.462,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 850,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 5.973,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 850,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 5.997,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 850,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 5.784,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 850,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 5.698,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 850,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 5.545,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 850,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 5.288,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 850,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 5.379,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 850,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 5.314,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 850,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 4.955,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 850,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 5.479,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 850,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 5.344,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 850,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 5.744,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 850,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 6.091,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 850,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 5.231,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 850,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 5.169,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 850,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 5.406,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 850,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 5.64,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 850,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 5.864,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 850,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 6.01,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 850,
+            "shared_read_blocks": 0
+          }
+        ]
+      },
+      "contains": {
+        "samples": 20,
+        "p50_ms": 8.49,
+        "p95_ms": 9.309,
+        "p99_ms": 9.514,
+        "max_ms": 9.514,
+        "plans": [
+          {
+            "execution_ms": 9.159,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 1534,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 9.309,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 1534,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 9.514,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 1534,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 7.809,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 1534,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.779,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 1534,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.907,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 1534,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.06,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 1534,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 9.093,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 1534,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 7.639,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 1534,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.063,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 1534,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 7.978,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 1534,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 7.867,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 1534,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 6.105,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 1534,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 6.856,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 1534,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 7.753,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 1534,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.512,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 1534,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.49,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 1534,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.582,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 1534,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.262,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 1534,
+            "shared_read_blocks": 0
+          },
+          {
+            "execution_ms": 8.718,
+            "planning_ms": null,
+            "nodes": [
+              "Bitmap Heap Scan",
+              "Bitmap Index Scan"
+            ],
+            "shared_hit_blocks": 1534,
+            "shared_read_blocks": 0
+          }
+        ]
+      }
+    }
+  },
+  "selectivity_plans": {
+    "btree": {
+      "nine_rows": {
+        "nodes": [
+          "Index Scan"
+        ],
+        "execution_ms": 0.009
+      },
+      "ninety_nine_rows": {
+        "nodes": [
+          "Index Scan"
+        ],
+        "execution_ms": 0.053
+      },
+      "nine_hundred_ninety_nine_rows": {
+        "nodes": [
+          "Index Scan"
+        ],
+        "execution_ms": 0.308
+      },
+      "all_rows": {
+        "nodes": [
+          "Seq Scan"
+        ],
+        "execution_ms": 26.306
+      }
+    },
+    "pattern_ops": {
+      "nine_rows": {
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "execution_ms": 0.03
+      },
+      "ninety_nine_rows": {
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "execution_ms": 0.04
+      },
+      "nine_hundred_ninety_nine_rows": {
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "execution_ms": 0.41
+      },
+      "all_rows": {
+        "nodes": [
+          "Seq Scan"
+        ],
+        "execution_ms": 20.246
+      }
+    },
+    "gin_trgm": {
+      "nine_rows": {
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "execution_ms": 7.108
+      },
+      "ninety_nine_rows": {
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "execution_ms": 7.055
+      },
+      "nine_hundred_ninety_nine_rows": {
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "execution_ms": 6.838
+      },
+      "all_rows": {
+        "nodes": [
+          "Seq Scan"
+        ],
+        "execution_ms": 14.498
+      }
+    }
+  },
+  "default_index_restored": true
+}

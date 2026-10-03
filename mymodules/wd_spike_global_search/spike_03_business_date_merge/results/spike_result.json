@@ -1,0 +1,97 @@
+{
+  "spike": "SPIKE-GS-03",
+  "database": "odoo18ce",
+  "uid": 1,
+  "date_range": {
+    "start_inclusive": "2026-06-01",
+    "end_exclusive": "2026-07-01",
+    "label": "2026-06"
+  },
+  "business_date_mapping": [
+    {
+      "model": "sale.order",
+      "field": "date_order",
+      "resource": "销售订单"
+    },
+    {
+      "model": "purchase.order",
+      "field": "date_order",
+      "resource": "采购订单"
+    },
+    {
+      "model": "account.move",
+      "field": "invoice_date",
+      "resource": "发票"
+    },
+    {
+      "model": "stock.picking",
+      "field": "date_done",
+      "resource": "出库单"
+    },
+    {
+      "model": "stock.move",
+      "field": "date",
+      "resource": "库存移动"
+    }
+  ],
+  "per_resource_included": {
+    "sale.order": 1,
+    "purchase.order": 1,
+    "account.move": 1,
+    "stock.picking": 1,
+    "stock.move": 1
+  },
+  "empty_dates_excluded": {
+    "sale.order": 0,
+    "purchase.order": 0,
+    "account.move": 1,
+    "stock.picking": 1,
+    "stock.move": 0
+  },
+  "merged_count": 5,
+  "merged_results": [
+    {
+      "resource": "发票",
+      "model": "account.move",
+      "record_id": 66,
+      "business_date": "2026-06-30",
+      "business_date_field": "invoice_date",
+      "marker": "GS03-INVOICE-2"
+    },
+    {
+      "resource": "采购订单",
+      "model": "purchase.order",
+      "record_id": 5034,
+      "business_date": "2026-06-30",
+      "business_date_field": "date_order",
+      "marker": "GS03-PURCHASE-2"
+    },
+    {
+      "resource": "销售订单",
+      "model": "sale.order",
+      "record_id": 5048,
+      "business_date": "2026-06-30",
+      "business_date_field": "date_order",
+      "marker": "GS03-SALE-2"
+    },
+    {
+      "resource": "库存移动",
+      "model": "stock.move",
+      "record_id": 54,
+      "business_date": "2026-06-30",
+      "business_date_field": "date",
+      "marker": "GS03-MOVE-2"
+    },
+    {
+      "resource": "出库单",
+      "model": "stock.picking",
+      "record_id": 31,
+      "business_date": "2026-06-30",
+      "business_date_field": "date_done",
+      "marker": "GS03-PICKING-2"
+    }
+  ],
+  "stable_repeat": true,
+  "all_results_are_june": true,
+  "all_results_annotated": true
+}

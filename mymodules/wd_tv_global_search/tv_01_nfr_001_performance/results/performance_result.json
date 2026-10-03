@@ -1,0 +1,788 @@
+{
+  "tv": "TV-01",
+  "seed": 20261002,
+  "database": "wd_tv_gs01_20261002_100k",
+  "uid": 1,
+  "environment": {
+    "python": "3.11.9",
+    "platform": "macOS-27.0.1-arm64-arm-64bit",
+    "cpu_count": 10
+  },
+  "nfr_target": {
+    "logical_resources": 10,
+    "rows_per_resource": 1000000,
+    "concurrency": 20,
+    "first_result_p95_ms": 2000,
+    "complete_result_p95_ms": 5000,
+    "error_rate_max": 0.01
+  },
+  "serial_first_result": [
+    {
+      "status": "OK",
+      "query": [
+        "res.partner",
+        "ref",
+        "=",
+        "TV01-PARTNER-0000001"
+      ],
+      "limit": 50,
+      "result_count": [
+        1
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 0.201,
+        "p95_ms": 0.31,
+        "p99_ms": 1.106,
+        "max_ms": 1.106
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "res.partner",
+        "ref",
+        "=ilike",
+        "TV01-PARTNER-0000001%"
+      ],
+      "limit": 50,
+      "result_count": [
+        1
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 15.861,
+        "p95_ms": 31.207,
+        "p99_ms": 45.468,
+        "max_ms": 45.468
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "res.partner",
+        "ref",
+        "ilike",
+        "%TV01-PARTNER%"
+      ],
+      "limit": 50,
+      "result_count": [
+        50
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 0.276,
+        "p95_ms": 0.817,
+        "p99_ms": 1.206,
+        "max_ms": 1.206
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "sale.order",
+        "client_order_ref",
+        "=",
+        "TV01-SALE-0000001"
+      ],
+      "limit": 50,
+      "result_count": [
+        1
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 5.01,
+        "p95_ms": 5.872,
+        "p99_ms": 16.603,
+        "max_ms": 16.603
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "sale.order",
+        "client_order_ref",
+        "=ilike",
+        "TV01-SALE-0000001%"
+      ],
+      "limit": 50,
+      "result_count": [
+        1
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 11.071,
+        "p95_ms": 11.31,
+        "p99_ms": 11.506,
+        "max_ms": 11.506
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "sale.order",
+        "client_order_ref",
+        "ilike",
+        "%TV01-SALE%"
+      ],
+      "limit": 50,
+      "result_count": [
+        50
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 0.285,
+        "p95_ms": 0.362,
+        "p99_ms": 0.94,
+        "max_ms": 0.94
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "purchase.order",
+        "partner_ref",
+        "=",
+        "TV01-PURCHASE-0000001"
+      ],
+      "limit": 50,
+      "result_count": [
+        1
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 4.759,
+        "p95_ms": 5.304,
+        "p99_ms": 13.456,
+        "max_ms": 13.456
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "purchase.order",
+        "partner_ref",
+        "=ilike",
+        "TV01-PURCHASE-0000001%"
+      ],
+      "limit": 50,
+      "result_count": [
+        1
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 11.927,
+        "p95_ms": 12.537,
+        "p99_ms": 12.66,
+        "max_ms": 12.66
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "purchase.order",
+        "partner_ref",
+        "ilike",
+        "%TV01-PURCHASE%"
+      ],
+      "limit": 50,
+      "result_count": [
+        50
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 11.119,
+        "p95_ms": 11.695,
+        "p99_ms": 11.876,
+        "max_ms": 11.876
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "account.move",
+        "ref",
+        "=",
+        "TV01-INV-0000001"
+      ],
+      "limit": 50,
+      "result_count": [
+        1
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 3.796,
+        "p95_ms": 4.189,
+        "p99_ms": 34.424,
+        "max_ms": 34.424
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "account.move",
+        "ref",
+        "=ilike",
+        "TV01-INV-0000001%"
+      ],
+      "limit": 50,
+      "result_count": [
+        1
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 3.886,
+        "p95_ms": 4.157,
+        "p99_ms": 4.289,
+        "max_ms": 4.289
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "account.move",
+        "ref",
+        "ilike",
+        "%TV01-INV%"
+      ],
+      "limit": 50,
+      "result_count": [
+        50
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 14.559,
+        "p95_ms": 16.51,
+        "p99_ms": 87.124,
+        "max_ms": 87.124
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "product.product",
+        "default_code",
+        "=",
+        "TV01-PROD-0000001"
+      ],
+      "limit": 50,
+      "result_count": [
+        1
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 0.36,
+        "p95_ms": 0.635,
+        "p99_ms": 7.685,
+        "max_ms": 7.685
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "product.product",
+        "default_code",
+        "=ilike",
+        "TV01-PROD-0000001%"
+      ],
+      "limit": 50,
+      "result_count": [
+        1
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 13.298,
+        "p95_ms": 14.251,
+        "p99_ms": 38.278,
+        "max_ms": 38.278
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "product.product",
+        "default_code",
+        "ilike",
+        "%TV01-PROD%"
+      ],
+      "limit": 50,
+      "result_count": [
+        50
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 37.493,
+        "p95_ms": 47.445,
+        "p99_ms": 174.07,
+        "max_ms": 174.07
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "project.task",
+        "name",
+        "=",
+        "TV01-TASK-0000001"
+      ],
+      "limit": 50,
+      "result_count": [
+        1
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 7.46,
+        "p95_ms": 8.617,
+        "p99_ms": 49.983,
+        "max_ms": 49.983
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "project.task",
+        "name",
+        "=ilike",
+        "TV01-TASK-0000001%"
+      ],
+      "limit": 50,
+      "result_count": [
+        1
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 7.543,
+        "p95_ms": 7.819,
+        "p99_ms": 7.837,
+        "max_ms": 7.837
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "project.task",
+        "name",
+        "ilike",
+        "%TV01-TASK%"
+      ],
+      "limit": 50,
+      "result_count": [
+        50
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 33.348,
+        "p95_ms": 34.12,
+        "p99_ms": 68.641,
+        "max_ms": 68.641
+      }
+    }
+  ],
+  "serial_complete_result": [
+    {
+      "status": "OK",
+      "query": [
+        "res.partner",
+        "ref",
+        "=",
+        "TV01-PARTNER-0000001"
+      ],
+      "limit": false,
+      "result_count": [
+        1
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 0.356,
+        "p95_ms": 0.643,
+        "p99_ms": 0.87,
+        "max_ms": 0.87
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "res.partner",
+        "ref",
+        "=ilike",
+        "TV01-PARTNER-0000001%"
+      ],
+      "limit": false,
+      "result_count": [
+        1
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 29.697,
+        "p95_ms": 32.724,
+        "p99_ms": 33.42,
+        "max_ms": 33.42
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "res.partner",
+        "ref",
+        "ilike",
+        "%TV01-PARTNER%"
+      ],
+      "limit": false,
+      "result_count": [
+        100000
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 55.97,
+        "p95_ms": 69.531,
+        "p99_ms": 70.387,
+        "max_ms": 70.387
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "sale.order",
+        "client_order_ref",
+        "=",
+        "TV01-SALE-0000001"
+      ],
+      "limit": false,
+      "result_count": [
+        1
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 6.469,
+        "p95_ms": 7.552,
+        "p99_ms": 10.901,
+        "max_ms": 10.901
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "sale.order",
+        "client_order_ref",
+        "=ilike",
+        "TV01-SALE-0000001%"
+      ],
+      "limit": false,
+      "result_count": [
+        1
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 14.243,
+        "p95_ms": 14.488,
+        "p99_ms": 15.445,
+        "max_ms": 15.445
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "sale.order",
+        "client_order_ref",
+        "ilike",
+        "%TV01-SALE%"
+      ],
+      "limit": false,
+      "result_count": [
+        100000
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 51.081,
+        "p95_ms": 55.093,
+        "p99_ms": 56.798,
+        "max_ms": 56.798
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "purchase.order",
+        "partner_ref",
+        "=",
+        "TV01-PURCHASE-0000001"
+      ],
+      "limit": false,
+      "result_count": [
+        1
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 5.832,
+        "p95_ms": 6.41,
+        "p99_ms": 8.48,
+        "max_ms": 8.48
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "purchase.order",
+        "partner_ref",
+        "=ilike",
+        "TV01-PURCHASE-0000001%"
+      ],
+      "limit": false,
+      "result_count": [
+        1
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 14.273,
+        "p95_ms": 14.826,
+        "p99_ms": 14.956,
+        "max_ms": 14.956
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "purchase.order",
+        "partner_ref",
+        "ilike",
+        "%TV01-PURCHASE%"
+      ],
+      "limit": false,
+      "result_count": [
+        100000
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 66.159,
+        "p95_ms": 67.683,
+        "p99_ms": 71.344,
+        "max_ms": 71.344
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "account.move",
+        "ref",
+        "=",
+        "TV01-INV-0000001"
+      ],
+      "limit": false,
+      "result_count": [
+        1
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 4.807,
+        "p95_ms": 4.932,
+        "p99_ms": 5.747,
+        "max_ms": 5.747
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "account.move",
+        "ref",
+        "=ilike",
+        "TV01-INV-0000001%"
+      ],
+      "limit": false,
+      "result_count": [
+        1
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 4.987,
+        "p95_ms": 5.258,
+        "p99_ms": 5.263,
+        "max_ms": 5.263
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "account.move",
+        "ref",
+        "ilike",
+        "%TV01-INV%"
+      ],
+      "limit": false,
+      "result_count": [
+        100000
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 97.612,
+        "p95_ms": 101.569,
+        "p99_ms": 102.396,
+        "max_ms": 102.396
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "product.product",
+        "default_code",
+        "=",
+        "TV01-PROD-0000001"
+      ],
+      "limit": false,
+      "result_count": [
+        1
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 0.203,
+        "p95_ms": 0.34,
+        "p99_ms": 0.656,
+        "max_ms": 0.656
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "product.product",
+        "default_code",
+        "=ilike",
+        "TV01-PROD-0000001%"
+      ],
+      "limit": false,
+      "result_count": [
+        1
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 13.017,
+        "p95_ms": 13.223,
+        "p99_ms": 13.684,
+        "max_ms": 13.684
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "product.product",
+        "default_code",
+        "ilike",
+        "%TV01-PROD%"
+      ],
+      "limit": false,
+      "result_count": [
+        100000
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 85.024,
+        "p95_ms": 88.38,
+        "p99_ms": 93.329,
+        "max_ms": 93.329
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "project.task",
+        "name",
+        "=",
+        "TV01-TASK-0000001"
+      ],
+      "limit": false,
+      "result_count": [
+        1
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 6.117,
+        "p95_ms": 8.857,
+        "p99_ms": 8.88,
+        "max_ms": 8.88
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "project.task",
+        "name",
+        "=ilike",
+        "TV01-TASK-0000001%"
+      ],
+      "limit": false,
+      "result_count": [
+        1
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 6.209,
+        "p95_ms": 6.453,
+        "p99_ms": 6.471,
+        "max_ms": 6.471
+      }
+    },
+    {
+      "status": "OK",
+      "query": [
+        "project.task",
+        "name",
+        "ilike",
+        "%TV01-TASK%"
+      ],
+      "limit": false,
+      "result_count": [
+        100000
+      ],
+      "timing": {
+        "count": 20,
+        "p50_ms": 114.746,
+        "p95_ms": 134.463,
+        "p99_ms": 143.876,
+        "max_ms": 143.876
+      }
+    }
+  ],
+  "parallel_first_result": {
+    "requests": 20,
+    "errors": 0,
+    "error_rate": 0.0,
+    "timing": {
+      "count": 20,
+      "p50_ms": 13.276,
+      "p95_ms": 30.968,
+      "p99_ms": 38.135,
+      "max_ms": 38.135
+    }
+  },
+  "parallel_complete_result": {
+    "requests": 20,
+    "errors": 0,
+    "error_rate": 0.0,
+    "timing": {
+      "count": 20,
+      "p50_ms": 29.491,
+      "p95_ms": 159.302,
+      "p99_ms": 183.759,
+      "max_ms": 183.759
+    }
+  },
+  "relation_depth_2": {
+    "status": "OK",
+    "timing": {
+      "count": 20,
+      "p50_ms": 0.163,
+      "p95_ms": 0.205,
+      "p99_ms": 1.49,
+      "max_ms": 1.49
+    },
+    "result_counts": [
+      1
+    ]
+  },
+  "cold_cache": {
+    "status": "NOT_VERIFIED",
+    "reason": "Cache clearing is outside ORM-only TV scope"
+  },
+  "record_rule_overhead": {
+    "status": "NOT_VERIFIED",
+    "reason": "Dedicated restricted user fixture is required"
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "spike": "SPIKE-GS-05",
+  "database": "odoo18ce",
+  "companies": [
+    {
+      "id": 1,
+      "name": "My Company (San Francisco)"
+    },
+    {
+      "id": 2,
+      "name": "My Company (Chicago)"
+    }
+  ],
+  "visibility": {
+    "1": {
+      "partner_ids": [
+        6143
+      ],
+      "order_ids": [
+        5050
+      ],
+      "expected_partner_id": 6143,
+      "expected_order_id": 5050,
+      "foreign_partner_visible": false,
+      "foreign_order_visible": false
+    },
+    "2": {
+      "partner_ids": [
+        6145
+      ],
+      "order_ids": [
+        5051
+      ],
+      "expected_partner_id": 6145,
+      "expected_order_id": 5051,
+      "foreign_partner_visible": false,
+      "foreign_order_visible": false
+    }
+  },
+  "counts": {
+    "1": {
+      "partner_count": 1,
+      "order_count": 1
+    },
+    "2": {
+      "partner_count": 1,
+      "order_count": 1
+    }
+  },
+  "preview": {
+    "1": {
+      "own_exists": true,
+      "foreign_exists": false
+    },
+    "2": {
+      "own_exists": true,
+      "foreign_exists": false
+    }
+  },
+  "query_understanding": {
+    "1": {
+      "own_match_ids": [
+        6143
+      ],
+      "foreign_match_ids": []
+    },
+    "2": {
+      "own_match_ids": [
+        6145
+      ],
+      "foreign_match_ids": []
+    }
+  },
+  "field_permission": {
+    "field": "credit_limit",
+    "readable": false,
+    "excluded_from_searchable_fields": true,
+    "search_result_from_forbidden_field": false
+  },
+  "relation_extension": {
+    "1": {
+      "own_relation_ids": [
+        5050
+      ],
+      "foreign_relation_ids": [],
+      "foreign_relation_count": 0
+    },
+    "2": {
+      "own_relation_ids": [
+        5051
+      ],
+      "foreign_relation_ids": [],
+      "foreign_relation_count": 0
+    }
+  },
+  "permission_failure_closed": {
+    "status": "PERMISSION_DENIED",
+    "records": [],
+    "count": 0
+  },
+  "no_foreign_visibility": true,
+  "no_foreign_count": true,
+  "no_foreign_preview": true,
+  "no_foreign_understanding": true,
+  "relation_rule_applied": true
+}

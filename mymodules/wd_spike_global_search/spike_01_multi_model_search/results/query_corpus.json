@@ -1,0 +1,61 @@
+{
+  "seed": 20261001,
+  "queries": [
+    {
+      "name": "identifier_exact",
+      "model": "res.partner",
+      "field": "ref",
+      "operator": "=",
+      "value": "GS01-CUST-000001"
+    },
+    {
+      "name": "identifier_prefix",
+      "model": "res.partner",
+      "field": "ref",
+      "operator": "=ilike",
+      "value": "GS01-CUST-000001%"
+    },
+    {
+      "name": "identifier_contains",
+      "model": "res.partner",
+      "field": "ref",
+      "operator": "ilike",
+      "value": "%GS01-CUST%"
+    },
+    {
+      "name": "entity_exact",
+      "model": "res.partner",
+      "field": "name",
+      "operator": "=",
+      "value": "GS01 Customer 000001"
+    },
+    {
+      "name": "entity_contains",
+      "model": "res.partner",
+      "field": "name",
+      "operator": "ilike",
+      "value": "%GS01 Customer%"
+    },
+    {
+      "name": "product_identifier_contains",
+      "model": "product.product",
+      "field": "default_code",
+      "operator": "ilike",
+      "value": "%GS01%"
+    },
+    {
+      "name": "sale_identifier_contains",
+      "model": "sale.order",
+      "field": "client_order_ref",
+      "operator": "ilike",
+      "value": "%GS01-SALE%"
+    },
+    {
+      "name": "purchase_identifier_contains",
+      "model": "purchase.order",
+      "field": "partner_ref",
+      "operator": "ilike",
+      "value": "%GS01-PURCHASE%"
+    }
+  ]
+}

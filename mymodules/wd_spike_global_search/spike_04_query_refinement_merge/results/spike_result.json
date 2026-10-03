@@ -1,0 +1,143 @@
+{
+  "spike": "SPIKE-GS-04",
+  "source_snapshot": "SPIKE-GS-03",
+  "records_loaded": 17,
+  "path_a": {
+    "raw_query": "GS03 Partner 出库 2026-06 draft",
+    "effective_conditions": [
+      {
+        "dimension": "entity",
+        "operator": "=",
+        "value": "GS03 Partner"
+      },
+      {
+        "dimension": "month",
+        "operator": "=",
+        "value": "2026-06"
+      },
+      {
+        "dimension": "resource",
+        "operator": "=",
+        "value": "出库单"
+      },
+      {
+        "dimension": "state",
+        "operator": "=",
+        "value": "draft"
+      }
+    ],
+    "result_count": 1,
+    "result_identities": [
+      [
+        "出库单",
+        "stock.picking",
+        31
+      ]
+    ]
+  },
+  "path_b": {
+    "raw_query": "GS03 Partner",
+    "refinement_conditions": [
+      {
+        "dimension": "resource",
+        "operator": "=",
+        "value": "出库单"
+      },
+      {
+        "dimension": "month",
+        "operator": "=",
+        "value": "2026-06"
+      },
+      {
+        "dimension": "state",
+        "operator": "=",
+        "value": "draft"
+      }
+    ],
+    "effective_conditions": [
+      {
+        "dimension": "entity",
+        "operator": "=",
+        "value": "GS03 Partner"
+      },
+      {
+        "dimension": "month",
+        "operator": "=",
+        "value": "2026-06"
+      },
+      {
+        "dimension": "resource",
+        "operator": "=",
+        "value": "出库单"
+      },
+      {
+        "dimension": "state",
+        "operator": "=",
+        "value": "draft"
+      }
+    ],
+    "result_count": 1,
+    "result_identities": [
+      [
+        "出库单",
+        "stock.picking",
+        31
+      ]
+    ]
+  },
+  "path_a_b_equivalent": true,
+  "conflict_refinement_wins": [
+    {
+      "dimension": "resource",
+      "operator": "=",
+      "value": "入库单"
+    }
+  ],
+  "duplicate_removed": {
+    "input_count": 2,
+    "effective_count": 1,
+    "effective_conditions": [
+      {
+        "dimension": "month",
+        "operator": "=",
+        "value": "2026-06"
+      }
+    ]
+  },
+  "invalid_condition_ignored": {
+    "effective_conditions": [
+      {
+        "dimension": "entity",
+        "operator": "=",
+        "value": "GS03 Partner"
+      }
+    ],
+    "contains_unknown": false
+  },
+  "deleted_condition": {
+    "raw_query_unchanged": true,
+    "effective_conditions": [
+      {
+        "dimension": "entity",
+        "operator": "=",
+        "value": "GS03 Partner"
+      },
+      {
+        "dimension": "month",
+        "operator": "=",
+        "value": "2026-06"
+      },
+      {
+        "dimension": "resource",
+        "operator": "=",
+        "value": "出库单"
+      }
+    ],
+    "state_removed": true
+  },
+  "count_deduplication": {
+    "raw_hits_with_duplicate_paths": 2,
+    "unique_result_identity_count": 1,
+    "br_013_correct": true
+  }
+}

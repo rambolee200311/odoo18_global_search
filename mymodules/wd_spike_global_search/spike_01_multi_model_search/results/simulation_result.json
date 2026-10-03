@@ -1,0 +1,14 @@
+{
+  "spike": "SPIKE-GS-01",
+  "seed": 20261001,
+  "rows_requested_per_model": 5000,
+  "database": "odoo18ce",
+  "uid": 1,
+  "partner_total": 5000,
+  "sale_created": 5000,
+  "purchase_created": 5000,
+  "sale_total": 5000,
+  "purchase_total": 5000,
+  "data_marker": "GS01-",
+  "orm_write": true
+}

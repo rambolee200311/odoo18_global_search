@@ -1,0 +1,47 @@
+{
+  "spike": "SPIKE-GS-05",
+  "database": "odoo18ce",
+  "uid": 1,
+  "marker": "GS05-",
+  "companies": [
+    {
+      "id": 1,
+      "name": "My Company (San Francisco)"
+    },
+    {
+      "id": 2,
+      "name": "My Company (Chicago)"
+    }
+  ],
+  "users": {
+    "1": {
+      "id": 102,
+      "login": "gs05_user_1@example.test"
+    },
+    "2": {
+      "id": 103,
+      "login": "gs05_user_2@example.test"
+    }
+  },
+  "partners": {
+    "1": {
+      "id": 6143,
+      "name": "GS05- Company 1 Secret"
+    },
+    "2": {
+      "id": 6145,
+      "name": "GS05- Company 2 Secret"
+    }
+  },
+  "orders": {
+    "1": {
+      "id": 5050,
+      "name": "S05050"
+    },
+    "2": {
+      "id": 5051,
+      "name": "S05051"
+    }
+  },
+  "orm_write": true
+}

@@ -1,0 +1,114 @@
+{
+  "tv_id": "TV-06",
+  "database": "wd_tv_gs01_20261002_100k",
+  "orm_fixture": true,
+  "fixture_count": 5,
+  "fixed_utc": "2026-10-03 23:30:00",
+  "same_dimension_or": {
+    "multi_value_ids": [
+      100057,
+      100058,
+      100061
+    ],
+    "union_of_single_values": [
+      100057,
+      100058,
+      100061
+    ],
+    "equivalent": true
+  },
+  "date_range": {
+    "start_inclusive": "2026-10-01",
+    "end_exclusive": "2026-11-01",
+    "ids": [
+      100057,
+      100058,
+      100059,
+      100060
+    ],
+    "boundary_included": true,
+    "next_month_excluded": true
+  },
+  "timezone_today": {
+    "UTC": "2026-10-03",
+    "Asia/Shanghai": "2026-10-04",
+    "America/Los_Angeles": "2026-10-03"
+  },
+  "week_starts": {
+    "en_US": {
+      "week_start": 6,
+      "start": "2026-09-27",
+      "end": "2026-10-04"
+    },
+    "zh_CN": {
+      "week_start": 0,
+      "start": "2026-09-28",
+      "end": "2026-10-05"
+    }
+  },
+  "dynamic_boundary": {
+    "fixed_utc": "2026-10-03 23:30:00",
+    "before_midnight_utc": "2026-10-03",
+    "after_midnight_shanghai": "2026-10-04",
+    "stable": true
+  },
+  "partial_failure": {
+    "result_ids": [
+      100057,
+      100058,
+      100061
+    ],
+    "count": 3,
+    "errors": [
+      {
+        "model": "broken.resource",
+        "code": "PERMISSION_DENIED",
+        "message": "simulated inaccessible model"
+      }
+    ],
+    "status": "PARTIAL_SUCCESS"
+  },
+  "timeout": {
+    "status": "PARTIAL_SUCCESS",
+    "result_ids": [
+      100057,
+      100058,
+      100061
+    ],
+    "count": 3,
+    "errors": [
+      {
+        "code": "TIMEOUT",
+        "message": "Search timed out"
+      }
+    ],
+    "keeps_completed_results": true
+  },
+  "configuration_error": {
+    "status": "FAILED",
+    "result_ids": [],
+    "count": 0,
+    "errors": [
+      {
+        "code": "CONFIGURATION_ERROR",
+        "message": "Business Date field is not configured"
+      }
+    ],
+    "fail_closed": true
+  },
+  "checks": {
+    "same_dimension_or": true,
+    "date_range": true,
+    "timezone_today": true,
+    "week_start": true,
+    "dynamic_boundary": true,
+    "partial_results": true,
+    "partial_count": true,
+    "partial_prompt": true,
+    "timeout_behavior": true,
+    "configuration_fail_closed": true
+  },
+  "all_semantic_checks_pass": true,
+  "production_service_available": false,
+  "language_created_for_test": false
+}

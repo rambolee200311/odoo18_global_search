@@ -1,0 +1,11 @@
+{
+  "spike": "SPIKE-GS-02",
+  "seed": 20261002,
+  "database": "odoo18ce",
+  "uid": 1,
+  "rows_requested": 1000,
+  "rows_created": 1000,
+  "rows_total": 1000,
+  "data_marker": "GS02-",
+  "orm_write": true
+}

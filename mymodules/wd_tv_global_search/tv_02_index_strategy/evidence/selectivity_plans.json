@@ -1,0 +1,86 @@
+{
+  "btree": {
+    "nine_rows": {
+      "nodes": [
+        "Index Scan"
+      ],
+      "execution_ms": 0.009
+    },
+    "ninety_nine_rows": {
+      "nodes": [
+        "Index Scan"
+      ],
+      "execution_ms": 0.053
+    },
+    "nine_hundred_ninety_nine_rows": {
+      "nodes": [
+        "Index Scan"
+      ],
+      "execution_ms": 0.308
+    },
+    "all_rows": {
+      "nodes": [
+        "Seq Scan"
+      ],
+      "execution_ms": 26.306
+    }
+  },
+  "pattern_ops": {
+    "nine_rows": {
+      "nodes": [
+        "Bitmap Heap Scan",
+        "Bitmap Index Scan"
+      ],
+      "execution_ms": 0.03
+    },
+    "ninety_nine_rows": {
+      "nodes": [
+        "Bitmap Heap Scan",
+        "Bitmap Index Scan"
+      ],
+      "execution_ms": 0.04
+    },
+    "nine_hundred_ninety_nine_rows": {
+      "nodes": [
+        "Bitmap Heap Scan",
+        "Bitmap Index Scan"
+      ],
+      "execution_ms": 0.41
+    },
+    "all_rows": {
+      "nodes": [
+        "Seq Scan"
+      ],
+      "execution_ms": 20.246
+    }
+  },
+  "gin_trgm": {
+    "nine_rows": {
+      "nodes": [
+        "Bitmap Heap Scan",
+        "Bitmap Index Scan"
+      ],
+      "execution_ms": 7.108
+    },
+    "ninety_nine_rows": {
+      "nodes": [
+        "Bitmap Heap Scan",
+        "Bitmap Index Scan"
+      ],
+      "execution_ms": 7.055
+    },
+    "nine_hundred_ninety_nine_rows": {
+      "nodes": [
+        "Bitmap Heap Scan",
+        "Bitmap Index Scan"
+      ],
+      "execution_ms": 6.838
+    },
+    "all_rows": {
+      "nodes": [
+        "Seq Scan"
+      ],
+      "execution_ms": 14.498
+    }
+  }
+}

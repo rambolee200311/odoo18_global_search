@@ -1,0 +1,629 @@
+{
+  "exact": {
+    "samples": 20,
+    "p50_ms": 8.815,
+    "p95_ms": 10.28,
+    "p99_ms": 10.613,
+    "max_ms": 10.613,
+    "plans": [
+      {
+        "execution_ms": 9.502,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 8.442,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 9.133,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 8.549,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 8.673,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 7.796,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 10.613,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 9.176,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 10.28,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 9.141,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 10.202,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 8.815,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 6.357,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 6.039,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 8.474,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 8.71,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 7.576,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 10.127,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 8.303,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 10.231,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      }
+    ]
+  },
+  "prefix": {
+    "samples": 20,
+    "p50_ms": 9.157,
+    "p95_ms": 10.271,
+    "p99_ms": 10.497,
+    "max_ms": 10.497,
+    "plans": [
+      {
+        "execution_ms": 7.627,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 8.841,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 9.319,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 9.157,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 10.497,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 9.75,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 8.537,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 9.556,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 10.271,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 6.175,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 8.075,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 9.073,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 8.214,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 9.298,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 9.542,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 8.403,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 9.837,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 8.511,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 8.778,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 10.007,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 561,
+        "shared_read_blocks": 0
+      }
+    ]
+  },
+  "contains": {
+    "samples": 20,
+    "p50_ms": 8.127,
+    "p95_ms": 8.859,
+    "p99_ms": 8.929,
+    "max_ms": 8.929,
+    "plans": [
+      {
+        "execution_ms": 7.17,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 764,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 8.249,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 764,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 7.931,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 764,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 8.047,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 764,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 7.988,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 764,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 8.859,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 764,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 7.753,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 764,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 7.959,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 764,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 8.136,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 764,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 8.272,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 764,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 7.615,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 764,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 8.061,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 764,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 7.723,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 764,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 6.896,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 764,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 8.929,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 764,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 8.649,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 764,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 8.135,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 764,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 8.496,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 764,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 8.127,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 764,
+        "shared_read_blocks": 0
+      },
+      {
+        "execution_ms": 8.417,
+        "planning_ms": null,
+        "nodes": [
+          "Bitmap Heap Scan",
+          "Bitmap Index Scan"
+        ],
+        "shared_hit_blocks": 764,
+        "shared_read_blocks": 0
+      }
+    ]
+  }
+}

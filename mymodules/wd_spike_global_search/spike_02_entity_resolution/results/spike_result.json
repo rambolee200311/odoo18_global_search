@@ -1,0 +1,838 @@
+{
+  "spike": "SPIKE-GS-02",
+  "database": "odoo18ce",
+  "uid": 1,
+  "records_loaded": 1000,
+  "threshold": 30,
+  "candidate_limit": 10,
+  "queries": [
+    {
+      "name": "unique_identifier",
+      "value": "GS02-ENT-0001",
+      "resolution": {
+        "query": "GS02-ENT-0001",
+        "decision": "unique_match",
+        "top_score": 110,
+        "second_score": 0,
+        "margin": 110,
+        "candidate_count": 1,
+        "returned_candidates": [
+          {
+            "id": 5142,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0001",
+            "score": 110,
+            "matched_fields": [
+              "identifier_exact"
+            ]
+          }
+        ],
+        "has_more": false,
+        "threshold": 30,
+        "candidate_limit": 10
+      },
+      "stable_repeat": true
+    },
+    {
+      "name": "exact_name",
+      "value": "GS02 Entity 01 Logistics",
+      "resolution": {
+        "query": "GS02 Entity 01 Logistics",
+        "decision": "candidate_list",
+        "top_score": 100,
+        "second_score": 100,
+        "margin": 0,
+        "candidate_count": 20,
+        "returned_candidates": [
+          {
+            "id": 5142,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0001",
+            "score": 100,
+            "matched_fields": [
+              "name_exact"
+            ]
+          },
+          {
+            "id": 5192,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0051",
+            "score": 100,
+            "matched_fields": [
+              "name_exact"
+            ]
+          },
+          {
+            "id": 5242,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0101",
+            "score": 100,
+            "matched_fields": [
+              "name_exact"
+            ]
+          },
+          {
+            "id": 5292,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0151",
+            "score": 100,
+            "matched_fields": [
+              "name_exact"
+            ]
+          },
+          {
+            "id": 5342,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0201",
+            "score": 100,
+            "matched_fields": [
+              "name_exact"
+            ]
+          },
+          {
+            "id": 5392,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0251",
+            "score": 100,
+            "matched_fields": [
+              "name_exact"
+            ]
+          },
+          {
+            "id": 5442,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0301",
+            "score": 100,
+            "matched_fields": [
+              "name_exact"
+            ]
+          },
+          {
+            "id": 5492,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0351",
+            "score": 100,
+            "matched_fields": [
+              "name_exact"
+            ]
+          },
+          {
+            "id": 5542,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0401",
+            "score": 100,
+            "matched_fields": [
+              "name_exact"
+            ]
+          },
+          {
+            "id": 5592,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0451",
+            "score": 100,
+            "matched_fields": [
+              "name_exact"
+            ]
+          }
+        ],
+        "has_more": true,
+        "threshold": 30,
+        "candidate_limit": 10
+      },
+      "stable_repeat": true
+    },
+    {
+      "name": "abbreviation",
+      "value": "E01",
+      "resolution": {
+        "query": "E01",
+        "decision": "candidate_list",
+        "top_score": 90,
+        "second_score": 90,
+        "margin": 0,
+        "candidate_count": 20,
+        "returned_candidates": [
+          {
+            "id": 5142,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0001",
+            "score": 90,
+            "matched_fields": [
+              "short_name",
+              "alias"
+            ]
+          },
+          {
+            "id": 5192,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0051",
+            "score": 90,
+            "matched_fields": [
+              "short_name",
+              "alias"
+            ]
+          },
+          {
+            "id": 5242,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0101",
+            "score": 90,
+            "matched_fields": [
+              "short_name",
+              "alias"
+            ]
+          },
+          {
+            "id": 5292,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0151",
+            "score": 90,
+            "matched_fields": [
+              "short_name",
+              "alias"
+            ]
+          },
+          {
+            "id": 5342,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0201",
+            "score": 90,
+            "matched_fields": [
+              "short_name",
+              "alias"
+            ]
+          },
+          {
+            "id": 5392,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0251",
+            "score": 90,
+            "matched_fields": [
+              "short_name",
+              "alias"
+            ]
+          },
+          {
+            "id": 5442,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0301",
+            "score": 90,
+            "matched_fields": [
+              "short_name",
+              "alias"
+            ]
+          },
+          {
+            "id": 5492,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0351",
+            "score": 90,
+            "matched_fields": [
+              "short_name",
+              "alias"
+            ]
+          },
+          {
+            "id": 5542,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0401",
+            "score": 90,
+            "matched_fields": [
+              "short_name",
+              "alias"
+            ]
+          },
+          {
+            "id": 5592,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0451",
+            "score": 90,
+            "matched_fields": [
+              "short_name",
+              "alias"
+            ]
+          }
+        ],
+        "has_more": true,
+        "threshold": 30,
+        "candidate_limit": 10
+      },
+      "stable_repeat": true
+    },
+    {
+      "name": "alias",
+      "value": "E01",
+      "resolution": {
+        "query": "E01",
+        "decision": "candidate_list",
+        "top_score": 90,
+        "second_score": 90,
+        "margin": 0,
+        "candidate_count": 20,
+        "returned_candidates": [
+          {
+            "id": 5142,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0001",
+            "score": 90,
+            "matched_fields": [
+              "short_name",
+              "alias"
+            ]
+          },
+          {
+            "id": 5192,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0051",
+            "score": 90,
+            "matched_fields": [
+              "short_name",
+              "alias"
+            ]
+          },
+          {
+            "id": 5242,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0101",
+            "score": 90,
+            "matched_fields": [
+              "short_name",
+              "alias"
+            ]
+          },
+          {
+            "id": 5292,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0151",
+            "score": 90,
+            "matched_fields": [
+              "short_name",
+              "alias"
+            ]
+          },
+          {
+            "id": 5342,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0201",
+            "score": 90,
+            "matched_fields": [
+              "short_name",
+              "alias"
+            ]
+          },
+          {
+            "id": 5392,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0251",
+            "score": 90,
+            "matched_fields": [
+              "short_name",
+              "alias"
+            ]
+          },
+          {
+            "id": 5442,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0301",
+            "score": 90,
+            "matched_fields": [
+              "short_name",
+              "alias"
+            ]
+          },
+          {
+            "id": 5492,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0351",
+            "score": 90,
+            "matched_fields": [
+              "short_name",
+              "alias"
+            ]
+          },
+          {
+            "id": 5542,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0401",
+            "score": 90,
+            "matched_fields": [
+              "short_name",
+              "alias"
+            ]
+          },
+          {
+            "id": 5592,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0451",
+            "score": 90,
+            "matched_fields": [
+              "short_name",
+              "alias"
+            ]
+          }
+        ],
+        "has_more": true,
+        "threshold": 30,
+        "candidate_limit": 10
+      },
+      "stable_repeat": true
+    },
+    {
+      "name": "pinyin_approximate",
+      "value": "shanghai wuliu 01",
+      "resolution": {
+        "query": "shanghai wuliu 01",
+        "decision": "candidate_list",
+        "top_score": 60,
+        "second_score": 60,
+        "margin": 0,
+        "candidate_count": 20,
+        "returned_candidates": [
+          {
+            "id": 5142,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0001",
+            "score": 60,
+            "matched_fields": [
+              "pinyin_approximate"
+            ]
+          },
+          {
+            "id": 5192,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0051",
+            "score": 60,
+            "matched_fields": [
+              "pinyin_approximate"
+            ]
+          },
+          {
+            "id": 5242,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0101",
+            "score": 60,
+            "matched_fields": [
+              "pinyin_approximate"
+            ]
+          },
+          {
+            "id": 5292,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0151",
+            "score": 60,
+            "matched_fields": [
+              "pinyin_approximate"
+            ]
+          },
+          {
+            "id": 5342,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0201",
+            "score": 60,
+            "matched_fields": [
+              "pinyin_approximate"
+            ]
+          },
+          {
+            "id": 5392,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0251",
+            "score": 60,
+            "matched_fields": [
+              "pinyin_approximate"
+            ]
+          },
+          {
+            "id": 5442,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0301",
+            "score": 60,
+            "matched_fields": [
+              "pinyin_approximate"
+            ]
+          },
+          {
+            "id": 5492,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0351",
+            "score": 60,
+            "matched_fields": [
+              "pinyin_approximate"
+            ]
+          },
+          {
+            "id": 5542,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0401",
+            "score": 60,
+            "matched_fields": [
+              "pinyin_approximate"
+            ]
+          },
+          {
+            "id": 5592,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0451",
+            "score": 60,
+            "matched_fields": [
+              "pinyin_approximate"
+            ]
+          }
+        ],
+        "has_more": true,
+        "threshold": 30,
+        "candidate_limit": 10
+      },
+      "stable_repeat": true
+    },
+    {
+      "name": "case_difference",
+      "value": "gs02 entity 01 logistics",
+      "resolution": {
+        "query": "gs02 entity 01 logistics",
+        "decision": "candidate_list",
+        "top_score": 95,
+        "second_score": 95,
+        "margin": 0,
+        "candidate_count": 20,
+        "returned_candidates": [
+          {
+            "id": 5142,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0001",
+            "score": 95,
+            "matched_fields": [
+              "name_case_normalized"
+            ]
+          },
+          {
+            "id": 5192,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0051",
+            "score": 95,
+            "matched_fields": [
+              "name_case_normalized"
+            ]
+          },
+          {
+            "id": 5242,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0101",
+            "score": 95,
+            "matched_fields": [
+              "name_case_normalized"
+            ]
+          },
+          {
+            "id": 5292,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0151",
+            "score": 95,
+            "matched_fields": [
+              "name_case_normalized"
+            ]
+          },
+          {
+            "id": 5342,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0201",
+            "score": 95,
+            "matched_fields": [
+              "name_case_normalized"
+            ]
+          },
+          {
+            "id": 5392,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0251",
+            "score": 95,
+            "matched_fields": [
+              "name_case_normalized"
+            ]
+          },
+          {
+            "id": 5442,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0301",
+            "score": 95,
+            "matched_fields": [
+              "name_case_normalized"
+            ]
+          },
+          {
+            "id": 5492,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0351",
+            "score": 95,
+            "matched_fields": [
+              "name_case_normalized"
+            ]
+          },
+          {
+            "id": 5542,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0401",
+            "score": 95,
+            "matched_fields": [
+              "name_case_normalized"
+            ]
+          },
+          {
+            "id": 5592,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0451",
+            "score": 95,
+            "matched_fields": [
+              "name_case_normalized"
+            ]
+          }
+        ],
+        "has_more": true,
+        "threshold": 30,
+        "candidate_limit": 10
+      },
+      "stable_repeat": true
+    },
+    {
+      "name": "ambiguous_name",
+      "value": "GS02 Entity 01 Logistics",
+      "resolution": {
+        "query": "GS02 Entity 01 Logistics",
+        "decision": "candidate_list",
+        "top_score": 100,
+        "second_score": 100,
+        "margin": 0,
+        "candidate_count": 20,
+        "returned_candidates": [
+          {
+            "id": 5142,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0001",
+            "score": 100,
+            "matched_fields": [
+              "name_exact"
+            ]
+          },
+          {
+            "id": 5192,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0051",
+            "score": 100,
+            "matched_fields": [
+              "name_exact"
+            ]
+          },
+          {
+            "id": 5242,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0101",
+            "score": 100,
+            "matched_fields": [
+              "name_exact"
+            ]
+          },
+          {
+            "id": 5292,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0151",
+            "score": 100,
+            "matched_fields": [
+              "name_exact"
+            ]
+          },
+          {
+            "id": 5342,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0201",
+            "score": 100,
+            "matched_fields": [
+              "name_exact"
+            ]
+          },
+          {
+            "id": 5392,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0251",
+            "score": 100,
+            "matched_fields": [
+              "name_exact"
+            ]
+          },
+          {
+            "id": 5442,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0301",
+            "score": 100,
+            "matched_fields": [
+              "name_exact"
+            ]
+          },
+          {
+            "id": 5492,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0351",
+            "score": 100,
+            "matched_fields": [
+              "name_exact"
+            ]
+          },
+          {
+            "id": 5542,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0401",
+            "score": 100,
+            "matched_fields": [
+              "name_exact"
+            ]
+          },
+          {
+            "id": 5592,
+            "name": "GS02 Entity 01 Logistics",
+            "ref": "GS02-ENT-0451",
+            "score": 100,
+            "matched_fields": [
+              "name_exact"
+            ]
+          }
+        ],
+        "has_more": true,
+        "threshold": 30,
+        "candidate_limit": 10
+      },
+      "stable_repeat": true
+    }
+  ],
+  "multi_field_example": {
+    "query": "E01",
+    "decision": "candidate_list",
+    "top_score": 90,
+    "second_score": 90,
+    "margin": 0,
+    "candidate_count": 20,
+    "returned_candidates": [
+      {
+        "id": 5142,
+        "name": "GS02 Entity 01 Logistics",
+        "ref": "GS02-ENT-0001",
+        "score": 90,
+        "matched_fields": [
+          "short_name",
+          "alias"
+        ]
+      },
+      {
+        "id": 5192,
+        "name": "GS02 Entity 01 Logistics",
+        "ref": "GS02-ENT-0051",
+        "score": 90,
+        "matched_fields": [
+          "short_name",
+          "alias"
+        ]
+      },
+      {
+        "id": 5242,
+        "name": "GS02 Entity 01 Logistics",
+        "ref": "GS02-ENT-0101",
+        "score": 90,
+        "matched_fields": [
+          "short_name",
+          "alias"
+        ]
+      },
+      {
+        "id": 5292,
+        "name": "GS02 Entity 01 Logistics",
+        "ref": "GS02-ENT-0151",
+        "score": 90,
+        "matched_fields": [
+          "short_name",
+          "alias"
+        ]
+      },
+      {
+        "id": 5342,
+        "name": "GS02 Entity 01 Logistics",
+        "ref": "GS02-ENT-0201",
+        "score": 90,
+        "matched_fields": [
+          "short_name",
+          "alias"
+        ]
+      },
+      {
+        "id": 5392,
+        "name": "GS02 Entity 01 Logistics",
+        "ref": "GS02-ENT-0251",
+        "score": 90,
+        "matched_fields": [
+          "short_name",
+          "alias"
+        ]
+      },
+      {
+        "id": 5442,
+        "name": "GS02 Entity 01 Logistics",
+        "ref": "GS02-ENT-0301",
+        "score": 90,
+        "matched_fields": [
+          "short_name",
+          "alias"
+        ]
+      },
+      {
+        "id": 5492,
+        "name": "GS02 Entity 01 Logistics",
+        "ref": "GS02-ENT-0351",
+        "score": 90,
+        "matched_fields": [
+          "short_name",
+          "alias"
+        ]
+      },
+      {
+        "id": 5542,
+        "name": "GS02 Entity 01 Logistics",
+        "ref": "GS02-ENT-0401",
+        "score": 90,
+        "matched_fields": [
+          "short_name",
+          "alias"
+        ]
+      },
+      {
+        "id": 5592,
+        "name": "GS02 Entity 01 Logistics",
+        "ref": "GS02-ENT-0451",
+        "score": 90,
+        "matched_fields": [
+          "short_name",
+          "alias"
+        ]
+      }
+    ],
+    "has_more": true,
+    "threshold": 30,
+    "candidate_limit": 10
+  },
+  "threshold_boundary_tests": [
+    {
+      "margin": 30,
+      "decision": "unique_match",
+      "expected": "unique_match"
+    },
+    {
+      "margin": 29,
+      "decision": "candidate_list",
+      "expected": "candidate_list"
+    }
+  ],
+  "same_input_stable": true,
+  "scoring_order": [
+    "name_exact",
+    "name_case_normalized",
+    "short_name",
+    "alias",
+    "pinyin_approximate"
+  ]
+}
