@@ -7,7 +7,8 @@ def merge(outcomes, request_id, offset, limit, config_version):
     counts = {}
     errors = []
     for outcome in outcomes:
-        counts[outcome.resource] = outcome.count
+        if outcome.status == "SUCCESS":
+            counts[outcome.resource] = outcome.count
         for result in outcome.results:
             identity = (
                 result.get("_resource"),
@@ -17,15 +18,18 @@ def merge(outcomes, request_id, offset, limit, config_version):
             if identity not in identities:
                 identities.add(identity)
                 all_results.append(result)
-        if outcome.error:
+        if outcome.error and outcome.resource not in {item.get("resource") for item in errors}:
             errors.append(outcome.error)
 
+    errors.sort(key=lambda item: item.get("resource") or "")
     all_results.sort(key=lambda item: (item.get("_resource", ""), item.get("_model", ""), item.get("id", 0)))
     page = all_results[offset : offset + limit]
     if errors and page:
         status = "PARTIAL_SUCCESS"
     elif errors:
         status = "FAILED"
+    elif not page:
+        status = "EMPTY"
     else:
         status = "SUCCESS"
     return SearchResponse(

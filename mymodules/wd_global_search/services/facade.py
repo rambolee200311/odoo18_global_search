@@ -113,6 +113,7 @@ class SearchService:
             deadline = time.monotonic() + _SEARCH_TIMEOUT_SECONDS
             for resource in resources:
                 if request_id in _cancelled:
+                    outcomes.append(_failure_outcome("CANCELLED"))
                     break
                 if time.monotonic() >= deadline:
                     outcomes.append(_failure_outcome("TIMEOUT"))

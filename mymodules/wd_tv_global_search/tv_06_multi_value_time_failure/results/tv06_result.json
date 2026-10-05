@@ -6,14 +6,14 @@
   "fixed_utc": "2026-10-03 23:30:00",
   "same_dimension_or": {
     "multi_value_ids": [
-      100057,
-      100058,
-      100061
+      100062,
+      100063,
+      100066
     ],
     "union_of_single_values": [
-      100057,
-      100058,
-      100061
+      100062,
+      100063,
+      100066
     ],
     "equivalent": true
   },
@@ -21,10 +21,10 @@
     "start_inclusive": "2026-10-01",
     "end_exclusive": "2026-11-01",
     "ids": [
-      100057,
-      100058,
-      100059,
-      100060
+      100062,
+      100063,
+      100064,
+      100065
     ],
     "boundary_included": true,
     "next_month_excluded": true
@@ -54,9 +54,9 @@
   },
   "partial_failure": {
     "result_ids": [
-      100057,
-      100058,
-      100061
+      100062,
+      100063,
+      100066
     ],
     "count": 3,
     "errors": [
@@ -71,9 +71,9 @@
   "timeout": {
     "status": "PARTIAL_SUCCESS",
     "result_ids": [
-      100057,
-      100058,
-      100061
+      100062,
+      100063,
+      100066
     ],
     "count": 3,
     "errors": [

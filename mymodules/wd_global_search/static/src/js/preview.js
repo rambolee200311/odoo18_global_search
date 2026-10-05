@@ -76,6 +76,11 @@
     }
 
     function renderResults(data) {
+        if (data.status && !["SUCCESS", "EMPTY", "PARTIAL_SUCCESS"].includes(data.status)) {
+            list.innerHTML = '<p class="wd-safe-message" data-testid="search-error">'
+                + text(data.status) + "</p>";
+            return;
+        }
         if (data.status === "EMPTY" || !data.results.length) {
             list.innerHTML = '<p class="wd-muted" data-testid="empty-results">No results found.</p>';
             return;
@@ -87,6 +92,12 @@
                 + '" data-record-id="' + result._record_id + '"><strong>' + text(title)
                 + '</strong><span>' + text(result._resource) + "</span></button>";
         }).join("");
+        if (data.status === "PARTIAL_SUCCESS") {
+            list.insertAdjacentHTML(
+                "afterbegin",
+                '<p class="wd-safe-message" data-testid="partial-success">Some resources are unavailable.</p>'
+            );
+        }
         list.querySelectorAll("button").forEach((button) => {
             button.addEventListener("click", () => loadPreview(
                 button.dataset.model, button.dataset.recordId
