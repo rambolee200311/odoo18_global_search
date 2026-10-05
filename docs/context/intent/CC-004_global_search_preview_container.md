@@ -14,7 +14,7 @@
 | 前置 CC | [CC-001](./CC-001_global_search_configuration_foundation.md) v1.0 FROZEN；[CC-002](./CC-002_global_search_service_core.md) v0.2 FROZEN；[CC-003](./CC-003_global_search_permission_boundary.md) v0.2 FROZEN |
 | 模块 | `wd_global_search` |
 | 目标 | 将当前用户可访问的真实 Odoo Form View 包装为不可写、失败关闭的只读 Preview 容器 |
-| 批准冻结 | 2026-10-05 19:55，用户批准冻结并进入实施 |
+| 批准冻结 | 2026-10-05 20:20，用户批准完成 HVR 后冻结并提交 |
 
 本 CC 只冻结 Phase 4 Preview 容器，不实现 Search Workspace 查询输入、Query Understanding、Refinement UI、前端搜索结果流程或索引性能。
 
