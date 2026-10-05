@@ -22,12 +22,22 @@ class GlobalSearchController(http.Controller):
 
     @http.route("/wd_global_search", type="http", auth="user")
     def workspace(self, **kwargs):
+        resource_keys = {
+            "res.partner": "contact",
+            "sale.order": "sale_order",
+            "stock.picking": "stock_picking",
+        }
         tabs = "".join(
             (
-                '<button class="wd-resource-tab" data-model="%s" '
+                '<button class="wd-resource-tab" data-model="%s" data-resource="%s" '
                 'data-testid="resource-%s">%s</button>'
             )
-            % (html.escape(model), html.escape(model.replace(".", "-")), html.escape(config["label"]))
+            % (
+                html.escape(model),
+                html.escape(resource_keys[model]),
+                html.escape(model.replace(".", "-")),
+                html.escape(config["label"]),
+            )
             for model, config in MODEL_CONFIG.items()
         )
         page = """<!doctype html>
@@ -47,13 +57,29 @@ class GlobalSearchController(http.Controller):
       </div>
       <span class="wd-readonly-badge" data-testid="readonly-badge">READ ONLY PREVIEW</span>
     </header>
-    <section class="wd-query-bar" aria-label="Search">
+    <form class="wd-query-bar" aria-label="Search">
       <label for="wd-query">Search query</label>
       <input id="wd-query" data-testid="search-query" type="search"
-             placeholder="Search results are configured by the server" readonly>
-      <button type="button" disabled aria-disabled="true">Search</button>
+             placeholder="Search business records">
+      <button id="wd-search-submit" data-testid="search-submit" type="submit">Search</button>
+    </form>
+    <nav class="wd-resource-tabs" aria-label="Business resources">
+      <button class="wd-resource-tab" data-resource="" type="button">All</button>%s
+    </nav>
+    <section class="wd-refinements" aria-label="Refinement">
+      <label>Date <select id="wd-date-refinement" data-testid="date-refinement">
+        <option value="">Any time</option><option value="today">Today</option>
+        <option value="this_week">This week</option><option value="this_month">This month</option>
+      </select></label>
+      <label>State <select id="wd-state-refinement" data-testid="state-refinement">
+        <option value="">Any state</option><option value="draft">Draft</option>
+        <option value="sale">Confirmed</option><option value="done">Done</option>
+      </select></label>
+      <div id="wd-active-refinements" data-testid="active-refinements"></div>
     </section>
-    <nav class="wd-resource-tabs" aria-label="Business resources">%s</nav>
+    <section class="wd-understanding" data-testid="query-understanding" aria-live="polite">
+      <strong>Query Understanding</strong><span id="wd-effective-conditions">No conditions</span>
+    </section>
     <section class="wd-layout">
       <div class="wd-results" data-testid="results-pane">
         <h2>Accessible records</h2>
@@ -65,7 +91,7 @@ class GlobalSearchController(http.Controller):
       </aside>
     </section>
   </main>
-  <script src="/wd_global_search/static/src/js/preview.js?v=cc004"></script>
+  <script src="/wd_global_search/static/src/js/preview.js?v=cc005c"></script>
 </body>
 </html>""" % tabs
         return request.make_response(page, headers=[("Content-Type", "text/html; charset=utf-8")])
@@ -86,9 +112,15 @@ class GlobalSearchController(http.Controller):
         if not isinstance(payload, dict):
             return {"status": "FAILED", "errors": [{"code": "INVALID_REQUEST"}], "results": []}
         try:
+            raw_query = str(payload.get("query", "")).strip()
+            parsed_conditions = list(payload.get("conditions", ()))
+            if raw_query:
+                parsed_conditions.append(
+                    {"dimension": "name", "operator": "ilike", "value": raw_query}
+                )
             search_request = SearchRequest(
-                raw_query=payload.get("query", ""),
-                parsed_conditions=tuple(payload.get("conditions", ())),
+                raw_query=raw_query,
+                parsed_conditions=tuple(parsed_conditions),
                 refinement_conditions=tuple(payload.get("refinement_conditions", ())),
                 resource_scope=tuple(payload.get("resources", ())),
                 offset=max(0, int(payload.get("offset", 0))),
@@ -103,6 +135,12 @@ class GlobalSearchController(http.Controller):
                 "results": response.results,
                 "counts": response.counts,
                 "errors": response.errors,
+                "resource_counts": response.counts.get("by_resource", {}),
+                "effective_conditions": [
+                    *search_request.parsed_conditions,
+                    *search_request.refinement_conditions,
+                ],
+                "next_cursor": response.meta.get("next_cursor"),
                 "meta": response.meta,
             }
         except (TypeError, ValueError):

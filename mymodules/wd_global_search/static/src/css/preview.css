@@ -97,6 +97,40 @@ h2 {
     border-top: 0;
 }
 
+.wd-refinements,
+.wd-understanding {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    padding: 12px 28px;
+    background: #fff;
+    border: 1px solid #dfe5ec;
+    border-top: 0;
+}
+
+.wd-refinements select {
+    margin-left: 6px;
+    padding: 7px 10px;
+    border: 1px solid #c9d3df;
+    border-radius: 6px;
+}
+
+.wd-understanding {
+    color: #6b7785;
+    font-size: 13px;
+}
+
+.wd-understanding strong {
+    color: #243447;
+}
+
+.wd-refinement-chip {
+    padding: 5px 9px;
+    border: 1px solid #c9d3df;
+    border-radius: 999px;
+    background: #f5f7fa;
+}
+
 .wd-resource-tab {
     padding: 9px 14px;
     border: 1px solid #c9d3df;
@@ -200,6 +234,8 @@ h2 {
     .wd-header,
     .wd-query-bar,
     .wd-resource-tabs,
+    .wd-refinements,
+    .wd-understanding,
     .wd-results,
     .wd-preview {
         padding: 16px;
@@ -213,6 +249,12 @@ h2 {
 
     .wd-resource-tabs {
         overflow-x: auto;
+    }
+
+    .wd-refinements,
+    .wd-understanding {
+        align-items: flex-start;
+        flex-direction: column;
     }
 
     .wd-layout {

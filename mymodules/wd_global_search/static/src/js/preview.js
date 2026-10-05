@@ -3,17 +3,46 @@
 
     const list = document.querySelector("#wd-result-list");
     const preview = document.querySelector("[data-testid='preview-pane']");
-    const tabs = document.querySelectorAll(".wd-resource-tab");
-    let currentRequest;
+    const queryInput = document.querySelector("[data-testid='search-query']");
+    const form = document.querySelector(".wd-query-bar");
+    const conditionView = document.querySelector("#wd-effective-conditions");
+    const activeView = document.querySelector("#wd-active-refinements");
+    const state = {rawQuery: "", resource: "", refinements: [], cursor: null};
+    let currentPreviewRequest;
 
     function text(value) {
-        if (value === false || value === null || value === undefined) {
+        if (value === false || value === null || value === undefined || value === "") {
             return "—";
         }
         if (Array.isArray(value)) {
             return value.length > 1 ? value[1] : String(value[0] || "—");
         }
         return String(value);
+    }
+
+    function conditionPayload() {
+        return state.refinements.map((item) => ({
+            dimension: item.dimension,
+            value: item.value,
+            operator: item.operator || "ilike",
+        }));
+    }
+
+    function renderUnderstanding(conditions) {
+        conditionView.textContent = conditions.length
+            ? conditions.map((item) => item.dimension + "=" + item.value).join(" · ")
+            : "No conditions";
+        activeView.innerHTML = state.refinements.map((item, index) => (
+            '<button type="button" class="wd-refinement-chip" data-refinement-index="'
+            + index + '">' + text(item.dimension) + ": " + text(item.value) + " ×</button>"
+        )).join("");
+        activeView.querySelectorAll("button").forEach((button) => {
+            button.addEventListener("click", () => {
+                state.refinements.splice(Number(button.dataset.refinementIndex), 1);
+                state.cursor = null;
+                search();
+            });
+        });
     }
 
     function renderPreview(data) {
@@ -32,41 +61,98 @@
             + "<h3>" + text(data.display_name) + "</h3>" + fields + "</div>";
     }
 
-    async function load(model, recordId) {
-        if (currentRequest) {
-            currentRequest.abort();
+    async function loadPreview(model, recordId) {
+        if (currentPreviewRequest) {
+            currentPreviewRequest.abort();
         }
-        currentRequest = new AbortController();
-        const query = new URLSearchParams({model: model});
-        if (recordId) {
-            query.set("record_id", recordId);
-        }
+        currentPreviewRequest = new AbortController();
+        const query = new URLSearchParams({model: model, record_id: recordId});
         const response = await fetch("/wd_global_search/api/preview?" + query.toString(), {
             credentials: "same-origin",
             headers: {"Accept": "application/json"},
-            signal: currentRequest.signal,
+            signal: currentPreviewRequest.signal,
         });
         renderPreview(await response.json());
     }
 
-    tabs.forEach((tab) => {
-        tab.addEventListener("click", async () => {
-            const model = tab.dataset.model;
-            try {
-                await load(model);
-            } catch (error) {
-                if (error.name !== "AbortError") {
-                    preview.innerHTML = '<div class="wd-safe-message">Preview unavailable</div>';
-                }
-                return;
-            }
-            list.innerHTML = '<button class="wd-record-card" type="button" '
-                + 'data-testid="preview-record-card"><strong>Selected record</strong>'
-                + "<span>Loaded under current permissions</span></button>";
-            list.querySelector("button").addEventListener("click", () => load(model));
+    function renderResults(data) {
+        if (data.status === "EMPTY" || !data.results.length) {
+            list.innerHTML = '<p class="wd-muted" data-testid="empty-results">No results found.</p>';
+            return;
+        }
+        list.innerHTML = data.results.map((result) => {
+            const title = result.display_name || result.name || result._record_id;
+            const model = result._model;
+            return '<button class="wd-record-card" type="button" data-model="' + model
+                + '" data-record-id="' + result._record_id + '"><strong>' + text(title)
+                + '</strong><span>' + text(result._resource) + "</span></button>";
+        }).join("");
+        list.querySelectorAll("button").forEach((button) => {
+            button.addEventListener("click", () => loadPreview(
+                button.dataset.model, button.dataset.recordId
+            ));
+        });
+    }
+
+    async function search() {
+        const payload = {
+            query: state.rawQuery,
+            conditions: [],
+            refinement_conditions: conditionPayload(),
+            resources: state.resource ? [state.resource] : [],
+            limit: 20,
+            cursor: state.cursor,
+        };
+        list.innerHTML = '<p class="wd-muted">Searching…</p>';
+        try {
+            const response = await fetch("/wd_global_search/api/search", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({jsonrpc: "2.0", method: "call", params: payload}),
+            });
+            const envelope = await response.json();
+            const data = envelope.result || envelope;
+            renderResults(data);
+            renderUnderstanding(data.effective_conditions || conditionPayload());
+        } catch (error) {
+            list.innerHTML = '<p class="wd-safe-message">Search unavailable</p>';
+        }
+    }
+
+    form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        state.rawQuery = queryInput.value.trim();
+        state.refinements = [];
+        state.cursor = null;
+        document.querySelector("#wd-date-refinement").value = "";
+        document.querySelector("#wd-state-refinement").value = "";
+        state.resource = "";
+        search();
+    });
+    document.querySelectorAll(".wd-resource-tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+            state.resource = tab.dataset.resource || "";
+            state.cursor = null;
+            search();
         });
     });
-
+    document.querySelector("#wd-date-refinement").addEventListener("change", (event) => {
+        state.refinements = state.refinements.filter((item) => item.dimension !== "date");
+        if (event.target.value) {
+            state.refinements.push({dimension: "date", value: event.target.value, operator: "="});
+        }
+        state.cursor = null;
+        search();
+    });
+    document.querySelector("#wd-state-refinement").addEventListener("change", (event) => {
+        state.refinements = state.refinements.filter((item) => item.dimension !== "state");
+        if (event.target.value) {
+            state.refinements.push({dimension: "state", value: event.target.value, operator: "="});
+        }
+        state.cursor = null;
+        search();
+    });
     document.addEventListener("submit", (event) => event.preventDefault());
     document.addEventListener("keydown", (event) => {
         if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
