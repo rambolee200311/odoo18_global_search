@@ -17,7 +17,7 @@
     }
 
     function renderPreview(data) {
-        if (data.status !== "LOADED") {
+        if (data.status !== "SUCCESS") {
             preview.innerHTML = '<div class="wd-safe-message" data-testid="preview-safe-state">'
                 + "Record unavailable or permission changed</div>";
             return;

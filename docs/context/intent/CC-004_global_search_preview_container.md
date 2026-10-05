@@ -5,8 +5,8 @@
 | 项 | 内容 |
 |---|---|
 | Coding Contract | CC-004 |
-| 版本 | v0.1 DRAFT |
-| 状态 | Draft，待评审和冻结 |
+| 版本 | v0.2 FROZEN |
+| 状态 | FROZEN，进入实施 |
 | Intent ID | `GS-SEARCH-PREVIEW-CONTAINER` |
 | 上游 SRS | [SRS_global_search](../../requirement/SRS_global_search.md) v1.4 FROZEN |
 | 上游 TDD | [TDD_global_search](../../design/TDD_global_search.md) v0.3 FROZEN |
@@ -14,7 +14,7 @@
 | 前置 CC | [CC-001](./CC-001_global_search_configuration_foundation.md) v1.0 FROZEN；[CC-002](./CC-002_global_search_service_core.md) v0.2 FROZEN；[CC-003](./CC-003_global_search_permission_boundary.md) v0.2 FROZEN |
 | 模块 | `wd_global_search` |
 | 目标 | 将当前用户可访问的真实 Odoo Form View 包装为不可写、失败关闭的只读 Preview 容器 |
-| 批准冻结 | 待用户批准 |
+| 批准冻结 | 2026-10-05 19:55，用户批准冻结并进入实施 |
 
 本 CC 只冻结 Phase 4 Preview 容器，不实现 Search Workspace 查询输入、Query Understanding、Refinement UI、前端搜索结果流程或索引性能。
 
@@ -26,10 +26,18 @@
 |---|---|---|
 | SRS FR-PM-001~008 | 当前用户和字段权限 | Preview 读取遵守 CC-003 |
 | SRS FR-ER-002~003 | 安全状态和错误协议 | 删除/失权统一安全失败 |
+| SRS FR-SW-004 | Form Preview | 在范围内 |
+| SRS FR-SW-005 | 打开完整记录 | 在范围内 |
+| SRS FR-SW-007 | Form Preview 编辑能力 | 在范围内，Preview 明确禁止编辑 |
 | SRS BR-013 | 结果打开和记录预览 | 当前记录加载 |
+| SRS CON-009 | Preview 只读 | 在范围内 |
+| SRS NFR-004 | 响应式窄屏降级 | 在范围内 |
 | TDD §6 | 权限边界 | 不绕过 CC-003 |
+| TDD §6.5 | 失败关闭 | 权限/删除/View 异常返回安全状态 |
 | TDD §7.1~§7.5 | Form View、只读容器、按钮/Chatter/附件阻断 | 本 CC 核心 |
 | TDD §10.3 | Preview API | 只读服务端入口 |
+| TDD §12.5 | 浏览器测试 | HVR 验证 |
+| TDD §3.14 | 国际化 | 标签、错误、日期和数字格式 |
 
 DDD：N/A，不得虚构领域对象或不变式。
 
@@ -81,6 +89,15 @@ DDD：N/A，不得虚构领域对象或不变式。
 | CC4-CHANGE-005 | 桌面/窄屏布局缺少验证 | 桌面分栏、375px 窄屏单栏可用 | CC4-TEST-005 |
 | CC4-CHANGE-006 | Preview 与 CC-003 权限边界缺少回归证据 | 只显示当前用户授权字段和记录 | CC4-TEST-006 |
 
+### 3.1 Preview 与 CC-003 权限边界交互
+
+- Preview 通过 `PermissionBoundary.authorize_resource` 校验模型和记录访问；
+- Preview 通过 `PermissionBoundary.filter_readable_fields` 过滤序列化字段；
+- `authorize_resource` 返回 `PERMISSION_DENIED`、`RESOURCE_NOT_ACCESSIBLE` 或 `RELATION_PATH_BLOCKED` 时，Preview 返回 `PERMISSION_OR_DELETED`；
+- `filter_readable_fields` 返回部分不可读字段时，仅序列化可读字段；
+- 全部字段不可读时返回 `PERMISSION_OR_DELETED`；
+- 任何权限异常、记录删除或 View 加载异常均失败关闭。
+
 ## 4. 既有行为保留
 
 | ID | 行为 |
@@ -107,6 +124,30 @@ DDD：N/A，不得虚构领域对象或不变式。
 - 不记录原始字段值、令牌、SQL 或 Record Rule 内容；
 - 不把前端隐藏按钮当作安全控制。
 
+Preview 成功响应：
+
+```json
+{
+  "status": "SUCCESS",
+  "model": "res.partner",
+  "record_id": 42,
+  "view_id": 126,
+  "fields": [
+    {"name": "name", "label": "显示名称", "value": "Acme Corporation", "type": "char", "readonly": true}
+  ],
+  "meta": {"request_id": "...", "config_version": "..."}
+}
+```
+
+Preview 失败响应：
+
+```json
+{
+  "status": "PERMISSION_OR_DELETED",
+  "error": {"code": "PERMISSION_OR_DELETED", "message": "Record unavailable or permission changed"}
+}
+```
+
 ## 6. 测试契约
 
 | ID | 测试内容 | 类型 | 预期结果 | 人工验证 |
@@ -118,6 +159,14 @@ DDD：N/A，不得虚构领域对象或不变式。
 | CC4-TEST-005 | 桌面和 375px 窄屏 | 浏览器 | 分栏/单栏布局符合契约，无控制台错误 | 是 |
 | CC4-TEST-006 | CC-003 权限回归 | 多用户 ORM+浏览器 | 只返回当前用户授权字段和记录 | 是 |
 | CC4-TEST-007 | Search/Config 回归 | 模块+浏览器 | CC-001/CC-002 既有行为不回归 | 是 |
+| CC4-TEST-008 | 记录切换 | 浏览器 | Preview 更新，Raw Query 和 Refinement 状态保持 | 是 |
+
+写操作监控要求：
+
+- 监听 ORM `create`、`write`、`unlink`、`copy`；
+- 监听 `/web/dataset/call_kw` 写操作；
+- 监听 `message_post`、`ir.attachment.create`、`mail.activity.create`；
+- CC4-TEST-002/003 断言所有写调用次数为 0。
 
 ## 7. 停止条件 / 完成定义
 
@@ -138,6 +187,7 @@ DDD：N/A，不得虚构领域对象或不变式。
 5. 写 RPC、Chatter、附件和活动入口均被阻断；
 6. CC-003 权限回归通过；
 7. 无官方代码修改、无业务数据 `sudo()`、无 Workspace 完成宣称。
+8. Preview 加载时间 P95 ≤ 1 秒；该项为软闸门，作为 TV-01 输入。
 
 ## 8. 实施结构
 
@@ -159,4 +209,123 @@ def serialize_readonly_view(env, model_name: str, record_id: int) -> dict: ...
 def reject_write_action(action: str) -> PreviewError: ...
 ```
 
-当前状态：**CC-004 DRAFT，待评审和冻结**。
+类型定义：
+
+```python
+PreviewResult:
+  status: str  # SUCCESS, PERMISSION_OR_DELETED, INVALID_REQUEST
+  model: str
+  record_id: int
+  view_id: int | None
+  fields: list[PreviewField]
+  error: PreviewError | None
+
+PreviewField:
+  name: str
+  label: str
+  value: str
+  type: str
+  readonly: bool = True
+
+PreviewError:
+  code: str  # PERMISSION_OR_DELETED, INVALID_REQUEST, INTERNAL_ERROR
+  message: str
+```
+
+### 8.1 字段序列化规范
+
+- 字段顺序按 Form View 定义顺序；
+- 支持 `char`、`text`、`integer`、`float`、`date`、`datetime`、`boolean`、`selection`、`many2one`、`monetary`；
+- 字段标签按当前用户语言翻译；
+- 日期/时间按当前用户时区格式化；
+- selection 序列化为当前语言 label；
+- many2one 序列化为 `display_name`；
+- 空值显示为 `—`；
+- 无权字段不序列化。
+
+### 8.2 只读动作清单
+
+以下动作必须在服务端和容器层阻断：
+
+- Edit、Save、Delete、Duplicate、Archive、Unarchive；
+- Chatter Post、附件上传/删除、活动创建/完成；
+- 所有业务按钮、工作流动作和状态变更；
+- Print、Export、Import、Share、Follow、Unfollow。
+
+### 8.3 浏览器兼容性矩阵
+
+| 浏览器 | 最新桌面 | 最新窄屏 |
+|---|---|---|
+| Chrome | 必须通过 | 必须通过 |
+| Firefox | 必须通过 | 必须通过 |
+| Safari | 必须通过 | 必须通过 |
+| Edge | 必须通过 | 必须通过 |
+
+### 8.4 安全状态、国际化和性能
+
+安全状态：
+
+- `SUCCESS`
+- `PERMISSION_OR_DELETED`
+- `INVALID_REQUEST`
+- `VIEW_NOT_FOUND`
+- `MODEL_NOT_FOUND`
+- `INTERNAL_ERROR`
+
+国际化：
+
+- 标签、错误、日期、数字和货币按当前用户语言/时区；
+- 缺失翻译回退英文；
+- 不把原始字段值写入日志。
+
+性能预算（软闸门）：
+
+- Preview 加载 P95 ≤ 1 秒；
+- 字段序列化 P95 ≤ 200 ms；
+- 权限过滤 P95 ≤ 100 ms；
+- Form View 加载 P95 ≤ 300 ms。
+
+### 8.5 日志和 fixture 规范
+
+日志位置：`services/preview.py`、`controllers/main.py`。记录级别和字段：
+
+- INFO：成功；
+- WARNING：权限/删除失败；
+- ERROR：内部错误；
+- `request_id`、`user_id`、`model`、`record_id`、`view_id`、`status`、`latency`。
+
+禁止记录字段值、SQL、Record Rule 内容和令牌。
+
+Fixture 位置：`tests/fixtures/preview/`，使用 Python/ORM 创建：
+
+- 普通用户、Portal 用户、多公司用户；
+- 可访问、不可访问、已删除记录；
+- 可读、不可读字段；
+- 标准和自定义 Form View；
+- 每个套件使用唯一标记，测试结束检查无残留。
+
+### 8.6 验收和 HVR 场景
+
+验收场景：
+
+1. 用户打开记录，Preview 显示真实 Form View；
+2. Preview 无编辑、保存、删除按钮；
+3. Chatter、附件和活动不可写；
+4. 写 RPC 被拒绝且调用次数为 0；
+5. 删除或失权记录返回 `PERMISSION_OR_DELETED`；
+6. 切换记录时 Preview 更新，Raw Query/Refinement 保持；
+7. 桌面和 375px 窄屏布局通过；
+8. Chrome、Firefox、Safari 无控制台错误。
+
+HVR 场景：
+
+1. 人工打开 Preview 并确认只读；
+2. 尝试编辑、保存、删除；
+3. 尝试 Chatter、附件和活动操作；
+4. 尝试业务按钮；
+5. 检查控制台无错误；
+6. 检查无写 RPC；
+7. 切换至少两条记录；
+8. 验证窄屏单栏布局。
+
+当前状态：**CC-004 v0.2 DRAFT / Ready for Freeze**。
