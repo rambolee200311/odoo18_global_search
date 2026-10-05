@@ -4,7 +4,11 @@
     "category": "Tools",
     "summary": "Read-only global search preview workspace",
     "depends": ["base", "web", "sale", "stock"],
-    "data": [],
+    "data": [
+        "security/security.xml",
+        "security/ir.model.access.csv",
+        "views/configuration_views.xml",
+    ],
     "assets": {
         "web.assets_backend": [
             "wd_global_search/static/src/css/preview.css",

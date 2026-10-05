@@ -1,0 +1,51 @@
+<odoo>
+    <record id="view_gs_config_domain_list" model="ir.ui.view">
+        <field name="name">wd.gs.config.domain.list</field>
+        <field name="model">wd.gs.config.domain</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="key"/>
+                <field name="name"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_gs_config_domain_form" model="ir.ui.view">
+        <field name="name">wd.gs.config.domain.form</field>
+        <field name="model">wd.gs.config.domain</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="key"/>
+                        <field name="name"/>
+                        <field name="active"/>
+                    </group>
+                    <notebook>
+                        <page string="Versions">
+                            <field name="version_ids">
+                                <list>
+                                    <field name="version"/>
+                                    <field name="state"/>
+                                    <field name="checksum"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_gs_config_domain" model="ir.actions.act_window">
+        <field name="name">Search Configuration Domains</field>
+        <field name="res_model">wd.gs.config.domain</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_global_search_root" name="Global Search" groups="wd_global_search.group_config_manager"/>
+    <menuitem id="menu_gs_config_domain" name="Configuration Domains"
+              parent="menu_global_search_root" action="action_gs_config_domain"
+              groups="wd_global_search.group_config_manager"/>
+</odoo>

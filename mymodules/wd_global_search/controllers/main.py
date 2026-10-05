@@ -6,6 +6,9 @@ from odoo import http
 from odoo.exceptions import AccessError, MissingError
 from odoo.http import request
 
+from ..services.facade import SearchService
+from ..services.types import SearchRequest
+
 
 MODEL_CONFIG = {
     "res.partner": {
@@ -89,6 +92,8 @@ def _read_preview(model_name, record_id=None):
 
 
 class GlobalSearchController(http.Controller):
+    search_service = SearchService()
+
     @http.route("/wd_global_search", type="http", auth="user")
     def workspace(self, **kwargs):
         tabs = "".join(
@@ -155,3 +160,48 @@ class GlobalSearchController(http.Controller):
             )
         except (TypeError, ValueError):
             return _json_response({"status": "INVALID_REQUEST"}, status=400)
+
+    @http.route("/wd_global_search/api/search", type="json", auth="user", methods=["POST"], csrf=False)
+    def search(self, **kwargs):
+        payload = kwargs.get("params", kwargs) if isinstance(kwargs, dict) else {}
+        if not isinstance(payload, dict):
+            return {"status": "FAILED", "errors": [{"code": "INVALID_REQUEST"}], "results": []}
+        try:
+            search_request = SearchRequest(
+                raw_query=payload.get("query", ""),
+                parsed_conditions=tuple(payload.get("conditions", ())),
+                refinement_conditions=tuple(payload.get("refinement_conditions", ())),
+                resource_scope=tuple(payload.get("resources", ())),
+                offset=max(0, int(payload.get("offset", 0))),
+                limit=int(payload.get("limit", 50)),
+                cursor=payload.get("cursor"),
+            )
+            domain_key = payload.get("domain_key", "global_search_baseline")
+            response = self.search_service.search(request.env, search_request, domain_key)
+            return {
+                "status": response.status,
+                "request_id": response.request_id,
+                "results": response.results,
+                "counts": response.counts,
+                "errors": response.errors,
+                "meta": response.meta,
+            }
+        except (TypeError, ValueError):
+            return {
+                "status": "FAILED",
+                "request_id": None,
+                "results": [],
+                "counts": {"all": 0, "by_resource": {}},
+                "errors": [{"code": "INTERNAL_ERROR", "retryable": False}],
+                "meta": {},
+            }
+
+    @http.route("/wd_global_search/api/cancel", type="json", auth="user", methods=["POST"], csrf=False)
+    def cancel(self, **kwargs):
+        payload = kwargs.get("params", kwargs) if isinstance(kwargs, dict) else {}
+        request_id = payload.get("request_id") if isinstance(payload, dict) else None
+        return {
+            "status": "CANCELLED"
+            if self.search_service.cancel(request.env, request_id)
+            else "FAILED"
+        }

@@ -1,0 +1,14 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_gs_config_domain_manager,wd.gs.config.domain manager,model_wd_gs_config_domain,wd_global_search.group_config_manager,1,1,1,1
+access_gs_config_version_manager,wd.gs.config.version manager,model_wd_gs_config_version,wd_global_search.group_config_manager,1,1,1,1
+access_gs_business_resource_manager,wd.gs.business.resource manager,model_wd_gs_business_resource,wd_global_search.group_config_manager,1,1,1,1
+access_gs_resource_model_mapping_manager,wd.gs.resource.model.mapping manager,model_wd_gs_resource_model_mapping,wd_global_search.group_config_manager,1,1,1,1
+access_gs_searchable_field_manager,wd.gs.searchable.field manager,model_wd_gs_searchable_field,wd_global_search.group_config_manager,1,1,1,1
+access_gs_relation_path_manager,wd.gs.relation.path manager,model_wd_gs_relation_path,wd_global_search.group_config_manager,1,1,1,1
+access_gs_business_date_mapping_manager,wd.gs.business.date.mapping manager,model_wd_gs_business_date_mapping,wd_global_search.group_config_manager,1,1,1,1
+access_gs_state_mapping_manager,wd.gs.state.mapping manager,model_wd_gs_state_mapping,wd_global_search.group_config_manager,1,1,1,1
+access_gs_snapshot_field_manager,wd.gs.snapshot.field manager,model_wd_gs_snapshot_field,wd_global_search.group_config_manager,1,1,1,1
+access_gs_vocabulary_entry_manager,wd.gs.vocabulary.entry manager,model_wd_gs_vocabulary_entry,wd_global_search.group_config_manager,1,1,1,1
+access_gs_entity_scoring_config_manager,wd.gs.entity.scoring.config manager,model_wd_gs_entity_scoring_config,wd_global_search.group_config_manager,1,1,1,1
+access_gs_performance_config_manager,wd.gs.performance.config manager,model_wd_gs_performance_config,wd_global_search.group_config_manager,1,1,1,1
+access_gs_audit_event_manager,wd.gs.audit.event manager,model_wd_gs_audit_event,wd_global_search.group_config_manager,1,1,1,1
