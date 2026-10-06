@@ -173,6 +173,18 @@ N/A。本项目没有冻结 DDD，不得虚构聚合、实体、值对象或不�
 
 响应必须包含 `status`、`request_id`、`results`、`counts`、`errors`、`meta`。不新增写 API，不改变既有 Preview API。
 
+### 9.1 Search Request Boundary（TD-001）
+
+- Raw Query 最大长度为 500 字符；
+- Parsed Conditions 与 Refinement Conditions 合计最多 20 个；
+- 条件嵌套深度最多 3 层；
+- Relation Path 最多 2 层；
+- 控制字符、非文本 Query、超限数量和超深结构返回 `INVALID_REQUEST`；
+- Request Timeout 上限为 5 秒，Resource Timeout 上限为 3 秒；
+- Result limit、pagination limit、rate limit 和 concurrency limit 沿用本 CC 既有契约；
+- 请求不得携带可执行 domain、动态代码或客户端权限声明；
+- 错误消息和日志不得包含 Raw Query、完整 conditions 或业务字段值。
+
 ## 10. 安全 / 权限影响
 
 - Facade 是唯一允许读取 `request.env` 的层；

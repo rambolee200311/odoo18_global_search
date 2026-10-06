@@ -12,6 +12,7 @@ from .errors import error
 from .executor import execute
 from .limiter import UserLimiter
 from .provider import ConfigurationError, published_snapshot
+from .request_boundary import RequestBoundaryError, validate_search_request
 from .types import ResourceOutcome, SearchRequest, UserContext
 
 
@@ -58,6 +59,7 @@ class SearchService:
                 None,
             )
         try:
+            validate_search_request(request)
             if request.limit < 1 or request.limit > 200:
                 return merge(
                     [_failure_outcome("INVALID_REQUEST")],
@@ -139,6 +141,8 @@ class SearchService:
                     cursor_secret.encode(),
                 )
             return response
+        except RequestBoundaryError:
+            return merge([_failure_outcome("INVALID_REQUEST")], request_id, 0, 0, None)
         except ConfigurationError:
             return merge(
                 [_failure_outcome("CONFIGURATION_ERROR")],

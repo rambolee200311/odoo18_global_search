@@ -112,9 +112,11 @@ class GlobalSearchController(http.Controller):
         if not isinstance(payload, dict):
             return {"status": "FAILED", "errors": [{"code": "INVALID_REQUEST"}], "results": []}
         try:
-            raw_query = str(payload.get("query", "")).strip()
+            raw_query = payload.get("query", "")
+            if isinstance(raw_query, str):
+                raw_query = raw_query.strip()
             parsed_conditions = list(payload.get("conditions", ()))
-            if raw_query:
+            if isinstance(raw_query, str) and raw_query:
                 parsed_conditions.append(
                     {"dimension": "name", "operator": "ilike", "value": raw_query}
                 )
@@ -129,6 +131,14 @@ class GlobalSearchController(http.Controller):
             )
             domain_key = payload.get("domain_key", "global_search_baseline")
             response = self.search_service.search(request.env, search_request, domain_key)
+            visible_conditions = (
+                []
+                if any(item.get("code") == "INVALID_REQUEST" for item in response.errors)
+                else [
+                    *search_request.parsed_conditions,
+                    *search_request.refinement_conditions,
+                ]
+            )
             return {
                 "status": response.status,
                 "request_id": response.request_id,
@@ -136,10 +146,7 @@ class GlobalSearchController(http.Controller):
                 "counts": response.counts,
                 "errors": response.errors,
                 "resource_counts": response.counts.get("by_resource", {}),
-                "effective_conditions": [
-                    *search_request.parsed_conditions,
-                    *search_request.refinement_conditions,
-                ],
+                "effective_conditions": visible_conditions,
                 "next_cursor": response.meta.get("next_cursor"),
                 "meta": response.meta,
             }

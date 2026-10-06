@@ -313,3 +313,11 @@ retry(): Promise<SearchResponse>
   `PERMISSION_OR_DELETED` 均显示预期安全状态；
 - 详细记录见 [IHR-GS-ERROR-PARTIAL-FAILURE](../history/IHR-GS-ERROR-PARTIAL-FAILURE.md)
   和 [ATR-GS-ERROR-PARTIAL-FAILURE](../history/ATR-GS-ERROR-PARTIAL-FAILURE.md)。
+
+## 14. TD-001 Error / Log Boundary
+
+- 服务端错误消息使用固定模板，不插入用户 Query 或条件值；
+- 错误日志只记录 request_id、错误码、资源、retryable 和延迟；
+- 不记录 Raw Query、完整 conditions、业务字段值、SQL、Record Rule 或令牌；
+- 前端错误消息使用文本节点或 `textContent`，不把用户输入拼接到 HTML；
+- 需要输入摘要时只允许记录 `hash(query)`。
