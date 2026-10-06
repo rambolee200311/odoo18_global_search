@@ -13,6 +13,7 @@ from .executor import execute
 from .limiter import UserLimiter
 from .provider import ConfigurationError, published_snapshot
 from .request_boundary import RequestBoundaryError, validate_search_request
+from .observability import hash_value, log_event
 from .types import ResourceOutcome, SearchRequest, UserContext
 
 
@@ -45,12 +46,53 @@ def user_context(env):
     )
 
 
+def _observe_response(response, request, context, secret):
+    status = response.status
+    event = {
+        "request_id": response.request_id,
+        "config_version": response.meta.get("config_version"),
+        "status": status,
+        "latency_ms": response.meta.get("latency_ms", 0),
+        "result_count": response.counts.get("all", 0),
+        "user_context_hash": hash_value(
+            secret,
+            "%s|%s" % (context.uid, ",".join(map(str, context.company_ids))),
+        ),
+    }
+    if request.raw_query:
+        event["raw_query_hash"] = hash_value(secret, request.raw_query)
+    event["conditions_hash"] = hash_value(
+        secret,
+        repr((request.parsed_conditions, request.refinement_conditions)),
+    )
+    if status == "PARTIAL_SUCCESS":
+        event["failed_resources"] = response.meta.get("failed_resources", [])
+        log_event("warning", "gs.search.partial", event)
+    elif status in {"FAILED", "TIMEOUT"}:
+        first_error = response.errors[0] if response.errors else {}
+        event.update(
+            {
+                "error_code": first_error.get("code", status),
+                "retryable": first_error.get("retryable", status == "TIMEOUT"),
+            }
+        )
+        log_event("error", "gs.search.failed", event)
+    else:
+        log_event("info", "gs.search.completed", event)
+    return response
+
+
 class SearchService:
     def search(self, env, request, domain_key):
         context = user_context(env)
         request_id = str(uuid.uuid4())
         _request_owners[request_id] = context.uid
         if not _limiter.acquire(context.uid):
+            log_event(
+                "warning",
+                "gs.search.rate_limited",
+                {"request_id": request_id, "latency_ms": 0},
+            )
             return merge(
                 [_failure_outcome("RATE_LIMITED")],
                 request_id,
@@ -61,6 +103,11 @@ class SearchService:
         try:
             validate_search_request(request)
             if request.limit < 1 or request.limit > 200:
+                log_event(
+                    "warning",
+                    "gs.boundary.rejected",
+                    {"request_id": request_id, "error_code": "INVALID_REQUEST", "boundary": "limit"},
+                )
                 return merge(
                     [_failure_outcome("INVALID_REQUEST")],
                     request_id,
@@ -140,8 +187,13 @@ class SearchService:
                     },
                     cursor_secret.encode(),
                 )
-            return response
+            return _observe_response(response, request, context, cursor_secret)
         except RequestBoundaryError:
+            log_event(
+                "warning",
+                "gs.boundary.rejected",
+                {"request_id": request_id, "error_code": "INVALID_REQUEST", "boundary": "request"},
+            )
             return merge([_failure_outcome("INVALID_REQUEST")], request_id, 0, 0, None)
         except ConfigurationError:
             return merge(
@@ -170,4 +222,5 @@ class SearchService:
         if _request_owners.get(request_id) != env.uid:
             return False
         _cancelled.add(request_id)
+        log_event("info", "gs.search.cancelled", {"request_id": request_id, "latency_ms": 0})
         return True
