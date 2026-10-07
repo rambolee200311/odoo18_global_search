@@ -5,8 +5,8 @@
 | 项 | 内容 |
 |---|---|
 | Coding Contract | CC-010 |
-| 版本 | v0.1 DRAFT |
-| 状态 | DRAFT，待评审和批准冻结 |
+| 版本 | v0.1 FROZEN |
+| 状态 | FROZEN，进入实施 |
 | Intent ID | `GS-SEARCH-UPGRADE-STRATEGY` |
 | 上游 SRS | [SRS_global_search](../../requirement/SRS_global_search.md) v1.4 FROZEN |
 | 上游 TDD | [TDD_global_search](../../design/TDD_global_search.md) v0.3 FROZEN |
@@ -118,4 +118,16 @@
 - 完成 IHR、ATR、HVR 和隔离数据库报告；
 - 未通过回滚演练不得进入发布状态。
 
-未经用户批准冻结，不得实施 CC-010。
+## 7. 冻结批准
+
+- 用户批准冻结：2026-10-07 18:48（+08:00）；
+- 实施范围：升级前置检查、Published 配置完整性校验、迁移审计和失败关闭；
+- 索引物理迁移在没有现有索引模型前不执行破坏性操作；
+- CC-010 状态：FROZEN，进入实施。
+
+## 8. 实施结论
+
+- Published 配置非破坏性 preflight 已实现并通过 Odoo 测试；
+- migration 入口、checksum 校验和升级审计已实现；
+- 隔离数据库备份恢复、物理索引故障演练和完整回滚仍是后续验收项；
+- CC-010 状态：FROZEN，首轮实施完成，ATR 保持 PARTIAL。

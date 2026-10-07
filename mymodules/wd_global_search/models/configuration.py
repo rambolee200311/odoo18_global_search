@@ -546,7 +546,13 @@ class AuditEvent(models.Model):
     _order = "create_date desc, id desc"
 
     action = fields.Selection(
-        [("publish", "Publish"), ("retire", "Retire"), ("reject", "Reject"), ("invalidate", "Invalidate")],
+        [
+            ("publish", "Publish"),
+            ("retire", "Retire"),
+            ("reject", "Reject"),
+            ("invalidate", "Invalidate"),
+            ("upgrade", "Upgrade"),
+        ],
         required=True,
     )
     domain_id = fields.Many2one("wd.gs.config.domain", ondelete="set null", index=True)
