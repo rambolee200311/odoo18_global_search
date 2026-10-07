@@ -5,8 +5,8 @@
 | 项 | 内容 |
 |---|---|
 | Coding Contract | CC-011 |
-| 版本 | v0.1 DRAFT |
-| 状态 | DRAFT，待评审和批准冻结 |
+| 版本 | v0.1 FROZEN |
+| 状态 | FROZEN，进入实施 |
 | Intent ID | `GS-SEARCH-FINAL-ACCEPTANCE` |
 | 上游 SRS | [SRS_global_search](../../requirement/SRS_global_search.md) v1.4 FROZEN |
 | 上游 TDD | [TDD_global_search](../../design/TDD_global_search.md) v0.3 FROZEN |
@@ -78,4 +78,10 @@ CC-011 只负责最终验收、补测、范围决定和发布候选交付，不�
 - 不删除失败记录、不修改历史审计、不静默降低门槛；
 - 不把 PARTIAL 或 BLOCKED 结论写成 PASS。
 
-未经用户批准冻结，不得实施 CC-011。
+## 7. 冻结批准与首轮实施
+
+- 用户批准冻结：2026-10-07 19:14（+08:00）；
+- 已进入最终验收实施；
+- 首轮 compileall、`git diff --check`、Odoo 模块测试和 TV-06 回归通过；
+- 当前结论仍为 `PARTIAL`，未将未执行的隔离数据库回滚和浏览器矩阵写成 PASS；
+- CC-011 状态：FROZEN，进入实施。
