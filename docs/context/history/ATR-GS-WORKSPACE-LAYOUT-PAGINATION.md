@@ -109,10 +109,10 @@
 | ID | Run | Status | Description | Follow-up |
 |---|---|---|---|---|
 | ATR-ISSUE-001 | ATR-RUN-001 | Resolved | Standalone Python import bypassed Odoo add-on namespace; no tests executed | Correct Odoo-shell invocation used in ATR-RUN-002 |
-| ATR-ISSUE-002 | Not run | Open | Final browser regression is pending after the reported Odoo blank pages and page-2 `Search unavailable` fixes | Complete HVR before declaring CC-005 DoD satisfied |
+| ATR-ISSUE-002 | HVR-RUN-001 | Open | Human confirmed Odoo shell/Form Action, page 2, and no-Preview presentation; page-size choices and Preview API network absence remain NOT RUN | Complete remaining HVR scenarios before declaring CC-005 DoD satisfied |
 
 ## 8. Handoff to HVR
 
 - Unit and static checks are recorded above; they do not prove browser behavior.
-- Human verification remains pending for `/odoo`, the configured Form Action, query `009` page-2 navigation, page sizes, and no-Preview behavior at Desktop/Narrow widths.
+- Human verification confirmed `/odoo`, the configured Form Action, query `009` page-2 navigation, and no-Preview presentation at Desktop/Narrow widths; page-size controls and Preview API network absence remain pending.
 - SRS FR-SW-004 remains explicitly unmet under the user-approved product deviation; SRS/TDD were not modified.

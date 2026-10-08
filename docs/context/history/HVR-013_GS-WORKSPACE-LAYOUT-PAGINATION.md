@@ -11,8 +11,8 @@
 | Module | `wd_global_search` |
 | Environment | Odoo 18, `http://127.0.0.1:8091`, database `odoo18ce` |
 | Code Baseline | `60d0778` |
-| Browser / Device | Awaiting human run details |
-| Human Verifier | Not yet recorded |
+| Browser / Device | User-shared browser; exact browser/device not recorded |
+| Human Verifier | `lijianqiang` |
 
 ## 2. Human Verification Contract Baseline
 
@@ -27,24 +27,25 @@
 | Metric | Value |
 |---|---|
 | Human Verification Required | Yes |
-| Required scenarios | 5 |
-| PASS / FAIL / BLOCKED | 0 / 0 / 0 |
-| NOT RUN | 5 |
+| Required scenarios | 6 |
+| PASS / FAIL / BLOCKED | 4 / 0 / 0 |
+| NOT RUN | 2 |
 | Current code baseline | `60d0778` |
-| Current valid evidence | None |
-| Evidence baseline status | Incomplete |
+| Current valid evidence | `HVR-RUN-001` (partial scenario coverage) |
+| Evidence baseline status | Partial |
 
-No human verifier or HVR run has been recorded. **No PASS is claimed.**
+The verifier confirmed the Odoo shell/Form Action, query `009` page 2, and no-Preview presentation. Page-size controls and absence of Preview API network requests were not explicitly confirmed and remain NOT RUN.
 
 ## 4. Human Verification Coverage Matrix
 
 | Requirement | Scenario | Current Evidence | Result |
 |---|---|---|---|
-| Odoo shell loads | HVR-SCN-001 | — | NOT RUN |
-| Configured Form Action opens | HVR-SCN-002 | — | NOT RUN |
-| Query `009` page navigation works | HVR-SCN-003 | — | NOT RUN |
+| Odoo shell loads | HVR-SCN-001 | HVR-RUN-001 | PASS |
+| Configured Form Action opens | HVR-SCN-002 | HVR-RUN-001 | PASS |
+| Query `009` page navigation works | HVR-SCN-003 | HVR-RUN-001 | PASS |
 | Page-size controls and dynamic page links work | HVR-SCN-004 | — | NOT RUN |
-| Preview absent at Desktop/Narrow; no Preview request | HVR-SCN-005 | — | NOT RUN |
+| Preview absent at Desktop/Narrow | HVR-SCN-005 | HVR-RUN-001 | PASS |
+| Workspace sends no Preview API request | HVR-SCN-006 | — | NOT RUN |
 
 ## 5. Verification Scenarios
 
@@ -78,19 +79,37 @@ No human verifier or HVR run has been recorded. **No PASS is claimed.**
 
 ### HVR-SCN-005 — Results-only responsive Workspace
 
-- **Purpose:** Confirm no Preview UI or request at Desktop and Narrow widths.
-- **Steps:** At a desktop width and 375px width, search and select a record; inspect the Workspace and network activity.
-- **Expected:** No Preview pane at either width and no `/wd_global_search/api/preview` request; Narrow page scroll and configured Action remain usable.
-- **Evidence:** Human observation and browser network panel.
+- **Purpose:** Confirm no Preview UI at Desktop and Narrow widths.
+- **Steps:** At Desktop and Narrow widths, search and select a record.
+- **Expected:** No Preview pane at either width; Narrow page scroll and configured Action remain usable.
+- **Evidence:** Human confirmation in the current session.
+
+### HVR-SCN-006 — No Preview API request
+
+- **Purpose:** Confirm selecting a result does not make a hidden Preview request.
+- **Steps:** Observe browser network activity while selecting results at Desktop and Narrow widths.
+- **Expected:** No `/wd_global_search/api/preview` request is issued by the Workspace.
+- **Evidence:** Browser network panel; NOT RUN.
 
 ## 6. Verification Run History
 
-No `HVR-RUN` has been recorded. The prior user reports of blank Odoo pages and page-two `Search unavailable` are known issues to retest, not evidence that the fixes pass.
+### HVR-RUN-001
+
+| Field | Value |
+|---|---|
+| Date | 2026-10-08 |
+| Human Verifier | `lijianqiang` |
+| Execution Assistance | Agent/tool-assisted; human verifier confirmed the observed outcomes |
+| Code Baseline | `60d0778` |
+| Environment | Odoo 18, `http://127.0.0.1:8091`, database `odoo18ce` |
+| Scope | Odoo shell/Form Action, query `009` page 2, Desktop/Narrow no-Preview presentation |
+| Result | PARTIAL — four scenarios confirmed; two remain NOT RUN |
+| Evidence | Human confirmation in the current conversation; no screenshot/network capture attached |
 
 ## 7. Findings / Issues
 
-No formal `HVR-FIND` is recorded without a human verification run. The reported symptoms remain pending confirmation against code baseline `60d0778`.
+No new finding was reported in the confirmed scenarios. The prior blank-page and page-two symptoms were reported as resolved by the verifier for the scenarios listed in HVR-RUN-001.
 
 ## 8. Handoff
 
-This HVR record is intentionally incomplete pending a human verifier's execution and confirmation. The SRS FR-SW-004 Preview requirement remains an explicitly documented, user-approved deviation; this HVR does not mark that SRS requirement as satisfied.
+This HVR remains partial: verify HVR-SCN-004 and HVR-SCN-006 before closure. The SRS FR-SW-004 Preview requirement remains an explicitly documented, user-approved deviation; this HVR does not mark that SRS requirement as satisfied.
