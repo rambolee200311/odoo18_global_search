@@ -60,7 +60,7 @@ class GlobalSearchController(http.Controller):
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Global Search</title>
-  <link rel="stylesheet" href="/wd_global_search/static/src/css/preview.css">
+  <link rel="stylesheet" href="/wd_global_search/static/src/css/preview.css?v=cc005-v031">
 </head>
 <body>
   <main class="wd-workspace" data-testid="global-search-workspace">
@@ -69,7 +69,7 @@ class GlobalSearchController(http.Controller):
         <p class="wd-eyebrow">WD GLOBAL SEARCH</p>
         <h1>Search Workspace</h1>
       </div>
-      <span class="wd-readonly-badge" data-testid="readonly-badge">READ ONLY PREVIEW</span>
+      <span class="wd-readonly-badge" data-testid="readonly-badge">READ ONLY SEARCH</span>
     </header>
     <form class="wd-query-bar" aria-label="Search">
       <label for="wd-query">Search query</label>
@@ -99,15 +99,26 @@ class GlobalSearchController(http.Controller):
     <section class="wd-layout">
       <div class="wd-results" data-testid="results-pane">
         <h2>Accessible records</h2>
-        <p class="wd-muted">Select a resource to load one record under your current Odoo permissions.</p>
+        <p class="wd-muted">Select a result; double-click to open its configured Odoo form.</p>
         <div id="wd-result-list" data-testid="result-list"></div>
+        <div class="wd-pagination" data-testid="pagination" hidden>
+          <label>Rows per page
+            <select id="wd-page-size" data-testid="page-size">
+              <option value="10" selected>10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </label>
+          <span id="wd-page-summary" class="wd-page-summary"
+                data-testid="page-summary" aria-live="polite"></span>
+          <nav id="wd-page-controls" class="wd-page-controls"
+               data-testid="page-controls" aria-label="Accessible records pages"></nav>
+        </div>
       </div>
-      <aside class="wd-preview" data-testid="preview-pane" aria-live="polite">
-        <div class="wd-preview-empty">Choose a record to preview it.</div>
-      </aside>
     </section>
   </main>
-  <script src="/wd_global_search/static/src/js/preview.js?v=cc012"></script>
+  <script src="/wd_global_search/static/src/js/preview.js?v=cc005-v031"></script>
 </body>
 </html>""" % tabs
         return request.make_response(page, headers=[("Content-Type", "text/html; charset=utf-8")])

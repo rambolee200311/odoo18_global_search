@@ -5,18 +5,25 @@
 | 项 | 内容 |
 |---|---|
 | Coding Contract | CC-004 |
-| 版本 | v0.2 FROZEN |
-| 状态 | FROZEN，进入实施 |
+| 版本 | v0.3 FROZEN |
+| 状态 | FROZEN；Workspace 不嵌入 Preview，保留 Preview API 既有只读/权限契约 |
 | Intent ID | `GS-SEARCH-PREVIEW-CONTAINER` |
 | 上游 SRS | [SRS_global_search](../../requirement/SRS_global_search.md) v1.4 FROZEN |
 | 上游 TDD | [TDD_global_search](../../design/TDD_global_search.md) v0.3 FROZEN |
 | 实施计划 | [IMPLEMENTATION_PLAN_global_search](../../implementation/IMPLEMENTATION_PLAN_global_search.md) v0.2 FROZEN，Phase 4 |
 | 前置 CC | [CC-001](./CC-001_global_search_configuration_foundation.md) v1.0 FROZEN；[CC-002](./CC-002_global_search_service_core.md) v0.2 FROZEN；[CC-003](./CC-003_global_search_permission_boundary.md) v0.2 FROZEN |
 | 模块 | `wd_global_search` |
-| 目标 | 将当前用户可访问的真实 Odoo Form View 包装为不可写、失败关闭的只读 Preview 容器 |
-| 批准冻结 | 2026-10-05 20:20，用户批准完成 HVR 后冻结并提交 |
+| 目标 | 维护当前用户可访问的真实 Odoo Form View 只读服务契约；Workspace 不嵌入 Preview，用户通过 configured Odoo Form Action 打开记录 |
+| 批准冻结 | v0.2：2026-10-05 20:20；v0.3：2026-10-08 15:35，用户批准 Workspace 所有宽度不显示 Preview 并进入实施 |
 
-本 CC 只冻结 Phase 4 Preview 容器，不实现 Search Workspace 查询输入、Query Understanding、Refinement UI、前端搜索结果流程或索引性能。
+本 CC 冻结只读 Preview 服务的安全行为，以及 Workspace 不嵌入 Preview 的产品行为；不实现 Search Workspace 查询输入、Query Understanding、Refinement UI、前端搜索结果流程或索引性能。
+
+### 修订记录
+
+| 版本 | 变更 |
+|---|---|
+| v0.2 | 冻结只读 Form View Preview 容器 |
+| v0.3 FROZEN | Workspace 所有宽度均不显示/请求 Preview；记录使用 configured Odoo Form Action 打开；保留 Preview API 只读/权限契约，不修改 SRS/TDD |
 
 ## 1. 上游与范围
 
@@ -26,7 +33,7 @@
 |---|---|---|
 | SRS FR-PM-001~008 | 当前用户和字段权限 | Preview 读取遵守 CC-003 |
 | SRS FR-ER-002~003 | 安全状态和错误协议 | 删除/失权统一安全失败 |
-| SRS FR-SW-004 | Form Preview | 在范围内 |
+| SRS FR-SW-004 | 桌面 Form Preview | 与本次批准的 Workspace 产品行为冲突；SRS 保持原文，FR-SW-004 不得报告为已满足 |
 | SRS FR-SW-005 | 打开完整记录 | 在范围内 |
 | SRS FR-SW-007 | Form Preview 编辑能力 | 在范围内，Preview 明确禁止编辑 |
 | SRS BR-013 | 结果打开和记录预览 | 当前记录加载 |
@@ -48,7 +55,7 @@ DDD：N/A，不得虚构领域对象或不变式。
 - 服务端只读 Preview API；
 - 编辑、创建、保存、删除、复制、Chatter、附件、活动和按钮双层阻断；
 - 记录删除或权限变化时返回 `PERMISSION_OR_DELETED`；
-- 桌面分栏和窄屏单栏 Preview 布局；
+- Workspace 所有宽度不嵌入 Preview；结果通过 configured Odoo Form Action 打开；
 - Preview 单元、集成、浏览器和只读写操作回归测试；
 - 与 CC-003 的当前用户权限边界集成。
 
@@ -59,6 +66,7 @@ DDD：N/A，不得虚构领域对象或不变式。
 - 新增业务模型、改变业务 ACL 或修改官方代码；
 - PostgreSQL 索引、性能压测和外部搜索引擎；
 - 业务数据写入、迁移和 `sudo()` 权限旁路。
+- 修改 SRS/TDD；按用户指示，本次不修改这两个冻结文档，并记录与其 Preview 要求的偏离。
 
 ## 2. 变更边界
 
@@ -66,6 +74,7 @@ DDD：N/A，不得虚构领域对象或不变式。
 
 - `controllers/main.py` 的只读 Preview API；
 - `static/src/` Preview 容器 JS/CSS；
+- Workspace 页面/静态资源移除 Preview pane 与调用，保留结果到 configured Form Action 导航；
 - Preview 服务、字段序列化和错误状态；
 - 当前用户 UI/ORM 集成测试、浏览器 HVR 和文档记录。
 
@@ -86,7 +95,7 @@ DDD：N/A，不得虚构领域对象或不变式。
 | CC4-CHANGE-002 | UI 只读阻断与服务端写保护未统一 | 创建/编辑/保存/删除/复制/按钮均不可执行 | CC4-TEST-002 |
 | CC4-CHANGE-003 | Chatter、附件和活动可能成为写入口 | Preview 隐藏或拒绝所有写相关入口 | CC4-TEST-003 |
 | CC4-CHANGE-004 | 删除或失权状态缺少统一响应 | 返回 `PERMISSION_OR_DELETED`，不泄露记录细节 | CC4-TEST-004 |
-| CC4-CHANGE-005 | 桌面/窄屏布局缺少验证 | 桌面分栏、375px 窄屏单栏可用 | CC4-TEST-005 |
+| CC4-CHANGE-005 | Workspace 仍可能显示 Preview | 所有宽度均无 Preview pane/双栏布局/Preview API 请求，结果打开 Action 不变 | CC4-TEST-005 |
 | CC4-CHANGE-006 | Preview 与 CC-003 权限边界缺少回归证据 | 只显示当前用户授权字段和记录 | CC4-TEST-006 |
 
 ### 3.1 Preview 与 CC-003 权限边界交互
@@ -97,6 +106,14 @@ DDD：N/A，不得虚构领域对象或不变式。
 - `filter_readable_fields` 返回部分不可读字段时，仅序列化可读字段；
 - 全部字段不可读时返回 `PERMISSION_OR_DELETED`；
 - 任何权限异常、记录删除或 View 加载异常均失败关闭。
+
+### 3.2 Workspace 展示与 SRS 偏离
+
+- Search Workspace 在所有响应式宽度均不渲染 Preview pane，不调用 `/wd_global_search/api/preview`；
+- Workspace 结果选择只更新选中状态；双击/打开使用既有 configured Odoo Form Action；
+- `/wd_global_search/api/preview` 如被其他受信调用方直接使用，仍遵循本 CC 的当前用户权限、字段过滤、只读和失败关闭契约；不得通过 Workspace UI 访问；
+- 用户于 2026-10-08 明确批准本 Workspace 产品例外，并要求保持 SRS/TDD 不变；
+- SRS v1.4 FR-SW-004 与 TDD v0.3 §7.4 仍要求 Desktop Preview。此 CC 不宣称该项已满足，且不通过改变 CC-003/只读权限语义绕过此差异。
 
 ## 4. 既有行为保留
 
@@ -111,7 +128,7 @@ DDD：N/A，不得虚构领域对象或不变式。
 
 | 接口 | 规则 |
 |---|---|
-| `GET /wd_global_search` | 只提供 Preview 容器页面，不提供写入口 |
+| `GET /wd_global_search` | 提供 Results-only Search Workspace；不嵌入 Preview pane |
 | `GET /wd_global_search/api/preview` | 只读取当前用户可访问记录；异常返回 `PERMISSION_OR_DELETED` 或 `INVALID_REQUEST` |
 | Form View | 使用当前用户环境加载，不信任请求体用户/公司声明 |
 | 写操作 | Preview 页面和服务端 API 均不得调用 create/write/unlink/copy |
@@ -156,10 +173,10 @@ Preview 失败响应：
 | CC4-TEST-002 | 写入口阻断 | 浏览器+RPC 监控 | 无 create/write/unlink/copy/按钮写 RPC | 是 |
 | CC4-TEST-003 | Chatter/附件/活动阻断 | 浏览器 | 不显示或不能执行写相关入口 | 是 |
 | CC4-TEST-004 | 删除/失权记录 | 集成+浏览器 | `PERMISSION_OR_DELETED`，不泄露业务数据 | 是 |
-| CC4-TEST-005 | 桌面和 375px 窄屏 | 浏览器 | 分栏/单栏布局符合契约，无控制台错误 | 是 |
+| CC4-TEST-005 | Desktop/Narrow Workspace 无 Preview | 浏览器 | 所有宽度无 Preview pane/双栏及 `/api/preview` 请求；configured Action 可用 | 是 |
 | CC4-TEST-006 | CC-003 权限回归 | 多用户 ORM+浏览器 | 只返回当前用户授权字段和记录 | 是 |
 | CC4-TEST-007 | Search/Config 回归 | 模块+浏览器 | CC-001/CC-002 既有行为不回归 | 是 |
-| CC4-TEST-008 | 记录切换 | 浏览器 | Preview 更新，Raw Query 和 Refinement 状态保持 | 是 |
+| CC4-TEST-008 | 记录打开 Action | 浏览器 | 单击选择不请求 Preview；双击/打开进入正确的 configured Odoo Form Action | 是 |
 
 写操作监控要求：
 
@@ -182,11 +199,11 @@ Preview 失败响应：
 
 1. CC4-CHANGE-001~006 全部实现并有 IHR；
 2. CC4-TEST-001~007 全部执行并有 ATR；
-3. 至少三种模型 Form View 完成浏览器 HVR；
-4. 桌面和 375px 窄屏验证通过；
+3. 既有只读 Preview API 的权限/失败关闭行为完成服务端回归；
+4. Desktop 和 375px 窄屏均无 Workspace Preview；结果列表和 configured Action 可用；
 5. 写 RPC、Chatter、附件和活动入口均被阻断；
 6. CC-003 权限回归通过；
-7. 无官方代码修改、无业务数据 `sudo()`、无 Workspace 完成宣称。
+7. 无官方代码修改、无业务数据 `sudo()`；SRS FR-SW-004 的例外明确记录，不得宣称 SRS Preview 需求已满足。
 8. Preview 加载时间 P95 ≤ 1 秒；该项为软闸门，作为 TV-01 输入。
 
 ## 8. 实施结构
@@ -308,24 +325,19 @@ Fixture 位置：`tests/fixtures/preview/`，使用 Python/ORM 创建：
 
 验收场景：
 
-1. 用户打开记录，Preview 显示真实 Form View；
-2. Preview 无编辑、保存、删除按钮；
-3. Chatter、附件和活动不可写；
-4. 写 RPC 被拒绝且调用次数为 0；
-5. 删除或失权记录返回 `PERMISSION_OR_DELETED`；
-6. 切换记录时 Preview 更新，Raw Query/Refinement 保持；
-7. 桌面和 375px 窄屏布局通过；
-8. Chrome、Firefox、Safari 无控制台错误。
+1. Workspace 不显示 Preview pane，单击结果不调用 `/api/preview`；
+2. 双击/打开结果进入 configured Odoo Form Action；
+3. Form Action 保持只读，写 RPC 调用次数为 0；
+4. 只读 Preview API 若由受信服务直接调用，继续遵守当前用户权限和失败关闭契约；
+5. Desktop 和 375px Narrow 均无 Preview pane，无控制台错误；
+6. SRS FR-SW-004 的获批偏离保留为未满足项，不记作 SRS PASS。
 
 HVR 场景：
 
-1. 人工打开 Preview 并确认只读；
-2. 尝试编辑、保存、删除；
-3. 尝试 Chatter、附件和活动操作；
-4. 尝试业务按钮；
-5. 检查控制台无错误；
-6. 检查无写 RPC；
-7. 切换至少两条记录；
-8. 验证窄屏单栏布局。
+1. 人工在 Desktop 和 Narrow Workspace 搜索并确认没有 Preview；
+2. 单击结果并确认没有 Preview API 请求；
+3. 双击/打开结果并确认进入 configured Odoo Form Action；
+4. 检查控制台无错误且无业务写 RPC；
+5. 确认 SRS FR-SW-004 偏离被如实记录。
 
 当前状态：**CC-004 v0.2 DRAFT / Ready for Freeze**。

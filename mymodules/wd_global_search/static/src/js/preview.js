@@ -2,13 +2,33 @@
     "use strict";
 
     const list = document.querySelector("#wd-result-list");
-    const preview = document.querySelector("[data-testid='preview-pane']");
     const queryInput = document.querySelector("[data-testid='search-query']");
     const form = document.querySelector(".wd-query-bar");
     const conditionView = document.querySelector("#wd-effective-conditions");
     const activeView = document.querySelector("#wd-active-refinements");
-    const state = {rawQuery: "", resources: new Set(), refinements: [], cursor: null};
-    let currentPreviewRequest;
+    const pagination = document.querySelector("[data-testid='pagination']");
+    const pageSizeInput = document.querySelector("[data-testid='page-size']");
+    const pageSummary = document.querySelector("[data-testid='page-summary']");
+    const pageControls = document.querySelector("[data-testid='page-controls']");
+    if (!list || !queryInput || !form || !conditionView || !activeView
+        || !pagination || !pageSizeInput || !pageSummary || !pageControls) {
+        return;
+    }
+    function isNarrowWorkspace() {
+        return window.matchMedia("(max-width: 700px)").matches;
+    }
+
+    const state = {
+        rawQuery: "",
+        resources: new Set(),
+        refinements: [],
+        cursor: null,
+        pageSize: 10,
+        currentPage: 1,
+        totalResultCount: 0,
+        hasSearched: false,
+    };
+    let searchSequence = 0;
 
     function text(value) {
         if (value === false || value === null || value === undefined || value === "") {
@@ -48,6 +68,7 @@
             state.refinements.push(refinement);
         }
         state.cursor = null;
+        state.currentPage = 1;
         search();
     }
 
@@ -63,6 +84,7 @@
             button.addEventListener("click", () => {
                 state.refinements.splice(Number(button.dataset.refinementIndex), 1);
                 state.cursor = null;
+                state.currentPage = 1;
                 search();
             });
         });
@@ -78,35 +100,6 @@
         });
     }
 
-    function renderPreview(data) {
-        if (data.status !== "SUCCESS") {
-            preview.innerHTML = '<div class="wd-safe-message" data-testid="preview-safe-state">'
-                + "Record unavailable or permission changed</div>";
-            return;
-        }
-        const fields = data.fields.map((field) => (
-            '<div class="wd-field"><span class="wd-field-label">'
-            + text(field.label) + '</span><span class="wd-field-value">'
-            + text(field.value) + "</span></div>"
-        )).join("");
-        preview.innerHTML = '<div class="wd-preview-card" data-testid="readonly-form-preview">'
-            + '<span class="wd-status">READ ONLY · FORM VIEW ' + text(data.view_id) + "</span>"
-            + "<h3>" + text(data.display_name) + "</h3>" + fields + "</div>";
-    }
-
-    async function loadPreview(model, recordId) {
-        if (currentPreviewRequest) {
-            currentPreviewRequest.abort();
-        }
-        currentPreviewRequest = new AbortController();
-        const query = new URLSearchParams({model: model, record_id: recordId});
-        const response = await fetch("/wd_global_search/api/preview?" + query.toString(), {
-            credentials: "same-origin",
-            headers: {"Accept": "application/json"},
-            signal: currentPreviewRequest.signal,
-        });
-        renderPreview(await response.json());
-    }
 
     async function openNativeForm(model, recordId) {
         const query = new URLSearchParams({model: model, record_id: recordId});
@@ -116,7 +109,11 @@
         });
         const data = await response.json();
         if (data.status !== "SUCCESS") {
-            renderPreview(data);
+            list.insertAdjacentHTML(
+                "afterbegin",
+                '<p class="wd-safe-message" data-testid="action-error">'
+                    + text(data.status || "Record unavailable") + "</p>"
+            );
             return;
         }
         window.open(data.url, "_blank", "noopener,noreferrer");
@@ -135,7 +132,8 @@
         list.innerHTML = data.results.map((result) => {
             const title = result.display_name || result.name || result._record_id;
             const model = result._model;
-            return '<button class="wd-record-card" type="button" data-model="' + model
+            return '<button class="wd-record-card" type="button" data-testid="record-card"'
+                + ' aria-pressed="false" data-model="' + model
                 + '" data-record-id="' + result._record_id + '"><strong>' + text(title)
                 + '</strong><span>' + text(result._resource) + "</span></button>";
         }).join("");
@@ -146,24 +144,99 @@
             );
         }
         list.querySelectorAll("button").forEach((button) => {
-            button.addEventListener("click", () => loadPreview(
-                button.dataset.model, button.dataset.recordId
-            ));
+            button.addEventListener("click", () => {
+                list.querySelectorAll(".wd-record-card").forEach((record) => {
+                    record.setAttribute("aria-pressed", "false");
+                });
+                button.setAttribute("aria-pressed", "true");
+            });
             button.addEventListener("dblclick", () => openNativeForm(
                 button.dataset.model, button.dataset.recordId
             ));
-            button.title = "Double-click to open the read-only Odoo form";
+            button.title = "Double-click to open the configured read-only Odoo form";
         });
     }
 
-    async function search() {
+    function pageNumberWindow(currentPage, totalPages) {
+        if (totalPages <= 7) {
+            return Array.from({length: totalPages}, (_, index) => index + 1);
+        }
+        if (currentPage <= 4) {
+            return [1, 2, 3, 4, 5, "…", totalPages];
+        }
+        if (currentPage >= totalPages - 3) {
+            return [1, "…", ...Array.from({length: 5}, (_, index) => totalPages - 4 + index)];
+        }
+        return [1, "…", currentPage - 1, currentPage, currentPage + 1, "…", totalPages];
+    }
+
+    function renderPagination(data) {
+        if (!["SUCCESS", "EMPTY", "PARTIAL_SUCCESS"].includes(data.status)) {
+            pagination.hidden = true;
+            return;
+        }
+        pagination.hidden = !state.hasSearched;
+        const count = Number(data.counts && data.counts.all);
+        if (!Number.isSafeInteger(count) || count < 0) {
+            pageSummary.textContent = "Pagination unavailable: exact result count is missing.";
+            pageControls.hidden = true;
+            return;
+        }
+        if (data.status === "PARTIAL_SUCCESS") {
+            pageSummary.textContent = "Partial results; total pages are unavailable.";
+            pageControls.hidden = true;
+            return;
+        }
+        state.totalResultCount = count;
+        const totalPages = Math.ceil(count / state.pageSize);
+        pageSummary.textContent = count
+            ? "Showing " + ((state.currentPage - 1) * state.pageSize + 1)
+                + "–" + Math.min(state.currentPage * state.pageSize, count)
+                + " of " + count
+            : "0 records";
+        pageControls.hidden = totalPages <= 1;
+        if (totalPages <= 1) {
+            pageControls.innerHTML = "";
+            return;
+        }
+
+        const button = (label, action, page, disabled, current) => (
+            '<button class="wd-page-button" type="button" data-page-action="' + action
+            + '" data-page="' + page + '" aria-label="' + label
+            + '"' + (current ? ' aria-current="page"' : "")
+            + (disabled ? " disabled" : "") + ">" + label + "</button>"
+        );
+        const entries = pageNumberWindow(state.currentPage, totalPages).map((entry) => (
+            entry === "…"
+                ? '<span class="wd-page-ellipsis" aria-hidden="true">…</span>'
+                : button(
+                    String(entry),
+                    "page",
+                    entry,
+                    false,
+                    entry === state.currentPage
+                )
+        ));
+        pageControls.innerHTML = [
+            button("First", "first", 1, state.currentPage === 1, false),
+            button("Previous", "previous", state.currentPage - 1, state.currentPage === 1, false),
+            ...entries,
+            button("Next", "next", state.currentPage + 1, state.currentPage === totalPages, false),
+            button("Last", "last", totalPages, state.currentPage === totalPages, false),
+        ].join("");
+    }
+
+    async function search(scrollToResults = false) {
+        const requestSequence = ++searchSequence;
+        state.hasSearched = true;
         const payload = {
             query: state.rawQuery,
             conditions: [],
             refinement_conditions: conditionPayload(),
             resources: Array.from(state.resources),
-            limit: 20,
-            cursor: state.cursor,
+            limit: state.pageSize,
+            offset: (state.currentPage - 1) * state.pageSize,
+            cursor: null,
         };
         list.innerHTML = '<p class="wd-muted">Searching…</p>';
         try {
@@ -175,19 +248,68 @@
             });
             const envelope = await response.json();
             const data = envelope.result || envelope;
+            if (requestSequence !== searchSequence) {
+                return;
+            }
+            if (["SUCCESS", "EMPTY"].includes(data.status)) {
+                const count = Number(data.counts && data.counts.all);
+                if (Number.isSafeInteger(count) && count >= 0) {
+                    const totalPages = Math.ceil(count / state.pageSize);
+                    const lastPage = Math.max(totalPages, 1);
+                    if (state.currentPage > lastPage) {
+                        state.currentPage = lastPage;
+                        state.cursor = null;
+                        return search(scrollToResults);
+                    }
+                }
+            }
             renderCounts(data.counts || {});
             renderResults(data);
             renderUnderstanding(data.effective_conditions || conditionPayload());
+            renderPagination(data);
+            list.scrollTop = 0;
+            if (scrollToResults && isNarrowWorkspace()) {
+                document.querySelector("[data-testid='results-pane']")
+                    .scrollIntoView({block: "start"});
+            }
         } catch (error) {
-            list.innerHTML = '<p class="wd-safe-message">Search unavailable</p>';
+            if (requestSequence !== searchSequence) {
+                return;
+            }
+            console.error("Global Search request failed", error);
+            list.innerHTML = '<p class="wd-safe-message" data-testid="search-error">'
+                + "Search unavailable</p>";
+            pagination.hidden = true;
         }
     }
+
+    pageControls.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-page-action]");
+        if (!button || button.disabled) {
+            return;
+        }
+        state.currentPage = Number(button.dataset.page);
+        state.cursor = null;
+        search(true);
+    });
+
+    pageSizeInput.addEventListener("change", () => {
+        const pageSize = Number(pageSizeInput.value);
+        if (![10, 20, 50, 100].includes(pageSize)) {
+            return;
+        }
+        state.pageSize = pageSize;
+        state.currentPage = 1;
+        state.cursor = null;
+        search();
+    });
 
     form.addEventListener("submit", (event) => {
         event.preventDefault();
         state.rawQuery = queryInput.value.trim();
         state.refinements = [];
         state.cursor = null;
+        state.currentPage = 1;
         document.querySelector("#wd-date-refinement").value = "";
         document.querySelector("#wd-date-start").value = "";
         document.querySelector("#wd-date-end").value = "";
@@ -217,6 +339,7 @@
                 );
             });
             state.cursor = null;
+            state.currentPage = 1;
             search();
         });
     });
@@ -241,6 +364,7 @@
             state.refinements.push({dimension: "state", value: event.target.value, operator: "="});
         }
         state.cursor = null;
+        state.currentPage = 1;
         search();
     });
     document.addEventListener("submit", (event) => event.preventDefault());

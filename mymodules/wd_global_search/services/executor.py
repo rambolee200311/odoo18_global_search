@@ -121,12 +121,17 @@ def _condition_domain(model, fields, relation_paths, resource, conditions, conte
     return domain
 
 
-def execute(env, resource, conditions, limit, context=None):
+def execute(env, resource, conditions, limit, context=None, offset=0):
     started = time.monotonic()
-    outcomes = []
     try:
         authorize_resource(env, resource, context)
-        for model_config in resource.get("models", ()):
+        results = []
+        resource_count = 0
+        remaining_offset = max(0, offset)
+        remaining_limit = max(0, limit)
+        for model_config in sorted(
+            resource.get("models", ()), key=lambda item: item["model_name"]
+        ):
             model_name = model_config["model_name"]
             model = env[model_name]
             fields = [item["name"] for item in model_config.get("fields", ())]
@@ -141,8 +146,18 @@ def execute(env, resource, conditions, limit, context=None):
             domain = _condition_domain(
                 model, fields, relation_paths, resource, conditions, context
             )
-            total_count = model.search_count(domain)
-            records = model.search(domain, limit=limit, order="id asc")
+            model_count = model.search_count(domain)
+            resource_count += model_count
+            model_offset = min(remaining_offset, model_count)
+            remaining_offset -= model_offset
+            if remaining_limit == 0 or model_offset == model_count:
+                continue
+            records = model.search(
+                domain,
+                offset=model_offset,
+                limit=remaining_limit,
+                order="id asc",
+            )
             values = records.read(fields)
             for value in values:
                 value.update(
@@ -152,15 +167,8 @@ def execute(env, resource, conditions, limit, context=None):
                         "_record_id": value["id"],
                     }
                 )
-            outcomes.append(
-                ResourceOutcome(
-                    resource=resource["key"],
-                    status="SUCCESS",
-                    results=values,
-                    count=total_count,
-                    latency=time.monotonic() - started,
-                )
-            )
+            results.extend(values)
+            remaining_limit -= len(values)
     except AuthorizationError as exc:
         return ResourceOutcome(
             resource=resource["key"],
@@ -168,18 +176,17 @@ def execute(env, resource, conditions, limit, context=None):
             error=error(exc.code, resource=resource["key"]),
             latency=time.monotonic() - started,
         )
-    if not outcomes:
+    if not resource.get("models"):
         return ResourceOutcome(
             resource=resource["key"],
             status="FAILED",
             error=error("CONFIGURATION_ERROR", resource=resource["key"]),
             latency=time.monotonic() - started,
         )
-    results = [item for outcome in outcomes for item in outcome.results]
     return ResourceOutcome(
         resource=resource["key"],
         status="SUCCESS",
         results=results,
-        count=len(results),
+        count=resource_count,
         latency=time.monotonic() - started,
     )

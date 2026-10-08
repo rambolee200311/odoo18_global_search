@@ -167,8 +167,11 @@ class SearchService:
                 )
             if request.resource_scope:
                 resources = [item for item in resources if item["key"] in request.resource_scope]
+            resources.sort(key=lambda item: item["key"])
             outcomes = []
             deadline = time.monotonic() + _SEARCH_TIMEOUT_SECONDS
+            remaining_offset = cursor_offset
+            remaining_limit = request.limit
             for resource in resources:
                 if request_id in _cancelled:
                     outcomes.append(_failure_outcome("CANCELLED"))
@@ -176,12 +179,26 @@ class SearchService:
                 if time.monotonic() >= deadline:
                     outcomes.append(_failure_outcome("TIMEOUT"))
                     break
-                fetch_limit = min(max(request.limit + cursor_offset, request.limit), 50)
-                outcomes.append(execute(env, resource, conditions, fetch_limit, context))
+                outcome = execute(
+                    env,
+                    resource,
+                    conditions,
+                    remaining_limit,
+                    context,
+                    offset=remaining_offset,
+                )
+                outcomes.append(outcome)
+                if outcome.status != "SUCCESS":
+                    continue
+                if remaining_offset >= outcome.count:
+                    remaining_offset -= outcome.count
+                    continue
+                remaining_offset = 0
+                remaining_limit = max(0, remaining_limit - len(outcome.results))
             response = merge(
                 outcomes,
                 request_id,
-                cursor_offset,
+                0,
                 request.limit,
                 snapshot_info["version_id"],
             )

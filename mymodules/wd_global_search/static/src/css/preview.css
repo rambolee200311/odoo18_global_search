@@ -9,11 +9,21 @@
     box-sizing: border-box;
 }
 
+html,
+body {
+    min-height: 100%;
+}
+
 body {
     margin: 0;
 }
 
 .wd-workspace {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
     max-width: 1280px;
     margin: 0 auto;
     padding: 32px;
@@ -22,6 +32,8 @@ body {
 .wd-header,
 .wd-query-bar,
 .wd-resource-tabs,
+.wd-refinements,
+.wd-understanding,
 .wd-layout {
     background: #fff;
     border: 1px solid #dfe5ec;
@@ -29,6 +41,7 @@ body {
 }
 
 .wd-header {
+    flex: 0 0 auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -67,6 +80,7 @@ h2 {
 }
 
 .wd-query-bar {
+    flex: 0 0 auto;
     display: flex;
     gap: 12px;
     align-items: center;
@@ -91,6 +105,7 @@ h2 {
 }
 
 .wd-resource-tabs {
+    flex: 0 0 auto;
     display: flex;
     gap: 8px;
     padding: 12px 28px;
@@ -99,6 +114,7 @@ h2 {
 
 .wd-refinements,
 .wd-understanding {
+    flex: 0 0 auto;
     display: flex;
     gap: 16px;
     align-items: center;
@@ -158,28 +174,35 @@ h2 {
 }
 
 .wd-layout {
+    flex: 1 1 auto;
     display: grid;
-    grid-template-columns: minmax(260px, .8fr) minmax(360px, 1.2fr);
-    min-height: 420px;
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+    overflow: hidden;
     border-top: 0;
     border-radius: 0 0 12px 12px;
 }
 
-.wd-results,
-.wd-preview {
+.wd-results {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
     padding: 24px 28px;
+    overflow: hidden;
 }
 
-.wd-results {
-    border-right: 1px solid #dfe5ec;
+#wd-result-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
 .wd-muted {
     color: #6b7785;
 }
 
-.wd-record-card,
-.wd-preview-card {
+.wd-record-card {
     border: 1px solid #dfe5ec;
     border-radius: 8px;
     background: #fff;
@@ -194,7 +217,8 @@ h2 {
 }
 
 .wd-record-card:hover,
-.wd-record-card:focus-visible {
+.wd-record-card:focus-visible,
+.wd-record-card[aria-pressed="true"] {
     border-color: #6d4c67;
 }
 
@@ -203,32 +227,9 @@ h2 {
     display: block;
 }
 
-.wd-record-card span,
-.wd-field-label,
-.wd-status {
+.wd-record-card span {
     color: #6b7785;
     font-size: 13px;
-}
-
-.wd-preview-card {
-    margin-top: 16px;
-    padding: 20px;
-}
-
-.wd-preview-card h3 {
-    margin: 0 0 16px;
-}
-
-.wd-field {
-    display: grid;
-    grid-template-columns: 140px 1fr;
-    gap: 12px;
-    padding: 10px 0;
-    border-top: 1px solid #edf0f4;
-}
-
-.wd-field-value {
-    overflow-wrap: anywhere;
 }
 
 .wd-safe-message {
@@ -238,8 +239,77 @@ h2 {
     background: #fff4ce;
 }
 
+.wd-pagination {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #dfe5ec;
+}
+
+.wd-pagination[hidden],
+.wd-page-controls[hidden] {
+    display: none;
+}
+
+.wd-pagination label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+.wd-pagination select,
+.wd-page-button {
+    min-height: 34px;
+    padding: 6px 10px;
+    border: 1px solid #c9d3df;
+    border-radius: 6px;
+    color: #243447;
+    background: #fff;
+}
+
+.wd-page-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.wd-page-button {
+    cursor: pointer;
+}
+
+.wd-page-button[aria-current="page"] {
+    color: #fff;
+    border-color: #6d4c67;
+    background: #6d4c67;
+}
+
+.wd-page-button:disabled {
+    color: #8b96a3;
+    background: #f5f7fa;
+    cursor: default;
+}
+
+.wd-page-ellipsis {
+    padding: 0 4px;
+}
+
+.wd-page-summary {
+    color: #6b7785;
+    font-size: 13px;
+}
+
 @media (max-width: 700px) {
     .wd-workspace {
+        height: auto;
+        min-height: 100vh;
+        min-height: 100dvh;
         padding: 12px;
     }
 
@@ -248,8 +318,7 @@ h2 {
     .wd-resource-tabs,
     .wd-refinements,
     .wd-understanding,
-    .wd-results,
-    .wd-preview {
+    .wd-results {
         padding: 16px;
     }
 
@@ -271,10 +340,19 @@ h2 {
 
     .wd-layout {
         display: block;
+        overflow: visible;
     }
 
     .wd-results {
-        border-right: 0;
-        border-bottom: 1px solid #dfe5ec;
+        display: block;
+        overflow: visible;
+    }
+
+    #wd-result-list {
+        overflow: visible;
+    }
+
+    .wd-pagination {
+        justify-content: flex-start;
     }
 }
