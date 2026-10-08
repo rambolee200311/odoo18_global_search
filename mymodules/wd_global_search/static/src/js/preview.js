@@ -6,11 +6,16 @@
     const form = document.querySelector(".wd-query-bar");
     const conditionView = document.querySelector("#wd-effective-conditions");
     const activeView = document.querySelector("#wd-active-refinements");
+    const workspace = document.querySelector("[data-testid='global-search-workspace']");
+    const resourceTabs = document.querySelector("#wd-resource-tabs");
+    const resourceEmpty = document.querySelector("[data-testid='resource-empty']");
+    const reselectAllButton = document.querySelector("[data-testid='reselect-all']");
     const pagination = document.querySelector("[data-testid='pagination']");
     const pageSizeInput = document.querySelector("[data-testid='page-size']");
     const pageSummary = document.querySelector("[data-testid='page-summary']");
     const pageControls = document.querySelector("[data-testid='page-controls']");
-    if (!list || !queryInput || !form || !conditionView || !activeView
+    if (!list || !queryInput || !form || !conditionView || !activeView || !workspace
+        || !resourceTabs || !resourceEmpty || !reselectAllButton
         || !pagination || !pageSizeInput || !pageSummary || !pageControls) {
         return;
     }
@@ -27,6 +32,8 @@
         currentPage: 1,
         totalResultCount: 0,
         hasSearched: false,
+        resourceSelectionInitialized: false,
+        configVersion: workspace.dataset.configVersion || null,
     };
     let searchSequence = 0;
 
@@ -90,16 +97,136 @@
         });
     }
 
-    function renderCounts(counts) {
-        const byResource = (counts && counts.by_resource) || {};
-        document.querySelectorAll("[data-count-for]").forEach((element) => {
-            const key = element.dataset.countFor;
-            element.textContent = Object.prototype.hasOwnProperty.call(byResource, key)
-                ? String(byResource[key])
-                : "—";
+    function resourceKeys() {
+        return Array.from(resourceTabs.querySelectorAll(".wd-resource-tab"))
+            .map((button) => button.dataset.resource)
+            .filter(Boolean);
+    }
+
+    function renderSelectionState() {
+        const keys = resourceKeys();
+        const emptySelection = state.hasSearched && state.resources.size === 0;
+        resourceTabs.hidden = !state.hasSearched;
+        resourceEmpty.hidden = !emptySelection;
+        reselectAllButton.hidden = !emptySelection || keys.length === 0;
+        const message = resourceEmpty.querySelector("p");
+        message.textContent = keys.length
+            ? "Select at least one Resource to show results."
+            : "No accessible Resources are available.";
+        resourceTabs.querySelectorAll(".wd-resource-tab").forEach((button) => {
+            button.setAttribute(
+                "aria-pressed",
+                String(state.resources.has(button.dataset.resource))
+            );
         });
     }
 
+    function clearResourceCounts() {
+        document.querySelectorAll("[data-count-for]").forEach((element) => {
+            element.textContent = "…";
+            element.removeAttribute("title");
+        });
+    }
+
+    function renderResourceDescriptors(descriptors, configVersion) {
+        if (!Array.isArray(descriptors)) {
+            return false;
+        }
+        const descriptorByKey = new Map(
+            descriptors
+                .filter((item) => item && typeof item.key === "string" && item.key)
+                .map((item) => [item.key, item])
+        );
+        const nextKeys = new Set(descriptorByKey.keys());
+        resourceTabs.querySelectorAll(".wd-resource-tab").forEach((button) => {
+            if (!nextKeys.has(button.dataset.resource)) {
+                state.resources.delete(button.dataset.resource);
+                button.remove();
+            }
+        });
+        descriptorByKey.forEach((descriptor, key) => {
+            let button = Array.from(resourceTabs.querySelectorAll(".wd-resource-tab"))
+                .find((item) => item.dataset.resource === key);
+            if (!button) {
+                button = document.createElement("button");
+                button.type = "button";
+                button.className = "wd-resource-tab";
+                button.dataset.resource = key;
+                button.dataset.testid = "resource-" + key;
+                button.setAttribute("aria-pressed", "false");
+                const label = document.createElement("span");
+                label.className = "wd-resource-label";
+                const count = document.createElement("span");
+                count.className = "wd-resource-count";
+                count.dataset.countFor = key;
+                button.append(label, document.createTextNode(" "), count);
+                resourceTabs.append(button);
+            }
+            button.querySelector(".wd-resource-label").textContent = text(descriptor.label || key);
+        });
+        let selectionChanged = false;
+        for (const key of state.resources) {
+            if (!nextKeys.has(key)) {
+                state.resources.delete(key);
+                selectionChanged = true;
+            }
+        }
+        const previousVersion = state.configVersion;
+        state.configVersion = configVersion === undefined || configVersion === null
+            ? state.configVersion
+            : String(configVersion);
+        state.resourceSelectionInitialized = true;
+        return selectionChanged || previousVersion !== state.configVersion;
+    }
+
+    function renderCounts(data) {
+        const resourceCounts = (data && data.resource_counts) || {};
+        const errors = (data && data.errors) || [];
+        const failures = new Map();
+        errors.forEach((item) => {
+            if (item.resource) {
+                failures.set(item.resource, item.code || "Unavailable");
+            }
+        });
+        ((data && data.meta && data.meta.failed_resources) || []).forEach((key) => {
+            if (!failures.has(key)) {
+                failures.set(key, "Unavailable");
+            }
+        });
+        document.querySelectorAll("[data-count-for]").forEach((element) => {
+            const key = element.dataset.countFor;
+            const button = element.closest(".wd-resource-tab");
+            if (failures.has(key)) {
+                const code = failures.get(key);
+                const status = code === "TIMEOUT" ? "Timeout" : "Unavailable";
+                element.textContent = "— " + status;
+                button.hidden = false;
+                button.title = status;
+                return;
+            }
+            button.removeAttribute("title");
+            if (!Object.prototype.hasOwnProperty.call(resourceCounts, key)) {
+                element.textContent = "—";
+                button.hidden = false;
+                return;
+            }
+            const count = Number(resourceCounts[key]);
+            if (!Number.isSafeInteger(count) || count < 0) {
+                element.textContent = "—";
+                button.hidden = false;
+                return;
+            }
+            if (count === 0) {
+                element.textContent = "";
+                button.hidden = true;
+                state.resources.delete(key);
+                return;
+            }
+            element.textContent = String(count);
+            button.hidden = false;
+        });
+        renderSelectionState();
+    }
 
     async function openNativeForm(model, recordId) {
         const query = new URLSearchParams({model: model, record_id: recordId});
@@ -123,6 +250,21 @@
         if (data.status && !["SUCCESS", "EMPTY", "PARTIAL_SUCCESS"].includes(data.status)) {
             list.innerHTML = '<p class="wd-safe-message" data-testid="search-error">'
                 + text(data.status) + "</p>";
+            return;
+        }
+        if (state.hasSearched && state.resources.size === 0) {
+            const message = data.status === "FAILED"
+                ? "Resource counts are unavailable. Select a Resource and retry."
+                : "Select at least one Resource to show results.";
+            list.innerHTML = '<p class="wd-muted" data-testid="resource-selection-prompt">'
+                + message + "</p>";
+            if (data.status === "PARTIAL_SUCCESS") {
+                list.insertAdjacentHTML(
+                    "afterbegin",
+                    '<p class="wd-safe-message" data-testid="partial-success">'
+                        + "Some Resource counts are unavailable.</p>"
+                );
+            }
             return;
         }
         if (data.status === "EMPTY" || !data.results.length) {
@@ -228,7 +370,12 @@
 
     async function search(scrollToResults = false) {
         const requestSequence = ++searchSequence;
+        if (!state.resourceSelectionInitialized) {
+            state.resources = new Set(resourceKeys());
+            state.resourceSelectionInitialized = true;
+        }
         state.hasSearched = true;
+        clearResourceCounts();
         const payload = {
             query: state.rawQuery,
             conditions: [],
@@ -251,6 +398,19 @@
             if (requestSequence !== searchSequence) {
                 return;
             }
+            const versionChanged = renderResourceDescriptors(
+                data.meta && data.meta.resource_descriptors,
+                data.meta && data.meta.config_version
+            );
+            if (
+                versionChanged
+                && data.status === "FAILED"
+                && (data.errors || []).some((item) => item.code === "INVALID_REQUEST")
+            ) {
+                state.currentPage = 1;
+                state.cursor = null;
+                return search(scrollToResults);
+            }
             if (["SUCCESS", "EMPTY"].includes(data.status)) {
                 const count = Number(data.counts && data.counts.all);
                 if (Number.isSafeInteger(count) && count >= 0) {
@@ -263,7 +423,7 @@
                     }
                 }
             }
-            renderCounts(data.counts || {});
+            renderCounts(data);
             renderResults(data);
             renderUnderstanding(data.effective_conditions || conditionPayload());
             renderPagination(data);
@@ -314,34 +474,30 @@
         document.querySelector("#wd-date-start").value = "";
         document.querySelector("#wd-date-end").value = "";
         document.querySelector("#wd-state-refinement").value = "";
-        state.resources.clear();
-        document.querySelectorAll(".wd-resource-tab").forEach((tab) => {
-            tab.setAttribute("aria-pressed", "false");
-        });
         search();
     });
-    document.querySelectorAll(".wd-resource-tab").forEach((tab) => {
-        tab.addEventListener("click", () => {
-            const resource = tab.dataset.resource || "";
-            if (!resource) {
-                state.resources.clear();
-            } else if (state.resources.has(resource)) {
-                state.resources.delete(resource);
-            } else {
-                state.resources.add(resource);
-            }
-            document.querySelectorAll(".wd-resource-tab").forEach((item) => {
-                item.setAttribute(
-                    "aria-pressed",
-                    item.dataset.resource
-                        ? String(state.resources.has(item.dataset.resource))
-                        : String(state.resources.size === 0)
-                );
-            });
-            state.cursor = null;
-            state.currentPage = 1;
-            search();
-        });
+    resourceTabs.addEventListener("click", (event) => {
+        const button = event.target.closest(".wd-resource-tab");
+        if (!button) {
+            return;
+        }
+        const resource = button.dataset.resource;
+        if (state.resources.has(resource)) {
+            state.resources.delete(resource);
+        } else {
+            state.resources.add(resource);
+        }
+        renderSelectionState();
+        state.cursor = null;
+        state.currentPage = 1;
+        search();
+    });
+    reselectAllButton.addEventListener("click", () => {
+        state.resources = new Set(resourceKeys());
+        renderSelectionState();
+        state.cursor = null;
+        state.currentPage = 1;
+        search();
     });
     document.querySelector("#wd-date-refinement").addEventListener("change", (event) => {
         if (event.target.value) {

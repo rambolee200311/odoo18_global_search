@@ -121,10 +121,23 @@ def _condition_domain(model, fields, relation_paths, resource, conditions, conte
     return domain
 
 
+def authorize_search_resource(env, resource, context=None):
+    authorize_resource(env, resource, context)
+    model_configs = resource.get("models", ())
+    if not model_configs:
+        raise AuthorizationError("RESOURCE_NOT_ACCESSIBLE")
+    for model_config in model_configs:
+        model = env[model_config["model_name"]]
+        fields = [item["name"] for item in model_config.get("fields", ())]
+        authorize_fields(model, fields, context)
+    for path in resource.get("relation_paths", ()):
+        authorize_relation_path(env, resource, path["path"], context)
+
+
 def execute(env, resource, conditions, limit, context=None, offset=0):
     started = time.monotonic()
     try:
-        authorize_resource(env, resource, context)
+        authorize_search_resource(env, resource, context)
         results = []
         resource_count = 0
         remaining_offset = max(0, offset)
@@ -136,8 +149,6 @@ def execute(env, resource, conditions, limit, context=None, offset=0):
             model = env[model_name]
             fields = [item["name"] for item in model_config.get("fields", ())]
             fields = authorize_fields(model, fields, context)
-            for path in resource.get("relation_paths", ()):
-                authorize_relation_path(env, resource, path["path"], context)
             relation_paths = [
                 path["path"]
                 for path in resource.get("relation_paths", ())

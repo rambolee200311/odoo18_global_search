@@ -6,8 +6,7 @@ from odoo.exceptions import AccessError, MissingError
 from odoo.http import request
 
 from ..services.facade import SearchService
-from ..services.permission_boundary import AuthorizationError, authorize_resource
-from ..services.provider import ConfigurationError, published_snapshot
+from ..services.provider import ConfigurationError
 from ..services.preview import MODEL_CONFIG, safe_preview
 from ..services.types import SearchRequest
 
@@ -26,16 +25,12 @@ class GlobalSearchController(http.Controller):
     @http.route("/wd_global_search", type="http", auth="user")
     def workspace(self, **kwargs):
         try:
-            published = published_snapshot(request.env, "global_search_baseline")
+            descriptor_response = self.search_service.resource_descriptors(
+                request.env, "global_search_baseline"
+            )
         except ConfigurationError:
             return _json_response({"status": "CONFIGURATION_ERROR"}, status=503)
-        descriptors = []
-        for resource in published["snapshot"].get("resources", ()):
-            try:
-                authorize_resource(request.env, resource, None)
-            except AuthorizationError:
-                continue
-            descriptors.append(resource)
+        descriptors = descriptor_response["resources"]
         tabs = "".join(
             (
                 '<button class="wd-resource-tab" data-resource="%s" '
@@ -48,7 +43,7 @@ class GlobalSearchController(http.Controller):
                 for value in (
                     resource["key"],
                     resource["key"],
-                    resource.get("name") or resource["key"],
+                    resource["label"],
                     resource["key"],
                 )
             )
@@ -60,10 +55,11 @@ class GlobalSearchController(http.Controller):
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Global Search</title>
-  <link rel="stylesheet" href="/wd_global_search/static/src/css/preview.css?v=cc005-v031">
+  <link rel="stylesheet" href="/wd_global_search/static/src/css/preview.css?v=cc012-v11">
 </head>
 <body>
-  <main class="wd-workspace" data-testid="global-search-workspace">
+  <main class="wd-workspace" data-testid="global-search-workspace"
+        data-config-version="%s">
     <header class="wd-header">
       <div>
         <p class="wd-eyebrow">WD GLOBAL SEARCH</p>
@@ -77,9 +73,15 @@ class GlobalSearchController(http.Controller):
              placeholder="Search business records">
       <button id="wd-search-submit" data-testid="search-submit" type="submit">Search</button>
     </form>
-    <nav class="wd-resource-tabs" aria-label="Business resources">
-      <button class="wd-resource-tab" data-resource="" type="button">All</button>%s
+    <nav id="wd-resource-tabs" class="wd-resource-tabs"
+         aria-label="Business resources" hidden>%s
     </nav>
+    <div class="wd-resource-empty" data-testid="resource-empty" hidden>
+      <p>Select at least one Resource to show results.</p>
+      <button id="wd-reselect-all" data-testid="reselect-all" type="button">
+        Reselect all accessible resources
+      </button>
+    </div>
     <section class="wd-refinements" aria-label="Refinement">
       <label>Date preset <select id="wd-date-refinement" data-testid="date-refinement">
         <option value="">Any time</option><option value="today">Today</option>
@@ -118,9 +120,9 @@ class GlobalSearchController(http.Controller):
       </div>
     </section>
   </main>
-  <script src="/wd_global_search/static/src/js/preview.js?v=cc005-v031"></script>
+  <script src="/wd_global_search/static/src/js/preview.js?v=cc012-v11"></script>
 </body>
-</html>""" % tabs
+</html>""" % (html.escape(str(descriptor_response["config_version"]), quote=True), tabs)
         return request.make_response(page, headers=[("Content-Type", "text/html; charset=utf-8")])
 
     @http.route("/wd_global_search/api/preview", type="http", auth="user")
@@ -200,7 +202,7 @@ class GlobalSearchController(http.Controller):
                 "results": response.results,
                 "counts": response.counts,
                 "errors": response.errors,
-                "resource_counts": response.counts.get("by_resource", {}),
+                "resource_counts": response.meta.get("resource_counts", {}),
                 "effective_conditions": visible_conditions,
                 "next_cursor": response.meta.get("next_cursor"),
                 "meta": response.meta,

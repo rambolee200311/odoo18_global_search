@@ -32,6 +32,7 @@ body {
 .wd-header,
 .wd-query-bar,
 .wd-resource-tabs,
+.wd-resource-empty,
 .wd-refinements,
 .wd-understanding,
 .wd-layout {
@@ -112,6 +113,28 @@ h2 {
     border-top: 0;
 }
 
+.wd-resource-tabs[hidden],
+.wd-resource-empty[hidden] {
+    display: none;
+}
+
+.wd-resource-empty {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 28px;
+    background: #fff;
+    border: 1px solid #dfe5ec;
+    border-top: 0;
+}
+
+.wd-resource-empty p {
+    margin: 0;
+    color: #6b7785;
+}
+
 .wd-refinements,
 .wd-understanding {
     flex: 0 0 auto;
@@ -147,7 +170,8 @@ h2 {
     background: #f5f7fa;
 }
 
-.wd-resource-tab {
+.wd-resource-tab,
+#wd-reselect-all {
     padding: 9px 14px;
     border: 1px solid #c9d3df;
     border-radius: 6px;
@@ -157,7 +181,9 @@ h2 {
 }
 
 .wd-resource-tab:hover,
-.wd-resource-tab:focus-visible {
+.wd-resource-tab:focus-visible,
+#wd-reselect-all:hover,
+#wd-reselect-all:focus-visible {
     border-color: #6d4c67;
 }
 
@@ -316,6 +342,7 @@ h2 {
     .wd-header,
     .wd-query-bar,
     .wd-resource-tabs,
+    .wd-resource-empty,
     .wd-refinements,
     .wd-understanding,
     .wd-results {

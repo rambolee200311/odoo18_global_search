@@ -6,7 +6,9 @@ from ..services.aggregator import merge
 from ..services.conditions import merge as merge_conditions
 from ..services.cursor import decode, encode
 from ..services import executor
+from ..services import facade
 from ..services.limiter import UserLimiter
+from ..services.permission_boundary import AuthorizationError
 from ..services.types import ResourceOutcome, SearchRequest
 
 
@@ -70,6 +72,82 @@ class TestSearchServiceCore(TestCase):
 
         self.assertEqual(len(response.results), 10)
         self.assertEqual(response.counts["all"], 37)
+
+    def test_aggregator_separates_selected_result_counts_from_facets(self):
+        outcomes = [
+            ResourceOutcome(
+                resource="contact",
+                status="SUCCESS",
+                results=[{"_resource": "contact", "_model": "res.partner", "id": 1}],
+                count=1,
+            ),
+            ResourceOutcome(
+                resource="sale_order",
+                status="SUCCESS",
+                count=3,
+            ),
+        ]
+
+        response = merge(
+            outcomes, "request-facets", 0, 10, 7, count_scope={"contact"}
+        )
+
+        self.assertEqual(response.counts, {"all": 1, "by_resource": {"contact": 1}})
+        self.assertEqual(
+            response.meta["resource_counts"],
+            {"contact": 1, "sale_order": 3},
+        )
+
+    def test_empty_result_scope_can_return_facets_without_results(self):
+        outcomes = [
+            ResourceOutcome(
+                resource="sale_order",
+                status="SUCCESS",
+                count=3,
+            )
+        ]
+
+        response = merge(outcomes, "request-empty-scope", 0, 10, 7, count_scope=set())
+
+        self.assertEqual(response.status, "EMPTY")
+        self.assertEqual(response.results, [])
+        self.assertEqual(response.counts, {"all": 0, "by_resource": {}})
+        self.assertEqual(response.meta["resource_counts"], {"sale_order": 3})
+
+    def test_facet_failure_remains_partial_for_empty_result_scope(self):
+        outcomes = [
+            ResourceOutcome(resource="contact", status="SUCCESS", count=1),
+            ResourceOutcome(
+                resource="sale_order",
+                status="FAILED",
+                error={"code": "TIMEOUT", "resource": "sale_order"},
+            ),
+        ]
+
+        response = merge(outcomes, "request-facet-timeout", 0, 10, 7, count_scope=set())
+
+        self.assertEqual(response.status, "PARTIAL_SUCCESS")
+        self.assertEqual(response.results, [])
+        self.assertEqual(response.counts, {"all": 0, "by_resource": {}})
+        self.assertEqual(response.meta["resource_counts"], {"contact": 1})
+        self.assertEqual(response.meta["failed_resources"], ["sale_order"])
+
+    def test_authorized_candidate_filter_omits_inaccessible_resources(self):
+        def authorize(env, resource, context):
+            if resource["key"] == "private":
+                raise AuthorizationError("RESOURCE_NOT_ACCESSIBLE")
+
+        with patch.object(facade, "authorize_search_resource", side_effect=authorize):
+            resources = facade._authorized_resources(
+                {},
+                [{"key": "private"}, {"key": "sale_order"}, {"key": "contact"}],
+                None,
+            )
+
+        self.assertEqual(
+            [resource["key"] for resource in resources],
+            ["contact", "sale_order"],
+        )
 
     def test_executor_returns_exact_total_and_requested_model_offset(self):
         class FakeRecordset:

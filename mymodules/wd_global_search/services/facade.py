@@ -9,8 +9,9 @@ from .aggregator import merge
 from .conditions import merge as merge_conditions
 from .cursor import decode, encode
 from .errors import error
-from .executor import execute
+from .executor import authorize_search_resource, execute
 from .limiter import UserLimiter
+from .permission_boundary import AuthorizationError
 from .provider import ConfigurationError, published_snapshot
 from .request_boundary import RequestBoundaryError, validate_search_request
 from .observability import hash_value, log_event
@@ -24,8 +25,16 @@ _SEARCH_TIMEOUT_SECONDS = 5
 _CURSOR_SORT_VERSION = "v1"
 
 
-def _failure_outcome(code):
-    return ResourceOutcome(resource="request", status="FAILED", error=error(code))
+def _failure_outcome(code, resource="request"):
+    return ResourceOutcome(
+        resource=resource,
+        status="FAILED",
+        error=error(
+            code,
+            scope="resource" if resource != "request" else "request",
+            resource=resource,
+        ),
+    )
 
 
 def _hash(value):
@@ -44,6 +53,24 @@ def user_context(env):
         tz=user.tz or "UTC",
         groups=tuple(user.groups_id.ids),
     )
+
+
+def _authorized_resources(env, resources, context):
+    eligible = []
+    for resource in resources:
+        try:
+            authorize_search_resource(env, resource, context)
+        except AuthorizationError:
+            continue
+        eligible.append(resource)
+    return sorted(eligible, key=lambda item: item["key"])
+
+
+def _resource_descriptor(resource):
+    return {
+        "key": resource["key"],
+        "label": resource.get("label") or resource.get("name") or resource["key"],
+    }
 
 
 def _observe_response(response, request, context, secret):
@@ -83,6 +110,19 @@ def _observe_response(response, request, context, secret):
 
 
 class SearchService:
+    def resource_descriptors(self, env, domain_key):
+        context = user_context(env)
+        snapshot_info = published_snapshot(env, domain_key)
+        resources = _authorized_resources(
+            env,
+            snapshot_info["snapshot"].get("resources", []),
+            context,
+        )
+        return {
+            "config_version": snapshot_info["version_id"],
+            "resources": [_resource_descriptor(resource) for resource in resources],
+        }
+
     def search(self, env, request, domain_key):
         context = user_context(env)
         request_id = str(uuid.uuid4())
@@ -117,12 +157,40 @@ class SearchService:
                 )
             snapshot_info = published_snapshot(env, domain_key)
             snapshot = snapshot_info["snapshot"]
+            resources = _authorized_resources(env, snapshot.get("resources", []), context)
+            descriptors = [_resource_descriptor(resource) for resource in resources]
+            selected_keys = set(request.resource_scope)
+
+            def response_for(outcomes, offset=0, limit=request.limit):
+                response = merge(
+                    outcomes,
+                    request_id,
+                    offset,
+                    limit,
+                    snapshot_info["version_id"],
+                    count_scope=selected_keys,
+                )
+                response.meta["resource_descriptors"] = descriptors
+                return response
+
+            cursor_secret = env["ir.config_parameter"].sudo().get_param("database.secret")
+            if not cursor_secret:
+                return response_for(
+                    [_failure_outcome("CONFIGURATION_ERROR")], 0, 0
+                )
+            if (
+                len(selected_keys) != len(request.resource_scope)
+                or selected_keys - {item["key"] for item in resources}
+            ):
+                return _observe_response(
+                    response_for([_failure_outcome("INVALID_REQUEST")], 0, 0),
+                    request,
+                    context,
+                    cursor_secret,
+                )
             conditions = merge_conditions(
                 request.parsed_conditions, request.refinement_conditions
             )
-            cursor_secret = env["ir.config_parameter"].sudo().get_param("database.secret")
-            if not cursor_secret:
-                return merge([_failure_outcome("CONFIGURATION_ERROR")], request_id, 0, 0, None)
             context_hash = _hash(
                 {
                     "uid": context.uid,
@@ -134,7 +202,7 @@ class SearchService:
             conditions_hash = _hash(
                 {
                     "conditions": list(conditions.values),
-                    "resources": list(request.resource_scope),
+                    "resources": sorted(selected_keys),
                 }
             )
             cursor_offset = request.offset
@@ -151,57 +219,55 @@ class SearchService:
                         },
                     )
                 except TimeoutError:
-                    return merge([_failure_outcome("CURSOR_EXPIRED")], request_id, 0, 0, None)
+                    return _observe_response(
+                        response_for([_failure_outcome("CURSOR_EXPIRED")], 0, 0),
+                        request,
+                        context,
+                        cursor_secret,
+                    )
                 except ValueError:
-                    return merge([_failure_outcome("CURSOR_INVALID")], request_id, 0, 0, None)
+                    return _observe_response(
+                        response_for([_failure_outcome("CURSOR_INVALID")], 0, 0),
+                        request,
+                        context,
+                        cursor_secret,
+                    )
                 cursor_offset = int(cursor_data.get("offset", request.offset))
-            resources = snapshot.get("resources", [])
-            known_resource_keys = {item["key"] for item in resources}
-            if set(request.resource_scope) - known_resource_keys:
-                return merge(
-                    [_failure_outcome("INVALID_REQUEST")],
-                    request_id,
-                    0,
-                    0,
-                    snapshot_info["version_id"],
-                )
-            if request.resource_scope:
-                resources = [item for item in resources if item["key"] in request.resource_scope]
-            resources.sort(key=lambda item: item["key"])
             outcomes = []
             deadline = time.monotonic() + _SEARCH_TIMEOUT_SECONDS
             remaining_offset = cursor_offset
             remaining_limit = request.limit
-            for resource in resources:
+            for index, resource in enumerate(resources):
                 if request_id in _cancelled:
-                    outcomes.append(_failure_outcome("CANCELLED"))
+                    outcomes.extend(
+                        _failure_outcome("CANCELLED", item["key"])
+                        for item in resources[index:]
+                    )
                     break
                 if time.monotonic() >= deadline:
-                    outcomes.append(_failure_outcome("TIMEOUT"))
+                    outcomes.extend(
+                        _failure_outcome("TIMEOUT", item["key"])
+                        for item in resources[index:]
+                    )
                     break
+                selected = resource["key"] in selected_keys
                 outcome = execute(
                     env,
                     resource,
                     conditions,
-                    remaining_limit,
+                    remaining_limit if selected else 0,
                     context,
-                    offset=remaining_offset,
+                    offset=remaining_offset if selected else 0,
                 )
                 outcomes.append(outcome)
-                if outcome.status != "SUCCESS":
+                if not selected or outcome.status != "SUCCESS":
                     continue
                 if remaining_offset >= outcome.count:
                     remaining_offset -= outcome.count
                     continue
                 remaining_offset = 0
                 remaining_limit = max(0, remaining_limit - len(outcome.results))
-            response = merge(
-                outcomes,
-                request_id,
-                0,
-                request.limit,
-                snapshot_info["version_id"],
-            )
+            response = response_for(outcomes, 0, request.limit)
             if response.results and len(response.results) == request.limit:
                 response.meta["next_cursor"] = encode(
                     {
