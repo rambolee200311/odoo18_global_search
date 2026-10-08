@@ -7,7 +7,7 @@
     const form = document.querySelector(".wd-query-bar");
     const conditionView = document.querySelector("#wd-effective-conditions");
     const activeView = document.querySelector("#wd-active-refinements");
-    const state = {rawQuery: "", resource: "", refinements: [], cursor: null};
+    const state = {rawQuery: "", resources: new Set(), refinements: [], cursor: null};
     let currentPreviewRequest;
 
     function text(value) {
@@ -28,6 +28,29 @@
         }));
     }
 
+    function dateRefinement() {
+        const start = document.querySelector("#wd-date-start").value;
+        const end = document.querySelector("#wd-date-end").value;
+        if (start || end) {
+            if (!start || !end || end <= start) {
+                return null;
+            }
+            return {dimension: "date", value: {start: start, end: end}, operator: "between"};
+        }
+        const preset = document.querySelector("#wd-date-refinement").value;
+        return preset ? {dimension: "date", value: preset, operator: "="} : null;
+    }
+
+    function applyDateRefinement() {
+        state.refinements = state.refinements.filter((item) => item.dimension !== "date");
+        const refinement = dateRefinement();
+        if (refinement) {
+            state.refinements.push(refinement);
+        }
+        state.cursor = null;
+        search();
+    }
+
     function renderUnderstanding(conditions) {
         conditionView.textContent = conditions.length
             ? conditions.map((item) => item.dimension + "=" + item.value).join(" · ")
@@ -42,6 +65,16 @@
                 state.cursor = null;
                 search();
             });
+        });
+    }
+
+    function renderCounts(counts) {
+        const byResource = (counts && counts.by_resource) || {};
+        document.querySelectorAll("[data-count-for]").forEach((element) => {
+            const key = element.dataset.countFor;
+            element.textContent = Object.prototype.hasOwnProperty.call(byResource, key)
+                ? String(byResource[key])
+                : "—";
         });
     }
 
@@ -75,6 +108,20 @@
         renderPreview(await response.json());
     }
 
+    async function openNativeForm(model, recordId) {
+        const query = new URLSearchParams({model: model, record_id: recordId});
+        const response = await fetch("/wd_global_search/api/form_url?" + query.toString(), {
+            credentials: "same-origin",
+            headers: {"Accept": "application/json"},
+        });
+        const data = await response.json();
+        if (data.status !== "SUCCESS") {
+            renderPreview(data);
+            return;
+        }
+        window.open(data.url, "_blank", "noopener,noreferrer");
+    }
+
     function renderResults(data) {
         if (data.status && !["SUCCESS", "EMPTY", "PARTIAL_SUCCESS"].includes(data.status)) {
             list.innerHTML = '<p class="wd-safe-message" data-testid="search-error">'
@@ -102,6 +149,10 @@
             button.addEventListener("click", () => loadPreview(
                 button.dataset.model, button.dataset.recordId
             ));
+            button.addEventListener("dblclick", () => openNativeForm(
+                button.dataset.model, button.dataset.recordId
+            ));
+            button.title = "Double-click to open the read-only Odoo form";
         });
     }
 
@@ -110,7 +161,7 @@
             query: state.rawQuery,
             conditions: [],
             refinement_conditions: conditionPayload(),
-            resources: state.resource ? [state.resource] : [],
+            resources: Array.from(state.resources),
             limit: 20,
             cursor: state.cursor,
         };
@@ -124,6 +175,7 @@
             });
             const envelope = await response.json();
             const data = envelope.result || envelope;
+            renderCounts(data.counts || {});
             renderResults(data);
             renderUnderstanding(data.effective_conditions || conditionPayload());
         } catch (error) {
@@ -137,24 +189,51 @@
         state.refinements = [];
         state.cursor = null;
         document.querySelector("#wd-date-refinement").value = "";
+        document.querySelector("#wd-date-start").value = "";
+        document.querySelector("#wd-date-end").value = "";
         document.querySelector("#wd-state-refinement").value = "";
-        state.resource = "";
+        state.resources.clear();
+        document.querySelectorAll(".wd-resource-tab").forEach((tab) => {
+            tab.setAttribute("aria-pressed", "false");
+        });
         search();
     });
     document.querySelectorAll(".wd-resource-tab").forEach((tab) => {
         tab.addEventListener("click", () => {
-            state.resource = tab.dataset.resource || "";
+            const resource = tab.dataset.resource || "";
+            if (!resource) {
+                state.resources.clear();
+            } else if (state.resources.has(resource)) {
+                state.resources.delete(resource);
+            } else {
+                state.resources.add(resource);
+            }
+            document.querySelectorAll(".wd-resource-tab").forEach((item) => {
+                item.setAttribute(
+                    "aria-pressed",
+                    item.dataset.resource
+                        ? String(state.resources.has(item.dataset.resource))
+                        : String(state.resources.size === 0)
+                );
+            });
             state.cursor = null;
             search();
         });
     });
     document.querySelector("#wd-date-refinement").addEventListener("change", (event) => {
-        state.refinements = state.refinements.filter((item) => item.dimension !== "date");
         if (event.target.value) {
-            state.refinements.push({dimension: "date", value: event.target.value, operator: "="});
+            document.querySelector("#wd-date-start").value = "";
+            document.querySelector("#wd-date-end").value = "";
         }
-        state.cursor = null;
-        search();
+        applyDateRefinement();
+    });
+    document.querySelector("#wd-date-start").addEventListener("change", () => {
+        document.querySelector("#wd-date-refinement").value = "";
+        applyDateRefinement();
+    });
+    document.querySelector("#wd-date-end").addEventListener("change", () => {
+        document.querySelector("#wd-date-refinement").value = "";
+        applyDateRefinement();
     });
     document.querySelector("#wd-state-refinement").addEventListener("change", (event) => {
         state.refinements = state.refinements.filter((item) => item.dimension !== "state");

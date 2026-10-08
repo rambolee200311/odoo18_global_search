@@ -48,4 +48,35 @@
     <menuitem id="menu_gs_config_domain" name="Configuration Domains"
               parent="menu_global_search_root" action="action_gs_config_domain"
               groups="wd_global_search.group_config_manager"/>
+
+    <record id="action_gs_native_form_partner" model="ir.actions.act_window">
+        <field name="name">Global Search Contact</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">form</field>
+        <field name="context">{'create': False, 'edit': False, 'delete': False, 'form_view_initial_mode': 'readonly'}</field>
+    </record>
+    <record id="action_gs_native_form_product" model="ir.actions.act_window">
+        <field name="name">Global Search Product</field>
+        <field name="res_model">product.product</field>
+        <field name="view_mode">form</field>
+        <field name="context">{'create': False, 'edit': False, 'delete': False, 'form_view_initial_mode': 'readonly'}</field>
+    </record>
+    <record id="action_gs_native_form_purchase" model="ir.actions.act_window">
+        <field name="name">Global Search Purchase Order</field>
+        <field name="res_model">purchase.order</field>
+        <field name="view_mode">form</field>
+        <field name="context">{'create': False, 'edit': False, 'delete': False, 'form_view_initial_mode': 'readonly'}</field>
+    </record>
+    <record id="action_gs_native_form_sale" model="ir.actions.act_window">
+        <field name="name">Global Search Sales Order</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">form</field>
+        <field name="context">{'create': False, 'edit': False, 'delete': False, 'form_view_initial_mode': 'readonly'}</field>
+    </record>
+    <record id="action_gs_native_form_picking" model="ir.actions.act_window">
+        <field name="name">Global Search Stock Transfer</field>
+        <field name="res_model">stock.picking</field>
+        <field name="view_mode">form</field>
+        <field name="context">{'create': False, 'edit': False, 'delete': False, 'form_view_initial_mode': 'readonly'}</field>
+    </record>
 </odoo>

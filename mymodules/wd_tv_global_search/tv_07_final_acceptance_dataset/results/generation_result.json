@@ -1,0 +1,213 @@
+{
+  "counts": {
+    "vendors": 5,
+    "customers": 5,
+    "products": 10,
+    "purchase_orders": 100,
+    "receipts": 100,
+    "sales_orders": 100,
+    "deliveries": 100
+  },
+  "date_distribution": {
+    "2025-10": {
+      "purchase_orders": 15,
+      "sales_orders": 15
+    },
+    "2025-11": {
+      "purchase_orders": 15,
+      "sales_orders": 15
+    },
+    "2025-12": {
+      "purchase_orders": 15,
+      "sales_orders": 15
+    },
+    "2026-01": {
+      "purchase_orders": 15,
+      "sales_orders": 15
+    },
+    "2026-02": {
+      "purchase_orders": 15,
+      "sales_orders": 15
+    },
+    "2026-03": {
+      "purchase_orders": 15,
+      "sales_orders": 15
+    },
+    "2026-04": {
+      "purchase_orders": 10,
+      "sales_orders": 10
+    }
+  },
+  "purchase_state_distribution": {
+    "purchase": 100
+  },
+  "sales_state_distribution": {
+    "sale": 100
+  },
+  "relations": {
+    "purchase_to_receipt": 100,
+    "sale_to_delivery": 100
+  },
+  "samples": {
+    "purchase_to_receipt": [
+      {
+        "order": "GS-PO-0001",
+        "order_marker": "GS-PO-0001",
+        "pickings": [
+          "GS-IN-0001"
+        ],
+        "linked": true
+      },
+      {
+        "order": "GS-PO-0002",
+        "order_marker": "GS-PO-0002",
+        "pickings": [
+          "GS-IN-0002"
+        ],
+        "linked": true
+      },
+      {
+        "order": "GS-PO-0003",
+        "order_marker": "GS-PO-0003",
+        "pickings": [
+          "GS-IN-0003"
+        ],
+        "linked": true
+      },
+      {
+        "order": "GS-PO-0004",
+        "order_marker": "GS-PO-0004",
+        "pickings": [
+          "GS-IN-0004"
+        ],
+        "linked": true
+      },
+      {
+        "order": "GS-PO-0005",
+        "order_marker": "GS-PO-0005",
+        "pickings": [
+          "GS-IN-0005"
+        ],
+        "linked": true
+      }
+    ],
+    "sale_to_delivery": [
+      {
+        "order": "GS-SO-0001",
+        "order_marker": "GS-SO-0001",
+        "pickings": [
+          "GS-OUT-0001"
+        ],
+        "linked": true
+      },
+      {
+        "order": "GS-SO-0002",
+        "order_marker": "GS-SO-0002",
+        "pickings": [
+          "GS-OUT-0002"
+        ],
+        "linked": true
+      },
+      {
+        "order": "GS-SO-0003",
+        "order_marker": "GS-SO-0003",
+        "pickings": [
+          "GS-OUT-0003"
+        ],
+        "linked": true
+      },
+      {
+        "order": "GS-SO-0004",
+        "order_marker": "GS-SO-0004",
+        "pickings": [
+          "GS-OUT-0004"
+        ],
+        "linked": true
+      },
+      {
+        "order": "GS-SO-0005",
+        "order_marker": "GS-SO-0005",
+        "pickings": [
+          "GS-OUT-0005"
+        ],
+        "linked": true
+      }
+    ]
+  },
+  "product_usage": {
+    "GS-PRODUCT-001": {
+      "purchase_orders": 10,
+      "sales_orders": 10
+    },
+    "GS-PRODUCT-002": {
+      "purchase_orders": 10,
+      "sales_orders": 10
+    },
+    "GS-PRODUCT-003": {
+      "purchase_orders": 10,
+      "sales_orders": 10
+    },
+    "GS-PRODUCT-004": {
+      "purchase_orders": 10,
+      "sales_orders": 10
+    },
+    "GS-PRODUCT-005": {
+      "purchase_orders": 10,
+      "sales_orders": 10
+    },
+    "GS-PRODUCT-006": {
+      "purchase_orders": 10,
+      "sales_orders": 10
+    },
+    "GS-PRODUCT-007": {
+      "purchase_orders": 10,
+      "sales_orders": 10
+    },
+    "GS-PRODUCT-008": {
+      "purchase_orders": 10,
+      "sales_orders": 10
+    },
+    "GS-PRODUCT-009": {
+      "purchase_orders": 10,
+      "sales_orders": 10
+    },
+    "GS-PRODUCT-010": {
+      "purchase_orders": 10,
+      "sales_orders": 10
+    }
+  },
+  "partner_usage": {
+    "GS-VENDOR-001": {
+      "purchase_orders": 20
+    },
+    "GS-VENDOR-002": {
+      "purchase_orders": 20
+    },
+    "GS-VENDOR-003": {
+      "purchase_orders": 20
+    },
+    "GS-VENDOR-004": {
+      "purchase_orders": 20
+    },
+    "GS-VENDOR-005": {
+      "purchase_orders": 20
+    }
+  },
+  "customer_usage": {
+    "GS-CUSTOMER-001": {
+      "sales_orders": 20
+    },
+    "GS-CUSTOMER-002": {
+      "sales_orders": 20
+    },
+    "GS-CUSTOMER-003": {
+      "sales_orders": 20
+    },
+    "GS-CUSTOMER-004": {
+      "sales_orders": 20
+    },
+    "GS-CUSTOMER-005": {
+      "sales_orders": 20
+    }
+  }
+}

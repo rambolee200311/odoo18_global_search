@@ -2,9 +2,12 @@ import html
 import json
 
 from odoo import http
+from odoo.exceptions import AccessError, MissingError
 from odoo.http import request
 
 from ..services.facade import SearchService
+from ..services.permission_boundary import AuthorizationError, authorize_resource
+from ..services.provider import ConfigurationError, published_snapshot
 from ..services.preview import MODEL_CONFIG, safe_preview
 from ..services.types import SearchRequest
 
@@ -22,23 +25,34 @@ class GlobalSearchController(http.Controller):
 
     @http.route("/wd_global_search", type="http", auth="user")
     def workspace(self, **kwargs):
-        resource_keys = {
-            "res.partner": "contact",
-            "sale.order": "sale_order",
-            "stock.picking": "stock_picking",
-        }
+        try:
+            published = published_snapshot(request.env, "global_search_baseline")
+        except ConfigurationError:
+            return _json_response({"status": "CONFIGURATION_ERROR"}, status=503)
+        descriptors = []
+        for resource in published["snapshot"].get("resources", ()):
+            try:
+                authorize_resource(request.env, resource, None)
+            except AuthorizationError:
+                continue
+            descriptors.append(resource)
         tabs = "".join(
             (
-                '<button class="wd-resource-tab" data-model="%s" data-resource="%s" '
-                'data-testid="resource-%s">%s</button>'
+                '<button class="wd-resource-tab" data-resource="%s" '
+                'data-testid="resource-%s" aria-pressed="false">'
+                '<span class="wd-resource-label">%s</span> '
+                '<span class="wd-resource-count" data-count-for="%s">—</span></button>'
             )
-            % (
-                html.escape(model),
-                html.escape(resource_keys[model]),
-                html.escape(model.replace(".", "-")),
-                html.escape(config["label"]),
+            % tuple(
+                html.escape(value)
+                for value in (
+                    resource["key"],
+                    resource["key"],
+                    resource.get("name") or resource["key"],
+                    resource["key"],
+                )
             )
-            for model, config in MODEL_CONFIG.items()
+            for resource in descriptors
         )
         page = """<!doctype html>
 <html lang="en">
@@ -67,10 +81,12 @@ class GlobalSearchController(http.Controller):
       <button class="wd-resource-tab" data-resource="" type="button">All</button>%s
     </nav>
     <section class="wd-refinements" aria-label="Refinement">
-      <label>Date <select id="wd-date-refinement" data-testid="date-refinement">
+      <label>Date preset <select id="wd-date-refinement" data-testid="date-refinement">
         <option value="">Any time</option><option value="today">Today</option>
         <option value="this_week">This week</option><option value="this_month">This month</option>
       </select></label>
+      <label>From <input id="wd-date-start" data-testid="date-start" type="date"></label>
+      <label>To (exclusive) <input id="wd-date-end" data-testid="date-end" type="date"></label>
       <label>State <select id="wd-state-refinement" data-testid="state-refinement">
         <option value="">Any state</option><option value="draft">Draft</option>
         <option value="sale">Confirmed</option><option value="done">Done</option>
@@ -91,7 +107,7 @@ class GlobalSearchController(http.Controller):
       </aside>
     </section>
   </main>
-  <script src="/wd_global_search/static/src/js/preview.js?v=cc005c"></script>
+  <script src="/wd_global_search/static/src/js/preview.js?v=cc012"></script>
 </body>
 </html>""" % tabs
         return request.make_response(page, headers=[("Content-Type", "text/html; charset=utf-8")])
@@ -105,6 +121,34 @@ class GlobalSearchController(http.Controller):
             return _json_response(safe_preview(request.env, model, parsed_id))
         except (TypeError, ValueError):
             return _json_response({"status": "INVALID_REQUEST"}, status=400)
+
+    @http.route("/wd_global_search/api/form_url", type="http", auth="user")
+    def form_url(self, model, record_id=None, **kwargs):
+        action_refs = {
+            "res.partner": "wd_global_search.action_gs_native_form_partner",
+            "product.product": "wd_global_search.action_gs_native_form_product",
+            "purchase.order": "wd_global_search.action_gs_native_form_purchase",
+            "sale.order": "wd_global_search.action_gs_native_form_sale",
+            "stock.picking": "wd_global_search.action_gs_native_form_picking",
+        }
+        if model not in action_refs:
+            return _json_response({"status": "INVALID_REQUEST"}, status=400)
+        try:
+            record = request.env[model].browse(int(record_id)).exists()
+            record.check_access_rule("read")
+            action = request.env.ref(action_refs[model])
+        except (AccessError, ValueError, MissingError):
+            return _json_response(
+                {"status": "PERMISSION_OR_DELETED"},
+                status=403,
+            )
+        return _json_response(
+            {
+                "status": "SUCCESS",
+                "url": "/web#id=%s&action=%s&model=%s&view_type=form"
+                % (record.id, action.id, model),
+            }
+        )
 
     @http.route("/wd_global_search/api/search", type="json", auth="user", methods=["POST"], csrf=False)
     def search(self, **kwargs):

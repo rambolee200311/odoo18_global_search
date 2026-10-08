@@ -8,7 +8,7 @@ def merge(outcomes, request_id, offset, limit, config_version):
     errors = []
     for outcome in outcomes:
         if outcome.status == "SUCCESS":
-            counts[outcome.resource] = outcome.count
+            counts[outcome.resource] = counts.get(outcome.resource, 0) + outcome.count
         for result in outcome.results:
             identity = (
                 result.get("_resource"),
@@ -36,7 +36,7 @@ def merge(outcomes, request_id, offset, limit, config_version):
         status=status,
         request_id=request_id,
         results=page,
-        counts={"all": len(all_results), "by_resource": counts},
+        counts={"all": sum(counts.values()), "by_resource": counts},
         errors=errors,
         meta={
             "request_id": request_id,

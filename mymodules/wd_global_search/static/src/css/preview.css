@@ -145,6 +145,18 @@ h2 {
     border-color: #6d4c67;
 }
 
+.wd-resource-tab[aria-pressed="true"] {
+    color: #fff;
+    border-color: #6d4c67;
+    background: #6d4c67;
+}
+
+.wd-resource-count {
+    margin-left: 4px;
+    font-size: 12px;
+    opacity: .8;
+}
+
 .wd-layout {
     display: grid;
     grid-template-columns: minmax(260px, .8fr) minmax(360px, 1.2fr);

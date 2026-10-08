@@ -1,0 +1,22 @@
+{
+  "domain": "global_search_baseline",
+  "version": 5,
+  "state": "published",
+  "checksum": "3e3415d7b25fff38c8266101f0a8ea4ea88322999e0b13a173c642a34fd89674",
+  "relation_paths": {
+    "purchase_order": [
+      "partner_id",
+      "order_line.product_id"
+    ],
+    "sale_order": [
+      "partner_id",
+      "order_line.product_id"
+    ],
+    "stock_picking": [
+      "partner_id",
+      "purchase_id",
+      "sale_id"
+    ]
+  },
+  "note": "Relation paths are validated and published; executor search remains direct-field based."
+}

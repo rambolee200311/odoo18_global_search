@@ -130,6 +130,11 @@ Published Configuration / UserContext；客户端不得通过请求体指定这�
 - 结果状态、错误码、Preview 安全状态；
 - 浏览器、viewport 和截图/日志位置。
 
+本项目 CC-011 验收数据集和实际生成报告见：
+
+- [TV-07 README](../../mymodules/wd_tv_global_search/tv_07_final_acceptance_dataset/README.md)
+- [TV-07 REPORT](../../mymodules/wd_tv_global_search/tv_07_final_acceptance_dataset/reports/REPORT.md)
+
 详细协议和最终验收状态见：
 
 - [CC-007 错误与部分失败](../context/intent/CC-007_global_search_error_partial_failure.md)

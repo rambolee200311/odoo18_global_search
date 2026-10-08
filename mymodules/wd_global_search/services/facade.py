@@ -156,6 +156,15 @@ class SearchService:
                     return merge([_failure_outcome("CURSOR_INVALID")], request_id, 0, 0, None)
                 cursor_offset = int(cursor_data.get("offset", request.offset))
             resources = snapshot.get("resources", [])
+            known_resource_keys = {item["key"] for item in resources}
+            if set(request.resource_scope) - known_resource_keys:
+                return merge(
+                    [_failure_outcome("INVALID_REQUEST")],
+                    request_id,
+                    0,
+                    0,
+                    snapshot_info["version_id"],
+                )
             if request.resource_scope:
                 resources = [item for item in resources if item["key"] in request.resource_scope]
             outcomes = []
