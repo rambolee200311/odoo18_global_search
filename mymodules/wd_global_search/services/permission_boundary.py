@@ -47,6 +47,10 @@ def authorize_relation_path(env, resource, path, context):
         field = model._fields.get(field_name)
         if field is None or field.type not in {"many2one", "one2many", "many2many"}:
             raise AuthorizationError("RELATION_PATH_BLOCKED")
+        try:
+            model.check_field_access_rights("read", [field_name])
+        except AccessError as exc:
+            raise AuthorizationError("RELATION_PATH_BLOCKED") from exc
         model = env[field.comodel_name]
         try:
             model.check_access_rights("read")

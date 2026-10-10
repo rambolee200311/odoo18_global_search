@@ -135,7 +135,7 @@ N/A。本项目没有冻结 DDD，不得虚构聚合、实体、值对象或不�
 
 | ID | 行为 / 契约 | CC-PRESERVE |
 |---|---|---|
-| 1 | CC-001 Configuration Domain/Version 生命周期和 Published immutable 不变 | CC-PRESERVE-001 |
+| 1 | Search Service 只读取当前 Published 的最后一次成功发布/应用快照；快照在单次请求内不可变 | CC-PRESERVE-001 |
 | 2 | 既有 `/wd_global_search` Preview 路由和只读策略不变 | CC-PRESERVE-002 |
 | 3 | 业务查询只通过当前用户 Odoo ORM 环境，不使用 `sudo()` | CC-PRESERVE-003 |
 | 4 | 现有错误状态和 `PERMISSION_OR_DELETED` Preview 响应不被 Search Service 改写 | CC-PRESERVE-004 |

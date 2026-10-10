@@ -5,11 +5,11 @@
 | 项 | 内容 |
 |---|---|
 | Coding Contract | CC-001 |
-| 版本 | v0.1 |
-| 状态 | FROZEN |
-| 上游 SRS | [SRS_global_search](../../requirement/SRS_global_search.md) V1.4 FROZEN |
-| 上游 TDD | [TDD_global_search](../../design/TDD_global_search.md) V0.3 FROZEN |
-| 实施计划 | [IMPLEMENTATION_PLAN_global_search](../../implementation/IMPLEMENTATION_PLAN_global_search.md) V0.2 FROZEN，Phase 0–1 |
+| 版本 | v1.1 |
+| 状态 | FROZEN — AMENDMENT |
+| 上游 SRS | [SRS_global_search](../../requirement/SRS_global_search.md) V1.5 FROZEN |
+| 上游 TDD | [TDD_global_search](../../design/TDD_global_search.md) V0.4 FROZEN — AMENDMENT |
+| 实施计划 | [IMPLEMENTATION_PLAN_global_search](../../implementation/IMPLEMENTATION_PLAN_global_search.md) V0.3 FROZEN — AMENDMENT，Phase 0–1 |
 | 模块 | `wd_global_search` |
 | 目标代码基线 | 本 CC 执行开始时的工作分支 |
 
@@ -72,11 +72,13 @@ N/A。本项目当前没有冻结 DDD 文档；不得为本 CC 虚构领域对�
 
 - 建立 Configuration Domain、Configuration Version 和 Phase 1 所需的 Odoo 配置模型；
 - 建立 Business Resource、Technical Model Mapping、Searchable Field、Relation Path、Business Date、State、Snapshot、Vocabulary、Entity、Scoring 和 Performance 配置；
+- 普通 Resource 以 Primary Model 定义结果模型，Searchable Fields 直接属于 Resource；Model Mapping 仅服务于显式 Composite Resource，关联子模型使用 Relation Path 搜索且不改变结果模型；
 - 建立配置管理员组、ACL 和 Record Rule；
 - 实现 Draft、Validating、Published、Retired、Rejected 生命周期；
 - 实现发布前结构校验、权限边界校验、引用完整性校验、索引策略兼容性校验和有界配置校验；
 - 实现发布失败保留 Draft、标记 Rejected、记录原因且不影响现有 Published 的行为；
-- 实现 Published 版本不可原地修改、配置域单一 Published 约束；
+- Published/Retired 业务配置修改及 Published 配置域 active 状态变更暂存，不改变当前运行配置；管理员执行 Apply Changes 时完整校验，并原子更新快照、大小、checksum、active 状态和审计；
+- 状态、版本身份、运行快照和 checksum 等技术元数据只能由生命周期动作写入；配置域单一 Published 约束；
 - 实现 JSON canonical snapshot、checksum、默认 1 MB 大小上限；
 - 实现发布、停用、校验失败和缓存失效的审计事件基础；
 - 实现配置模型版本兼容性边界：新模块版本可读取受支持的旧配置版本，并将不兼容配置标记为 `REJECTED`；
@@ -169,7 +171,7 @@ N/A。本项目当前没有冻结 DDD 文档；不得为本 CC 虚构领域对�
 | ID | 当前行为 | 期望行为 | CC-CHANGE ID |
 |---|---|---|---|
 | 1 | 模块没有完整的版本化配置模型 | 配置域、配置版本及 Phase 1 配置实体使用 Odoo `models.Model` 持久化，并具有明确关联和约束 | CC-CHANGE-001 |
-| 2 | 无受控配置生命周期 | 配置版本按 Draft → Validating → Published → Retired/Rejected 转换，Published 唯一且不可原地修改 | CC-CHANGE-002 |
+| 2 | 无受控配置生命周期 | 配置版本按 Draft → Validating → Published → Retired/Rejected 转换；Published/Retired 业务编辑仅暂存，Apply 完整校验后原子更新运行快照；同一域 Published 唯一 | CC-CHANGE-002 |
 | 3 | 无发布前配置校验 | 发布前校验模型、字段、关系路径、Business Date、引用、优先级、索引策略和各项上限；失败关闭，不发布不完整版本 | CC-CHANGE-003 |
 | 4 | 无配置访问边界 | 配置管理员可维护配置；普通用户不能直接读取或修改配置模型；Search Service 后续仅消费 Published 配置 | CC-CHANGE-004 |
 | 5 | 无可验证快照 | Published 配置生成 canonical JSON、checksum，超过 1 MB 拒绝发布并记录审计 | CC-CHANGE-005 |
@@ -185,7 +187,7 @@ N/A。本项目当前没有冻结 DDD 文档；不得为本 CC 虚构领域对�
 - Configuration Version：`domain_id + version` 唯一，同一 domain 同时只有一个 Published；
 - Business Resource：`version_id + key` 唯一；
 - Resource Model Mapping：`resource_id + model_name` 唯一，同一 resource 内 priority 唯一；
-- Searchable Field：`mapping_id + field_name` 唯一；
+- Searchable Field：Primary Model 直接配置时 `resource_id + field_name` 唯一；Composite Resource 按 `mapping_id + field_name` 唯一；
 - Relation Path：`resource_id + path` 唯一；
 - Business Date Mapping：`resource_id + model_name` 唯一；
 - State Mapping：`resource_id + business_state` 唯一；
@@ -251,10 +253,10 @@ N/A。本项目当前没有冻结 DDD 文档；不得为本 CC 虚构领域对�
 | 测试 ID | 对应变更 | 上游来源 | 测试类型 | 预期结果 | 人工验证 | 原因 |
 |---|---|---|---|---|---|---|
 | CC-TEST-001 | CC-CHANGE-001/004 | CFG-001~CFG-013、TDD §4/§11.1 | ORM 集成 | 配置管理员可创建配置；普通用户无直接读取/写入权限；模型关联和必填约束生效 | 否 | 核验配置模型和 ACL 基础 |
-| CC-TEST-002 | CC-CHANGE-002 | BR-014、CFG-007、TDD §5.1 | ORM 集成 | 合法生命周期可转换；重复 Published、Published 原地修改和非法转换均被拒绝 | 否 | 防止版本边界失效 |
+| CC-TEST-002 | CC-CHANGE-002 | BR-014、CFG-007、TDD §5.1 | ORM 集成 | 状态/版本/运行快照技术字段受保护；Published/Retired 业务修改仅暂存；重复 Published 和非法转换被拒绝 | 否 | 保留运行时版本边界，同时支持受控编辑 |
 | CC-TEST-003 | CC-CHANGE-003 | BR-015、TDD §5.2 | ORM 集成 | 无效模型/字段/关系/Business Date/优先级/索引兼容性导致 REJECTED；Draft 保留，当前 Published 不变 | 否 | 固化失败关闭语义 |
-| CC-TEST-004 | CC-CHANGE-005 | BR-014、CFG-007、TDD §3.11/§5.3 | 单元 + ORM 集成 | Published 快照为 canonical JSON；checksum 稳定；超过 1 MB 返回配置错误且不发布 | 否 | 防止配置不一致和静默截断 |
-| CC-TEST-005 | CC-CHANGE-006 | BR-014、BR-015、TDD §5.4 | ORM 集成 | 发布、停用、拒绝和缓存失效产生审计事件；事件不含业务字段值 | 否 | 满足可追溯性 |
+| CC-TEST-004 | CC-CHANGE-005 | BR-014、CFG-007、TDD §3.11/§5.3 | 单元 + ORM 集成 | Published 快照为 canonical JSON；发布/Apply checksum 稳定；超 1 MB 拒绝且保留旧活动快照 | 否 | 防止配置不一致和静默截断 |
+| CC-TEST-005 | CC-CHANGE-006 | BR-014、BR-015、TDD §5.4 | ORM 集成 | 发布、暂存、Apply 成功/失败、停用和缓存失效产生审计；Apply 记录旧/新 checksum；事件不含业务字段值 | 否 | 满足可追溯性 |
 | CC-TEST-006 | CC-CHANGE-004、CC-PRESERVE-004 | CFG-005、TDD §6.1 | 权限回归 | 普通用户无法通过模型、关联或 RPC 直接读取配置；实现未使用 `sudo()` 读取业务数据 | 否 | 防止权限旁路 |
 | CC-TEST-007 | CC-PRESERVE-001/002/003 | TV-05、TDD §7 | 回归 + smoke | 现有 Preview 路由加载、只读边界和模块安装路径不回归 | 是 | 保护既有实现 |
 | CC-TEST-008 | CC-CHANGE-001/003 | CFG-001~CFG-013、TDD §5.5 | ORM 集成 | 唯一约束、外键/引用约束、必填约束生效；受支持旧配置可读取；不兼容配置为 REJECTED | 否 | 防止配置污染和升级回退 |
@@ -328,16 +330,18 @@ N/A。本项目当前没有冻结 DDD 文档；不得为本 CC 虚构领域对�
 | CC-DEC ID | 决策 | 考虑的替代方案 | 理由 |
 |---|---|---|---|
 | CC-DEC-001 | 将首轮范围限制为配置基础，不在同一 CC 实现 Search Service 或 Preview | 将 Phase 1–4 合并为一份大 CC | Implementation Plan 已定义阶段依赖；拆分可使权限、错误协议和浏览器证据分别闭环 |
-| CC-DEC-002 | 普通用户不直接读取配置模型 | 给予普通用户 Published 配置只读 ACL | 与 TDD v0.3 的安全边界一致，减少配置元数据泄露面 |
+| CC-DEC-002 | 普通用户不直接读取配置模型 | 给予普通用户 Published 配置只读 ACL | 与 TDD v0.4 的安全边界一致，减少配置元数据泄露面 |
 | CC-DEC-003 | 本轮只建立索引策略配置校验，不创建 PostgreSQL 业务索引 | 在配置模型 CC 内同步执行索引迁移 | 索引迁移有独立性能、回滚和环境门禁，应由后续 CC 负责 |
 | CC-DEC-004 | 直接引用 TDD 章节，不虚构当前尚未发布的 `T-xxx` 编号 | 为本 CC 临时创建 T-xxx | 保持 TDD 作为 Guardrail 的单一事实源 |
+| CC-DEC-005 | 普通 Resource 直接配置 Primary Model 和 Searchable Fields；关联子模型只通过 Relation Path 搜索；Model Mapping 保留给显式合并多个独立结果模型的 Composite Resource | 要求所有 Resource 经 Model Mapping 配置，或把父子关系当作 Composite | 用户确认调拨单等结果应保持根业务模型；关系匹配不能改变返回记录类型 |
+| CC-DEC-006 | Published/Retired 业务编辑暂存，只有显式 Apply 在全量校验后原子刷新快照/checksum | 直接修改运行快照或禁止 Published 编辑 | 用户批准的配置管理行为；Search 在 Apply 前保持旧快照 |
 
 ## 附录 B — 术语表
 
 | 术语 | 含义 |
 |---|---|
 | Configuration Domain | 一组可独立发布的 Global Search 配置 |
-| Published | 当前允许后续 Search Service 消费的不可变配置版本 |
+| Published | Search Service 当前选择的版本；其已应用快照在下一次成功 Apply 前保持不变 |
 | REJECTED | 发布校验失败但保留供管理员修订的版本状态 |
 | Snapshot | Published 配置的 canonical JSON 表示及 checksum |
 
@@ -348,3 +352,4 @@ N/A。本项目当前没有冻结 DDD 文档；不得为本 CC 虚构领域对�
 | v0.1 | 2026-10-03 | 起草 CC-001，冻结 Phase 1 配置基础的范围、边界、测试和停止条件 | Draft |
 | v0.2 | 2026-10-04 | 根据评审补充 SRS 上下文、版本兼容性、数据完整性、命名/ACL/视图/fixture/日志规范、CC-TEST-008、回滚闸门和文档完成闸门 | Draft |
 | v1.0 | 2026-10-04 | 获批准冻结并进入 Phase 1 配置基础实施 | FROZEN |
+| v1.1 | 2026-10-10 | 按用户批准修订 Published/Retired 暂存应用规则，并澄清 Primary Model、Relation Path 与可选 Composite Mapping | FROZEN — AMENDMENT |

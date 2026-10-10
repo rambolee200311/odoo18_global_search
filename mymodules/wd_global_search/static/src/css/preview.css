@@ -229,6 +229,7 @@ h2 {
 }
 
 .wd-record-card {
+    position: relative;
     border: 1px solid #dfe5ec;
     border-radius: 8px;
     background: #fff;
@@ -253,9 +254,58 @@ h2 {
     display: block;
 }
 
+.wd-card-primary {
+    margin-bottom: 4px;
+    color: #243447;
+    font-size: 16px;
+}
+
+.wd-card-primary-label,
+.wd-card-secondary,
+.wd-card-field,
+.wd-card-resource {
+    color: #6b7785;
+    font-size: 13px;
+}
+
+.wd-card-more {
+    position: relative;
+    z-index: 2;
+    margin-top: 8px;
+    color: #243447;
+    font-size: 13px;
+}
+
+.wd-card-open {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    border-radius: inherit;
+}
+
+.wd-card-more summary {
+    width: fit-content;
+    color: #6d4c67;
+    cursor: pointer;
+}
+
+.wd-card-more .wd-card-field {
+    margin-top: 5px;
+}
+
+.wd-card-resource {
+    margin-top: 8px;
+}
+
 .wd-record-card span {
     color: #6b7785;
     font-size: 13px;
+}
+
+@media (max-width: 1023px) {
+    .wd-record-card {
+        padding: 12px;
+    }
 }
 
 .wd-safe-message {

@@ -207,6 +207,74 @@ class TestSearchServiceCore(TestCase):
         self.assertEqual(first_model.search_calls, [(10, 100, "id asc")])
         self.assertEqual(second_model.search_calls, [(0, 98, "id asc")])
 
+    def test_relation_search_fields_include_product_codes_and_serial_numbers(self):
+        class RelationField:
+            def __init__(self, comodel_name):
+                self.comodel_name = comodel_name
+
+        class FakeModel:
+            def __init__(self, fields, env):
+                self._fields = fields
+                self.env = env
+
+            def check_field_access_rights(self, operation, field_names):
+                return field_names
+
+        class FakeEnv:
+            def __init__(self):
+                self.models = {
+                    "stock.picking": FakeModel(
+                        {
+                            "move_ids": RelationField("stock.move"),
+                            "move_line_ids": RelationField("stock.move.line"),
+                        },
+                        self,
+                    ),
+                    "stock.move": FakeModel(
+                        {"product_id": RelationField("product.product")}, self
+                    ),
+                    "stock.move.line": FakeModel(
+                        {"lot_id": RelationField("stock.lot")}, self
+                    ),
+                    "product.product": FakeModel(
+                        {
+                            field: object()
+                            for field in (
+                                "name",
+                                "display_name",
+                                "default_code",
+                                "barcode",
+                            )
+                        },
+                        self,
+                    ),
+                    "stock.lot": FakeModel(
+                        {"name": object(), "display_name": object()}, self
+                    ),
+                }
+
+            def __getitem__(self, model_name):
+                return self.models[model_name]
+
+        env = FakeEnv()
+        self.assertEqual(
+            executor._relation_search_fields(
+                env["stock.picking"], "move_ids.product_id"
+            ),
+            [
+                "move_ids.product_id.name",
+                "move_ids.product_id.display_name",
+                "move_ids.product_id.default_code",
+                "move_ids.product_id.barcode",
+            ],
+        )
+        self.assertEqual(
+            executor._relation_search_fields(
+                env["stock.picking"], "move_line_ids.lot_id"
+            ),
+            ["move_line_ids.lot_id.name", "move_line_ids.lot_id.display_name"],
+        )
+
     def test_cursor_rejects_other_user_and_expired_values(self):
         secret = b"test-secret"
         cursor = encode(

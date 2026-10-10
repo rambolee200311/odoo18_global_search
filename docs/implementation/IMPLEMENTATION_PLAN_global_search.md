@@ -5,11 +5,11 @@
 | 项 | 内容 |
 |---|---|
 | 文档名 | IMPLEMENTATION_PLAN_global_search |
-| 版本 | v0.2 |
-| 状态 | FROZEN |
+| 版本 | v0.3 |
+| 状态 | FROZEN — AMENDMENT |
 | 模块名 | `wd_global_search` |
 | 目标 | 按冻结 TDD 将 Global Search 的配置、搜索、权限、Preview、性能和验收能力实施为可交付模块 |
-| 评审状态 | 已批准冻结（2026-10-03） |
+| 评审状态 | 原版已批准冻结（2026-10-03）；v0.3 按用户批准更新配置应用和主模型配置契约（2026-10-10） |
 
 ### 1.2 冻结声明
 
@@ -117,7 +117,7 @@ SRS V1.4 是行为和验收的唯一需求基准。本计划不降低 MUST 要�
 - Configuration Domain；
 - Configuration Version；
 - Business Resource；
-- Resource Model Mapping；
+- Primary Model（普通 Resource）；Resource Model Mapping（仅 Composite Resource）；
 - Searchable Field；
 - Relation Path；
 - Business Date Mapping；
@@ -131,6 +131,7 @@ SRS V1.4 是行为和验收的唯一需求基准。本计划不降低 MUST 要�
 - 配置校验约束；
 - Draft/Validating/Published/Retired/Rejected 生命周期；
 - 发布校验、1 MB 快照上限和 checksum；
+- Published/Retired 业务配置及配置域启停修改暂存、完整 Apply 校验、原子 snapshot/checksum/active 更新及审计；
 - Published 版本缓存失效接口；
 - 配置管理员操作说明。
 
@@ -141,7 +142,7 @@ SRS V1.4 是行为和验收的唯一需求基准。本计划不降低 MUST 要�
 - 无效模型、字段、Relation Path、索引策略、优先级和 Business Date 被拒绝；
 - 发布失败保留 Draft、标记 REJECTED、记录原因且不影响当前 Published；
 - 同一配置域只能有一个 Published 版本；
-- Published 不允许原地修改；
+- Published/Retired 业务编辑和配置域启停暂存；Apply 前搜索使用旧快照/active 状态，Apply 完整校验成功后原子更新快照/checksum/active；
 - 快照 JSON canonical 化、checksum 和大小限制生效；
 - 发布、停用、校验失败和缓存失效均形成 Audit Event；
 - 不使用 `sudo()` 读取业务数据。
@@ -814,9 +815,10 @@ SRS 变更必须由需求负责人批准并增加版本。Implementation Plan �
 | NFR-001 | Phase 6 | P95 首次 ≤2 秒、完整 ≤5 秒、错误率 ≤1% |
 | NFR-002 | Phase 1、8、11 | 业务和配置新鲜度、无需重启生效 |
 | AC-044~AC-045 | Phase 1、8、11 | 业务提交可见、配置发布即时生效 |
+| AC-046~AC-047 | Phase 1、2、11 | 配置暂存/Apply 原子边界、主模型关联搜索结果类型 |
 | CON-008 | Phase 3、7 | 权限异常失败关闭 |
 | CON-009 | Phase 4 | Preview 无编辑和业务副作用 |
-| CON-010 | Phase 1、8 | 配置发布无需重启生效 |
+| CON-010 | Phase 1、8 | 配置发布或显式 Apply 无需重启生效 |
 | CON-011 | Phase 3 | 无权限字段不参与搜索 |
 
 ## 17. 变更历史
@@ -825,3 +827,4 @@ SRS 变更必须由需求负责人批准并增加版本。Implementation Plan �
 |---|---|---|
 | v0.1 | 2026-10-03 | 基于 SRS V1.4、Spike、TV-01~06 和 TDD v0.3 FROZEN 起草实施计划 |
 | v0.2 | 2026-10-03 | 获批准冻结 Implementation Plan，冻结实施顺序、门禁、资源、风险和变更流程 |
+| v0.3 | 2026-10-10 | 按 SRS V1.5 Amendment 和用户批准，明确 Primary Model/Relation Path 与 Published 暂存、显式 Apply 规则 |

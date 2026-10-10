@@ -360,7 +360,7 @@ Published Domain
 - Scenario F：先前为 0 的 Resource 在 Raw Query/Refinement 改变后变为正数时重新显示，初始为未选中；
 - Scenario G：Resource 失败或超时保留可见错误状态，不得作为 0 隐藏。
 
-不重新定义 CC-001 的发布、退休、checksum 和 immutable 规则。
+不重新定义 CC-001 的发布、退休、checksum 和 Apply 规则；Workspace 不得修改配置，管理员 Apply 的变更由配置管理界面和 CC-001 契约控制。
 
 ## 8. Multi-select Resource Contract
 
@@ -798,7 +798,7 @@ HVR 场景：
 - CC-007 的失败资源、PARTIAL_SUCCESS、EMPTY 和错误唯一性保持兼容；
 - CC-008 的日志字段白名单和 audit 语义保持兼容；
 - CC-009 的 label、语言和时区来源保持服务端唯一；
-- CC-010 的 Published checksum 和配置版本不可被 Workspace 修改。
+- CC-010 的 Published checksum 和配置版本不可被 Workspace 修改；管理员显式 Apply 的边界由 CC-001 控制。
 - Count 计算和刷新必须处于本 CC 的软性能预算内，超预算需记录并保留失败证据。
 
 ## 19. Stop Conditions

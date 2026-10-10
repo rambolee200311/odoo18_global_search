@@ -2,6 +2,7 @@ import time
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
+from .card import authorized_card_field_names, serialize_card_fields
 from .errors import error
 from .permission_boundary import (
     AuthorizationError,
@@ -12,7 +13,7 @@ from .permission_boundary import (
 from .types import ResourceOutcome
 
 
-def _relation_search_fields(model, path):
+def _relation_search_fields(model, path, context):
     relation = model
     for segment in path.split("."):
         field = relation._fields.get(segment)
@@ -20,10 +21,18 @@ def _relation_search_fields(model, path):
             return []
         relation = model.env[field.comodel_name]
         model = relation
+    candidates = [
+        field_name
+        for field_name in ("name", "display_name", "ref", "default_code", "barcode")
+        if field_name in relation._fields
+    ]
+    try:
+        readable_fields = authorize_fields(relation, candidates, context)
+    except AuthorizationError:
+        return []
     return [
         "%s.%s" % (path, field_name)
-        for field_name in ("name", "display_name", "ref", "default_code")
-        if field_name in relation._fields
+        for field_name in readable_fields
     ]
 
 
@@ -71,7 +80,7 @@ def _condition_domain(model, fields, relation_paths, resource, conditions, conte
         if field == "name":
             search_fields = list(fields)
             for path in relation_paths:
-                search_fields.extend(_relation_search_fields(model, path))
+                search_fields.extend(_relation_search_fields(model, path, context))
         if not search_fields:
             continue
         grouped.setdefault(field, []).append(condition)
@@ -163,22 +172,36 @@ def execute(env, resource, conditions, limit, context=None, offset=0):
             remaining_offset -= model_offset
             if remaining_limit == 0 or model_offset == model_count:
                 continue
+            readable_card_fields = authorized_card_field_names(
+                resource, model, context
+            )
             records = model.search(
                 domain,
                 offset=model_offset,
                 limit=remaining_limit,
                 order="id asc",
             )
-            values = records.read(fields)
+            values = records.read(readable_card_fields)
             for value in values:
-                value.update(
+                record_id = value["id"]
+                results.append(
                     {
+                        "id": record_id,
                         "_resource": resource["key"],
                         "_model": model_name,
-                        "_record_id": value["id"],
+                        "_record_id": record_id,
+                        "snapshot": {
+                            "fields": serialize_card_fields(
+                                env,
+                                resource,
+                                model_name,
+                                value,
+                                readable_card_fields,
+                                context,
+                            )
+                        },
                     }
                 )
-            results.extend(values)
             remaining_limit -= len(values)
     except AuthorizationError as exc:
         return ResourceOutcome(

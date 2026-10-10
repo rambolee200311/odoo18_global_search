@@ -36,6 +36,7 @@
         configVersion: workspace.dataset.configVersion || null,
     };
     let searchSequence = 0;
+    let cardDensityExpanded = window.innerWidth >= 768;
 
     function text(value) {
         if (value === false || value === null || value === undefined || value === "") {
@@ -228,22 +229,29 @@
         renderSelectionState();
     }
 
-    async function openNativeForm(model, recordId) {
-        const query = new URLSearchParams({model: model, record_id: recordId});
-        const response = await fetch("/wd_global_search/api/form_url?" + query.toString(), {
-            credentials: "same-origin",
-            headers: {"Accept": "application/json"},
+    function showNavigationError(message) {
+        const notice = document.createElement("p");
+        notice.className = "wd-safe-message";
+        notice.dataset.testid = "action-error";
+        notice.textContent = message;
+        list.prepend(notice);
+    }
+
+    function openNativeForm(resourceKey, recordId) {
+        const query = new URLSearchParams({
+            resource_key: resourceKey,
+            record_id: recordId,
         });
-        const data = await response.json();
-        if (data.status !== "SUCCESS") {
-            list.insertAdjacentHTML(
-                "afterbegin",
-                '<p class="wd-safe-message" data-testid="action-error">'
-                    + text(data.status || "Record unavailable") + "</p>"
-            );
+        const tab = window.open(
+            "/wd_global_search/open_result?" + query.toString(),
+            "_blank"
+        );
+        if (!tab) {
+            showNavigationError("Allow pop-ups to open this record in a new tab.");
             return;
         }
-        window.open(data.url, "_blank", "noopener,noreferrer");
+        tab.focus();
+        tab.opener = null;
     }
 
     function renderResults(data) {
@@ -271,33 +279,141 @@
             list.innerHTML = '<p class="wd-muted" data-testid="empty-results">No results found.</p>';
             return;
         }
-        list.innerHTML = data.results.map((result) => {
-            const title = result.display_name || result.name || result._record_id;
-            const model = result._model;
-            return '<button class="wd-record-card" type="button" data-testid="record-card"'
-                + ' aria-pressed="false" data-model="' + model
-                + '" data-record-id="' + result._record_id + '"><strong>' + text(title)
-                + '</strong><span>' + text(result._resource) + "</span></button>";
-        }).join("");
+        list.replaceChildren();
         if (data.status === "PARTIAL_SUCCESS") {
-            list.insertAdjacentHTML(
-                "afterbegin",
-                '<p class="wd-safe-message" data-testid="partial-success">Some resources are unavailable.</p>'
-            );
+            const partial = document.createElement("p");
+            partial.className = "wd-safe-message";
+            partial.dataset.testid = "partial-success";
+            partial.textContent = "Some resources are unavailable.";
+            list.append(partial);
         }
-        list.querySelectorAll("button").forEach((button) => {
-            button.addEventListener("click", () => {
+
+        data.results.forEach((result) => {
+            const card = document.createElement("article");
+            card.className = "wd-record-card";
+            card.dataset.testid = "record-card";
+            card.dataset.resource = result._resource;
+            card.dataset.recordId = result._record_id;
+            card.setAttribute("role", "button");
+            card.setAttribute("tabindex", "0");
+            card.setAttribute("aria-pressed", "false");
+
+            const fields = result.snapshot && Array.isArray(result.snapshot.fields)
+                ? result.snapshot.fields
+                : [];
+            if (fields.length) {
+                const primary = document.createElement("strong");
+                primary.className = "wd-card-primary";
+                primary.textContent = text(fields[0].value);
+                card.append(primary);
+                const primaryLabel = document.createElement("span");
+                primaryLabel.className = "wd-card-primary-label";
+                primaryLabel.textContent = text(fields[0].label);
+                card.append(primaryLabel);
+                if (fields.length > 1) {
+                    const secondary = document.createElement("span");
+                    secondary.className = "wd-card-secondary";
+                    secondary.textContent = text(fields[1].label) + ": " + text(fields[1].value);
+                    card.append(secondary);
+                }
+                if (fields.length > 2) {
+                    const more = document.createElement("details");
+                    more.className = "wd-card-more";
+                    more.open = cardDensityExpanded;
+                    const summary = document.createElement("summary");
+                    summary.textContent = "More";
+                    more.append(summary);
+                    fields.slice(2).forEach((field) => {
+                        const row = document.createElement("span");
+                        row.className = "wd-card-field";
+                        row.textContent = text(field.label) + ": " + text(field.value);
+                        more.append(row);
+                    });
+                    card.append(more);
+                }
+            } else {
+                const primary = document.createElement("strong");
+                primary.className = "wd-card-primary";
+                primary.textContent = "Record";
+                card.append(primary);
+            }
+            const resourceLabel = Array.from(
+                resourceTabs.querySelectorAll(".wd-resource-tab")
+            ).find((item) => item.dataset.resource === result._resource)
+                ?.querySelector(".wd-resource-label")?.textContent || result._resource;
+            const resource = document.createElement("span");
+            resource.className = "wd-card-resource";
+            resource.textContent = resourceLabel;
+            card.append(resource);
+
+            const openLink = document.createElement("a");
+            const navigationQuery = new URLSearchParams({
+                resource_key: result._resource,
+                record_id: result._record_id,
+            });
+            openLink.className = "wd-card-open";
+            openLink.href = "/wd_global_search/open_result?" + navigationQuery.toString();
+            openLink.target = "_blank";
+            openLink.rel = "noopener noreferrer";
+            openLink.tabIndex = -1;
+            openLink.setAttribute("aria-hidden", "true");
+            card.append(openLink);
+
+            card.addEventListener("click", (event) => {
+                if (event.target.closest(".wd-card-more summary")) {
+                    return;
+                }
+                if (event.detail === 2) {
+                    event.preventDefault();
+                    openNativeForm(card.dataset.resource, card.dataset.recordId);
+                }
+                const openInNewTab = event.ctrlKey || event.metaKey;
+                if (!openInNewTab) {
+                    event.preventDefault();
+                }
                 list.querySelectorAll(".wd-record-card").forEach((record) => {
                     record.setAttribute("aria-pressed", "false");
                 });
-                button.setAttribute("aria-pressed", "true");
+                card.setAttribute("aria-pressed", "true");
             });
-            button.addEventListener("dblclick", () => openNativeForm(
-                button.dataset.model, button.dataset.recordId
-            ));
-            button.title = "Double-click to open the configured read-only Odoo form";
+            card.addEventListener("keydown", (event) => {
+                if (event.target.closest(".wd-card-more summary")) {
+                    return;
+                }
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    openNativeForm(card.dataset.resource, card.dataset.recordId);
+                } else if (event.key === " " && !event.repeat) {
+                    event.preventDefault();
+                    list.querySelectorAll(".wd-record-card").forEach((record) => {
+                        record.setAttribute(
+                            "aria-pressed",
+                            String(record === card && card.getAttribute("aria-pressed") !== "true")
+                        );
+                    });
+                } else if (event.key === "Escape") {
+                    event.preventDefault();
+                    list.querySelectorAll(".wd-record-card").forEach((record) => {
+                        record.setAttribute("aria-pressed", "false");
+                    });
+                }
+            });
+            card.title = "Double-click or press Enter to open the configured Odoo form";
+            list.append(card);
         });
     }
+
+    window.addEventListener("resize", () => {
+        const expanded = window.innerWidth >= 768;
+        if (expanded === cardDensityExpanded) {
+            return;
+        }
+        cardDensityExpanded = expanded;
+        list.querySelectorAll(".wd-card-more").forEach((details) => {
+            details.open = expanded;
+        });
+    });
 
     function pageNumberWindow(currentPage, totalPages) {
         if (totalPages <= 7) {

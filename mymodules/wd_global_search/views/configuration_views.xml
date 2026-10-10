@@ -7,6 +7,11 @@
                 <field name="key"/>
                 <field name="name"/>
                 <field name="active"/>
+                <field name="pending_active_set" invisible="1"/>
+                <field name="pending_active"
+                       readonly="1"
+                       invisible="not pending_active_set"
+                       string="Active after Apply"/>
             </list>
         </field>
     </record>
@@ -30,6 +35,181 @@
                                     <field name="state"/>
                                     <field name="checksum"/>
                                 </list>
+                                <form>
+                                    <header>
+                                        <button name="action_validate" type="object"
+                                                string="Validate" class="btn-secondary"
+                                                invisible="state not in ['draft', 'rejected']"/>
+                                        <button name="action_publish" type="object"
+                                                string="Publish" class="btn-primary"
+                                                invisible="state not in ['draft', 'rejected']"/>
+                                        <button name="action_retire" type="object"
+                                                string="Retire" class="btn-secondary"
+                                                invisible="state != 'published'"/>
+                                        <button name="action_apply_changes" type="object"
+                                                string="Apply Changes" class="btn-primary"
+                                                invisible="not pending_changes or state not in ['published', 'retired']"/>
+                                        <field name="state" widget="statusbar"
+                                               readonly="1"
+                                               statusbar_visible="draft,validating,published,retired,rejected"/>
+                                    </header>
+                                    <sheet>
+                                        <group>
+                                            <field name="version" readonly="state in ['published', 'retired']"/>
+                                            <field name="schema_version"/>
+                                            <field name="state" readonly="1"/>
+                                            <field name="checksum" readonly="1"/>
+                                            <field name="pending_changes" readonly="1"/>
+                                        </group>
+                                        <notebook>
+                                            <page string="Business Resources">
+                                                <field name="resource_ids">
+                                                    <list>
+                                                        <field name="key"/>
+                                                        <field name="name"/>
+                                                        <field name="active"/>
+                                                        <field name="primary_model_id" invisible="composite"/>
+                                                        <field name="primary_model_name" invisible="1"/>
+                                                        <field name="composite" string="Combine independent models (advanced)"/>
+                                                        <field name="navigation_action_id"
+                                                               invisible="composite"
+                                                               domain="[('res_model', '=', primary_model_name)]"/>
+                                                    </list>
+                                                    <form>
+                                                        <sheet>
+                                                            <group>
+                                                                <field name="key"/>
+                                                                <field name="name"/>
+                                                                <field name="active"/>
+                                                                <field name="composite"
+                                                                       string="Combine independent models (advanced)"
+                                                                       help="Use only when one search category should return records from several independent models. Related child models do not belong here; configure Relation Paths instead."/>
+                                                                <field name="result_identity_scope"/>
+                                                                <field name="primary_model_id"
+                                                                       invisible="composite"
+                                                                       options="{'no_create': True}"
+                                                                       help="The model whose records appear as search results. Related models such as stock.move are searched through Relation Paths."/>
+                                                                <field name="primary_model_name" invisible="1"/>
+                                                                <field name="navigation_action_id"
+                                                                       invisible="composite"
+                                                                       domain="[('res_model', '=', primary_model_name)]"
+                                                                       help="Choose a standalone Window Action for this Primary Model. Its Form View and group restrictions are preserved; its Context and Domain must not depend on active_id, active_ids, or active_model."/>
+                                                            </group>
+                                                            <notebook>
+                                                                <page string="Search Fields"
+                                                                      invisible="composite">
+                                                                    <field name="searchable_field_ids"
+                                                                           context="{'default_resource_id': id}">
+                                                                        <list editable="bottom">
+                                                                            <field name="field_name"/>
+                                                                            <field name="purpose"/>
+                                                                            <field name="operator_set"/>
+                                                                            <field name="index_strategy"/>
+                                                                            <field name="searchable"/>
+                                                                        </list>
+                                                                    </field>
+                                                                </page>
+                                                                <page string="Model Mappings (advanced)"
+                                                                      invisible="not composite">
+                                                                    <field name="model_mapping_ids">
+                                                                        <list>
+                                                                            <field name="model_name"/>
+                                                                            <field name="priority"/>
+                                                                        </list>
+                                                                        <form>
+                                                                            <group>
+                                                                                <field name="model_name"/>
+                                                                                <field name="priority"/>
+                                                                            </group>
+                                                                            <field name="searchable_field_ids">
+                                                                                <list editable="bottom">
+                                                                                    <field name="field_name"/>
+                                                                                    <field name="purpose"/>
+                                                                                    <field name="operator_set"/>
+                                                                                    <field name="index_strategy"/>
+                                                                                    <field name="searchable"/>
+                                                                                </list>
+                                                                            </field>
+                                                                        </form>
+                                                                    </field>
+                                                                </page>
+                                                                <page string="Relation Paths">
+                                                                    <div class="text-muted">
+                                                                        Search related records but return results from the Primary Model, for example
+                                                                        move_ids.product_id or move_line_ids.lot_id on stock.picking.
+                                                                        Matching uses readable name, reference, internal code and barcode fields on the related model.
+                                                                    </div>
+                                                                    <field name="relation_path_ids">
+                                                                        <list editable="bottom">
+                                                                            <field name="path"/>
+                                                                            <field name="max_depth"/>
+                                                                        </list>
+                                                                    </field>
+                                                                </page>
+                                                                <page string="Card Fields">
+                                                                    <field name="snapshot_field_ids"
+                                                                           context="{'default_resource_id': id}">
+                                                                        <list>
+                                                                            <field name="sequence"/>
+                                                                            <field name="visible"/>
+                                                                            <field name="field_reference_id"/>
+                                                                            <field name="label"/>
+                                                                            <field name="format_type"/>
+                                                                            <field name="allow_empty"/>
+                                                                        </list>
+                                                                        <form>
+                                                                            <sheet>
+                                                                                <group>
+                                                                                    <field name="resource_id" invisible="1"/>
+                                                                                    <field name="allowed_model_names" invisible="1"/>
+                                                                                    <field name="sequence"/>
+                                                                                    <field name="visible"/>
+                                                                                    <field name="field_reference_id"
+                                                                                           domain="[('model', 'in', allowed_model_names)]"/>
+                                                                                    <field name="field_name" invisible="1"/>
+                                                                                    <field name="label"/>
+                                                                                    <field name="format_type"/>
+                                                                                    <field name="allow_empty"/>
+                                                                                </group>
+                                                                            </sheet>
+                                                                        </form>
+                                                                    </field>
+                                                                </page>
+                                                                <page string="Business Dates">
+                                                                    <field name="business_date_ids">
+                                                                        <list editable="bottom">
+                                                                            <field name="model_name"/>
+                                                                            <field name="field_name"/>
+                                                                            <field name="timezone_behavior"/>
+                                                                            <field name="empty_date_policy"/>
+                                                                        </list>
+                                                                    </field>
+                                                                </page>
+                                                                <page string="States">
+                                                                    <field name="state_mapping_ids">
+                                                                        <list editable="bottom">
+                                                                            <field name="business_state"/>
+                                                                            <field name="technical_values"/>
+                                                                        </list>
+                                                                    </field>
+                                                                </page>
+                                                            </notebook>
+                                                        </sheet>
+                                                    </form>
+                                                </field>
+                                            </page>
+                                            <page string="Vocabulary">
+                                                <field name="vocabulary_ids">
+                                                    <list editable="bottom">
+                                                        <field name="lang"/>
+                                                        <field name="term"/>
+                                                        <field name="value"/>
+                                                    </list>
+                                                </field>
+                                            </page>
+                                        </notebook>
+                                    </sheet>
+                                </form>
                             </field>
                         </page>
                     </notebook>
@@ -58,6 +238,12 @@
     <record id="action_gs_native_form_product" model="ir.actions.act_window">
         <field name="name">Global Search Product</field>
         <field name="res_model">product.product</field>
+        <field name="view_mode">form</field>
+        <field name="context">{'create': False, 'edit': False, 'delete': False, 'form_view_initial_mode': 'readonly'}</field>
+    </record>
+    <record id="action_gs_native_form_location" model="ir.actions.act_window">
+        <field name="name">Global Search Storage Location</field>
+        <field name="res_model">stock.location</field>
         <field name="view_mode">form</field>
         <field name="context">{'create': False, 'edit': False, 'delete': False, 'form_view_initial_mode': 'readonly'}</field>
     </record>

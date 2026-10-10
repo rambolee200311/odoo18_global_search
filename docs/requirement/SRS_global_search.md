@@ -1,12 +1,12 @@
-# Odoo Global Search 软件需求规格说明书（SRS）V1.4
+# Odoo Global Search 软件需求规格说明书（SRS）V1.5
 
 > **文档性质：Software Requirements Specification / 软件需求规格说明书**
-> **状态：FROZEN — 需求基线已冻结 — 不授权直接编码**
-> **版本：V1.4**
+> **状态：FROZEN — 需求基线已冻结 — Amendment**
+> **版本：V1.5**
 > **适用平台：Odoo 18 Community / Enterprise**
 > **上游输入：RAR V0.2（ANALYSIS COMPLETE — FROZEN）**
 > **仓库路径：`docs/requirement/RAR_global_search.md`**
-> **评审输入：SRS V1.0/V1.1/V1.2/V1.3 评审结论**
+> **评审输入：SRS V1.0/V1.1/V1.2/V1.3/V1.4 评审结论；V1.5 用户批准的配置应用与 Resource 主模型澄清**
 > **目的：将 RAR 中已确认的需求边界转化为可验证、可追溯、可冻结的软件需求。**
 >
 > 本 SRS 不定义技术实现，不构成技术设计文档（TDD），不授权编码。
@@ -78,8 +78,8 @@ Global Search 是配置驱动的统一搜索入口，允许用户通过业务线
 |---|---|
 | **Business Resource** | 用户认知中的业务对象（如"出库单"、"客户"）。可为单模型资源、复合资源或关联资源（见 §1.3.1） |
 | **单模型资源** | 对应一个 Odoo Technical Model 的 Business Resource |
-| **复合资源** | 由多个 Technical Model 组成、对用户呈现为单一业务对象的 Business Resource（如"订单"） |
-| **关联资源** | 通过 Relation Path 从其他资源扩展出来的资源 |
+| **复合资源** | 可选地将多个独立结果模型合并呈现为一个业务类别；不是父子模型关系 |
+| **关联资源** | 通过 Relation Path 从一个结果模型查找关联记录；命中后仍返回根结果模型记录 |
 | **Business Resource Vocabulary** | 用户语言与系统数据之间的语义对应关系，可配置 |
 | **Identifier** | 高区分度的业务标识符（如柜号、单号、提货码） |
 | **Entity** | 业务实体（如客户、产品、司机、仓库） |
@@ -95,7 +95,7 @@ Global Search 是配置驱动的统一搜索入口，允许用户通过业务线
 | **Snapshot** | 搜索结果的业务摘要卡片，用于快速判断 |
 | **Search Workspace** | 搜索结果工作区（左侧结果 + 右侧 Preview） |
 | **Result Identity** | 搜索结果的唯一标识（见 BR-011） |
-| **Relation Path** | Business Resource 之间的关联路径（见 BR-012） |
+| **Relation Path** | 从 Resource 主模型遍历关联字段以匹配相关记录的路径；命中后保留主模型作为结果（见 BR-012） |
 | **L1/L2/L3/L4** | RAR 定义的能力分层 |
 
 ### 1.3.1 Business Resource 类型
@@ -103,10 +103,10 @@ Global Search 是配置驱动的统一搜索入口，允许用户通过业务线
 | 类型 | 定义 | 示例 |
 |---|---|---|
 | **单模型资源** | 一个 Business Resource 对应一个 Technical Model | 客户 → `res.partner` |
-| **复合资源** | 一个 Business Resource 由多个 Technical Model 组成 | 订单 → `sale.order` + `purchase.order` |
-| **关联资源** | 通过 Relation Path 从其他资源扩展出来的资源 | 客户的订单 → 通过 `partner_id` 关联 |
+| **复合资源（可选）** | 一个业务类别有意合并多个独立结果模型 | 统一"业务单据" → `sale.order` + `purchase.order` |
+| **单模型资源的关联搜索** | 从主模型沿字段关系匹配子模型中的值，结果仍是主模型记录 | `stock.picking` 通过 `move_ids.product_id` 搜产品，或通过 `move_line_ids.lot_id` 搜 SN |
 
-Business Resource 的类型决定了 CFG-001 的配置模型必须支持多模型。
+普通 Resource MUST 配置一个主模型。只有产品明确要求多个独立模型记录出现在同一类别时才使用复合资源；Odoo 中有关联的子模型不构成复合资源。库存调拨示例中，`stock.picking` 是主模型，`stock.move` / `stock.move.line` 仅作为关联搜索路径，搜索结果仍为 `stock.picking`。
 
 ## 1.4 需求来源与追溯
 
@@ -1176,7 +1176,9 @@ Limited Query Input 与 Refinement Conditions MUST 映射到同一条件模型�
 
 ## BR-012 Relation Path 【MUST】【SRS-DEC】
 
-Business Resource 之间的关联路径 MUST 可配置。
+Resource 的关联路径 MUST 可配置。单模型 Resource 沿关联路径搜索时，匹配的关联记录 MUST 映射回主模型结果；关联模型不得因此自动成为独立结果模型或 Model Mapping。
+
+例如，库存调拨以 `stock.picking` 为主模型；产品可经 `move_ids.product_id` 匹配，序列号可经 `move_line_ids.lot_id` 匹配，返回结果均为对应的 `stock.picking`。
 
 **配置项：**
 
@@ -1232,16 +1234,23 @@ Business Resource 之间的关联路径 MUST 可配置。
 | 操作 | 效果 |
 |---|---|
 | 保存草稿 | 不生效 |
-| 发布配置 | 立即生效 |
-| 停用配置 | 立即失效 |
+| 发布配置 | 校验后成为当前 Published 快照并立即生效 |
+| 停用配置 | 暂存停用；Apply 成功后失效 |
 | 回滚配置 | 恢复到指定已发布版本，立即生效 |
+| 编辑 Published/Retired 配置 | 仅暂存业务配置改动；当前运行快照不变 |
+| 应用更改 | 对完整配置执行校验，并原子更新该版本的快照、checksum 及暂存的配置域启停状态 |
 
 **补充规则：**
 
 - 发布和回滚权限 MUST 由配置管理员组控制
+- Published/Retired 状态 MUST NOT 阻止配置管理员编辑业务配置；状态、版本身份及快照/checksum 等技术元数据仍由生命周期动作保护
+- Search MUST 持续读取最后一次成功发布或应用的 Published 快照；暂存改动 MUST NOT 影响搜索
+- 应用失败 MUST 保留原运行快照、checksum、配置域启停状态和待应用状态；成功应用 MUST 在同一事务记录旧/新 checksum、操作者和时间
+- Published 配置域 active 的暂存值 MUST 只在 Apply 成功后生效
+- 应用 Retired 版本只更新其保存快照，不使其成为 Search 运行版本
 - 配置版本 MUST 保留最近 10 个版本（默认值，可配置）
 - 回滚 MUST 立即生效
-- 配置变更审计由项目现有 `audit_log` 模块负责记录
+- 配置生命周期审计 MUST 记录操作者、时间、动作和配置域；Apply 成功记录旧/新 checksum，失败记录错误原因；审计不得记录业务字段值
 - Global Search 不定义审计日志保留周期；保留策略由 `audit_log` 模块负责
 
 **追溯：** SRS V1.1 评审 P0-2、P1-10、SRS V1.2 评审 P1-11
@@ -1311,7 +1320,8 @@ Entity 匹配的字段来源 MUST 可配置：
 |---|---|---|
 | Resource 名称 | 用户看到的业务名称 | 所有 |
 | Resource 类型 | 单模型 / 复合 / 关联 | 所有 |
-| Odoo 模型 | 实际模型（可多个） | 单模型 / 复合 |
+| 主模型 | 返回搜索结果的 Odoo Technical Model | 普通单模型 Resource 必填 |
+| Model Mappings | 合并到同一结果类别的独立模型 | 仅复合资源 |
 | Identifier 字段 | 用于标识符匹配的字段 | 所有 |
 | Entity 关联 | 关联的实体模型和字段 | 所有 |
 | Business Date | 默认业务日期字段 | 所有 |
@@ -1646,7 +1656,7 @@ Preview MUST 为只读，MUST NOT 允许编辑、保存、执行业务按钮。
 
 ## CON-010 配置变更立即生效 【MUST】【SRS-DEC】
 
-配置发布后 MUST 立即生效，无需重启。
+配置发布或管理员明确应用已暂存的配置更改后 MUST 立即生效，无需重启。Published 配置的暂存编辑 MUST NOT 在应用前影响搜索。
 
 **详见 BR-014。**
 
@@ -1945,6 +1955,24 @@ Preview MUST 为只读，MUST NOT 允许编辑、保存、执行业务按钮。
 **When** 用户使用别名搜索
 **Then** 系统匹配到该 Business Resource
 
+## AC-046 Published 配置暂存与应用 【MUST】
+
+**Given** 当前有一个 Published 配置，管理员修改其业务配置
+**When** 修改已保存但尚未执行 Apply Changes
+**Then** 系统显示待应用状态，Search 继续使用旧 snapshot/checksum
+
+**When** 管理员应用一份通过完整校验的配置
+**Then** snapshot、大小、checksum、pending 状态、暂存的配置域 active 状态和审计事件在同一事务更新；审计包含旧/新 checksum
+
+**When** 完整校验失败
+**Then** 旧 snapshot/checksum/配置域 active 状态不变，pending 状态保留，并记录失败原因
+
+## AC-047 主模型关联搜索结果保持 【MUST】
+
+**Given** `stock.picking` Resource 配置为单一主模型，并配置 `move_ids.product_id` 与 `move_line_ids.lot_id` Relation Paths
+**When** 用户搜索产品标识或序列号并命中关联明细
+**Then** 返回对应的 `stock.picking` 记录，不把 `stock.move` 或 `stock.move.line` 作为结果模型
+
 ---
 
 # 9. 冻结决策与开发前问题
@@ -2113,12 +2141,13 @@ SRS 冻结后，进入技术研究阶段。至少需要研究：
 | V1.2 | 2026-10-01 | DRAFT | 闭合 V1.1 评审 P0×6、P1×7、补充 2、其他建议 |
 | V1.3 | 2026-10-01 | DRAFT | 闭合 V1.2 评审 P0×4、P1×7、文档一致性×2 |
 | V1.4 | 2026-10-01 | **FROZEN** | 闭合 V1.3 评审 P0×3、P1×7、文档一致性×3；收口配置保留、audit_log 职责、性能验证环境和数据新鲜度决策 |
+| V1.5 | 2026-10-10 | **FROZEN — AMENDMENT** | 用户批准 Published/Retired 配置编辑暂存、显式 Apply 原子生效；明确普通 Resource 主模型与关联搜索的结果语义，Model Mappings 仅用于有意合并独立结果模型 |
 
 ---
 
 # 12. 当前状态
 
-**SRS V1.4：FROZEN**
+**SRS V1.5：FROZEN — AMENDMENT**
 
 本版本用于：
 

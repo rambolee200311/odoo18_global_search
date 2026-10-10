@@ -76,3 +76,90 @@ class TestPermissionBoundary(TestCase):
             )
 
         self.assertEqual(raised.exception.code, "RELATION_PATH_BLOCKED")
+
+    def test_card_serializer_keeps_sequence_and_omits_unreadable_and_hidden_fields(self):
+        from ..services.card import serialize_card_fields
+
+        class CardField:
+            def __init__(self, field_type="char"):
+                self.type = field_type
+
+        class CardModel:
+            _fields = {
+                "name": CardField(),
+                "is_company": CardField("boolean"),
+                "secret": CardField(),
+                "hidden": CardField(),
+            }
+
+        class CardEnv(dict):
+            pass
+
+        resource = {
+            "snapshot_fields": [
+                {
+                    "field_name": "secret",
+                    "label": "Secret",
+                    "labels": {"en_US": "Secret"},
+                    "sequence": 20,
+                    "visible": True,
+                    "format_type": "text",
+                    "allow_empty": True,
+                },
+                {
+                    "field_name": "is_company",
+                    "label": "Company",
+                    "labels": {"en_US": "Company"},
+                    "sequence": 15,
+                    "visible": True,
+                    "format_type": "text",
+                    "allow_empty": False,
+                },
+                {
+                    "field_name": "hidden",
+                    "label": "Hidden",
+                    "sequence": 5,
+                    "visible": False,
+                    "format_type": "text",
+                },
+                {
+                    "field_name": "name",
+                    "label": "Name",
+                    "labels": {"en_US": "Name", "fr_FR": "Nom"},
+                    "sequence": 10,
+                    "visible": True,
+                    "format_type": "text",
+                    "allow_empty": False,
+                },
+            ]
+        }
+        values = {
+            "name": "Acme",
+            "is_company": False,
+            "secret": "classified",
+            "hidden": "internal",
+        }
+
+        fields = serialize_card_fields(
+            CardEnv({"res.partner": CardModel()}),
+            resource,
+            "res.partner",
+            values,
+            {"name", "is_company"},
+            type("Context", (), {"lang": "fr_FR"})(),
+        )
+
+        self.assertEqual(fields, [
+            {
+                "field_name": "name",
+                "label": "Nom",
+                "format": "text",
+                "value": "Acme",
+            },
+            {
+                "field_name": "is_company",
+                "label": "Company",
+                "format": "text",
+                "value": "No",
+            },
+        ])

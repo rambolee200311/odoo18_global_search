@@ -66,10 +66,20 @@ def _authorized_resources(env, resources, context):
     return sorted(eligible, key=lambda item: item["key"])
 
 
-def _resource_descriptor(resource):
+def _localized_value(translations, fallback, lang):
+    if isinstance(translations, dict):
+        return translations.get(lang) or translations.get("en_US") or fallback
+    return fallback
+
+
+def _resource_descriptor(resource, lang="en_US"):
     return {
         "key": resource["key"],
-        "label": resource.get("label") or resource.get("name") or resource["key"],
+        "label": _localized_value(
+            resource.get("name_translations"),
+            resource.get("label") or resource.get("name") or resource["key"],
+            lang,
+        ),
     }
 
 
@@ -120,7 +130,9 @@ class SearchService:
         )
         return {
             "config_version": snapshot_info["version_id"],
-            "resources": [_resource_descriptor(resource) for resource in resources],
+            "resources": [
+                _resource_descriptor(resource, context.lang) for resource in resources
+            ],
         }
 
     def search(self, env, request, domain_key):
@@ -158,7 +170,9 @@ class SearchService:
             snapshot_info = published_snapshot(env, domain_key)
             snapshot = snapshot_info["snapshot"]
             resources = _authorized_resources(env, snapshot.get("resources", []), context)
-            descriptors = [_resource_descriptor(resource) for resource in resources]
+            descriptors = [
+                _resource_descriptor(resource, context.lang) for resource in resources
+            ]
             selected_keys = set(request.resource_scope)
 
             def response_for(outcomes, offset=0, limit=request.limit):

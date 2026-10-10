@@ -5,15 +5,15 @@
 | 项 | 内容 |
 |---|---|
 | 文档 | TDD_global_search |
-| 版本 | v0.1 |
-| 状态 | Draft for Freeze Review（v0.3 评审问题已处理，待正式 Freeze） |
+| 版本 | v0.4 |
+| 状态 | FROZEN — AMENDMENT（基于 SRS V1.5；仅修改配置应用和 Resource 模型边界） |
 | 模块 | `wd_global_search` |
-| 上游需求 | [SRS_global_search.md](../requirement/SRS_global_search.md) V1.4 FROZEN |
+| 上游需求 | [SRS_global_search.md](../requirement/SRS_global_search.md) V1.5 FROZEN |
 | 上游分析 | [RAR_global_search.md](../requirement/RAR_global_search.md) V0.2 |
 | Spike 输入 | [SPIKE_global_search_report.md](../verification/SPIKE_global_search_report.md) |
 | TV 输入 | [TV_global_search_report.md](../verification/TV_global_search_report.md) |
 | 目标 | 定义进入 Implementation 前必须冻结的技术边界，不定义具体代码实现 |
-| 评审状态 | 待评审、待 TDD Freeze |
+| 评审状态 | 原 v0.3 已评审；v0.4 amendment 按用户批准的配置和 Resource 语义冻结 |
 
 ### 1.1 评审输入
 
@@ -368,14 +368,17 @@ salt 是服务端密钥管理的秘密，不暴露给客户端；hash 不用于�
 | key | 稳定业务资源键 | 唯一、不可随意复用 | CFG-001 |
 | name | 用户可见名称 | 必填、可翻译 | CFG-001 |
 | active | 是否参与搜索 | 发布版本内生效 | CFG-001 |
-| technical_models | 模型映射 | 至少一个 | CFG-001 |
+| primary_model | 返回结果的主模型 | 普通 Resource 恰好一个 | CFG-001 |
+| model_mappings | 复合资源合并的独立结果模型 | 仅复合 Resource | BR-003 |
 | composite | 是否复合资源 | 复合资源必须定义合并规则 | BR-003 |
 | result_identity_scope | 去重范围 | 必须明确 | BR-011 |
 | ranking_policy | 排序策略 | 必须可验证 | BR-003.1 |
 
 ### 4.2 复合资源合并规则
 
-复合资源例如“订单”可映射多个 Technical Model。每个映射必须定义：
+普通 Resource 以一个 Primary Model 查询并返回结果。关联搜索通过 Relation Path 从主模型遍历关系字段匹配子模型值，命中后仍返回主模型记录；例如 `stock.picking` 可用 `move_ids.product_id` 搜产品、用 `move_line_ids.lot_id` 搜序列号。
+
+复合资源例如“统一业务单据”可选地合并多个独立结果模型（如销售订单和采购订单），这不是 Odoo 父子模型关系。每个 mapping 必须定义：
 
 - 标题字段；
 - Business Date 字段；
@@ -501,20 +504,23 @@ DRAFT -> VALIDATING -> PUBLISHED
                  RETIRED
 
 DRAFT -> REJECTED
+PUBLISHED/RETIRED --edit--> STAGED --apply+validate--> UPDATED SNAPSHOT
 ```
 
 - Draft 可编辑；
 - Validating 执行完整结构和权限边界校验；
 - Published 是唯一可被 Search Service 使用的版本；
 - 同一配置域同时只能有一个 Published 版本；
-- Published 不原地修改；
+- Published/Retired 的业务配置可由配置管理员编辑，但只标记为 pending；Search 继续使用最后一次成功发布/应用的 snapshot；
+- `Apply Changes` 必须完整校验配置，并在单一事务中更新 snapshot JSON、大小、checksum、暂存的配置域 active 值、清理 pending 状态和记录审计；失败时旧运行快照/checksum/active 状态保持不变；
+- state、version/domain identity 和 snapshot/checksum 等生命周期技术字段不得通过普通配置编辑直接修改；
 - Retired 不再被新请求选择，但保留审计。
 
 对应 BR-014、BR-015、CFG-007。
 
 ### 5.2 发布校验
 
-发布必须检查：
+发布和 Apply Changes 必须检查：
 
 1. Resource key 唯一；
 2. Technical Model 存在且可读；
@@ -529,21 +535,23 @@ DRAFT -> REJECTED
 
 任一项失败时：
 
-- Draft 版本保留，状态设为 `REJECTED`；
+- 初次发布时 Draft 版本保留，状态设为 `REJECTED`；
+- 应用暂存改动时保留原 snapshot/checksum 和 pending 状态，不切换活动配置；
 - 失败原因和校验项写入审计事件；
-- 当前 Published 版本不受影响；
+- 当前活动 Published 快照不受影响；
 - 管理员可修订该 Draft 后重新提交校验；
 - REJECTED 版本不能被 Search Service 读取。
 
 ### 5.3 生效时间和缓存失效
 
-发布事件产生：
+发布或成功应用事件产生：
 
 ```text
 config_domain
 version_id
 published_at
 published_by
+previous_checksum
 checksum
 ```
 
@@ -560,13 +568,14 @@ Search Service 每次请求读取当前已发布版本标识。进程内缓存�
 - 操作者；
 - 时间；
 - 配置域；
-- 旧版本；
-- 新版本；
+- version；
+- 动作类型（publish/retire/stage/apply/apply_rejected）；
+- Apply 前 checksum 和成功 Apply 后 checksum；
 - 校验结果；
 - 失败原因；
-- 发布/停用动作。
+- 发布/停用/暂存/应用动作。
 
-审计日志只追加，不进入普通搜索结果。配置校验失败、发布、停用和缓存失效均必须产生审计事件。
+审计日志只追加，不进入普通搜索结果。配置校验失败、发布、停用、暂存、Apply 成功/失败和缓存失效均必须产生审计事件；不得记录业务字段值。
 
 ### 5.5 升级策略
 
@@ -886,10 +895,10 @@ get_published_version(domain)
 | 模型 | 关键字段 |
 |---|---|
 | Configuration Domain | key、name、active |
-| Configuration Version | domain、version、state、checksum、published_at、published_by |
-| Business Resource | version、key、name、composite、active |
+| Configuration Version | domain、version、state、checksum、pending_changes、pending_resource_ids、published_at、published_by |
+| Business Resource | version、key、name、primary_model、composite、active |
 | Resource Model Mapping | resource、model、priority、identity_policy |
-| Searchable Field | mapping、field_name、purpose、operators、index_strategy、weight |
+| Searchable Field | resource/optional mapping、field_name、purpose、operators、index_strategy、weight |
 | Relation Path | resource、path、max_depth、permission_policy |
 | Business Date Mapping | resource、model、field_name、empty_policy |
 | State Mapping | resource、business_state、technical_values |
@@ -897,7 +906,7 @@ get_published_version(domain)
 | Vocabulary Entry | version、lang、term、dimension、value |
 | Entity/Scoring Config | candidate_fields、threshold、limit、weights |
 | Performance Config | result_limit、timeout、max_depth、candidate_limit |
-| Audit Event | version、actor、action、timestamp、details |
+| Audit Event | version、actor、action、previous_checksum、checksum、timestamp、details |
 
 配置模型权限：
 
@@ -1037,3 +1046,4 @@ get_published_version(domain)
 | v0.1 | 2026-10-03 | 基于 SRS V1.4、Spike 和 TV-01~06 生成 TDD Draft |
 | v0.2 | 2026-10-03 | 根据评审补充 UserContext 获取、错误码、发布失败语义、权限/Preview 边界、API 参数、配置模型 ACL、超时并发、分页、快照、可观测性、限流、国际化、测试数据和升级策略 |
 | v0.3 | 2026-10-03 | 根据 v0.2 评审补充 Facade/UserContext 边界、服务端 request_id、取消与队列策略、签名 cursor、快照上限、hash 规则、migration 路径、Preview 字段权限验证、retryable 规则和普通用户配置访问边界 |
+| v0.4 | 2026-10-10 | 对齐 SRS V1.5：明确 Primary Model 与关联路径返回语义；Published/Retired 编辑暂存、显式应用、完整校验、原子快照/checksum 更新及旧/新 checksum 审计 |

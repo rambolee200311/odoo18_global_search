@@ -2,10 +2,10 @@ import html
 import json
 
 from odoo import http
-from odoo.exceptions import AccessError, MissingError
 from odoo.http import request
 
 from ..services.facade import SearchService
+from ..services.navigation import resolve_form_navigation
 from ..services.provider import ConfigurationError
 from ..services.preview import MODEL_CONFIG, safe_preview
 from ..services.types import SearchRequest
@@ -55,7 +55,7 @@ class GlobalSearchController(http.Controller):
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Global Search</title>
-  <link rel="stylesheet" href="/wd_global_search/static/src/css/preview.css?v=cc012-v11">
+  <link rel="stylesheet" href="/wd_global_search/static/src/css/preview.css?v=cc013-v02">
 </head>
 <body>
   <main class="wd-workspace" data-testid="global-search-workspace"
@@ -120,7 +120,7 @@ class GlobalSearchController(http.Controller):
       </div>
     </section>
   </main>
-  <script src="/wd_global_search/static/src/js/preview.js?v=cc012-v11"></script>
+  <script src="/wd_global_search/static/src/js/preview.js?v=cc013-v07"></script>
 </body>
 </html>""" % (html.escape(str(descriptor_response["config_version"]), quote=True), tabs)
         return request.make_response(page, headers=[("Content-Type", "text/html; charset=utf-8")])
@@ -136,32 +136,52 @@ class GlobalSearchController(http.Controller):
             return _json_response({"status": "INVALID_REQUEST"}, status=400)
 
     @http.route("/wd_global_search/api/form_url", type="http", auth="user")
-    def form_url(self, model, record_id=None, **kwargs):
-        action_refs = {
-            "res.partner": "wd_global_search.action_gs_native_form_partner",
-            "product.product": "wd_global_search.action_gs_native_form_product",
-            "purchase.order": "wd_global_search.action_gs_native_form_purchase",
-            "sale.order": "wd_global_search.action_gs_native_form_sale",
-            "stock.picking": "wd_global_search.action_gs_native_form_picking",
-        }
-        if model not in action_refs:
+    def form_url(self, resource_key=None, record_id=None, **kwargs):
+        if kwargs or not resource_key or record_id is None:
             return _json_response({"status": "INVALID_REQUEST"}, status=400)
-        try:
-            record = request.env[model].browse(int(record_id)).exists()
-            record.check_access_rule("read")
-            action = request.env.ref(action_refs[model])
-        except (AccessError, ValueError, MissingError):
-            return _json_response(
-                {"status": "PERMISSION_OR_DELETED"},
-                status=403,
-            )
-        return _json_response(
-            {
-                "status": "SUCCESS",
-                "url": "/web#id=%s&action=%s&model=%s&view_type=form"
-                % (record.id, action.id, model),
-            }
+        result = resolve_form_navigation(
+            request.env,
+            resource_key,
+            record_id,
+            "global_search_baseline",
         )
+        if result["status"] != "SUCCESS":
+            status = 503 if result["status"] == "CONFIGURATION_ERROR" else 403
+            return _json_response(result, status=status)
+        return _json_response(result)
+
+    @http.route(
+        "/wd_global_search/open_result",
+        type="http",
+        auth="user",
+        methods=["GET"],
+    )
+    def open_result(self, resource_key=None, record_id=None, **kwargs):
+        if kwargs or not resource_key or record_id is None:
+            return _json_response({"status": "INVALID_REQUEST"}, status=400)
+        result = resolve_form_navigation(
+            request.env,
+            resource_key,
+            record_id,
+            "global_search_baseline",
+        )
+        if result["status"] != "SUCCESS":
+            status = 503 if result["status"] == "CONFIGURATION_ERROR" else 403
+            message = html.escape(
+                result.get("message", "Record unavailable or permission changed")
+            )
+            page = (
+                "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">"
+                "<title>Record unavailable</title></head><body><main>"
+                "<p>%s</p><a href=\"/wd_global_search\">Back to search</a>"
+                "</main></body></html>"
+            ) % message
+            return request.make_response(
+                page,
+                headers=[("Content-Type", "text/html; charset=utf-8")],
+                status=status,
+            )
+        return request.redirect(result["navigation_url"], code=303, local=True)
 
     @http.route("/wd_global_search/api/search", type="json", auth="user", methods=["POST"], csrf=False)
     def search(self, **kwargs):

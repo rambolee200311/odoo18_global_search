@@ -3,7 +3,7 @@
     "version": "18.0.1.1.0",
     "category": "Tools",
     "summary": "Read-only global search workspace",
-    "depends": ["base", "web", "sale", "stock"],
+    "depends": ["base", "web", "sale", "purchase", "stock"],
     "data": [
         "security/security.xml",
         "security/ir.model.access.csv",

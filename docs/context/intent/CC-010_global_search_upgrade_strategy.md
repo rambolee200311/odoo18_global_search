@@ -39,7 +39,7 @@
 ## 2. 升级不变量
 
 1. 升级前必须确认数据库备份可恢复，并记录备份标识；
-2. Published 配置、版本号和 checksum 在无迁移需求时保持不变；
+2. 升级不得隐式改变 Published 配置、版本号或 checksum；管理员明确 Apply 已暂存业务配置变更属于受审计的配置更新，不属于模块升级副作用；
 3. 旧配置无法安全转换时进入显式 `REJECTED`，不得伪造为 Published；
 4. ACL、Record Rule、字段权限和 Permission Boundary 不得放宽；
 5. 索引迁移失败必须可识别，既有可用索引不得被静默删除；
