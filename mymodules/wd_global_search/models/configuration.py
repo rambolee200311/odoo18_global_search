@@ -1,10 +1,12 @@
 import ast
 import hashlib
 import json
+import math
 
 from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, UserError, ValidationError
 
+from ..services.field_path import FieldPathError, validate_field_path
 from ..services.template import TemplateError, validate_template
 
 
@@ -463,6 +465,30 @@ class ConfigurationVersion(models.Model):
             scoring._validate_configuration()
         for performance in self.performance_ids:
             performance._validate_configuration()
+        resource_keys = set(self.resource_ids.mapped("key"))
+        performance_by_resource = {}
+        for performance in self.performance_ids:
+            if performance.resource_key not in resource_keys:
+                raise ValidationError(
+                    _("Performance configuration references an unknown Resource.")
+                )
+            if performance.resource_key in performance_by_resource:
+                raise ValidationError(
+                    _("A Resource may have only one Performance configuration.")
+                )
+            performance_by_resource[performance.resource_key] = performance
+        for resource in self.resource_ids:
+            max_relation_depth = performance_by_resource.get(
+                resource.key
+            ).max_relation_depth if resource.key in performance_by_resource else 2
+            fields_to_validate = (
+                resource.searchable_field_ids
+                | resource.model_mapping_ids.mapped("searchable_field_ids")
+            )
+            for searchable_field in fields_to_validate:
+                searchable_field._validate_configuration(
+                    max_relation_depth=max_relation_depth
+                )
 
     def _build_snapshot(self):
         self.ensure_one()
@@ -764,6 +790,9 @@ class BusinessResource(models.Model):
                                 "purpose": field.purpose,
                                 "operator_set": field.operator_set,
                                 "index_strategy": field.index_strategy,
+                                "searchable": field.searchable,
+                                "readable_required": field.readable_required,
+                                "collection_match": field.collection_match,
                             }
                             for field in self.searchable_field_ids
                         ],
@@ -780,6 +809,9 @@ class BusinessResource(models.Model):
                                 "purpose": field.purpose,
                                 "operator_set": field.operator_set,
                                 "index_strategy": field.index_strategy,
+                                "searchable": field.searchable,
+                                "readable_required": field.readable_required,
+                                "collection_match": field.collection_match,
                             }
                             for field in mapping.searchable_field_ids
                         ],
@@ -922,6 +954,15 @@ class SearchableField(models.Model):
     )
     searchable = fields.Boolean(default=True)
     readable_required = fields.Boolean(default=True)
+    collection_match = fields.Selection(
+        [("any", "Any related record"), ("all", "All query values")],
+        required=True,
+        default="any",
+        help=(
+            "Applies only to Many2many and One2many Searchable Field paths. "
+            "Direct and Many2one paths must use Any."
+        ),
+    )
     index_strategy = fields.Selection(
         [
             ("btree", "B-tree"),
@@ -964,7 +1005,7 @@ class SearchableField(models.Model):
             """
         )
 
-    def _validate_configuration(self):
+    def _validate_configuration(self, max_relation_depth=None):
         self.ensure_one()
         model_name = (
             self.resource_id.primary_model_id.model
@@ -976,18 +1017,20 @@ class SearchableField(models.Model):
         if not model_name:
             raise ValidationError(_("A searchable field must belong to a Resource model."))
         model = self.env[model_name]
-        if self.field_name not in model._fields:
-            raise ValidationError(_("Field %s does not exist on %s.") % (self.field_name, model_name))
-        compatible = {
-            "exact": {"btree", "none"},
-            "prefix": {"pattern_ops", "btree", "none"},
-            "contains": {"gin_trgm", "gist_trgm", "none"},
-        }
-        if self.index_strategy not in compatible[self.operator_set]:
-            raise ValidationError(
-                _("Index strategy %s is incompatible with operator %s.")
-                % (self.index_strategy, self.operator_set)
+        try:
+            validate_field_path(
+                model,
+                self.field_name,
+                operator_set=self.operator_set,
+                index_strategy=self.index_strategy,
+                collection_match=self.collection_match,
+                max_relation_depth=max_relation_depth,
             )
+        except FieldPathError as exc:
+            raise ValidationError(
+                _("Invalid Searchable Field path %s: %s")
+                % (self.field_name, str(exc))
+            ) from exc
 
 
 class RelationPath(models.Model):
@@ -1238,13 +1281,27 @@ class PerformanceConfig(models.Model):
 
     def _validate_configuration(self):
         self.ensure_one()
-        if min(
-            self.max_results,
-            self.resource_timeout,
-            self.request_timeout,
-            self.max_relation_depth,
-        ) <= 0:
+        if (
+            min(
+                self.max_results,
+                self.resource_timeout,
+                self.request_timeout,
+                self.max_relation_depth,
+            )
+            <= 0
+            or not math.isfinite(self.resource_timeout)
+            or not math.isfinite(self.request_timeout)
+        ):
             raise ValidationError(_("Performance limits must be positive."))
+        if (
+            self.max_results > 200
+            or self.resource_timeout > 3.0
+            or self.request_timeout > 5.0
+            or self.max_relation_depth > 3
+        ):
+            raise ValidationError(
+                _("Performance configuration cannot exceed the Search Service limits.")
+            )
 
 
 class AuditEvent(models.Model):

@@ -38,6 +38,35 @@ class TestRequestBoundary(TestCase):
                 ))
             )
 
+    def test_condition_dimension_and_operator_have_bounded_types(self):
+        validate_search_request(
+            SearchRequest(
+                refinement_conditions=(
+                    {"dimension": "partner_id.city", "operator": "ilike", "value": "X"},
+                )
+            )
+        )
+        with self.assertRaises(RequestBoundaryError):
+            validate_search_request(
+                SearchRequest(refinement_conditions=({"dimension": ["path"]},))
+            )
+        with self.assertRaises(RequestBoundaryError):
+            validate_search_request(
+                SearchRequest(
+                    refinement_conditions=(
+                        {"dimension": "x" * 101, "value": "value"},
+                    )
+                )
+            )
+        with self.assertRaises(RequestBoundaryError):
+            validate_search_request(
+                SearchRequest(
+                    refinement_conditions=(
+                        {"dimension": "name", "operator": ["="], "value": "X"},
+                    )
+                )
+            )
+
     def test_control_characters_are_rejected(self):
         with self.assertRaises(RequestBoundaryError):
             validate_search_request(SearchRequest(raw_query="safe\nunsafe"))

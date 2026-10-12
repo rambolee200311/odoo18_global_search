@@ -109,6 +109,7 @@
                                                                             <field name="field_name"/>
                                                                             <field name="purpose"/>
                                                                             <field name="operator_set"/>
+                                                                            <field name="collection_match"/>
                                                                             <field name="index_strategy"/>
                                                                             <field name="searchable"/>
                                                                         </list>
@@ -131,6 +132,7 @@
                                                                                     <field name="field_name"/>
                                                                                     <field name="purpose"/>
                                                                                     <field name="operator_set"/>
+                                                                                    <field name="collection_match"/>
                                                                                     <field name="index_strategy"/>
                                                                                     <field name="searchable"/>
                                                                                 </list>
@@ -210,6 +212,19 @@
                                                         <field name="lang"/>
                                                         <field name="term"/>
                                                         <field name="value"/>
+                                                    </list>
+                                                </field>
+                                            </page>
+                                            <page string="Performance">
+                                                <field name="performance_ids">
+                                                    <list editable="bottom">
+                                                        <field name="resource_key"
+                                                               help="Must exactly match a Business Resource key in this version."/>
+                                                        <field name="max_results"/>
+                                                        <field name="resource_timeout"/>
+                                                        <field name="request_timeout"/>
+                                                        <field name="max_relation_depth"
+                                                               help="Defaults to 2 when no row exists; maximum supported value is 3."/>
                                                     </list>
                                                 </field>
                                             </page>

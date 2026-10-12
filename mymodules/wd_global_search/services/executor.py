@@ -2,6 +2,8 @@ import time
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
+from odoo.osv.expression import AND, OR
+
 from .card import (
     authorized_card_field_names,
     read_card_values,
@@ -14,8 +16,24 @@ from .permission_boundary import (
     authorize_fields,
     authorize_relation_path,
     authorize_resource,
+    authorize_searchable_fields,
+)
+from .field_path import (
+    FieldPathError,
+    operator_domain,
+    validate_field_path,
+    wrap_path_domain,
 )
 from .types import ResourceOutcome
+
+
+class SearchTimeout(Exception):
+    pass
+
+
+def _check_deadline(deadline):
+    if deadline is not None and time.monotonic() >= deadline:
+        raise SearchTimeout()
 
 
 def _relation_search_fields(model, path, context):
@@ -73,25 +91,35 @@ def _date_bounds(value, context):
     )
 
 
-def _condition_domain(model, fields, relation_paths, resource, conditions, context):
+def _condition_domain(model, field_configs, relation_paths, resource, conditions, context):
+    configs_by_name = {item["name"]: item for item in field_configs}
+    direct_fields = [
+        name for name in configs_by_name if "." not in name
+    ]
     grouped = {}
+    path_grouped = {}
     date_conditions = []
     for condition in conditions.values:
         field = condition["dimension"]
         if field == "date":
             date_conditions.append(condition)
             continue
-        search_fields = [field] if field in fields else []
         if field == "name":
-            search_fields = list(fields)
+            grouped.setdefault(field, []).append(condition)
+        elif field in configs_by_name:
+            target = path_grouped if "." in field else grouped
+            target.setdefault(field, []).append(condition)
+
+    domain_parts = []
+    for field, values in grouped.items():
+        search_fields = (
+            direct_fields
+            if field == "name"
+            else [field]
+        )
+        if field == "name":
             for path in relation_paths:
                 search_fields.extend(_relation_search_fields(model, path, context))
-        if not search_fields:
-            continue
-        grouped.setdefault(field, []).append(condition)
-
-    domain = []
-    for field, values in grouped.items():
         alternatives = []
         for condition in values:
             operator = condition["operator"]
@@ -102,11 +130,50 @@ def _condition_domain(model, fields, relation_paths, resource, conditions, conte
                 value = "%s%%" % condition["value"]
             else:
                 value = condition["value"]
-            alternatives.extend([(search_field, operator, value) for search_field in search_fields])
-        if len(alternatives) == 1:
-            domain.extend(alternatives)
-        elif alternatives:
-            domain.extend(["|"] * (len(alternatives) - 1) + alternatives)
+            alternatives.extend(
+                [[(search_field, operator, value)] for search_field in search_fields]
+            )
+        if alternatives:
+            domain_parts.append(OR(alternatives))
+
+    for field_name, values in path_grouped.items():
+        field_config = configs_by_name[field_name]
+        resolved_path = validate_field_path(
+            model,
+            field_name,
+            operator_set=field_config.get("operator_set", "exact"),
+            index_strategy=field_config.get("index_strategy", "none"),
+            collection_match=field_config.get("collection_match", "any"),
+        )
+        predicates = []
+        seen_values = set()
+        for condition in values:
+            value = condition["value"]
+            value_key = (type(value).__name__, repr(value))
+            if value_key in seen_values:
+                continue
+            seen_values.add(value_key)
+            operator, query_value = operator_domain(
+                field_config.get("operator_set", "exact"), value
+            )
+            if operator == "ilike" and not isinstance(value, str):
+                continue
+            terminal_field = resolved_path.segments[-1]
+            predicates.append(
+                wrap_path_domain(
+                    resolved_path,
+                    [(terminal_field, operator, query_value)],
+                )
+            )
+        if predicates:
+            if (
+                resolved_path.collection_match_applicable
+                and field_config.get("collection_match", "any") == "all"
+            ):
+                domain_parts.append(AND(predicates))
+            else:
+                domain_parts.append(OR(predicates))
+
     for date_condition in date_conditions:
         bounds = _date_bounds(date_condition.get("value"), context)
         if not bounds:
@@ -118,21 +185,21 @@ def _condition_domain(model, fields, relation_paths, resource, conditions, conte
             if field_name not in model._fields:
                 continue
             if model._fields[field_name].type == "date":
-                domain.extend(
+                domain_parts.append(
                     [
                         (field_name, ">=", bounds[0][:10]),
                         (field_name, "<", bounds[1][:10]),
                     ]
                 )
             else:
-                domain.extend(
+                domain_parts.append(
                     [
                         (field_name, ">=", bounds[0]),
                         (field_name, "<", bounds[1]),
                     ]
                 )
             break
-    return domain
+    return AND(domain_parts)
 
 
 def authorize_search_resource(env, resource, context=None):
@@ -142,16 +209,19 @@ def authorize_search_resource(env, resource, context=None):
         raise AuthorizationError("RESOURCE_NOT_ACCESSIBLE")
     for model_config in model_configs:
         model = env[model_config["model_name"]]
-        fields = [item["name"] for item in model_config.get("fields", ())]
-        authorize_fields(model, fields, context)
+        authorize_searchable_fields(
+            env, model, model_config.get("fields", ()), context
+        )
     for path in resource.get("relation_paths", ()):
         authorize_relation_path(env, resource, path["path"], context)
 
 
-def execute(env, resource, conditions, limit, context=None, offset=0):
+def execute(env, resource, conditions, limit, context=None, offset=0, deadline=None):
     started = time.monotonic()
     try:
+        _check_deadline(deadline)
         authorize_search_resource(env, resource, context)
+        _check_deadline(deadline)
         results = []
         resource_count = 0
         remaining_offset = max(0, offset)
@@ -161,17 +231,20 @@ def execute(env, resource, conditions, limit, context=None, offset=0):
         ):
             model_name = model_config["model_name"]
             model = env[model_name]
-            fields = [item["name"] for item in model_config.get("fields", ())]
-            fields = authorize_fields(model, fields, context)
+            field_configs = authorize_searchable_fields(
+                env, model, model_config.get("fields", ()), context
+            )
             relation_paths = [
                 path["path"]
                 for path in resource.get("relation_paths", ())
                 if path.get("path")
             ]
             domain = _condition_domain(
-                model, fields, relation_paths, resource, conditions, context
+                model, field_configs, relation_paths, resource, conditions, context
             )
+            _check_deadline(deadline)
             model_count = model.search_count(domain)
+            _check_deadline(deadline)
             resource_count += model_count
             model_offset = min(remaining_offset, model_count)
             remaining_offset -= model_offset
@@ -180,12 +253,14 @@ def execute(env, resource, conditions, limit, context=None, offset=0):
             readable_card_fields = authorized_card_field_names(
                 resource, model, context
             )
+            _check_deadline(deadline)
             records = model.search(
                 domain,
                 offset=model_offset,
                 limit=remaining_limit,
                 order="id asc",
             )
+            _check_deadline(deadline)
             values = (
                 read_card_values(
                     records, readable_card_fields, resource["card_template"]
@@ -193,6 +268,7 @@ def execute(env, resource, conditions, limit, context=None, offset=0):
                 if resource.get("card_template")
                 else [(value, readable_card_fields) for value in records.read(readable_card_fields)]
             )
+            _check_deadline(deadline)
             for value, row_readable_fields in values:
                 record_id = value["id"]
                 results.append(
@@ -231,6 +307,14 @@ def execute(env, resource, conditions, limit, context=None, offset=0):
             resource=resource["key"],
             status="FAILED",
             error=error(exc.code, resource=resource["key"]),
+            latency=time.monotonic() - started,
+        )
+    except (FieldPathError, SearchTimeout) as exc:
+        code = "TIMEOUT" if isinstance(exc, SearchTimeout) else "CONFIGURATION_ERROR"
+        return ResourceOutcome(
+            resource=resource["key"],
+            status="FAILED",
+            error=error(code, resource=resource["key"]),
             latency=time.monotonic() - started,
         )
     if not resource.get("models"):

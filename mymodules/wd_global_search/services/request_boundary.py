@@ -4,6 +4,7 @@ MAX_RAW_QUERY_LENGTH = 500
 MAX_CONDITIONS = 20
 MAX_CONDITION_DEPTH = 3
 MAX_RELATION_PATH_DEPTH = 2
+MAX_DIMENSION_LENGTH = 100
 
 
 class RequestBoundaryError(ValueError):
@@ -29,6 +30,12 @@ def _validate_condition(condition):
         raise RequestBoundaryError("Conditions must be objects")
     if _condition_depth(condition) > MAX_CONDITION_DEPTH:
         raise RequestBoundaryError("Condition nesting exceeds the supported depth")
+    if "dimension" in condition and not isinstance(condition["dimension"], str):
+        raise RequestBoundaryError("Condition dimension must be text")
+    if len(condition.get("dimension", "")) > MAX_DIMENSION_LENGTH:
+        raise RequestBoundaryError("Condition dimension exceeds the supported length")
+    if "operator" in condition and not isinstance(condition["operator"], str):
+        raise RequestBoundaryError("Condition operator must be text")
     for key in ("relation_path", "path"):
         if key in condition:
             _validate_relation_path(condition[key])

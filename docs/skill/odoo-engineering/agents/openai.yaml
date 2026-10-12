@@ -1,0 +1,3 @@
+interface:
+  display_name: "Odoo 工程准则"
+  short_description: "用 Odoo 原生、简单、稳健的方式设计和实现"

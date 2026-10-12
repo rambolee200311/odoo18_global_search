@@ -1,8 +1,10 @@
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests.common import TransactionCase
+from types import SimpleNamespace
 from uuid import uuid4
 
 from psycopg2 import IntegrityError
+from ..services import executor
 from ..services.provider import ConfigurationError, published_snapshot
 
 
@@ -314,6 +316,120 @@ class TestGlobalSearchConfiguration(TransactionCase):
         self.assertEqual(resource.primary_model_name, "res.partner")
         self.assertFalse(resource.model_mapping_ids)
         self.assertEqual(resource.searchable_field_ids.field_name, "name")
+
+    def test_multi_level_searchable_field_is_validated_and_snapshotted(self):
+        _, version = self._create_draft("multi_level_field")
+        resource = version.resource_ids
+        field = self.field_model.create(
+            {
+                "resource_id": resource.id,
+                "field_name": "category_id.parent_id.name",
+                "purpose": "entity",
+                "operator_set": "contains",
+                "index_strategy": "gin_trgm",
+                "collection_match": "all",
+            }
+        )
+
+        field._validate_configuration()
+        snapshot_fields = version._build_snapshot()["resources"][0]["models"][0][
+            "fields"
+        ]
+        configured = next(
+            item for item in snapshot_fields if item["name"] == field.field_name
+        )
+
+        self.assertEqual(configured["collection_match"], "all")
+        self.assertTrue(configured["searchable"])
+        self.assertTrue(configured["readable_required"])
+
+    def test_multi_level_searchable_field_rejects_excess_collection_depth(self):
+        _, version = self._create_draft("multi_level_invalid")
+        resource = version.resource_ids
+        field = self.field_model.create(
+            {
+                "resource_id": resource.id,
+                "field_name": "category_id.parent_id.parent_id.name",
+                "purpose": "entity",
+                "operator_set": "contains",
+                "index_strategy": "gin_trgm",
+            }
+        )
+
+        with self.assertRaises(ValidationError):
+            field._validate_configuration()
+
+    def test_many2many_search_path_obeys_related_record_rules(self):
+        suffix = uuid4().hex
+        category_model = self.env["res.partner.category"]
+        partner_model = self.env["res.partner"]
+        visible_category = category_model.create({"name": "GS visible %s" % suffix})
+        hidden_category = category_model.create({"name": "GS hidden %s" % suffix})
+        partner_model.create(
+            {
+                "name": "GS visible partner %s" % suffix,
+                "category_id": [(6, 0, [visible_category.id])],
+            }
+        )
+        partner_model.create(
+            {
+                "name": "GS hidden partner %s" % suffix,
+                "category_id": [(6, 0, [hidden_category.id])],
+            }
+        )
+
+        internal_group = self.env.ref("base.group_user")
+        user = self.env["res.users"].create(
+            {
+                "name": "GS path user %s" % suffix,
+                "login": "gs_path_user_%s" % suffix,
+                "groups_id": [(6, 0, [internal_group.id])],
+                "company_ids": [(6, 0, self.env.company.ids)],
+                "company_id": self.env.company.id,
+            }
+        )
+        self.env["ir.rule"].create(
+            {
+                "name": "GS category visibility %s" % suffix,
+                "model_id": self.env.ref("base.model_res_partner_category").id,
+                "domain_force": "[('id', '=', %s)]" % visible_category.id,
+                "groups": [(6, 0, [internal_group.id])],
+            }
+        )
+
+        user_model = partner_model.with_user(user)
+
+        def domain_for(value):
+            return executor._condition_domain(
+                user_model,
+                [
+                    {
+                        "name": "category_id.name",
+                        "operator_set": "exact",
+                        "index_strategy": "btree",
+                        "collection_match": "all",
+                    }
+                ],
+                [],
+                {},
+                SimpleNamespace(
+                    values=(
+                        {
+                            "dimension": "category_id.name",
+                            "value": value,
+                            "operator": "=",
+                        },
+                    )
+                ),
+                None,
+            )
+
+        self.assertEqual(
+            user_model.search_count(domain_for(visible_category.name)), 1
+        )
+        self.assertEqual(
+            user_model.search_count(domain_for(hidden_category.name)), 0
+        )
 
     def test_stock_picking_relation_paths_keep_picking_as_result_model(self):
         _, version = self._create_draft("picking_relations")

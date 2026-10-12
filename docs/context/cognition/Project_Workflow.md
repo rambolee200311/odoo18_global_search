@@ -32,8 +32,8 @@
 | | | HVR模板.md | Frozen v1.0.0 |
 | | | FR模板.md | Frozen v1.0.0 |
 | Closure | docs/template/Closure/ | 
-| | | PVR模板.md | Draft（占位） |
-| | | PCR模板.md | Draft（占位） |
+| | | PVR模板.md | Frozen v1.0.0 |
+| | | PCR模板.md | Frozen v1.0.0 |
 
 ---
 

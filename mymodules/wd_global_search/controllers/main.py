@@ -777,14 +777,7 @@ class GlobalSearchController(http.Controller):
             )
             domain_key = payload.get("domain_key", "global_search_baseline")
             response = self.search_service.search(request.env, search_request, domain_key)
-            visible_conditions = (
-                []
-                if any(item.get("code") == "INVALID_REQUEST" for item in response.errors)
-                else [
-                    *search_request.parsed_conditions,
-                    *search_request.refinement_conditions,
-                ]
-            )
+            visible_conditions = response.meta.get("effective_conditions", [])
             return {
                 "status": response.status,
                 "request_id": response.request_id,

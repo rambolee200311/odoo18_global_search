@@ -6,7 +6,7 @@
 | 项 | 内容 |
 |---|---|
 | 手册版本 | v0.2 |
-| 适用模块 | `wd_global_search` 18.0.1.2.0 |
+| 适用模块 | `wd_global_search` 18.0.1.3.0 |
 | 契约基线 | CC-014 v0.1、CC-014-1 v0.1 |
 | 更新日期 | 2026-10-12 |
 
@@ -359,7 +359,7 @@ separator 是 Resource 级纯文本，不是模板片段，不会展开变量或
 - [CC-013：Result Card 与 Native Form 导航](../context/intent/CC-013_search_result_card_native_form_navigation.md)
 - [配置与搜索管理员手册](./CC-001_configuration_admin_guide.md)
 
-版本兼容性：本手册以 Odoo 18 CE、`wd_global_search` 18.0.1.2.0 和 CC-014 / CC-014-1
+版本兼容性：本手册以 Odoo 18 CE、`wd_global_search` 18.0.1.3.0 和 CC-014 / CC-014-1
 v0.1 为基线。升级模块或配置格式时，先按 [CC-010 升级策略](../context/intent/CC-010_global_search_upgrade_strategy.md)
 执行升级和回归确认；不要仅凭旧版模板可打开，就推断新版本中的发布和渲染行为完全相同。
 

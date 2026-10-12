@@ -33,6 +33,8 @@ def merge(outcomes, request_id, offset, limit, config_version, count_scope=None)
     has_success = any(item.status == "SUCCESS" for item in outcomes)
     if errors and (page or has_success):
         status = "PARTIAL_SUCCESS"
+    elif errors and all(item.get("code") == "TIMEOUT" for item in errors):
+        status = "TIMEOUT"
     elif errors:
         status = "FAILED"
     elif not page:

@@ -5,20 +5,24 @@ from ..services.permission_boundary import (
     authorize_fields,
     authorize_relation_path,
     authorize_resource,
+    authorize_searchable_fields,
 )
 
 
 class FakeField:
-    def __init__(self, field_type="char", comodel_name=None):
+    def __init__(self, field_type="char", comodel_name=None, store=True):
         self.type = field_type
         self.comodel_name = comodel_name
+        self.store = store
 
 
 class FakeModel:
-    def __init__(self, readable_fields, fields=None, access=True):
+    def __init__(self, readable_fields, fields=None, access=True, name=None, env=None):
         self._readable_fields = set(readable_fields)
         self._fields = fields or {}
         self._access = access
+        self._name = name
+        self.env = env
 
     def check_access_rights(self, operation):
         if operation == "read" and not self._access:
@@ -76,6 +80,67 @@ class TestPermissionBoundary(TestCase):
             )
 
         self.assertEqual(raised.exception.code, "RELATION_PATH_BLOCKED")
+
+    def test_searchable_path_checks_every_field_and_related_model_access(self):
+        env = FakeEnvironment()
+        env["sale.order"] = FakeModel(
+            {"partner_id"},
+            {"partner_id": FakeField("many2one", "res.partner")},
+            name="sale.order",
+            env=env,
+        )
+        env["res.partner"] = FakeModel(
+            {"city"},
+            {"city": FakeField()},
+            name="res.partner",
+            env=env,
+        )
+        fields = authorize_searchable_fields(
+            env,
+            env["sale.order"],
+            [
+                {
+                    "name": "partner_id.city",
+                    "operator_set": "contains",
+                    "index_strategy": "gin_trgm",
+                }
+            ],
+            None,
+        )
+
+        self.assertEqual([item["name"] for item in fields], ["partner_id.city"])
+
+    def test_searchable_path_is_excluded_when_target_model_is_unreadable(self):
+        env = FakeEnvironment()
+        env["sale.order"] = FakeModel(
+            {"partner_id"},
+            {"partner_id": FakeField("many2one", "res.partner")},
+            name="sale.order",
+            env=env,
+        )
+        env["res.partner"] = FakeModel(
+            {"city"},
+            {"city": FakeField()},
+            access=False,
+            name="res.partner",
+            env=env,
+        )
+
+        with self.assertRaises(AuthorizationError) as raised:
+            authorize_searchable_fields(
+                env,
+                env["sale.order"],
+                [
+                    {
+                        "name": "partner_id.city",
+                        "operator_set": "contains",
+                        "index_strategy": "gin_trgm",
+                    }
+                ],
+                None,
+            )
+
+        self.assertEqual(raised.exception.code, "FIELD_NOT_READABLE")
 
     def test_card_serializer_keeps_sequence_and_omits_unreadable_and_hidden_fields(self):
         from ..services.card import serialize_card_fields

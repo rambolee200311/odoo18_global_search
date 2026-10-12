@@ -17,16 +17,17 @@
 5. 在版本中配置至少一个 Business Resource。
 6. 为每个 Resource 配置：
    - Technical Model Mapping；
-   - 至少一个 Searchable Field；
+   - 至少一个 Searchable Field（技术字段名或本手册 §5.4 所述的有限关系路径）；
    - 一个 Business Date Mapping；
-   - 必要的 Relation Path、State、Snapshot 和 Vocabulary。
+   - 必要的 Relation Path、State、Snapshot、Vocabulary 和 Performance 配置。
 7. 保存后确认版本仍为 `Draft`。
 
 配置 key、版本号、Resource key、模型映射、字段、关系路径、Business Date 和 Vocabulary 的唯一性由 ORM 约束保护。
 
 ## 二、校验和发布
 
-- 校验动作检查模型、字段、Relation Path、Business Date、索引策略、优先级、评分和性能上限。
+- 校验动作检查模型、Searchable Field 路径及类型、Relation Path、Business Date、索引策略、
+  优先级、评分和性能上限。
 - 校验失败时版本进入 `REJECTED`，错误码和原因保存在版本及 Audit Event；当前 Published 版本不受影响。
 - 校验通过后发布版本。Published 版本生成 canonical JSON snapshot、SHA-256 checksum，并受 1 MB 大小上限保护。
 - 同一 Configuration Domain 同时只能有一个 Published 版本；发布新版本会将旧版本置为 `RETIRED`。
@@ -84,7 +85,44 @@
 | 空结果 | 输入不存在的值 | 显示 `EMPTY`，不显示虚假结果 |
 | 部分失败 | 注入/模拟不可用资源 | 显示 `PARTIAL_SUCCESS` 和安全错误信息 |
 
-### 5.4 边界验证
+### 5.4 多级 Searchable Field 路径
+
+Searchable Field 可以是根模型上的直接字段，也可以是配置中完整、有限的关系路径，例如：
+
+| Resource 根模型 | `field_name` 示例 | 路径含义 |
+|---|---|---|
+| `sale.order` | `partner_id.city` | 客户城市 |
+| `sale.order` | `partner_id.country_id.name` | 客户国家名称 |
+| `sale.order` | `order_line.product_id.name` | 任意订单明细产品名称 |
+| `res.partner` | `category_id.name` | 任意联系人标签名称 |
+
+路径必须使用真实 Odoo 技术字段名；Sale Order 的 One2many 字段是 `order_line`，不是
+展示名或自行猜测的 `order_line_ids`。路径末端必须是受支持、已存储的普通字段。只允许
+有限的 Many2one、Many2many、One2many 形态；不支持索引、条件、表达式、函数或方法调用。
+
+Many2many / One2many 路径在同一行的 **Collection Match** 中选择：
+
+- **Any related record**：至少一条当前用户可读的关联记录满足任一查询值；
+- **All query values**：每个不同查询值都必须匹配，可由不同关联记录分别满足。
+
+集合策略属于该 Searchable Field 的 Published 配置；不需要为新字段路径另建 Relation Path。
+既有 Relation Path 仍保留 `name` 搜索扩展用途。`max_relation_depth` 默认是 2；三条关系边
+的路径必须在该 Resource 的 Performance Config 中明确配置至少 3，并仍受 Search Service
+时间和结果预算限制。
+
+在版本的 **Performance** 页新增一行，`resource_key` 必须与 Business Resource 的 key 完全
+一致；将 `max_relation_depth` 设为 3 才能发布总关系深度为 3 的路径。其余预算值只能收紧
+服务端上限，不能扩大结果数或超时预算。默认没有配置行时，`max_relation_depth=2`。
+
+结构化条件继续使用既有 SearchRequest 的 dimension，例如 `dimension="partner_id.city"`、
+`value="Fremont"`；dimension 必须与已发布配置中的完整 `field_name` 完全一致。客户端不得
+提供 ORM domain、拆解路径或添加新的 API 路由。
+
+路径搜索、Count 与结果取回均按当前搜索用户权限执行。关联模型 Record Rule 必须实际约束
+匹配；配置预览或管理员可见不代表普通用户可见。索引策略只声明策略，不表示 Publish 会
+创建物理索引；索引部署仍须遵循 CC-006 的受控流程。
+
+### 5.5 边界验证
 
 以下请求应返回 `INVALID_REQUEST`，且错误消息不得回显原始输入：
 
@@ -92,13 +130,14 @@
 - 条件总数超过 20；
 - 条件嵌套超过 3 层；
 - Relation Path 超过 2 层；
+- 多级 Searchable Field dimension 超过 100 字符或不是已发布、当前用户可用的字段路径；
 - `query` 不是服务端定义的文本类型；
 - Query 包含被边界协议禁止的控制字符。
 
 Model、Field、Operator、Domain Structure 和 Permission Context 必须来自服务端
 Published Configuration / UserContext；客户端不得通过请求体指定这些内容。
 
-### 5.5 权限和 Preview 验证
+### 5.6 权限和 Preview 验证
 
 使用普通用户、不同公司用户或 Portal 用户重复执行基础搜索：
 
