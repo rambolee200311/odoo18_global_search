@@ -298,10 +298,19 @@
             card.setAttribute("tabindex", "0");
             card.setAttribute("aria-pressed", "false");
 
+            const renderedText = result.snapshot
+                && typeof result.snapshot.rendered_text === "string"
+                ? result.snapshot.rendered_text
+                : null;
             const fields = result.snapshot && Array.isArray(result.snapshot.fields)
                 ? result.snapshot.fields
                 : [];
-            if (fields.length) {
+            if (renderedText !== null) {
+                const content = document.createElement("div");
+                content.className = "wd-card-template-text";
+                content.textContent = renderedText;
+                card.append(content);
+            } else if (fields.length) {
                 const primary = document.createElement("strong");
                 primary.className = "wd-card-primary";
                 primary.textContent = text(fields[0].value);

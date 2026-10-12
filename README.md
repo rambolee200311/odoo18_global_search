@@ -65,6 +65,14 @@
 安装后登录 Odoo，进入 Global Search Workspace。配置管理员可在配置菜单维护
 Domain、Version、Resource 和 Vocabulary；搜索用户只消费 Published Snapshot。
 
+配置管理员可在 **Configuration Domains → Published/Retired Version → Business
+Resources → Result Card Template** 查看该 Resource 当前的只读卡片预览。选择 **Edit
+Template** 后会在当前标签页打开仅针对该 Resource 的模板编辑器；浏览器返回可回到
+Resource 表单。模板编辑器提供可用字段列表、实时预览和拖放/键盘字段插入，预览支持最近
+可读记录、手动选择的可读记录和合成样例。`Save` 遵循现有配置暂存规则；
+Published/Retired 配置只有显式 `Apply Changes` 后才更新运行时 Snapshot。旧 Card Field
+配置提供确定性迁移建议；若空值语义无法等价表达，必须手动确认模板后才能 Apply。
+
 ## 目录结构
 
 ```text
@@ -72,7 +80,7 @@ mymodules/wd_global_search/
   controllers/       Search、Cancel、Preview 和 Workspace 路由
   models/            配置、Published Snapshot 和 audit event
   services/          facade、provider、条件、聚合、权限、i18n、观测和升级校验
-  static/src/        Preview 前端资源
+  static/src/        Search Workspace、Resource 卡片摘要和 Resource 专属模板编辑器前端资源
   migrations/        Odoo 模块升级入口
   tests/             Odoo 和服务层自动化测试
 

@@ -96,6 +96,10 @@
                                                                        help="Choose a standalone Window Action for this Primary Model. Its Form View and group restrictions are preserved; its Context and Domain must not depend on active_id, active_ids, or active_model."/>
                                                             </group>
                                                             <notebook>
+                                                                <page string="Result Card Template">
+                                                                    <field name="card_template" invisible="1"/>
+                                                                    <widget name="wd_card_template_summary"/>
+                                                                </page>
                                                                 <page string="Search Fields"
                                                                       invisible="composite">
                                                                     <field name="searchable_field_ids"
@@ -146,7 +150,8 @@
                                                                         </list>
                                                                     </field>
                                                                 </page>
-                                                                <page string="Card Fields">
+                                                                <page string="Legacy Card Fields"
+                                                                      invisible="card_template">
                                                                     <field name="snapshot_field_ids"
                                                                            context="{'default_resource_id': id}">
                                                                         <list>
@@ -228,6 +233,8 @@
     <menuitem id="menu_gs_config_domain" name="Configuration Domains"
               parent="menu_global_search_root" action="action_gs_config_domain"
               groups="wd_global_search.group_config_manager"/>
+    <delete model="ir.ui.menu" id="menu_gs_card_template_designer"/>
+    <delete model="ir.actions.act_url" id="action_gs_card_template_designer"/>
 
     <record id="action_gs_native_form_partner" model="ir.actions.act_window">
         <field name="name">Global Search Contact</field>

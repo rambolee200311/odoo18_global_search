@@ -26,6 +26,7 @@ class TestGlobalSearchConfiguration(TransactionCase):
                 "version_id": version.id,
                 "key": "partner",
                 "name": "Partner",
+                "card_template": "Name: {name}",
                 "primary_model_id": self.env["ir.model"].search(
                     [("model", "=", "res.partner")], limit=1
                 ).id,
@@ -234,6 +235,31 @@ class TestGlobalSearchConfiguration(TransactionCase):
         )
         self.assertEqual(snapshot["resources"][0]["snapshot_fields"][0]["sequence"], 10)
         self.assertTrue(snapshot["resources"][0]["snapshot_fields"][0]["visible"])
+        self.assertEqual(snapshot["resources"][0]["card_template"], "Name: {name}")
+
+    def test_explicit_card_template_is_staged_until_applied(self):
+        domain, version = self._create_draft("card_template")
+        version.action_publish()
+        resource = version.resource_ids
+        previous_checksum = version.checksum
+
+        resource.write({"card_template": "Partner: {name}\nReference: {ref}"})
+
+        self.assertTrue(version.pending_changes)
+        self.assertEqual(version.checksum, previous_checksum)
+        self.assertNotIn("Partner: {name}", version.snapshot_json)
+
+        version.action_apply_changes()
+
+        self.assertFalse(version.pending_changes)
+        self.assertNotEqual(version.checksum, previous_checksum)
+        self.assertIn("Partner: {name}\\nReference: {ref}", version.snapshot_json)
+        self.assertEqual(
+            published_snapshot(self.env, domain.key)["snapshot"]["resources"][0][
+                "card_template"
+            ],
+            "Partner: {name}\nReference: {ref}",
+        )
 
     def test_single_model_resource_uses_primary_model_and_direct_search_fields(self):
         _, version = self._create_draft("primary_model")
@@ -272,6 +298,7 @@ class TestGlobalSearchConfiguration(TransactionCase):
         snapshot_resource = version._build_snapshot()["resources"][0]
 
         self.assertEqual(snapshot_resource["models"][0]["model_name"], "stock.picking")
+        self.assertEqual(snapshot_resource["card_template"], "Name: {name}")
         self.assertEqual(
             {path["path"] for path in snapshot_resource["relation_paths"]},
             {"move_ids.product_id", "move_line_ids.lot_id"},
@@ -392,19 +419,10 @@ class TestGlobalSearchConfiguration(TransactionCase):
         self.assertEqual(version.state, "rejected")
         self.assertEqual(version.rejection_code, "CONFIGURATION_ERROR")
 
-    def test_publish_rejects_duplicate_card_sequence(self):
-        _, version = self._create_draft("duplicate_card_sequence")
+    def test_publish_rejects_unknown_template_variable(self):
+        _, version = self._create_draft("unknown_template_variable")
         resource = version.resource_ids
-        self.env["wd.gs.snapshot.field"].create(
-            {
-                "resource_id": resource.id,
-                "field_name": "email",
-                "label": "Email",
-                "sequence": 10,
-                "visible": True,
-                "format_type": "text",
-            }
-        )
+        resource.card_template = "Name: {name}{unknown}"
 
         version.action_publish()
 
@@ -426,7 +444,7 @@ class TestGlobalSearchConfiguration(TransactionCase):
 
     def test_publish_rejects_missing_visible_card_field(self):
         _, version = self._create_draft("missing_card")
-        version.resource_ids.snapshot_field_ids.unlink()
+        version.resource_ids.card_template = False
 
         version.action_publish()
 
@@ -435,7 +453,7 @@ class TestGlobalSearchConfiguration(TransactionCase):
 
     def test_publish_rejects_incompatible_card_field_format(self):
         _, version = self._create_draft("card_format")
-        version.resource_ids.snapshot_field_ids.write({"format_type": "date"})
+        version.resource_ids.card_template = "{name:date}"
 
         version.action_publish()
 

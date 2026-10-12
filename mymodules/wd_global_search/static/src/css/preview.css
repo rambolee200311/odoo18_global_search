@@ -260,6 +260,12 @@ h2 {
     font-size: 16px;
 }
 
+.wd-card-template-text {
+    color: #243447;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
 .wd-card-primary-label,
 .wd-card-secondary,
 .wd-card-field,

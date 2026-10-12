@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="wd_global_search.CardTemplateSummary">
+        <section class="wd-template-card-summary" aria-live="polite">
+            <div class="wd-template-card-summary-content">
+                <pre t-if="state.rendered" t-esc="state.rendered"/>
+                <p t-if="!state.rendered" t-att-class="state.isError ? 'is-error' : ''" t-esc="state.message"/>
+                <p t-if="state.message and state.rendered" class="wd-template-card-summary-message" t-esc="state.message"/>
+                <p t-if="state.pending" class="wd-template-card-summary-pending">
+                    Unapplied configuration changes are pending.
+                </p>
+            </div>
+            <button class="btn btn-secondary"
+                    type="button"
+                    t-att-disabled="state.busy"
+                    t-on-click="editTemplate">Edit Template</button>
+        </section>
+    </t>
+</templates>

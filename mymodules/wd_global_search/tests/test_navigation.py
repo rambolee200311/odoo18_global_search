@@ -23,6 +23,7 @@ class TestConfiguredNavigation(TransactionCase):
                 "version_id": version.id,
                 "key": "partner_%s" % suffix,
                 "name": "Partners",
+                "card_template": "Name: {name}",
                 "primary_model_id": self.env["ir.model"].search(
                     [("model", "=", "res.partner")], limit=1
                 ).id,

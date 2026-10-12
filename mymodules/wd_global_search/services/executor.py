@@ -2,7 +2,12 @@ import time
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from .card import authorized_card_field_names, serialize_card_fields
+from .card import (
+    authorized_card_field_names,
+    read_card_values,
+    serialize_card_fields,
+    serialize_card_template,
+)
 from .errors import error
 from .permission_boundary import (
     AuthorizationError,
@@ -181,8 +186,14 @@ def execute(env, resource, conditions, limit, context=None, offset=0):
                 limit=remaining_limit,
                 order="id asc",
             )
-            values = records.read(readable_card_fields)
-            for value in values:
+            values = (
+                read_card_values(
+                    records, readable_card_fields, resource["card_template"]
+                )
+                if resource.get("card_template")
+                else [(value, readable_card_fields) for value in records.read(readable_card_fields)]
+            )
+            for value, row_readable_fields in values:
                 record_id = value["id"]
                 results.append(
                     {
@@ -190,16 +201,28 @@ def execute(env, resource, conditions, limit, context=None, offset=0):
                         "_resource": resource["key"],
                         "_model": model_name,
                         "_record_id": record_id,
-                        "snapshot": {
-                            "fields": serialize_card_fields(
-                                env,
-                                resource,
-                                model_name,
-                                value,
-                                readable_card_fields,
-                                context,
-                            )
-                        },
+                        "snapshot": (
+                            {
+                                "rendered_text": serialize_card_template(
+                                    env,
+                                    resource,
+                                    model_name,
+                                    value,
+                                    row_readable_fields,
+                                )
+                            }
+                            if resource.get("card_template")
+                            else {
+                                "fields": serialize_card_fields(
+                                    env,
+                                    resource,
+                                    model_name,
+                                    value,
+                                    row_readable_fields,
+                                    context,
+                                )
+                            }
+                        ),
                     }
                 )
             remaining_limit -= len(values)

@@ -5,6 +5,8 @@ import json
 from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, UserError, ValidationError
 
+from ..services.template import TemplateError, validate_template
+
 
 MAX_SNAPSHOT_BYTES = 1024 * 1024
 SUPPORTED_CONFIG_SCHEMA = 1
@@ -528,6 +530,10 @@ class BusinessResource(models.Model):
     business_date_ids = fields.One2many("wd.gs.business.date.mapping", "resource_id")
     state_mapping_ids = fields.One2many("wd.gs.state.mapping", "resource_id")
     snapshot_field_ids = fields.One2many("wd.gs.snapshot.field", "resource_id")
+    card_template = fields.Text(
+        string="Result Card Template",
+        help="Plain-text template using constants and {field_name} variables.",
+    )
 
     _sql_constraints = [
         ("version_key_unique", "unique(version_id, key)", "Business resource keys must be unique per version."),
@@ -573,8 +579,14 @@ class BusinessResource(models.Model):
             raise ValidationError(_("Technical model priorities must be unique for %s.") % self.key)
         if not self.business_date_ids:
             raise ValidationError(_("Business Date is not configured for %s.") % self.key)
-        if not self.snapshot_field_ids:
-            raise ValidationError(_("At least one Card field is required for %s.") % self.key)
+        if not self.card_template:
+            raise ValidationError(
+                _(
+                    "Configure a Result Card template for %s before publishing or "
+                    "applying changes. Legacy Card fields require explicit migration."
+                )
+                % self.key
+            )
         if not self.composite:
             if not self.primary_model_id or self.model_mapping_ids:
                 raise ValidationError(
@@ -594,21 +606,16 @@ class BusinessResource(models.Model):
             raise ValidationError(
                 _("Composite Resources use Model Mappings and cannot define a Primary Model or single-model Action.")
             )
-        sequences = self.snapshot_field_ids.mapped("sequence")
-        if any(sequence <= 0 for sequence in sequences):
-            raise ValidationError(_("Card field sequence must be positive."))
-        if len(sequences) != len(set(sequences)):
-            raise ValidationError(
-                _("Card field sequences must be unique for Resource %s.") % self.key
-            )
-        if not self.snapshot_field_ids or not any(
-            item.visible for item in self.snapshot_field_ids
-        ):
-            raise ValidationError(
-                _("At least one visible Card field is required for Resource %s.") % self.key
-            )
-        for snapshot_field in self.snapshot_field_ids:
-            snapshot_field._validate_for_resource(self)
+        template = self.card_template
+        model_names = (
+            self.model_mapping_ids.mapped("model_name")
+            if self.composite
+            else [self.primary_model_id.model]
+        )
+        try:
+            validate_template(template, [self.env[name] for name in model_names])
+        except TemplateError as exc:
+            raise ValidationError(str(exc)) from exc
         for mapping in self.model_mapping_ids:
             mapping._validate_configuration()
         searchable_fields = (
@@ -791,6 +798,7 @@ class BusinessResource(models.Model):
                 }
                 for item in self.state_mapping_ids
             ],
+            "card_template": self.card_template,
             "snapshot_fields": [
                 {
                     "field_name": item.field_name,
@@ -806,6 +814,62 @@ class BusinessResource(models.Model):
                 )
             ],
         }
+
+    def _legacy_card_template(self):
+        self.ensure_one()
+        visible_fields = self.snapshot_field_ids.filtered("visible").sorted(
+            lambda item: (item.sequence, item.id)
+        )
+        if not visible_fields:
+            return ""
+        sequences = visible_fields.mapped("sequence")
+        if any(sequence <= 0 for sequence in sequences) or len(sequences) != len(set(sequences)):
+            raise ValidationError(
+                _("Legacy Card fields need unique positive sequence values before migration.")
+            )
+        for item in visible_fields:
+            item._validate_for_resource(self)
+        if any(not item.allow_empty for item in visible_fields):
+            raise ValidationError(
+                _(
+                    "Resource %s has Card fields whose empty-value behavior cannot be "
+                    "represented by a template. Configure a template explicitly."
+                )
+                % self.key
+            )
+        lines = []
+        for item in visible_fields:
+            label = item.with_context(lang="en_US").label or item.label
+            if "\\n" in label or "\\t" in label:
+                raise ValidationError(
+                    _(
+                        "Legacy Card label %s contains an escape sequence that cannot be "
+                        "migrated losslessly."
+                    )
+                    % item.field_name
+                )
+            label = label.replace("{", "{{").replace("}", "}}")
+            model_names = item.allowed_model_names
+            field_type = (
+                self.env[model_names[0]]._fields.get(item.field_name)
+                if model_names
+                else None
+            )
+            format_key = item.format_type
+            if format_key == "number" and field_type:
+                format_key = {
+                    "integer": "integer",
+                    "float": "float",
+                    "monetary": "monetary",
+                }.get(field_type.type, "")
+            if format_key in {"date", "datetime"}:
+                variable = "{%s:%s}" % (item.field_name, format_key)
+            elif format_key in {"integer", "float", "monetary"}:
+                variable = "{%s:%s}" % (item.field_name, format_key)
+            else:
+                variable = "{%s}" % item.field_name
+            lines.append("%s: %s" % (label, variable))
+        return "\n".join(lines)
 
 
 class ResourceModelMapping(models.Model):
