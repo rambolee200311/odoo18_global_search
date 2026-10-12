@@ -35,6 +35,12 @@ def _json_response(payload, status=200):
     )
 
 
+def _many2many_separator(resource, supplied):
+    if supplied is None:
+        supplied = resource.card_many2many_separator
+    return supplied or ", "
+
+
 class GlobalSearchController(http.Controller):
     search_service = SearchService()
 
@@ -188,6 +194,7 @@ class GlobalSearchController(http.Controller):
         <p class="wd-template-resource-name">%s</p>
       </div>
       <div class="wd-template-actions">
+        <button id="wd-template-check" class="btn btn-secondary" type="button">Check Template</button>
         <button id="wd-template-save" class="btn btn-secondary" type="button">Save</button>
         <button id="wd-template-apply" class="btn btn-primary" type="button" disabled>Apply Changes</button>
       </div>
@@ -200,6 +207,10 @@ class GlobalSearchController(http.Controller):
       <label class="wd-template-editor">
         <span>Template</span>
         <textarea id="wd-template-input" maxlength="8192" spellcheck="false"></textarea>
+      </label>
+      <label class="wd-template-separator">
+        <span>Many2many value separator</span>
+        <input id="wd-template-separator" type="text">
       </label>
       <section class="wd-template-preview">
         <h2>Live Preview</h2>
@@ -217,6 +228,7 @@ class GlobalSearchController(http.Controller):
       <section class="wd-template-fields">
         <h2>Available fields</h2>
         <p>Drag a field into the template, or focus a field and press Enter to insert it.</p>
+        <p>Readability is for the preview user; group-restricted fields may not be visible to every search user.</p>
         <ul id="wd-template-fields" class="wd-template-fields-list" role="listbox"></ul>
       </section>
     </div>
@@ -252,7 +264,8 @@ class GlobalSearchController(http.Controller):
                 if (
                     field.type not in {
                         "char", "text", "html", "integer", "float", "date",
-                        "datetime", "boolean", "selection", "many2one", "monetary",
+                        "datetime", "boolean", "selection", "many2one", "many2many",
+                        "one2many", "monetary",
                     }
                     or not field.store
                     or field.related
@@ -265,15 +278,19 @@ class GlobalSearchController(http.Controller):
                 field_names.append(name)
             fields_info = model.fields_get(field_names, ["string", "type"])
             current = {
-                name: {
-                    "name": name,
-                    "type": values["type"],
-                    "label": values.get("string", name),
-                }
+                name: self._template_field_descriptor(
+                    name, model._fields[name], values
+                )
                 for name, values in fields_info.items()
             }
             common = current if common is None else {
-                name: info
+                name: {
+                    **info,
+                    "group_restricted": (
+                        info["group_restricted"]
+                        or current[name]["group_restricted"]
+                    ),
+                }
                 for name, info in common.items()
                 if name in current and current[name]["type"] == info["type"]
             }
@@ -286,9 +303,20 @@ class GlobalSearchController(http.Controller):
                 "state": resource.version_id.state,
                 "pending": resource.version_id.pending_changes,
                 "models": [model._name for model in models],
+                "many2many_separator": resource.card_many2many_separator or ", ",
                 "fields": sorted((common or {}).values(), key=lambda item: item["name"]),
             }
         )
+
+    @staticmethod
+    def _template_field_descriptor(name, field, values):
+        return {
+            "name": name,
+            "type": values["type"],
+            "label": values.get("string", name),
+            "readable": True,
+            "group_restricted": bool(field.groups),
+        }
 
     @staticmethod
     def _resource_template_text(resource):
@@ -361,6 +389,7 @@ class GlobalSearchController(http.Controller):
         template=None,
         source=None,
         record_id=None,
+        many2many_separator=None,
         csrf_token=None,
         **kwargs,
     ):
@@ -384,7 +413,13 @@ class GlobalSearchController(http.Controller):
         try:
             template = template or ""
             models = self._template_models(resource)
-            parts = validate_template(template, models, check_permissions=False)
+            separator = _many2many_separator(resource, many2many_separator)
+            parts = validate_template(
+                template,
+                models,
+                check_permissions=False,
+                many2many_separator=separator,
+            )
             selected = None
             actual_source = source or "synthetic_example"
             if actual_source == "selected_readable_record":
@@ -429,6 +464,7 @@ class GlobalSearchController(http.Controller):
                 readable_fields,
                 template,
                 unauthorized_placeholder="[无权访问]",
+                many2many_separator=separator,
             )
             return _json_response(
                 {
@@ -474,22 +510,70 @@ class GlobalSearchController(http.Controller):
             _template_preview_limiter.release(request.env.uid)
 
     @http.route(
+        "/wd_global_search/card_templates/check",
+        type="http",
+        auth="user",
+        methods=["POST"],
+    )
+    def card_template_check(
+        self,
+        resource_id=None,
+        template=None,
+        many2many_separator=None,
+        csrf_token=None,
+        **kwargs,
+    ):
+        del csrf_token
+        if kwargs:
+            return _json_response({"status": "INVALID_REQUEST"}, status=400)
+        resource = self._template_resource(resource_id)
+        models = self._template_models(resource)
+        separator = _many2many_separator(resource, many2many_separator)
+        try:
+            validate_template(
+                template or "",
+                models,
+                many2many_separator=separator,
+            )
+        except TemplateError as exc:
+            return _json_response(
+                {"status": "CONFIGURATION_ERROR", "message": str(exc)},
+                status=400,
+            )
+        return _json_response({"status": "SUCCESS", "message": "Template structure is valid."})
+
+    @http.route(
         "/wd_global_search/card_templates/save",
         type="http",
         auth="user",
         methods=["POST"],
     )
     def card_template_save(
-        self, resource_id=None, template=None, csrf_token=None, **kwargs
+        self,
+        resource_id=None,
+        template=None,
+        many2many_separator=None,
+        csrf_token=None,
+        **kwargs,
     ):
         del csrf_token
         if kwargs:
             return _json_response({"status": "INVALID_REQUEST"}, status=400)
         resource = self._template_resource(resource_id)
         template = template or ""
+        separator = _many2many_separator(resource, many2many_separator)
         try:
-            validate_template(template, self._template_models(resource))
-            resource.write({"card_template": template})
+            validate_template(
+                template,
+                self._template_models(resource),
+                many2many_separator=separator,
+            )
+            resource.write(
+                {
+                    "card_template": template,
+                    "card_many2many_separator": separator,
+                }
+            )
         except (TemplateError, ValidationError) as exc:
             log_event(
                 "warning",

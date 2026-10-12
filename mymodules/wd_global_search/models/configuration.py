@@ -534,6 +534,11 @@ class BusinessResource(models.Model):
         string="Result Card Template",
         help="Plain-text template using constants and {field_name} variables.",
     )
+    card_many2many_separator = fields.Text(
+        string="Result Card Many2many Separator",
+        default=", ",
+        help="Plain-text separator between values in Many2many template paths.",
+    )
 
     _sql_constraints = [
         ("version_key_unique", "unique(version_id, key)", "Business resource keys must be unique per version."),
@@ -613,7 +618,11 @@ class BusinessResource(models.Model):
             else [self.primary_model_id.model]
         )
         try:
-            validate_template(template, [self.env[name] for name in model_names])
+            validate_template(
+                template,
+                [self.env[name] for name in model_names],
+                many2many_separator=self.card_many2many_separator or ", ",
+            )
         except TemplateError as exc:
             raise ValidationError(str(exc)) from exc
         for mapping in self.model_mapping_ids:
@@ -799,6 +808,7 @@ class BusinessResource(models.Model):
                 for item in self.state_mapping_ids
             ],
             "card_template": self.card_template,
+            "card_many2many_separator": self.card_many2many_separator or ", ",
             "snapshot_fields": [
                 {
                     "field_name": item.field_name,

@@ -131,6 +131,51 @@ class TestGlobalSearchConfiguration(TransactionCase):
         self.assertEqual(applied_event.previous_checksum, original_checksum)
         self.assertEqual(applied_event.checksum, version.checksum)
 
+    def test_many2many_separator_uses_the_published_snapshot_lifecycle(self):
+        domain, version = self._create_draft("many2many_separator")
+        version.action_publish()
+        resource = version.resource_ids
+        initial = published_snapshot(self.env, domain.key)
+        initial_checksum = version.checksum
+        self.assertEqual(
+            initial["snapshot"]["resources"][0]["card_many2many_separator"],
+            ", ",
+        )
+
+        resource.write({"card_many2many_separator": " | "})
+
+        self.assertTrue(version.pending_changes)
+        self.assertEqual(version.checksum, initial_checksum)
+        self.assertEqual(
+            published_snapshot(self.env, domain.key)["snapshot"]["resources"][0][
+                "card_many2many_separator"
+            ],
+            ", ",
+        )
+        version.action_apply_changes()
+
+        applied = published_snapshot(self.env, domain.key)
+        self.assertEqual(
+            applied["snapshot"]["resources"][0]["card_many2many_separator"],
+            " | ",
+        )
+        self.assertNotEqual(version.checksum, initial_checksum)
+
+    def test_invalid_relation_template_cannot_replace_published_snapshot(self):
+        _, version = self._create_draft("invalid_relation_template")
+        version.action_publish()
+        resource = version.resource_ids
+        original_snapshot = version.snapshot_json
+        original_checksum = version.checksum
+        resource.write({"card_template": "{name.name}"})
+
+        result = version.action_apply_changes()
+
+        self.assertEqual(result["tag"], "display_notification")
+        self.assertTrue(version.pending_changes)
+        self.assertEqual(version.snapshot_json, original_snapshot)
+        self.assertEqual(version.checksum, original_checksum)
+
     def test_failed_apply_keeps_active_snapshot_and_pending_changes(self):
         _, version = self._create_draft("failed_apply")
         version.action_publish()

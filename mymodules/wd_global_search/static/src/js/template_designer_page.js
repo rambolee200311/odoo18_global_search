@@ -9,13 +9,16 @@
     const resourceId = root.dataset.resourceId;
     const csrfToken = root.dataset.csrfToken;
     const editor = document.getElementById("wd-template-input");
+    const separator = document.getElementById("wd-template-separator");
     const source = document.getElementById("wd-template-source");
     const recordSelect = document.getElementById("wd-template-record");
     const rendered = document.getElementById("wd-template-rendered");
     const message = document.getElementById("wd-template-message");
     const saveButton = document.getElementById("wd-template-save");
+    const checkButton = document.getElementById("wd-template-check");
     const applyButton = document.getElementById("wd-template-apply");
     const fieldsList = document.getElementById("wd-template-fields");
+    const fieldByName = new Map();
     let pending = false;
     let previewTimer;
     let previewRequest = 0;
@@ -53,32 +56,60 @@
     }
 
     function addField(field) {
+        fieldByName.set(field.name, field);
         const item = document.createElement("li");
         item.setAttribute("role", "option");
         const button = document.createElement("button");
         button.type = "button";
         button.draggable = true;
-        button.textContent = `${field.name} · ${field.type} · ${field.label}`;
-        button.addEventListener("click", () => insertField(field.name));
+        const label = document.createElement("span");
+        label.textContent = `${field.name} · ${field.type} · ${field.label}`;
+        button.append(label);
+        const readability = document.createElement("span");
+        readability.className = "wd-template-field-access";
+        readability.textContent = field.readable
+            ? "Readable by preview user"
+            : "Not readable by preview user";
+        button.append(readability);
+        if (field.group_restricted) {
+            const groupWarning = document.createElement("span");
+            groupWarning.className = "wd-template-field-group-warning";
+            groupWarning.textContent = "Group-restricted; visibility may vary by user";
+            button.append(groupWarning);
+        }
+        button.addEventListener("click", () => insertField(field));
         button.addEventListener("keydown", (event) => {
             if (event.key === "Enter") {
                 event.preventDefault();
-                insertField(field.name);
+                insertField(field);
             }
         });
         button.addEventListener("dragstart", (event) => {
             event.dataTransfer.setData("text/plain", `{${field.name}}`);
+            event.dataTransfer.setData(
+                "application/x-wd-global-search-field",
+                JSON.stringify({ name: field.name, type: field.type })
+            );
             event.dataTransfer.effectAllowed = "copy";
         });
         item.append(button);
         fieldsList.append(item);
     }
 
-    function insertField(name) {
-        const token = `{${name}}`;
+    function insertField(field) {
+        let token = `{${field.name}}`;
+        let cursorOffset = token.length;
+        if (field.type === "one2many") {
+            token = `{${field.name}}\n  \n{/${field.name}}`;
+            cursorOffset = token.indexOf("\n  ") + 3;
+        } else if (field.type === "many2many") {
+            token = `{${field.name}.}`;
+            cursorOffset = token.length - 1;
+        }
         const start = editor.selectionStart;
         const end = editor.selectionEnd;
-        editor.setRangeText(token, start, end, "end");
+        editor.setRangeText(token, start, end, "select");
+        editor.setSelectionRange(start + cursorOffset, start + cursorOffset);
         editor.focus();
         schedulePreview();
     }
@@ -115,6 +146,7 @@
                 template: editor.value,
                 source: source.value,
                 record_id: recordSelect.value,
+                many2many_separator: separator.value,
             });
             if (requestNumber !== previewRequest) {
                 return;
@@ -143,6 +175,7 @@
             const result = await postJson("/wd_global_search/card_templates/save", {
                 resource_id: resourceId,
                 template: editor.value,
+                many2many_separator: separator.value,
             });
             if (result.status !== "SUCCESS") {
                 throw new Error(result.message || "Template could not be saved.");
@@ -156,6 +189,27 @@
             return false;
         } finally {
             saveButton.disabled = false;
+        }
+    }
+
+    async function checkTemplate() {
+        checkButton.disabled = true;
+        try {
+            const result = await postJson("/wd_global_search/card_templates/check", {
+                resource_id: resourceId,
+                template: editor.value,
+                many2many_separator: separator.value,
+            });
+            if (result.status !== "SUCCESS") {
+                throw new Error(result.message || "Template structure is invalid.");
+            }
+            setMessage(result.message || "Template structure is valid.", false);
+            return true;
+        } catch (error) {
+            setMessage(error.message || "Template structure is invalid.", true);
+            return false;
+        } finally {
+            checkButton.disabled = false;
         }
     }
 
@@ -190,6 +244,7 @@
                 throw new Error("This Resource's template is unavailable.");
             }
             editor.value = descriptor.template || "";
+            separator.value = descriptor.many2many_separator || ", ";
             pending = Boolean(descriptor.pending);
             applyButton.disabled = !pending;
             for (const field of descriptor.fields) {
@@ -199,6 +254,8 @@
             await renderPreview();
         } catch (error) {
             editor.disabled = true;
+            separator.disabled = true;
+            checkButton.disabled = true;
             saveButton.disabled = true;
             applyButton.disabled = true;
             setMessage(error.message || "Unable to load this Resource's template.", true);
@@ -216,13 +273,30 @@
         }
     });
     editor.addEventListener("input", schedulePreview);
+    separator.addEventListener("input", schedulePreview);
     editor.addEventListener("dragover", (event) => event.preventDefault());
     editor.addEventListener("drop", (event) => {
         event.preventDefault();
-        const token = event.dataTransfer.getData("text/plain");
-        const match = /^\{([A-Za-z_]\w*)\}$/.exec(token);
-        if (match) {
-            insertField(match[1]);
+        const structured = event.dataTransfer.getData(
+            "application/x-wd-global-search-field"
+        );
+        if (structured) {
+            try {
+                const field = JSON.parse(structured);
+                if (fieldByName.has(field.name)) {
+                    insertField(fieldByName.get(field.name));
+                    return;
+                }
+            } catch (_error) {
+                setMessage("The dragged field could not be inserted.", true);
+                return;
+            }
+        }
+        const match = /^\{([A-Za-z_]\w*)\}$/.exec(
+            event.dataTransfer.getData("text/plain")
+        );
+        if (match && fieldByName.has(match[1])) {
+            insertField(fieldByName.get(match[1]));
         }
     });
     source.addEventListener("change", () => {
@@ -231,6 +305,7 @@
         renderPreview();
     });
     recordSelect.addEventListener("change", renderPreview);
+    checkButton.addEventListener("click", checkTemplate);
     saveButton.addEventListener("click", saveTemplate);
     applyButton.addEventListener("click", applyChanges);
     document.addEventListener("keydown", (event) => {

@@ -98,6 +98,7 @@
                                                             <notebook>
                                                                 <page string="Result Card Template">
                                                                     <field name="card_template" invisible="1"/>
+                                                                    <field name="card_many2many_separator" invisible="1"/>
                                                                     <widget name="wd_card_template_summary"/>
                                                                 </page>
                                                                 <page string="Search Fields"

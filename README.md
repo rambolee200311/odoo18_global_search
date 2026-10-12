@@ -68,10 +68,15 @@ Domain、Version、Resource 和 Vocabulary；搜索用户只消费 Published Sna
 配置管理员可在 **Configuration Domains → Published/Retired Version → Business
 Resources → Result Card Template** 查看该 Resource 当前的只读卡片预览。选择 **Edit
 Template** 后会在当前标签页打开仅针对该 Resource 的模板编辑器；浏览器返回可回到
-Resource 表单。模板编辑器提供可用字段列表、实时预览和拖放/键盘字段插入，预览支持最近
-可读记录、手动选择的可读记录和合成样例。`Save` 遵循现有配置暂存规则；
+Resource 表单。模板编辑器提供当前模型直接字段列表、结构检查、实时预览和拖放/键盘字段
+插入，预览支持最近可读记录、手动选择的可读记录和合成样例。模板支持受限的 Many2one/
+Many2many 路径（分别最多 3/2 次关系跳转）及最多两层嵌套的 One2many 循环；Many2many
+值以 Resource 上配置的纯文本分隔符连接。关系字段和循环项始终通过当前用户 ORM 权限读取。
+`Check Template` 只校验模板结构与字段元数据，不读取业务记录。`Save` 遵循现有配置暂存规则；
 Published/Retired 配置只有显式 `Apply Changes` 后才更新运行时 Snapshot。旧 Card Field
 配置提供确定性迁移建议；若空值语义无法等价表达，必须手动确认模板后才能 Apply。
+管理员操作步骤和多个模板实例见
+[卡片模板设计器管理员操作手册](docs/implementation/CC-014_card_template_admin_guide.md)。
 
 ## 目录结构
 

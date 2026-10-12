@@ -7,6 +7,7 @@ from odoo.tools.misc import format_date, format_datetime, formatLang
 from .permission_boundary import AuthorizationError, authorize_fields
 from .template import (
     render_template,
+    template_direct_field_names,
     template_field_names,
     template_read_field_names,
 )
@@ -117,32 +118,42 @@ def serialize_card_template(env, resource, model_name, values, readable_fields):
         values,
         readable_fields,
         resource["card_template"],
+        many2many_separator=resource.get("card_many2many_separator", ", "),
     )
 
 
 def read_card_values(records, field_names, template):
     model = records.env[records._name]
-    template_names = set(template_field_names(template))
+    direct_names = set(template_direct_field_names(template))
+    monetary_fields = {
+        name: model._fields[name]
+        for name in direct_names
+        if name in model._fields and model._fields[name].type == "monetary"
+    }
+    monetary_currency_names = {
+        name: field.get_currency_field(model)
+        for name, field in monetary_fields.items()
+    }
+    currency_names = {
+        currency_name
+        for currency_name in monetary_currency_names.values()
+        if currency_name in model._fields
+    }
     relation_fields = {
         name: model._fields[name]
         for name in field_names
         if name in model._fields
         and model._fields[name].type == "many2one"
+        and (name in direct_names or name in currency_names)
     }
-    monetary_fields = {
-        name: model._fields[name]
-        for name in template_names
-        if name in model._fields and model._fields[name].type == "monetary"
-    }
-    for field in monetary_fields.values():
-        currency_name = field.currency_field
+    for currency_name in monetary_currency_names.values():
         if currency_name in model._fields and model._fields[currency_name].type == "many2one":
             relation_fields[currency_name] = model._fields[currency_name]
 
     fields_to_read = list(dict.fromkeys(field_names))
-    for field in monetary_fields.values():
-        if field.currency_field in model._fields:
-            fields_to_read.append(field.currency_field)
+    for currency_name in monetary_currency_names.values():
+        if currency_name in model._fields:
+            fields_to_read.append(currency_name)
     fields_to_read = list(dict.fromkeys(fields_to_read))
     readable_fields = []
     for name in fields_to_read:
@@ -151,14 +162,31 @@ def read_card_values(records, field_names, template):
         except AccessError:
             continue
         readable_fields.append(name)
-    for monetary_name, monetary_field in monetary_fields.items():
-        if monetary_field.currency_field not in readable_fields:
+    for monetary_name, currency_name in monetary_currency_names.items():
+        if currency_name not in readable_fields:
             readable_fields = [
                 name for name in readable_fields if name != monetary_name
             ]
 
     relation_names = [name for name in relation_fields if name in readable_fields]
-    scalar_names = [name for name in readable_fields if name not in relation_names]
+    non_scalar_names = {
+        name
+        for name in readable_fields
+        if name in model._fields
+        and (
+            model._fields[name].type in {"one2many", "many2many"}
+            or (
+                model._fields[name].type == "many2one"
+                and name not in direct_names
+                and name not in currency_names
+            )
+        )
+    }
+    scalar_names = [
+        name
+        for name in readable_fields
+        if name not in relation_names and name not in non_scalar_names
+    ]
     scalar_rows = records.read(scalar_names) if scalar_names else [
         {"id": record.id} for record in records
     ]
@@ -172,6 +200,7 @@ def read_card_values(records, field_names, template):
     for scalar_row in scalar_rows:
         record_id = scalar_row["id"]
         values = dict(scalar_row)
+        values["_record"] = records.browse(record_id)
         allowed = set(readable_fields)
         raw_relations = relation_by_id.get(record_id, {})
         for name in relation_names:
@@ -186,15 +215,15 @@ def read_card_values(records, field_names, template):
             except AccessError:
                 values[name] = False
                 allowed.discard(name)
-                for monetary_name, monetary_field in monetary_fields.items():
-                    if monetary_field.currency_field == name:
+                for monetary_name, currency_name in monetary_currency_names.items():
+                    if currency_name == name:
                         allowed.discard(monetary_name)
                 continue
-            if name in template_names:
+            if name in direct_names:
                 values[name] = label
             else:
-                for monetary_name, monetary_field in monetary_fields.items():
-                    if monetary_field.currency_field == name:
+                for monetary_name, currency_name in monetary_currency_names.items():
+                    if currency_name == name:
                         values["_currency_%s" % monetary_name] = relation
         result.append((values, allowed))
     return result

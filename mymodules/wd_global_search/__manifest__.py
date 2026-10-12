@@ -1,6 +1,6 @@
 {
     "name": "WD Global Search",
-    "version": "18.0.1.1.0",
+    "version": "18.0.1.2.0",
     "category": "Tools",
     "summary": "Read-only global search workspace",
     "depends": ["base", "web", "sale", "purchase", "stock"],

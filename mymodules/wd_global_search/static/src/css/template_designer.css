@@ -157,6 +157,23 @@
     max-width: 100%;
 }
 
+.wd-template-separator {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.wd-template-separator span {
+    font-weight: 600;
+}
+
+.wd-template-separator input {
+    min-width: 160px;
+    max-width: 100%;
+    padding: 6px 8px;
+}
+
 .wd-template-preview pre {
     min-height: 220px;
 }
@@ -188,6 +205,22 @@
     cursor: grab;
     white-space: normal;
     overflow-wrap: anywhere;
+}
+
+.wd-template-field-access,
+.wd-template-field-group-warning {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.75rem;
+}
+
+.wd-template-field-access {
+    color: #475467;
+}
+
+.wd-template-field-group-warning {
+    color: #8a5a00;
+    font-weight: 600;
 }
 
 .wd-template-designer-page button:focus-visible,
