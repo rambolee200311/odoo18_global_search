@@ -1,12 +1,15 @@
 from dataclasses import dataclass
 
+from .types import KeywordTerm
+
 
 @dataclass(frozen=True)
 class EffectiveConditions:
     values: tuple[dict, ...] = ()
+    keyword_terms: tuple[KeywordTerm, ...] = ()
 
 
-def merge(parsed, refinement, deleted=()):
+def merge(parsed, refinement, deleted=(), *, keyword_terms=()):
     merged = []
     seen = set()
     for condition in [*(parsed or ()), *(refinement or ())]:
@@ -24,4 +27,4 @@ def merge(parsed, refinement, deleted=()):
                     "operator": condition.get("operator", "contains"),
                 }
             )
-    return EffectiveConditions(tuple(merged))
+    return EffectiveConditions(tuple(merged), tuple(keyword_terms))

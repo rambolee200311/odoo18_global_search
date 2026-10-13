@@ -142,7 +142,7 @@ class GlobalSearchController(http.Controller):
       </div>
     </section>
   </main>
-  <script src="/wd_global_search/static/src/js/preview.js?v=cc013-v07"></script>
+  <script src="/wd_global_search/static/src/js/preview.js?v=cc015-v01"></script>
 </body>
 </html>""" % (html.escape(str(descriptor_response["config_version"]), quote=True), tabs)
         return request.make_response(page, headers=[("Content-Type", "text/html; charset=utf-8")])
@@ -759,13 +759,7 @@ class GlobalSearchController(http.Controller):
             return {"status": "FAILED", "errors": [{"code": "INVALID_REQUEST"}], "results": []}
         try:
             raw_query = payload.get("query", "")
-            if isinstance(raw_query, str):
-                raw_query = raw_query.strip()
             parsed_conditions = list(payload.get("conditions", ()))
-            if isinstance(raw_query, str) and raw_query:
-                parsed_conditions.append(
-                    {"dimension": "name", "operator": "ilike", "value": raw_query}
-                )
             search_request = SearchRequest(
                 raw_query=raw_query,
                 parsed_conditions=tuple(parsed_conditions),

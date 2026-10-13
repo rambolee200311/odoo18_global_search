@@ -657,6 +657,23 @@ class BusinessResource(models.Model):
             self.model_mapping_ids.mapped("searchable_field_ids")
             | self.searchable_field_ids
         )
+        fields_by_model = (
+            [
+                (mapping.model_name, mapping.searchable_field_ids)
+                for mapping in self.model_mapping_ids
+            ]
+            if self.composite
+            else [(self.primary_model_id.model, self.searchable_field_ids)]
+        )
+        for model_name, model_fields in fields_by_model:
+            if not model_fields.filtered(lambda item: item.searchable):
+                raise ValidationError(
+                    _(
+                        "Resource %s model %s requires at least one searchable "
+                        "field for multi-token search."
+                    )
+                    % (self.key, model_name)
+                )
         direct_field_names = self.searchable_field_ids.filtered(
             lambda item: not item.mapping_id
         ).mapped("field_name")

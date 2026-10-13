@@ -3,6 +3,8 @@ from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import patch
 
+from odoo.osv.expression import AND, OR
+
 from ..services.aggregator import merge
 from ..services.conditions import merge as merge_conditions
 from ..services.cursor import decode, encode
@@ -10,7 +12,7 @@ from ..services import executor
 from ..services import facade
 from ..services.limiter import UserLimiter
 from ..services.permission_boundary import AuthorizationError
-from ..services.types import ResourceOutcome, SearchRequest
+from ..services.types import KeywordTerm, ResourceOutcome, SearchRequest
 
 
 class TestSearchServiceCore(TestCase):
@@ -48,6 +50,226 @@ class TestSearchServiceCore(TestCase):
                             [("name", "=", "US")],
                         )
                     ],
+                )
+            ],
+        )
+
+    def test_keyword_terms_are_and_of_authorized_text_field_contains_ors(self):
+        from .test_field_path import FakeField, field_path_models
+
+        env = field_path_models()
+        env["sale.order"]._fields["name"] = FakeField("char")
+        field_configs = [
+            {
+                "name": "name",
+                "operator_set": "exact",
+                "index_strategy": "btree",
+                "collection_match": "any",
+            },
+            {
+                "name": "partner_id.city",
+                "operator_set": "exact",
+                "index_strategy": "btree",
+                "collection_match": "any",
+            },
+            {
+                "name": "partner_id.country_id.name",
+                "operator_set": "exact",
+                "index_strategy": "btree",
+                "collection_match": "any",
+            },
+            {
+                "name": "category_ids.name",
+                "operator_set": "exact",
+                "index_strategy": "btree",
+                "collection_match": "any",
+            },
+            {
+                "name": "order_line.product_id.name",
+                "operator_set": "contains",
+                "index_strategy": "gin_trgm",
+                "collection_match": "any",
+            },
+        ]
+        terms = (KeywordTerm("001"), KeywordTerm("chair"))
+        domain = executor._condition_domain(
+            env["sale.order"],
+            field_configs,
+            [],
+            {},
+            SimpleNamespace(
+                values=(
+                    {
+                        "dimension": "partner_id.city",
+                        "value": "Berkeley",
+                        "operator": "=",
+                    },
+                ),
+                keyword_terms=terms,
+            ),
+            None,
+        )
+
+        def term_domain(value):
+            predicate = ("ilike", "%%%s%%" % value)
+            return OR(
+                [
+                    [("name",) + predicate],
+                    [("partner_id", "any", [("city",) + predicate])],
+                    [
+                        (
+                            "partner_id",
+                            "any",
+                            [
+                                (
+                                    "country_id",
+                                    "any",
+                                    [("name",) + predicate],
+                                )
+                            ],
+                        )
+                    ],
+                    [("category_ids", "any", [("name",) + predicate])],
+                    [
+                        (
+                            "order_line",
+                            "any",
+                            [
+                                (
+                                    "product_id",
+                                    "any",
+                                    [("name",) + predicate],
+                                )
+                            ],
+                        )
+                    ],
+                ]
+            )
+
+        self.assertEqual(
+            domain,
+            AND(
+                [
+                    [("partner_id", "any", [("city", "=", "Berkeley")])],
+                    term_domain("001"),
+                    term_domain("chair"),
+                ]
+            ),
+        )
+
+    def test_keyword_query_has_a_false_domain_when_no_field_can_match_token_type(self):
+        from .test_field_path import FakeField, field_path_models
+
+        env = field_path_models()
+        env["sale.order"]._fields["amount"] = FakeField("integer")
+        domain = executor._keyword_term_domain(
+            env["sale.order"],
+            [
+                {
+                    "name": "amount",
+                    "operator_set": "exact",
+                    "index_strategy": "btree",
+                    "collection_match": "any",
+                }
+            ],
+            KeywordTerm("Fremont"),
+        )
+
+        self.assertEqual(domain, [("id", "=", 0)])
+
+    def test_keyword_query_converts_tokens_for_exact_typed_fields(self):
+        from datetime import date, datetime
+
+        from .test_field_path import FakeField, field_path_models
+
+        cases = (
+            ("integer", "42", 42),
+            ("float", "3.5", 3.5),
+            ("date", "2026-10-13", date(2026, 10, 13)),
+            (
+                "datetime",
+                "2026-10-13T14:15:00",
+                datetime(2026, 10, 13, 14, 15),
+            ),
+            ("boolean", "false", False),
+        )
+        env = field_path_models()
+        model = env["sale.order"]
+        for field_type, raw_value, expected in cases:
+            with self.subTest(field_type=field_type):
+                field_name = "typed_value"
+                model._fields[field_name] = FakeField(field_type)
+                domain = executor._keyword_term_domain(
+                    model,
+                    [
+                        {
+                            "name": field_name,
+                            "operator_set": "exact",
+                            "index_strategy": "btree",
+                            "collection_match": "any",
+                        }
+                    ],
+                    KeywordTerm(raw_value),
+                )
+                self.assertEqual(domain, [(field_name, "=", expected)])
+
+    def test_keyword_query_uses_contains_for_all_searchable_text_fields(self):
+        from .test_field_path import field_path_models
+
+        env = field_path_models()
+        domain = executor._keyword_term_domain(
+            env["sale.order"],
+            [
+                {
+                    "name": "partner_id.city",
+                    "operator_set": "prefix",
+                    "index_strategy": "pattern_ops",
+                    "collection_match": "any",
+                }
+            ],
+            KeywordTerm("Fremont"),
+        )
+
+        self.assertEqual(
+            domain,
+            [("partner_id", "any", [("city", "ilike", "%Fremont%")])],
+        )
+
+    def test_keyword_query_rejects_resources_without_searchable_fields(self):
+        from .test_field_path import field_path_models
+
+        env = field_path_models()
+        with self.assertRaises(executor.FieldPathError):
+            executor._keyword_term_domain(
+                env["sale.order"],
+                [],
+                KeywordTerm("Fremont"),
+            )
+
+    def test_keyword_contains_treats_like_wildcards_as_literal_text(self):
+        from .test_field_path import field_path_models
+
+        env = field_path_models()
+        domain = executor._keyword_term_domain(
+            env["sale.order"],
+            [
+                {
+                    "name": "partner_id.city",
+                    "operator_set": "contains",
+                    "index_strategy": "gin_trgm",
+                    "collection_match": "any",
+                }
+            ],
+            KeywordTerm(r"50%_off\sale"),
+        )
+
+        self.assertEqual(
+            domain,
+            [
+                (
+                    "partner_id",
+                    "any",
+                    [("city", "ilike", r"%50\%\_off\\sale%")],
                 )
             ],
         )
@@ -286,7 +508,6 @@ class TestSearchServiceCore(TestCase):
                 },
             )
         )
-
         with patch.object(
             facade, "authorize_searchable_fields", return_value=[field_config]
         ):
@@ -309,6 +530,82 @@ class TestSearchServiceCore(TestCase):
                     conditions,
                     None,
                 )
+
+    def test_query_understanding_exposes_keyword_values_not_search_paths(self):
+        field_config = {
+            "name": "partner_id.city",
+            "operator_set": "contains",
+            "index_strategy": "gin_trgm",
+            "collection_match": "any",
+        }
+        resource = {
+            "key": "sales",
+            "models": [{"model_name": "sale.order", "fields": [field_config]}],
+            "business_dates": [],
+        }
+        conditions = merge_conditions(
+            (),
+            (),
+            keyword_terms=(KeywordTerm("Fremont"), KeywordTerm("ACME")),
+        )
+        with patch.object(
+            facade, "authorize_searchable_fields", return_value=[field_config]
+        ):
+            visible = facade._effective_conditions(
+                {"sale.order": object()},
+                [resource],
+                {"sales"},
+                conditions,
+                None,
+            )
+
+        self.assertEqual(
+            visible,
+            [
+                {"dimension": "keyword", "operator": "contains", "value": "Fremont"},
+                {"dimension": "keyword", "operator": "contains", "value": "ACME"},
+            ],
+        )
+
+    def test_multitoken_query_identity_and_failure_summary(self):
+        legacy = merge_conditions((), ())
+        first = merge_conditions(
+            (), (), keyword_terms=(KeywordTerm("Fremont"), KeywordTerm("ACME"))
+        )
+        second = merge_conditions(
+            (), (), keyword_terms=(KeywordTerm("Oakland"), KeywordTerm("ACME"))
+        )
+
+        self.assertEqual(
+            facade._condition_identity(legacy, {"sales"}),
+            {"conditions": [], "resources": ["sales"]},
+        )
+        self.assertEqual(
+            facade._condition_identity(first, {"sales"})["keyword_match_mode"],
+            "contains_text",
+        )
+        self.assertNotEqual(
+            facade._condition_identity(first, {"sales"}),
+            facade._condition_identity(second, {"sales"}),
+        )
+        self.assertEqual(
+            facade._response_conditions(
+                first,
+                [{"dimension": "keyword", "value": "Fremont"}],
+                [ResourceOutcome(resource="sales", status="FAILED")],
+                {"sales"},
+            ),
+            [],
+        )
+        self.assertEqual(
+            facade._response_conditions(
+                first,
+                [{"dimension": "keyword", "value": "Fremont"}],
+                [ResourceOutcome(resource="sales", status="SUCCESS")],
+                {"sales"},
+            ),
+            [{"dimension": "keyword", "value": "Fremont"}],
+        )
 
     def test_performance_config_defaults_and_rejects_unsafe_expansion(self):
         resources = [{"key": "sales"}]

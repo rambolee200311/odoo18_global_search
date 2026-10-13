@@ -1,0 +1,3 @@
+interface:
+  display_name: "Odoo 自动化测试"
+  short_description: "编写并验证 Odoo Python 与 ORM 自动化测试"

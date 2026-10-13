@@ -76,6 +76,22 @@ class TestGlobalSearchConfiguration(TransactionCase):
             1,
         )
 
+    def test_publish_accepts_contains_field_and_requires_searchable_field(self):
+        _, version = self._create_draft("multi_token_exact_field")
+        searchable_field = version.resource_ids.searchable_field_ids
+        searchable_field.write(
+            {
+                "operator_set": "contains",
+                "index_strategy": "gin_trgm",
+            }
+        )
+
+        version._validate_configuration()
+
+        searchable_field.write({"searchable": False})
+        with self.assertRaises(ValidationError):
+            version._validate_configuration()
+
     def test_version_identity_remains_protected(self):
         _, version = self._create_draft("identity")
         version.action_publish()

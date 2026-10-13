@@ -44,6 +44,28 @@ def _hash(value):
     ).hexdigest()
 
 
+def _condition_identity(conditions, selected_keys):
+    identity = {
+        "conditions": list(conditions.values),
+        "resources": sorted(selected_keys),
+    }
+    keyword_terms = getattr(conditions, "keyword_terms", ())
+    if keyword_terms:
+        identity["keyword_match_mode"] = "contains_text"
+        identity["keyword_terms"] = [term.value for term in keyword_terms]
+    return identity
+
+
+def _response_conditions(conditions, visible_conditions, outcomes, selected_keys):
+    has_selected_success = any(
+        outcome.status == "SUCCESS" and outcome.resource in selected_keys
+        for outcome in outcomes
+    )
+    if getattr(conditions, "keyword_terms", ()) and not has_selected_success:
+        return []
+    return visible_conditions
+
+
 def user_context(env):
     user = env.user
     return UserContext(
@@ -166,6 +188,10 @@ def _effective_conditions(env, resources, selected_keys, conditions, context):
             visible.append(condition)
         elif "." in dimension:
             raise RequestBoundaryError("Condition is not an available searchable field")
+    visible.extend(
+        {"dimension": "keyword", "operator": "contains", "value": term.value}
+        for term in getattr(conditions, "keyword_terms", ())
+    )
     return visible
 
 
@@ -257,7 +283,7 @@ class SearchService:
                 None,
             )
         try:
-            validate_search_request(request)
+            query_object = validate_search_request(request)
             if request.limit < 1 or request.limit > 200:
                 log_event(
                     "warning",
@@ -308,7 +334,9 @@ class SearchService:
                     cursor_secret,
                 )
             conditions = merge_conditions(
-                request.parsed_conditions, request.refinement_conditions
+                query_object.field_conditions,
+                request.refinement_conditions,
+                keyword_terms=query_object.keyword_terms,
             )
             visible_conditions = _effective_conditions(
                 env, resources, selected_keys, conditions, context
@@ -334,12 +362,7 @@ class SearchService:
                     "tz": context.tz,
                 }
             )
-            conditions_hash = _hash(
-                {
-                    "conditions": list(conditions.values),
-                    "resources": sorted(selected_keys),
-                }
-            )
+            conditions_hash = _hash(_condition_identity(conditions, selected_keys))
             cursor_offset = request.offset
             if request.cursor:
                 try:
@@ -414,7 +437,12 @@ class SearchService:
                 remaining_offset = 0
                 remaining_limit = max(0, remaining_limit - len(outcome.results))
             response = response_for(outcomes, 0, effective_limit)
-            response.meta["effective_conditions"] = visible_conditions
+            response.meta["effective_conditions"] = _response_conditions(
+                conditions,
+                visible_conditions,
+                outcomes,
+                selected_keys,
+            )
             response.meta["page_limit"] = effective_limit
             if response.results and len(response.results) == effective_limit:
                 response.meta["next_cursor"] = encode(

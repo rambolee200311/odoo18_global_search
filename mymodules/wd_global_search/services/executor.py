@@ -1,5 +1,8 @@
+import math
+import re
 import time
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
+from decimal import Decimal, InvalidOperation
 from zoneinfo import ZoneInfo
 
 from odoo.osv.expression import AND, OR
@@ -91,6 +94,90 @@ def _date_bounds(value, context):
     )
 
 
+def _keyword_field_value(field_type, value):
+    if field_type in {"char", "text", "selection"}:
+        return value
+    if field_type == "integer":
+        if not re.fullmatch(r"[+-]?[0-9]+", value):
+            return None
+        return int(value)
+    if field_type in {"float", "monetary"}:
+        try:
+            parsed = Decimal(value)
+            converted = float(parsed)
+        except (InvalidOperation, OverflowError, ValueError):
+            return None
+        return converted if parsed.is_finite() and math.isfinite(converted) else None
+    if field_type == "date":
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+            return None
+        try:
+            return date.fromisoformat(value)
+        except ValueError:
+            return None
+    if field_type == "datetime":
+        if not re.fullmatch(
+            r"\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?",
+            value,
+        ):
+            return None
+        try:
+            return datetime.fromisoformat(value)
+        except ValueError:
+            return None
+    if field_type == "boolean":
+        normalized = value.casefold()
+        if normalized == "true":
+            return True
+        if normalized == "false":
+            return False
+        return None
+    return None
+
+
+def _keyword_term_domain(model, field_configs, term):
+    alternatives = []
+    eligible_field_count = 0
+    for field_config in field_configs:
+        resolved_path = validate_field_path(
+            model,
+            field_config.get("name"),
+            operator_set=field_config.get("operator_set", "exact"),
+            index_strategy=field_config.get("index_strategy", "none"),
+            collection_match=field_config.get("collection_match", "any"),
+        )
+        field_type = resolved_path.fields[-1].type
+        if field_type in {"char", "text"}:
+            eligible_field_count += 1
+            escaped_value = (
+                term.value.replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_")
+            )
+            operator, value = "ilike", "%%%s%%" % escaped_value
+        elif field_config.get("operator_set", "exact") == "exact":
+            value = _keyword_field_value(field_type, term.value)
+            eligible_field_count += 1
+            if value is None:
+                continue
+            operator, value = operator_domain("exact", value)
+        else:
+            continue
+        if value is None:
+            continue
+        alternatives.append(
+            wrap_path_domain(
+                resolved_path,
+                [(resolved_path.segments[-1], operator, value)],
+            )
+        )
+    if not eligible_field_count:
+        raise FieldPathError(
+            "No readable Searchable Field is available for this query."
+        )
+    return OR(alternatives) if alternatives else [("id", "=", 0)]
+
+
 def _condition_domain(model, field_configs, relation_paths, resource, conditions, context):
     configs_by_name = {item["name"]: item for item in field_configs}
     direct_fields = [
@@ -173,6 +260,9 @@ def _condition_domain(model, field_configs, relation_paths, resource, conditions
                 domain_parts.append(AND(predicates))
             else:
                 domain_parts.append(OR(predicates))
+
+    for term in getattr(conditions, "keyword_terms", ()):
+        domain_parts.append(_keyword_term_domain(model, field_configs, term))
 
     for date_condition in date_conditions:
         bounds = _date_bounds(date_condition.get("value"), context)

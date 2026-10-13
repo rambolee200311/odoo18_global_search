@@ -81,9 +81,14 @@
     }
 
     function renderUnderstanding(conditions) {
-        conditionView.textContent = conditions.length
-            ? conditions.map((item) => item.dimension + "=" + item.value).join(" · ")
-            : "No conditions";
+        const keywords = conditions.filter((item) => item.dimension === "keyword");
+        const otherConditions = conditions.filter((item) => item.dimension !== "keyword");
+        const summary = [];
+        if (keywords.length) {
+            summary.push("keywords: " + keywords.map((item) => item.value).join(" AND "));
+        }
+        summary.push(...otherConditions.map((item) => item.dimension + "=" + item.value));
+        conditionView.textContent = summary.length ? summary.join(" · ") : "No conditions";
         activeView.innerHTML = state.refinements.map((item, index) => (
             '<button type="button" class="wd-refinement-chip" data-refinement-index="'
             + index + '">' + text(item.dimension) + ": " + text(item.value) + " ×</button>"
@@ -495,6 +500,7 @@
 
     async function search(scrollToResults = false) {
         const requestSequence = ++searchSequence;
+        conditionView.textContent = "Searching…";
         if (!state.resourceSelectionInitialized) {
             state.resources = new Set(resourceKeys());
             state.resourceSelectionInitialized = true;
@@ -550,7 +556,9 @@
             }
             renderCounts(data);
             renderResults(data);
-            renderUnderstanding(data.effective_conditions || conditionPayload());
+            renderUnderstanding(
+                Array.isArray(data.effective_conditions) ? data.effective_conditions : []
+            );
             renderPagination(data);
             list.scrollTop = 0;
             if (scrollToResults && isNarrowWorkspace()) {
@@ -564,6 +572,7 @@
             console.error("Global Search request failed", error);
             list.innerHTML = '<p class="wd-safe-message" data-testid="search-error">'
                 + "Search unavailable</p>";
+            conditionView.textContent = "Search unavailable";
             pagination.hidden = true;
         }
     }
@@ -591,7 +600,7 @@
 
     form.addEventListener("submit", (event) => {
         event.preventDefault();
-        state.rawQuery = queryInput.value.trim();
+        state.rawQuery = queryInput.value;
         state.refinements = [];
         state.cursor = null;
         state.currentPage = 1;

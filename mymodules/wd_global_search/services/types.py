@@ -45,6 +45,19 @@ class PathCheck:
 
 
 @dataclass(frozen=True)
+class KeywordTerm:
+    value: str
+    source: str = "raw_query"
+
+
+@dataclass(frozen=True)
+class ConditionQueryObject:
+    combinator: str = "AND"
+    keyword_terms: tuple[KeywordTerm, ...] = ()
+    field_conditions: tuple[dict[str, Any], ...] = ()
+
+
+@dataclass(frozen=True)
 class SearchRequest:
     raw_query: str = ""
     parsed_conditions: tuple[dict[str, Any], ...] = ()
