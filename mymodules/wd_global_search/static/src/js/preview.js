@@ -1071,19 +1071,83 @@
             card.setAttribute("tabindex", "0");
             card.setAttribute("aria-pressed", "false");
 
-            const renderedText = result.snapshot
+            const hasStructuredCard = result.snapshot
+                && Object.prototype.hasOwnProperty.call(result.snapshot, "card")
+            const structuredCard = hasStructuredCard ? result.snapshot.card : null;
+            if (hasStructuredCard) {
+                if (
+                    !structuredCard
+                    || structuredCard.schema_version !== 1
+                    || typeof structuredCard.title !== "string"
+                    || typeof structuredCard.meta !== "string"
+                    || typeof structuredCard.summary !== "string"
+                    || !Array.isArray(structuredCard.details)
+                    || !structuredCard.details.every((item) => typeof item === "string")
+                    || typeof structuredCard.details_truncated !== "boolean"
+                ) {
+                    const unavailable = document.createElement("p");
+                    unavailable.className = "wd-safe-message";
+                    unavailable.dataset.testid = "structured-card-unavailable";
+                    unavailable.textContent = "Structured card unavailable.";
+                    card.append(unavailable);
+                } else {
+                    if (structuredCard.title) {
+                        const title = document.createElement("h3");
+                        title.className = "wd-card-title wd-card-primary";
+                        title.textContent = structuredCard.title;
+                        card.append(title);
+                    }
+                    if (structuredCard.meta) {
+                        const meta = document.createElement("div");
+                        meta.className = "wd-card-meta wd-card-resource";
+                        meta.textContent = structuredCard.meta;
+                        card.append(meta);
+                    }
+                    if (structuredCard.summary) {
+                        const summary = document.createElement("p");
+                        summary.className = "wd-card-summary wd-card-secondary";
+                        summary.textContent = structuredCard.summary;
+                        card.append(summary);
+                    }
+                    if (structuredCard.details.length || structuredCard.details_truncated) {
+                        const details = document.createElement("div");
+                        details.className = "wd-card-details wd-card-secondary";
+                        structuredCard.details.forEach((item, index) => {
+                            if (index) {
+                                details.append(document.createTextNode(" · "));
+                            }
+                            const detail = document.createElement("span");
+                            detail.className = "wd-card-detail";
+                            detail.textContent = item;
+                            details.append(detail);
+                        });
+                        if (structuredCard.details_truncated) {
+                            if (structuredCard.details.length) {
+                                details.append(document.createTextNode(" · "));
+                            }
+                            const overflow = document.createElement("span");
+                            overflow.className = "wd-card-details-overflow";
+                            overflow.textContent = "...";
+                            details.append(overflow);
+                        }
+                        card.append(details);
+                    }
+                }
+            }
+            const renderedText = !hasStructuredCard && result.snapshot
                 && typeof result.snapshot.rendered_text === "string"
                 ? result.snapshot.rendered_text
                 : null;
-            const fields = result.snapshot && Array.isArray(result.snapshot.fields)
+            const fields = !hasStructuredCard
+                && result.snapshot && Array.isArray(result.snapshot.fields)
                 ? result.snapshot.fields
                 : [];
-            if (renderedText !== null) {
+            if (!hasStructuredCard && renderedText !== null) {
                 const content = document.createElement("div");
                 content.className = "wd-card-template-text";
                 content.textContent = renderedText;
                 card.append(content);
-            } else if (fields.length) {
+            } else if (!hasStructuredCard && fields.length) {
                 const primary = document.createElement("strong");
                 primary.className = "wd-card-primary";
                 primary.textContent = text(fields[0].value);
@@ -1113,7 +1177,7 @@
                     });
                     card.append(more);
                 }
-            } else {
+            } else if (!hasStructuredCard) {
                 const primary = document.createElement("strong");
                 primary.className = "wd-card-primary";
                 primary.textContent = "Record";

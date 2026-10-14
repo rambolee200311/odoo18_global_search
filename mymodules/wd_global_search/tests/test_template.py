@@ -1,5 +1,6 @@
 import logging
 import time
+from unittest.mock import patch
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -9,11 +10,13 @@ from odoo.tools.misc import formatLang
 
 from ..services.card import read_card_values, serialize_card_template
 from ..services.executor import execute
+from ..services import template as template_service
 from ..services.template import (
     TemplateError,
     parse_template,
     render_template,
     template_read_field_names,
+    validate_structured_card_template,
     validate_template,
 )
 
@@ -250,6 +253,137 @@ class TestCardTemplate(TransactionCase):
             result["snapshot"]["rendered_text"],
             "Template Loop Product",
         )
+
+    def test_search_executor_returns_structured_card_and_truncates_visible_details(self):
+        partner = self.env["res.partner"].create(
+            {"name": "Structured Card Fixture Customer"}
+        )
+        order = self.env["sale.order"].create({"partner_id": partner.id})
+        products = self.env["product.product"].create(
+            [
+                {"name": "Structured Fixture Product %s" % index, "list_price": 10}
+                for index in range(4)
+            ]
+        )
+        order.write(
+            {
+                "order_line": [
+                    (
+                        0,
+                        0,
+                        {
+                            "product_id": product.id,
+                            "product_uom_qty": index + 1,
+                        },
+                    )
+                    for index, product in enumerate(products)
+                ]
+            }
+        )
+        resource = {
+            "key": "structured_card_test",
+            "models": [
+                {"model_name": "sale.order", "fields": [{"name": "name"}]}
+            ],
+            "structured_card_template": {
+                "schema_version": 1,
+                "title": "{name}",
+                "meta": "Sales Order · {date_order:datetime}",
+                "summary": "{partner_id}",
+                "details": (
+                    "{order_line}{product_id.name} × {product_uom_qty}"
+                    "{/order_line}"
+                ),
+            },
+        }
+
+        outcome = execute(
+            self.env,
+            resource,
+            SimpleNamespace(
+                values=(
+                    {
+                        "dimension": "name",
+                        "operator": "=",
+                        "value": order.name,
+                    },
+                )
+            ),
+            limit=1,
+        )
+
+        result = next(item for item in outcome.results if item["id"] == order.id)
+        card = result["snapshot"]["card"]
+        self.assertEqual(card["schema_version"], 1)
+        self.assertEqual(card["title"], order.name)
+        self.assertEqual(card["summary"], partner.display_name)
+        self.assertEqual(len(card["details"]), 3)
+        self.assertTrue(card["details_truncated"])
+        self.assertNotIn("rendered_text", result["snapshot"])
+        self.assertEqual(outcome.count, 1)
+
+        original_resolve_path = template_service._resolve_path
+
+        def deny_first_product(record, path, format_key, separator):
+            if (
+                path == ["product_id", "name"]
+                and record.product_id.name == products[0].name
+            ):
+                return template_service._UNAUTHORIZED
+            return original_resolve_path(record, path, format_key, separator)
+
+        with patch.object(
+            template_service, "_resolve_path", side_effect=deny_first_product
+        ):
+            visible_details, details_truncated = template_service.render_template_items(
+                self.env,
+                order,
+                resource["structured_card_template"]["details"],
+            )
+        self.assertEqual(len(visible_details), 3)
+        self.assertFalse(details_truncated)
+        self.assertTrue(
+            all(products[0].name not in item for item in visible_details)
+        )
+
+    def test_structured_card_validation_requires_explicit_regions_and_single_loop(self):
+        base = {
+            "schema_version": 1,
+            "title": "{name}",
+            "meta": "",
+            "summary": "",
+            "details": "",
+        }
+        parsed = validate_structured_card_template(
+            base, [self.env["res.partner"]]
+        )
+        self.assertIn("title", parsed)
+
+        invalid = dict(base, details="{category_id}{/category_id}")
+        with self.assertRaises(TemplateError):
+            validate_structured_card_template(
+                invalid, [self.env["res.partner"]]
+            )
+
+        invalid = dict(base, title="Partners")
+        with self.assertRaises(TemplateError):
+            validate_structured_card_template(
+                invalid, [self.env["res.partner"]]
+            )
+
+    def test_structured_card_template_enforces_aggregate_budgets(self):
+        configuration = {
+            "schema_version": 1,
+            "title": "{name}" + ("a" * 4100),
+            "meta": "",
+            "summary": "b" * 4100,
+            "details": "",
+        }
+
+        with self.assertRaises(TemplateError):
+            validate_structured_card_template(
+                configuration, [self.env["res.partner"]]
+            )
 
     def test_constant_only_templates_are_valid(self):
         parts = validate_template(

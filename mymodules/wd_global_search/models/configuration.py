@@ -7,7 +7,11 @@ from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, UserError, ValidationError
 
 from ..services.field_path import FieldPathError, validate_field_path
-from ..services.template import TemplateError, validate_template
+from ..services.template import (
+    TemplateError,
+    validate_structured_card_template,
+    validate_template,
+)
 
 
 MAX_SNAPSHOT_BYTES = 1024 * 1024
@@ -560,6 +564,22 @@ class BusinessResource(models.Model):
         string="Result Card Template",
         help="Plain-text template using constants and {field_name} variables.",
     )
+    structured_card_title_template = fields.Text(
+        string="Structured Card Title",
+        help="Required title region; use the existing card template syntax.",
+    )
+    structured_card_meta_template = fields.Text(
+        string="Structured Card Meta",
+        help="Optional metadata region using the existing card template syntax.",
+    )
+    structured_card_summary_template = fields.Text(
+        string="Structured Card Summary",
+        help="Optional summary region using the existing card template syntax.",
+    )
+    structured_card_details_template = fields.Text(
+        string="Structured Card Details",
+        help="Optional details region with one One2many loop.",
+    )
     card_many2many_separator = fields.Text(
         string="Result Card Many2many Separator",
         default=", ",
@@ -610,11 +630,11 @@ class BusinessResource(models.Model):
             raise ValidationError(_("Technical model priorities must be unique for %s.") % self.key)
         if not self.business_date_ids:
             raise ValidationError(_("Business Date is not configured for %s.") % self.key)
-        if not self.card_template:
+        structured_template = self._structured_card_template()
+        if bool(self.card_template) == bool(structured_template):
             raise ValidationError(
                 _(
-                    "Configure a Result Card template for %s before publishing or "
-                    "applying changes. Legacy Card fields require explicit migration."
+                    "Configure exactly one Result Card template mode for %s."
                 )
                 % self.key
             )
@@ -637,18 +657,25 @@ class BusinessResource(models.Model):
             raise ValidationError(
                 _("Composite Resources use Model Mappings and cannot define a Primary Model or single-model Action.")
             )
-        template = self.card_template
         model_names = (
             self.model_mapping_ids.mapped("model_name")
             if self.composite
             else [self.primary_model_id.model]
         )
         try:
-            validate_template(
-                template,
-                [self.env[name] for name in model_names],
-                many2many_separator=self.card_many2many_separator or ", ",
-            )
+            models = [self.env[name] for name in model_names]
+            if structured_template:
+                validate_structured_card_template(
+                    structured_template,
+                    models,
+                    many2many_separator=self.card_many2many_separator or ", ",
+                )
+            else:
+                validate_template(
+                    self.card_template,
+                    models,
+                    many2many_separator=self.card_many2many_separator or ", ",
+                )
         except TemplateError as exc:
             raise ValidationError(str(exc)) from exc
         for mapping in self.model_mapping_ids:
@@ -857,6 +884,11 @@ class BusinessResource(models.Model):
                 for item in self.state_mapping_ids
             ],
             "card_template": self.card_template,
+            **(
+                {"structured_card_template": self._structured_card_template()}
+                if self._structured_card_template()
+                else {}
+            ),
             "card_many2many_separator": self.card_many2many_separator or ", ",
             "snapshot_fields": [
                 {
@@ -873,6 +905,68 @@ class BusinessResource(models.Model):
                 )
             ],
         }
+
+    def _structured_card_template(self):
+        self.ensure_one()
+        values = {
+            "title": self.structured_card_title_template or "",
+            "meta": self.structured_card_meta_template or "",
+            "summary": self.structured_card_summary_template or "",
+            "details": self.structured_card_details_template or "",
+        }
+        if not any(values.values()):
+            return None
+        return {"schema_version": 1, **values}
+
+    def action_use_structured_card_template(self):
+        self.check_access("write")
+        for resource in self:
+            structured_template = resource._structured_card_template()
+            if not structured_template:
+                raise UserError(_("Configure the structured card regions before switching modes."))
+            model_names = (
+                resource.model_mapping_ids.mapped("model_name")
+                if resource.composite
+                else [resource.primary_model_id.model]
+            )
+            try:
+                validate_structured_card_template(
+                    structured_template,
+                    [resource.env[name] for name in model_names],
+                    many2many_separator=resource.card_many2many_separator or ", ",
+                )
+            except TemplateError as exc:
+                raise ValidationError(str(exc)) from exc
+            resource.write({"card_template": False})
+        return True
+
+    def action_use_legacy_card_template(self):
+        self.check_access("write")
+        for resource in self:
+            if not resource.card_template:
+                raise UserError(_("Configure the legacy card template before switching modes."))
+            model_names = (
+                resource.model_mapping_ids.mapped("model_name")
+                if resource.composite
+                else [resource.primary_model_id.model]
+            )
+            try:
+                validate_template(
+                    resource.card_template,
+                    [resource.env[name] for name in model_names],
+                    many2many_separator=resource.card_many2many_separator or ", ",
+                )
+            except TemplateError as exc:
+                raise ValidationError(str(exc)) from exc
+            resource.write(
+                {
+                    "structured_card_title_template": False,
+                    "structured_card_meta_template": False,
+                    "structured_card_summary_template": False,
+                    "structured_card_details_template": False,
+                }
+            )
+        return True
 
     def _legacy_card_template(self):
         self.ensure_one()

@@ -12,6 +12,7 @@ from .card import (
     read_card_values,
     serialize_card_fields,
     serialize_card_template,
+    serialize_structured_card,
 )
 from .errors import error
 from .permission_boundary import (
@@ -28,6 +29,7 @@ from .field_path import (
     wrap_path_domain,
 )
 from .types import ResourceOutcome
+from .template import TemplateError
 
 
 class SearchTimeout(Exception):
@@ -358,6 +360,22 @@ def execute(
     started = time.monotonic()
     try:
         _check_deadline(deadline)
+        has_structured_template = "structured_card_template" in resource
+        structured_template = resource.get("structured_card_template")
+        if has_structured_template and (
+            not isinstance(structured_template, dict)
+            or set(structured_template)
+            != {"schema_version", "title", "meta", "summary", "details"}
+            or type(structured_template.get("schema_version")) is not int
+            or structured_template.get("schema_version") != 1
+            or not all(
+                isinstance(structured_template.get(name), str)
+                for name in ("title", "meta", "summary", "details")
+            )
+            or not structured_template.get("title", "").strip()
+            or resource.get("card_template")
+        ):
+            raise TemplateError("Structured card template snapshot is invalid.")
         if max_relation_depth is None:
             authorize_search_resource(env, resource, context)
         else:
@@ -412,13 +430,26 @@ def execute(
                 order="id asc",
             )
             _check_deadline(deadline)
-            values = (
-                read_card_values(
-                    records, readable_card_fields, resource["card_template"]
+            structured_template = resource.get("structured_card_template")
+            card_template = resource.get("card_template")
+            if has_structured_template:
+                root_templates = "\n".join(
+                    structured_template.get(name, "")
+                    for name in ("title", "meta", "summary")
+                    if isinstance(structured_template.get(name, ""), str)
                 )
-                if resource.get("card_template")
-                else [(value, readable_card_fields) for value in records.read(readable_card_fields)]
-            )
+                values = read_card_values(
+                    records, readable_card_fields, root_templates
+                )
+            elif card_template:
+                values = read_card_values(
+                    records, readable_card_fields, card_template
+                )
+            else:
+                values = [
+                    (value, readable_card_fields)
+                    for value in records.read(readable_card_fields)
+                ]
             _check_deadline(deadline)
             for value, row_readable_fields in values:
                 record_id = value["id"]
@@ -428,27 +459,14 @@ def execute(
                         "_resource": resource["key"],
                         "_model": model_name,
                         "_record_id": record_id,
-                        "snapshot": (
-                            {
-                                "rendered_text": serialize_card_template(
-                                    env,
-                                    resource,
-                                    model_name,
-                                    value,
-                                    row_readable_fields,
-                                )
-                            }
-                            if resource.get("card_template")
-                            else {
-                                "fields": serialize_card_fields(
-                                    env,
-                                    resource,
-                                    model_name,
-                                    value,
-                                    row_readable_fields,
-                                    context,
-                                )
-                            }
+                        "snapshot": _serialize_result_snapshot(
+                            env,
+                            resource,
+                            model_name,
+                            value,
+                            row_readable_fields,
+                            context,
+                            deadline,
                         ),
                     }
                 )
@@ -468,6 +486,13 @@ def execute(
             error=error(code, resource=resource["key"]),
             latency=time.monotonic() - started,
         )
+    except (TemplateError, ValueError):
+        return ResourceOutcome(
+            resource=resource["key"],
+            status="FAILED",
+            error=error("CONFIGURATION_ERROR", resource=resource["key"]),
+            latency=time.monotonic() - started,
+        )
     if not resource.get("models"):
         return ResourceOutcome(
             resource=resource["key"],
@@ -482,3 +507,40 @@ def execute(
         count=resource_count,
         latency=time.monotonic() - started,
     )
+
+
+def _serialize_result_snapshot(
+    env, resource, model_name, values, readable_fields, context, deadline
+):
+    if "structured_card_template" in resource:
+        return {
+            "card": serialize_structured_card(
+                env,
+                resource,
+                model_name,
+                values.get("_record"),
+                values,
+                readable_fields,
+                check_deadline=lambda: _check_deadline(deadline),
+            )
+        }
+    if resource.get("card_template"):
+        return {
+            "rendered_text": serialize_card_template(
+                env,
+                resource,
+                model_name,
+                values,
+                readable_fields,
+            )
+        }
+    return {
+        "fields": serialize_card_fields(
+            env,
+            resource,
+            model_name,
+            values,
+            readable_fields,
+            context,
+        )
+    }

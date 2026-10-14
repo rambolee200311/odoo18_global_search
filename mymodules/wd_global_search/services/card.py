@@ -7,6 +7,7 @@ from odoo.tools.misc import format_date, format_datetime, formatLang
 from .permission_boundary import AuthorizationError, authorize_fields
 from .template import (
     render_template,
+    render_template_items,
     template_direct_field_names,
     template_field_names,
     template_read_field_names,
@@ -14,6 +15,8 @@ from .template import (
 
 
 def card_field_names(resource, model):
+    if resource.get("structured_card_template"):
+        return structured_card_field_names(resource, model)
     if resource.get("card_template"):
         return [
             field_name
@@ -28,6 +31,20 @@ def card_field_names(resource, model):
         )
         if item.get("visible", True) and item.get("field_name") in model._fields
     ]
+
+
+def structured_card_field_names(resource, model):
+    configuration = resource.get("structured_card_template") or {}
+    templates = [
+        configuration.get(name, "")
+        for name in ("title", "meta", "summary")
+        if isinstance(configuration.get(name, ""), str)
+        and configuration.get(name, "").strip()
+    ]
+    names = []
+    for template in templates:
+        names.extend(template_read_field_names(model, template))
+    return tuple(dict.fromkeys(names))
 
 
 def authorized_card_field_names(resource, model, context):
@@ -120,6 +137,69 @@ def serialize_card_template(env, resource, model_name, values, readable_fields):
         resource["card_template"],
         many2many_separator=resource.get("card_many2many_separator", ", "),
     )
+
+
+def serialize_structured_card(
+    env, resource, model_name, record, values, readable_fields, check_deadline=None
+):
+    configuration = resource.get("structured_card_template")
+    if (
+        not isinstance(configuration, dict)
+        or set(configuration)
+        != {"schema_version", "title", "meta", "summary", "details"}
+        or type(configuration.get("schema_version")) is not int
+        or configuration.get("schema_version") != 1
+        or not isinstance(configuration.get("title"), str)
+        or not isinstance(configuration.get("meta"), str)
+        or not isinstance(configuration.get("summary"), str)
+        or not isinstance(configuration.get("details"), str)
+        or not configuration.get("title").strip()
+    ):
+        raise ValueError("Unsupported structured card template schema.")
+
+    rendered = {}
+    for name in ("title", "meta", "summary"):
+        if check_deadline:
+            check_deadline()
+        template = configuration.get(name, "")
+        if not isinstance(template, str):
+            raise ValueError("Structured card template region must be text.")
+        rendered[name] = (
+            render_template(
+                env,
+                model_name,
+                values,
+                readable_fields,
+                template,
+                many2many_separator=resource.get(
+                    "card_many2many_separator", ", "
+                ),
+            )
+            if template.strip()
+            else ""
+        )
+
+    details_template = configuration.get("details", "")
+    if not isinstance(details_template, str):
+        raise ValueError("Structured card details template must be text.")
+    if details_template.strip():
+        details, details_truncated = render_template_items(
+            env,
+            record,
+            details_template,
+            many2many_separator=resource.get("card_many2many_separator", ", "),
+            check_deadline=check_deadline,
+        )
+    else:
+        details, details_truncated = [], False
+    return {
+        "schema_version": 1,
+        "title": rendered["title"],
+        "meta": rendered["meta"],
+        "summary": rendered["summary"],
+        "details": details,
+        "details_truncated": details_truncated,
+    }
 
 
 def read_card_values(records, field_names, template):

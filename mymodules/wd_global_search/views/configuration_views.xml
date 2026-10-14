@@ -96,10 +96,34 @@
                                                                        help="Choose a standalone Window Action for this Primary Model. Its Form View and group restrictions are preserved; its Context and Domain must not depend on active_id, active_ids, or active_model."/>
                                                             </group>
                                                             <notebook>
-                                                                <page string="Result Card Template">
+                                                                <page string="Result Card Template" invisible="1">
                                                                     <field name="card_template" invisible="1"/>
                                                                     <field name="card_many2many_separator" invisible="1"/>
                                                                     <widget name="wd_card_template_summary"/>
+                                                                </page>
+                                                                <page string="Structured Result Card">
+                                                                    <div class="alert alert-info" role="note">
+                                                                        Configure Structured Result Card for new or updated Resources. Existing legacy templates remain supported at runtime for backward compatibility.
+                                                                    </div>
+                                                                    <button name="action_use_structured_card_template"
+                                                                            type="object"
+                                                                            string="Use Structured Result Card"
+                                                                            class="btn-secondary"
+                                                                            invisible="not card_template or not structured_card_title_template"
+                                                                            confirm="This clears the legacy template and stages Structured Result Card mode. Continue?"/>
+                                                                    <group>
+                                                                        <field name="structured_card_title_template"
+                                                                               required="not card_template"
+                                                                               placeholder="{name}"/>
+                                                                        <field name="structured_card_meta_template"
+                                                                               placeholder="Sales Order · {date_order:date}"/>
+                                                                        <field name="structured_card_summary_template"
+                                                                               placeholder="{partner_id} · {amount_total:monetary}"/>
+                                                                        <field name="structured_card_details_template"
+                                                                               placeholder="{order_line}{product_id.name} × {product_uom_qty}{/order_line}"/>
+                                                                        <field name="card_many2many_separator"
+                                                                               invisible="1"/>
+                                                                    </group>
                                                                 </page>
                                                                 <page string="Search Fields"
                                                                       invisible="composite">

@@ -471,6 +471,7 @@ h2 {
 }
 
 .wd-card-primary {
+    margin-top: 0;
     margin-bottom: 4px;
     color: #1a0dab;
     font-size: 20px;
@@ -531,6 +532,19 @@ h2 {
     color: #70757a;
     font-size: 12px;
     font-weight: 400;
+}
+
+.wd-card-summary {
+    margin: 4px 0 8px;
+}
+
+.wd-card-details {
+    line-height: 1.5;
+}
+
+.wd-card-details .wd-card-detail,
+.wd-card-details .wd-card-details-overflow {
+    display: inline;
 }
 
 @media (max-width: 1023px) {

@@ -1,3 +1,5 @@
+import json
+
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests.common import TransactionCase
 from types import SimpleNamespace
@@ -75,6 +77,150 @@ class TestGlobalSearchConfiguration(TransactionCase):
             ),
             1,
         )
+
+    def test_publish_accepts_explicit_structured_card_template(self):
+        _, version = self._create_draft("structured_card")
+        resource = version.resource_ids
+        resource.write(
+            {
+                "card_template": False,
+                "structured_card_title_template": "{name}",
+                "structured_card_meta_template": "",
+                "structured_card_summary_template": "",
+                "structured_card_details_template": "",
+            }
+        )
+
+        version.action_publish()
+        snapshot_resource = json.loads(version.snapshot_json)["resources"][0]
+
+        self.assertEqual(
+            snapshot_resource["structured_card_template"],
+            {
+                "schema_version": 1,
+                "title": "{name}",
+                "meta": "",
+                "summary": "",
+                "details": "",
+            },
+        )
+        self.assertFalse(snapshot_resource["card_template"])
+
+    def test_publish_rejects_both_card_template_modes(self):
+        _, version = self._create_draft("ambiguous_card_mode")
+        version.action_publish()
+        original_snapshot = version.snapshot_json
+        original_checksum = version.checksum
+        version.resource_ids.write(
+            {"structured_card_title_template": "{name}"}
+        )
+
+        version.action_apply_changes()
+
+        self.assertTrue(version.pending_changes)
+        self.assertEqual(version.snapshot_json, original_snapshot)
+        self.assertEqual(version.checksum, original_checksum)
+
+    def test_published_card_mode_switch_applies_atomically(self):
+        _, version = self._create_draft("structured_mode_switch")
+        version.action_publish()
+        original_checksum = version.checksum
+        version.resource_ids.write(
+            {
+                "card_template": False,
+                "structured_card_title_template": "{name}",
+            }
+        )
+
+        version.action_apply_changes()
+
+        self.assertFalse(version.pending_changes)
+        self.assertNotEqual(version.checksum, original_checksum)
+        snapshot_resource = json.loads(version.snapshot_json)["resources"][0]
+        self.assertIn("structured_card_template", snapshot_resource)
+        self.assertFalse(snapshot_resource["card_template"])
+
+    def test_ui_structured_mode_switch_clears_legacy_template_after_validation(self):
+        _, version = self._create_draft("ui_structured_mode_switch")
+        version.action_publish()
+        resource = version.resource_ids
+        original_checksum = version.checksum
+        resource.write(
+            {
+                "structured_card_title_template": "{name}",
+                "structured_card_meta_template": "",
+                "structured_card_summary_template": "",
+                "structured_card_details_template": "",
+            }
+        )
+
+        resource.action_use_structured_card_template()
+
+        self.assertFalse(resource.card_template)
+        self.assertTrue(version.pending_changes)
+        self.assertEqual(version.checksum, original_checksum)
+        version.action_apply_changes()
+        self.assertFalse(version.pending_changes)
+        snapshot_resource = json.loads(version.snapshot_json)["resources"][0]
+        self.assertFalse(snapshot_resource["card_template"])
+        self.assertEqual(
+            snapshot_resource["structured_card_template"]["title"], "{name}"
+        )
+
+    def test_ui_structured_mode_switch_rejects_invalid_template_without_clearing_legacy(self):
+        _, version = self._create_draft("ui_invalid_structured_mode_switch")
+        resource = version.resource_ids
+        resource.write({"structured_card_title_template": "{missing_field}"})
+
+        with self.assertRaises(ValidationError):
+            resource.action_use_structured_card_template()
+
+        self.assertEqual(resource.card_template, "Name: {name}")
+
+    def test_ui_legacy_mode_switch_clears_structured_template_after_validation(self):
+        _, version = self._create_draft("ui_legacy_mode_switch")
+        version.action_publish()
+        resource = version.resource_ids
+        original_checksum = version.checksum
+        resource.write(
+            {
+                "structured_card_title_template": "{name}",
+                "structured_card_meta_template": "Partner",
+                "structured_card_summary_template": "",
+                "structured_card_details_template": "",
+            }
+        )
+
+        resource.action_use_legacy_card_template()
+
+        self.assertEqual(resource.card_template, "Name: {name}")
+        self.assertFalse(resource.structured_card_title_template)
+        self.assertFalse(resource.structured_card_meta_template)
+        self.assertFalse(resource.structured_card_summary_template)
+        self.assertFalse(resource.structured_card_details_template)
+        self.assertTrue(version.pending_changes)
+        version.action_apply_changes()
+        self.assertFalse(version.pending_changes)
+        self.assertEqual(version.checksum, original_checksum)
+        snapshot_resource = json.loads(version.snapshot_json)["resources"][0]
+        self.assertEqual(snapshot_resource["card_template"], "Name: {name}")
+        self.assertNotIn("structured_card_template", snapshot_resource)
+
+    def test_ui_legacy_mode_switch_rejects_invalid_template_without_clearing_structured(self):
+        _, version = self._create_draft("ui_invalid_legacy_mode_switch")
+        resource = version.resource_ids
+        resource.write(
+            {
+                "card_template": "{missing_field}",
+                "structured_card_title_template": "{name}",
+            }
+        )
+
+        with self.assertRaises(ValidationError):
+            resource.action_use_legacy_card_template()
+
+        self.assertEqual(resource.card_template, "{missing_field}")
+        self.assertEqual(resource.structured_card_title_template, "{name}")
 
     def test_publish_accepts_contains_field_and_requires_searchable_field(self):
         _, version = self._create_draft("multi_token_exact_field")

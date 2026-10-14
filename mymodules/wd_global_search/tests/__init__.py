@@ -10,3 +10,5 @@ from . import test_navigation
 from . import test_template
 from . import test_template_descriptor
 from . import test_cc015_contract
+from . import test_structured_card
+from . import test_backward_compatibility

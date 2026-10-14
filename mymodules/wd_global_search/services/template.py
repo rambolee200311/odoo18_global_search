@@ -234,6 +234,91 @@ def validate_template(
     return parts
 
 
+def validate_structured_card_template(
+    configuration,
+    models,
+    check_permissions=True,
+    many2many_separator=", ",
+):
+    if not isinstance(configuration, dict) or set(configuration) != {
+        "schema_version",
+        "title",
+        "meta",
+        "summary",
+        "details",
+    }:
+        raise TemplateError(_("Structured card template has an invalid shape."))
+    if type(configuration.get("schema_version")) is not int or configuration["schema_version"] != 1:
+        raise TemplateError(_("Structured card template schema version is unsupported."))
+    templates = {}
+    for name in ("title", "meta", "summary", "details"):
+        value = configuration.get(name)
+        if not isinstance(value, str):
+            raise TemplateError(_("Structured card template regions must be strings."))
+        templates[name] = value
+    if not templates["title"].strip():
+        raise TemplateError(_("Structured card title template must not be empty."))
+
+    parsed = {
+        name: parse_template(value) if value.strip() else ()
+        for name, value in templates.items()
+    }
+    if not any(part.is_variable for part in parsed["title"]):
+        raise TemplateError(_("Structured card title must include a field variable."))
+    if any(
+        part.is_loop
+        for name in ("title", "meta", "summary")
+        for part in parsed[name]
+    ):
+        raise TemplateError(_("Only the details region may contain a loop."))
+
+    details_parts = parsed["details"]
+    loops = [part for part in details_parts if part.is_loop]
+    if templates["details"].strip() and len(loops) != 1:
+        raise TemplateError(_("Details must contain exactly one top-level One2many loop."))
+    if not templates["details"].strip() and loops:
+        raise TemplateError(_("Empty details cannot contain a loop."))
+    if any(
+        part.is_variable
+        or (not part.is_loop and part.text.strip())
+        for part in details_parts
+    ):
+        raise TemplateError(_("Details content must be inside its One2many loop."))
+
+    byte_count = sum(len(value.encode("utf-8")) for value in templates.values())
+    variable_count = 0
+    loop_count = 0
+
+    def count_parts(parts):
+        nonlocal variable_count, loop_count
+        for part in parts:
+            if part.is_variable:
+                variable_count += 1
+            elif part.is_loop:
+                loop_count += 1
+                count_parts(part.body)
+
+    for parts in parsed.values():
+        count_parts(parts)
+    if byte_count > MAX_TEMPLATE_BYTES:
+        raise TemplateError(_("Structured card templates exceed the 8 KiB limit."))
+    if variable_count > MAX_VARIABLES:
+        raise TemplateError(_("Structured card templates exceed the 50 variable limit."))
+    if loop_count > MAX_LOOP_BLOCKS:
+        raise TemplateError(_("Structured card templates exceed the five-loop limit."))
+
+    for model in models:
+        if check_permissions:
+            try:
+                model.check_access_rights("read")
+            except AccessError as exc:
+                raise TemplateError(_("Card template model is not readable.")) from exc
+        for name, parts in parsed.items():
+            if parts:
+                _validate_scope(parts, model, check_permissions)
+    return parsed
+
+
 def validate_many2many_separator(separator):
     if separator is None:
         return ", "
@@ -511,6 +596,7 @@ def _render_scope(
     is_root,
     unauthorized_placeholder,
     separator,
+    unauthorized_observer=None,
 ):
     rendered = []
     for part in parts:
@@ -521,6 +607,8 @@ def _render_scope(
             if record:
                 children = _visible_relation_records(record, part.field_name, "one2many")
                 if children is _UNAUTHORIZED:
+                    if unauthorized_observer:
+                        unauthorized_observer()
                     rendered.append(unauthorized_placeholder)
                     continue
                 for child in children:
@@ -535,6 +623,7 @@ def _render_scope(
                             False,
                             unauthorized_placeholder,
                             separator,
+                            unauthorized_observer,
                         )
                     )
             else:
@@ -558,6 +647,7 @@ def _render_scope(
                         False,
                         unauthorized_placeholder,
                         separator,
+                        unauthorized_observer,
                     )
                 )
             continue
@@ -586,7 +676,55 @@ def _render_scope(
         rendered.append(
             unauthorized_placeholder if result is _UNAUTHORIZED else result
         )
+        if result is _UNAUTHORIZED and unauthorized_observer:
+            unauthorized_observer()
     return "".join(rendered)
+
+
+def render_template_items(
+    env,
+    record,
+    template,
+    many2many_separator=", ",
+    check_deadline=None,
+):
+    parts = parse_template(template)
+    loops = [part for part in parts if part.is_loop]
+    if len(loops) != 1:
+        raise TemplateError(_("Details must contain exactly one top-level loop."))
+    loop = loops[0]
+    children = _visible_relation_records(record, loop.field_name, "one2many")
+    if children is _UNAUTHORIZED:
+        raise TemplateError(_("Details relation is not readable."))
+
+    rendered_items = []
+    separator = validate_many2many_separator(many2many_separator)
+    for child in children:
+        if check_deadline:
+            check_deadline()
+        unreadable = False
+
+        def mark_unreadable():
+            nonlocal unreadable
+            unreadable = True
+
+        rendered = _render_scope(
+            env,
+            child.env[child._name],
+            loop.body,
+            {},
+            set(),
+            child,
+            False,
+            "",
+            separator,
+            mark_unreadable,
+        )
+        if not unreadable:
+            rendered_items.append(rendered)
+            if len(rendered_items) == 4:
+                break
+    return rendered_items[:3], len(rendered_items) > 3
 
 
 def _render_root_variable(env, model, part, values, readable_fields):
