@@ -320,25 +320,53 @@ def _condition_domain(model, field_configs, relation_paths, resource, conditions
     return AND(domain_parts)
 
 
-def authorize_search_resource(env, resource, context=None):
+def authorize_search_resource(
+    env, resource, context=None, max_relation_depth=None
+):
     authorize_resource(env, resource, context)
     model_configs = resource.get("models", ())
     if not model_configs:
         raise AuthorizationError("RESOURCE_NOT_ACCESSIBLE")
     for model_config in model_configs:
         model = env[model_config["model_name"]]
-        authorize_searchable_fields(
-            env, model, model_config.get("fields", ()), context
-        )
+        if max_relation_depth is None:
+            authorize_searchable_fields(
+                env, model, model_config.get("fields", ()), context
+            )
+        else:
+            authorize_searchable_fields(
+                env,
+                model,
+                model_config.get("fields", ()),
+                context,
+                max_relation_depth=max_relation_depth,
+            )
     for path in resource.get("relation_paths", ()):
         authorize_relation_path(env, resource, path["path"], context)
 
 
-def execute(env, resource, conditions, limit, context=None, offset=0, deadline=None):
+def execute(
+    env,
+    resource,
+    conditions,
+    limit,
+    context=None,
+    offset=0,
+    deadline=None,
+    max_relation_depth=None,
+):
     started = time.monotonic()
     try:
         _check_deadline(deadline)
-        authorize_search_resource(env, resource, context)
+        if max_relation_depth is None:
+            authorize_search_resource(env, resource, context)
+        else:
+            authorize_search_resource(
+                env,
+                resource,
+                context,
+                max_relation_depth=max_relation_depth,
+            )
         _check_deadline(deadline)
         results = []
         resource_count = 0

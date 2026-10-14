@@ -82,7 +82,7 @@ class GlobalSearchController(http.Controller):
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Global Search</title>
-  <link rel="stylesheet" href="/wd_global_search/static/src/css/preview.css?v=cc017-v03">
+  <link rel="stylesheet" href="/wd_global_search/static/src/css/preview.css?v=cc017-v04">
 </head>
 <body>
   <main class="wd-workspace" data-testid="global-search-workspace"
@@ -146,6 +146,8 @@ class GlobalSearchController(http.Controller):
           </select></label>
           <label>From <input id="wd-date-start" data-testid="date-start" type="date"></label>
           <label>To (exclusive) <input id="wd-date-end" data-testid="date-end" type="date"></label>
+          <p id="wd-date-message" class="wd-condition-message wd-date-message"
+             role="alert" aria-live="assertive" hidden></p>
           <label>State <select id="wd-state-refinement" data-testid="state-refinement">
             <option value="">Any state</option>
           </select></label>
@@ -206,7 +208,7 @@ class GlobalSearchController(http.Controller):
       </div>
     </section>
   </main>
-  <script src="/wd_global_search/static/src/js/preview.js?v=cc016-v02"></script>
+  <script src="/wd_global_search/static/src/js/preview.js?v=cc016-p0-date-v01"></script>
 </body>
 </html>""" % (
             html.escape(str(descriptor_response["config_version"]), quote=True),

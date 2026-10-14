@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor
+from threading import Barrier
 import time
 from types import SimpleNamespace
 from unittest import TestCase
@@ -12,10 +14,102 @@ from ..services import executor
 from ..services import facade
 from ..services.limiter import UserLimiter
 from ..services.permission_boundary import AuthorizationError
-from ..services.types import KeywordTerm, ResourceOutcome, SearchRequest
+from ..services.types import KeywordTerm, ResourceOutcome, SearchRequest, SearchResponse
 
 
 class TestSearchServiceCore(TestCase):
+    def test_custom_date_refinement_builds_a_half_open_business_date_domain(self):
+        from .test_field_path import FakeField, field_path_models
+
+        env = field_path_models()
+        model = env["sale.order"]
+        model._fields["date_order"] = FakeField("date")
+        condition = {
+            "dimension": "date",
+            "operator": "between",
+            "value": {"start": "2026-06-01", "end": "2026-07-01"},
+        }
+
+        domain = executor._condition_domain(
+            model,
+            [],
+            [],
+            {
+                "business_dates": [
+                    {"model_name": model._name, "field_name": "date_order"}
+                ]
+            },
+            SimpleNamespace(values=(condition,), keyword_terms=()),
+            SimpleNamespace(tz="UTC", lang="en_US"),
+        )
+
+        self.assertEqual(
+            domain,
+            [
+                "&",
+                ("date_order", ">=", "2026-06-01"),
+                ("date_order", "<", "2026-07-01"),
+            ],
+        )
+
+    def test_search_observability_logs_total_and_resource_latencies(self):
+        response = SearchResponse(
+            status="PARTIAL_SUCCESS",
+            request_id="request-1",
+            results=[],
+            counts={"all": 1},
+            errors=[{"code": "TIMEOUT", "resource": "slow"}],
+            meta={},
+        )
+        outcomes = (
+            ResourceOutcome(
+                resource="sales",
+                status="SUCCESS",
+                latency=0.012345,
+            ),
+            ResourceOutcome(
+                resource="slow",
+                status="FAILED",
+                latency=0.004567,
+            ),
+            ResourceOutcome(resource="not_started", status="FAILED"),
+        )
+
+        with (
+            patch.object(facade.time, "monotonic", return_value=10.125),
+            patch.object(facade, "log_event") as log_event,
+        ):
+            observed = facade._observe_response(
+                response,
+                SearchRequest(raw_query="chair"),
+                SimpleNamespace(uid=7, company_ids=(1,)),
+                "test-secret",
+                10.0,
+                outcomes,
+            )
+
+        self.assertIs(observed, response)
+        self.assertEqual(log_event.call_count, 3)
+        total_event = log_event.call_args_list[0].args
+        self.assertEqual(total_event[1], "gs.search.partial")
+        self.assertEqual(total_event[2]["latency_ms"], 125.0)
+        self.assertEqual(
+            [
+                (
+                    call.args[1],
+                    call.args[2]["resource"],
+                    call.args[2]["status"],
+                    call.args[2]["latency_ms"],
+                )
+                for call in log_event.call_args_list[1:]
+            ],
+            [
+                ("gs.search.resource.completed", "sales", "SUCCESS", 12.345),
+                ("gs.search.resource.failed", "slow", "FAILED", 4.567),
+            ],
+        )
+        self.assertNotIn("latency_ms", response.meta)
+
     def test_state_refinement_maps_business_state_to_technical_values(self):
         from .test_field_path import FakeField, field_path_models
 
@@ -818,6 +912,56 @@ class TestSearchServiceCore(TestCase):
             ["contact", "sale_order"],
         )
 
+    def test_authorized_candidate_filter_applies_resource_depth_budget(self):
+        resource = {"key": "sales"}
+        performance = {"sales": {"max_relation_depth": 1}}
+        with patch.object(facade, "authorize_search_resource") as authorize:
+            resources = facade._authorized_resources(
+                {}, [resource], None, performance
+            )
+
+        self.assertEqual(resources, [resource])
+        authorize.assert_called_once_with(
+            {}, resource, None, max_relation_depth=1
+        )
+
+    def test_effective_conditions_reject_paths_over_runtime_depth_budget(self):
+        from .test_field_path import field_path_models
+
+        field_config = {
+            "name": "partner_id.country_id.name",
+            "operator_set": "exact",
+            "index_strategy": "none",
+        }
+        resource = {
+            "key": "sales",
+            "models": [
+                {"model_name": "sale.order", "fields": [field_config]},
+            ],
+            "business_dates": [],
+        }
+        conditions = SimpleNamespace(
+            values=(
+                {
+                    "dimension": field_config["name"],
+                    "value": "United States",
+                    "operator": "=",
+                },
+            )
+        )
+        with patch.object(
+            facade, "authorize_searchable_fields", return_value=[field_config]
+        ):
+            with self.assertRaises(facade.ConfigurationError):
+                facade._effective_conditions(
+                    field_path_models(),
+                    [resource],
+                    {"sales"},
+                    conditions,
+                    None,
+                    performance={"sales": {"max_relation_depth": 1}},
+                )
+
     def test_effective_conditions_only_exposes_authorized_published_paths(self):
         from .test_field_path import field_path_models
 
@@ -1017,6 +1161,24 @@ class TestSearchServiceCore(TestCase):
                 },
                 resources,
             )
+        for max_relation_depth in (0, 4, True, "2"):
+            with self.subTest(max_relation_depth=max_relation_depth):
+                with self.assertRaises(facade.ConfigurationError):
+                    facade._performance_config(
+                        {
+                            "resources": resources,
+                            "performance": [
+                                {
+                                    "resource_key": "sales",
+                                    "max_results": 200,
+                                    "resource_timeout": 3.0,
+                                    "request_timeout": 5.0,
+                                    "max_relation_depth": max_relation_depth,
+                                }
+                            ],
+                        },
+                        resources,
+                    )
 
     def test_executor_returns_exact_total_and_requested_model_offset(self):
         class FakeRecordset:
@@ -1125,6 +1287,21 @@ class TestSearchServiceCore(TestCase):
         self.assertEqual(
             [(item["_model"], item["id"]) for item in outcome.results],
             [("sale.order", 1)],
+        )
+
+    def test_executor_passes_runtime_relation_depth_to_authorization(self):
+        resource = {"key": "sales", "models": []}
+        with patch.object(executor, "authorize_search_resource") as authorize:
+            executor.execute(
+                {},
+                resource,
+                SimpleNamespace(values=()),
+                0,
+                max_relation_depth=1,
+            )
+
+        authorize.assert_called_once_with(
+            {}, resource, None, max_relation_depth=1
         )
 
     def test_executor_returns_timeout_without_partial_success_shape(self):
@@ -1246,3 +1423,52 @@ class TestSearchServiceCore(TestCase):
         self.assertFalse(limiter.acquire(2))
         limiter.release(2)
         self.assertTrue(limiter.acquire(2))
+
+    def test_limiter_serializes_same_process_threaded_acquires(self):
+        limiter = UserLimiter(max_concurrency=1)
+        barrier = Barrier(6)
+
+        def acquire_once(_):
+            barrier.wait()
+            acquired = limiter.acquire(2)
+            barrier.wait()
+            if acquired:
+                limiter.release(2)
+            return acquired
+
+        with ThreadPoolExecutor(max_workers=6) as pool:
+            outcomes = list(pool.map(acquire_once, range(6)))
+
+        self.assertEqual(outcomes.count(True), 1)
+
+    def test_search_cancellation_is_limited_to_the_request_owner(self):
+        service = facade.SearchService()
+        request_id = "in-process-cancel-test"
+        facade._request_owners[request_id] = 7
+        facade._cancelled.discard(request_id)
+        try:
+            with patch.object(facade, "log_event"):
+                self.assertFalse(service.cancel(SimpleNamespace(uid=8), request_id))
+                self.assertNotIn(request_id, facade._cancelled)
+                self.assertTrue(service.cancel(SimpleNamespace(uid=7), request_id))
+                self.assertIn(request_id, facade._cancelled)
+        finally:
+            facade._request_owners.pop(request_id, None)
+            facade._cancelled.discard(request_id)
+
+    def test_rate_limited_request_does_not_leave_cancellation_owner(self):
+        request_id = "rate-limited-owner-test"
+        facade._request_owners.pop(request_id, None)
+        service = facade.SearchService()
+        request = SearchRequest()
+        context = SimpleNamespace(uid=7, company_id=1, company_ids=(1,), lang="en_US", tz="UTC")
+        with (
+            patch.object(facade, "user_context", return_value=context),
+            patch.object(facade.uuid, "uuid4", return_value=request_id),
+            patch.object(facade._limiter, "acquire", return_value=False),
+            patch.object(facade, "log_event"),
+        ):
+            response = service.search({}, request, "default")
+
+        self.assertEqual(response.status, "FAILED")
+        self.assertNotIn(request_id, facade._request_owners)

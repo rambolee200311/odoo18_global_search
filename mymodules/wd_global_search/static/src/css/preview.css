@@ -186,6 +186,10 @@ h2 {
     display: none;
 }
 
+.wd-date-message {
+    color: #b42318;
+}
+
 #wd-condition-value-container {
     display: inline-flex;
     min-width: 120px;

@@ -199,8 +199,16 @@ class TestCC015SearchContracts(TransactionCase):
         authorized_fields = []
         authorize = permission_boundary.authorize_searchable_fields
 
-        def capture_authorized_fields(env, model, fields, context):
-            result = authorize(env, model, fields, context)
+        def capture_authorized_fields(
+            env, model, fields, context, max_relation_depth=None
+        ):
+            result = authorize(
+                env,
+                model,
+                fields,
+                context,
+                max_relation_depth=max_relation_depth,
+            )
             authorized_fields.append(tuple(sorted(item["name"] for item in result)))
             return result
 

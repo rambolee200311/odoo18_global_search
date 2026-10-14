@@ -1,5 +1,6 @@
 """Server-side bounds for SearchRequest input (TD-001)."""
 
+from datetime import date
 import math
 import unicodedata
 
@@ -125,17 +126,38 @@ def _validate_condition(condition):
         raise RequestBoundaryError("Condition dimension must be non-empty text")
     if len(dimension) > MAX_DIMENSION_LENGTH:
         raise RequestBoundaryError("Condition dimension exceeds the supported length")
-    if "value" not in condition or condition["value"] is None:
-        raise RequestBoundaryError("Condition value is required")
-    value = condition["value"]
-    if not isinstance(value, (str, int, float, bool)):
-        raise RequestBoundaryError("Condition value must be a scalar")
-    if isinstance(value, float) and not math.isfinite(value):
-        raise RequestBoundaryError("Condition value must be finite")
     if "operator" in condition and not isinstance(condition["operator"], str):
         raise RequestBoundaryError("Condition operator must be text")
     if "operator" in condition and not condition["operator"]:
         raise RequestBoundaryError("Condition operator must be non-empty")
+    if "value" not in condition or condition["value"] is None:
+        raise RequestBoundaryError("Condition value is required")
+    value = condition["value"]
+    if dimension == "date" and condition.get("operator") == "between":
+        if not isinstance(value, dict) or set(value) != {"start", "end"}:
+            raise RequestBoundaryError(
+                "Date range must contain exactly start and end"
+            )
+        date_bounds = {}
+        for bound in ("start", "end"):
+            raw_date = value[bound]
+            if not isinstance(raw_date, str):
+                raise RequestBoundaryError("Date range bounds must be ISO dates")
+            try:
+                parsed_date = date.fromisoformat(raw_date)
+            except ValueError as exc:
+                raise RequestBoundaryError(
+                    "Date range bounds must be ISO dates"
+                ) from exc
+            if parsed_date.isoformat() != raw_date:
+                raise RequestBoundaryError("Date range bounds must be ISO dates")
+            date_bounds[bound] = parsed_date
+        if date_bounds["end"] <= date_bounds["start"]:
+            raise RequestBoundaryError("Date range end must be after start")
+    elif not isinstance(value, (str, int, float, bool)):
+        raise RequestBoundaryError("Condition value must be a scalar")
+    if isinstance(value, float) and not math.isfinite(value):
+        raise RequestBoundaryError("Condition value must be finite")
     for key in ("relation_path", "path"):
         if key in condition:
             _validate_relation_path(condition[key])

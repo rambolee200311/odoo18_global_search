@@ -15,6 +15,7 @@
     const conditionValueContainer = document.querySelector("#wd-condition-value-container");
     const conditionSubmit = document.querySelector("#wd-condition-submit");
     const conditionMessage = document.querySelector("#wd-condition-message");
+    const dateMessage = document.querySelector("#wd-date-message");
     const removeUnavailableConditions = document.querySelector(
         "#wd-remove-unavailable-conditions"
     );
@@ -34,7 +35,7 @@
         || !keywordCombinator || !structuredView || !effectiveRefinementView
         || !conditionCombination || !conditionField || !conditionOperator
         || !conditionValueContainer || !conditionSubmit || !conditionMessage
-        || !removeUnavailableConditions
+        || !dateMessage || !removeUnavailableConditions
         || !keywordAddInput || !keywordAddSubmit
         || !activeView || !workspace
         || !resourceTabs || !resourceEmpty || !reselectAllButton
@@ -428,20 +429,40 @@
         const start = document.querySelector("#wd-date-start").value;
         const end = document.querySelector("#wd-date-end").value;
         if (start || end) {
-            if (!start || !end || end <= start) {
-                return null;
+            if (!start || !end) {
+                return {error: "Choose both dates for a custom range."};
             }
-            return {dimension: "date", value: {start: start, end: end}, operator: "between"};
+            if (end <= start) {
+                return {error: "The To date must be after the From date."};
+            }
+            return {
+                condition: {
+                    dimension: "date",
+                    value: {start: start, end: end},
+                    operator: "between",
+                },
+            };
         }
         const preset = document.querySelector("#wd-date-refinement").value;
-        return preset ? {dimension: "date", value: preset, operator: "="} : null;
+        return {
+            condition: preset
+                ? {dimension: "date", value: preset, operator: "="}
+                : null,
+        };
     }
 
     function applyDateRefinement() {
+        const result = dateRefinement();
+        if (result.error) {
+            dateMessage.textContent = result.error;
+            dateMessage.hidden = false;
+            return;
+        }
+        dateMessage.textContent = "";
+        dateMessage.hidden = true;
         state.refinements = state.refinements.filter((item) => item.dimension !== "date");
-        const refinement = dateRefinement();
-        if (refinement) {
-            state.refinements.push(refinement);
+        if (result.condition) {
+            state.refinements.push(result.condition);
         }
         renderActiveRefinementControls();
         state.cursor = null;

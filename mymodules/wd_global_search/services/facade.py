@@ -122,11 +122,21 @@ def user_context(env):
     )
 
 
-def _authorized_resources(env, resources, context):
+def _authorized_resources(env, resources, context, performance=None):
     eligible = []
     for resource in resources:
         try:
-            authorize_search_resource(env, resource, context)
+            if performance is None:
+                authorize_search_resource(env, resource, context)
+            else:
+                authorize_search_resource(
+                    env,
+                    resource,
+                    context,
+                    max_relation_depth=performance[resource["key"]][
+                        "max_relation_depth"
+                    ],
+                )
         except AuthorizationError as exc:
             if exc.code == "CONFIGURATION_ERROR":
                 raise ConfigurationError() from exc
@@ -185,7 +195,13 @@ def _performance_config(snapshot, resources):
 
 
 def _effective_conditions(
-    env, resources, selected_keys, conditions, context, submitted_conditions=()
+    env,
+    resources,
+    selected_keys,
+    conditions,
+    context,
+    submitted_conditions=(),
+    performance=None,
 ):
     configured_fields = {}
     selected_resources = [
@@ -205,19 +221,33 @@ def _effective_conditions(
         ]
         common_states = set.intersection(*state_sets) if state_sets else set()
     for resource in selected_resources:
+        max_relation_depth = (
+            performance[resource["key"]]["max_relation_depth"]
+            if performance is not None
+            else None
+        )
         for model_config in resource.get("models", ()):
             model = env[model_config["model_name"]]
             try:
-                readable_fields = authorize_searchable_fields(
-                    env, model, model_config.get("fields", ()), context
-                )
+                if performance is None:
+                    readable_fields = authorize_searchable_fields(
+                        env, model, model_config.get("fields", ()), context
+                    )
+                else:
+                    readable_fields = authorize_searchable_fields(
+                        env,
+                        model,
+                        model_config.get("fields", ()),
+                        context,
+                        max_relation_depth=max_relation_depth,
+                    )
             except AuthorizationError as exc:
                 if exc.code == "CONFIGURATION_ERROR":
                     raise ConfigurationError() from exc
                 continue
             for field_config in readable_fields:
                 configured_fields.setdefault(field_config["name"], []).append(
-                    (model, field_config)
+                    (model, field_config, max_relation_depth)
                 )
 
     for condition in submitted_conditions:
@@ -230,7 +260,7 @@ def _effective_conditions(
             "prefix": "prefix",
             "contains": "contains",
         }
-        for _model, field_config in field_configs:
+        for _model, field_config, _max_relation_depth in field_configs:
             expected = expected_operators[field_config.get("operator_set", "exact")]
             if condition["operator"] != expected:
                 raise RequestBoundaryError(
@@ -261,7 +291,7 @@ def _effective_conditions(
                 raise RequestBoundaryError("Invalid searchable field value")
             if isinstance(value, float) and not math.isfinite(value):
                 raise RequestBoundaryError("Invalid searchable field value")
-            for model, field_config in configured_fields[dimension]:
+            for model, field_config, max_relation_depth in configured_fields[dimension]:
                 try:
                     resolved_path = validate_field_path(
                         model,
@@ -269,6 +299,7 @@ def _effective_conditions(
                         operator_set=field_config.get("operator_set", "exact"),
                         index_strategy=field_config.get("index_strategy", "none"),
                         collection_match=field_config.get("collection_match", "any"),
+                        max_relation_depth=max_relation_depth,
                     )
                 except FieldPathError as exc:
                     raise ConfigurationError() from exc
@@ -459,13 +490,17 @@ def _resource_searchable_fields(env, resource, context):
     )
 
 
-def _observe_response(response, request, context, secret):
+def _elapsed_ms(started_at):
+    return round((time.monotonic() - started_at) * 1000, 3)
+
+
+def _observe_response(response, request, context, secret, request_started, outcomes=()):
     status = response.status
     event = {
         "request_id": response.request_id,
         "config_version": response.meta.get("config_version"),
         "status": status,
-        "latency_ms": response.meta.get("latency_ms", 0),
+        "latency_ms": _elapsed_ms(request_started),
         "result_count": response.counts.get("all", 0),
         "user_context_hash": hash_value(
             secret,
@@ -492,6 +527,22 @@ def _observe_response(response, request, context, secret):
         log_event("error", "gs.search.failed", event)
     else:
         log_event("info", "gs.search.completed", event)
+    for outcome in outcomes:
+        if outcome.latency <= 0:
+            continue
+        resource_status = outcome.status
+        log_event(
+            "info" if resource_status == "SUCCESS" else "warning",
+            "gs.search.resource.completed"
+            if resource_status == "SUCCESS"
+            else "gs.search.resource.failed",
+            {
+                "request_id": response.request_id,
+                "resource": outcome.resource,
+                "status": resource_status,
+                "latency_ms": round(outcome.latency * 1000, 3),
+            },
+        )
     return response
 
 
@@ -517,10 +568,11 @@ class SearchService:
         request_started = time.monotonic()
         _request_owners[request_id] = context.uid
         if not _limiter.acquire(context.uid):
+            _request_owners.pop(request_id, None)
             log_event(
                 "warning",
                 "gs.search.rate_limited",
-                {"request_id": request_id, "latency_ms": 0},
+                {"request_id": request_id, "latency_ms": _elapsed_ms(request_started)},
             )
             return merge(
                 [_failure_outcome("RATE_LIMITED")],
@@ -535,7 +587,12 @@ class SearchService:
                 log_event(
                     "warning",
                     "gs.boundary.rejected",
-                    {"request_id": request_id, "error_code": "INVALID_REQUEST", "boundary": "limit"},
+                    {
+                        "request_id": request_id,
+                        "error_code": "INVALID_REQUEST",
+                        "boundary": "limit",
+                        "latency_ms": _elapsed_ms(request_started),
+                    },
                 )
                 return merge(
                     [_failure_outcome("INVALID_REQUEST")],
@@ -546,8 +603,22 @@ class SearchService:
                 )
             snapshot_info = published_snapshot(env, domain_key)
             snapshot = snapshot_info["snapshot"]
-            resources = _authorized_resources(env, snapshot.get("resources", []), context)
-            performance = _performance_config(snapshot, resources)
+            snapshot_resources = snapshot.get("resources", [])
+            all_performance = _performance_config(snapshot, snapshot_resources)
+            resources = _authorized_resources(
+                env, snapshot_resources, context, all_performance
+            )
+            authorized_keys = {resource["key"] for resource in resources}
+            if any(
+                item["resource_key"] not in authorized_keys
+                for item in snapshot.get("performance", ())
+            ):
+                raise ConfigurationError()
+            performance = {
+                key: value
+                for key, value in all_performance.items()
+                if key in authorized_keys
+            }
             descriptors = [
                 _resource_descriptor(env, resource, context) for resource in resources
             ]
@@ -579,6 +650,7 @@ class SearchService:
                     request,
                     context,
                     cursor_secret,
+                    request_started,
                 )
             conditions = merge_conditions(
                 query_object.field_conditions,
@@ -592,6 +664,7 @@ class SearchService:
                 conditions,
                 context,
                 request.parsed_conditions,
+                performance,
             )
             effective_limit = min(
                 [request.limit]
@@ -634,6 +707,7 @@ class SearchService:
                         request,
                         context,
                         cursor_secret,
+                        request_started,
                     )
                 except ValueError:
                     return _observe_response(
@@ -641,6 +715,7 @@ class SearchService:
                         request,
                         context,
                         cursor_secret,
+                        request_started,
                     )
                 cursor_offset = int(cursor_data.get("offset", request.offset))
             outcomes = []
@@ -679,6 +754,9 @@ class SearchService:
                     context,
                     offset=remaining_offset if selected else 0,
                     deadline=resource_deadline,
+                    max_relation_depth=performance[resource["key"]][
+                        "max_relation_depth"
+                    ],
                 )
                 outcomes.append(outcome)
                 if not selected or outcome.status != "SUCCESS":
@@ -707,12 +785,19 @@ class SearchService:
                     },
                     cursor_secret.encode(),
                 )
-            return _observe_response(response, request, context, cursor_secret)
+            return _observe_response(
+                response, request, context, cursor_secret, request_started, outcomes
+            )
         except RequestBoundaryError:
             log_event(
                 "warning",
                 "gs.boundary.rejected",
-                {"request_id": request_id, "error_code": "INVALID_REQUEST", "boundary": "request"},
+                {
+                    "request_id": request_id,
+                    "error_code": "INVALID_REQUEST",
+                    "boundary": "request",
+                    "latency_ms": _elapsed_ms(request_started),
+                },
             )
             return merge([_failure_outcome("INVALID_REQUEST")], request_id, 0, 0, None)
         except ConfigurationError:
@@ -742,5 +827,5 @@ class SearchService:
         if _request_owners.get(request_id) != env.uid:
             return False
         _cancelled.add(request_id)
-        log_event("info", "gs.search.cancelled", {"request_id": request_id, "latency_ms": 0})
+        log_event("info", "gs.search.cancelled", {"request_id": request_id})
         return True

@@ -123,6 +123,78 @@ class TestRequestBoundary(TestCase):
                 )
             )
 
+    def test_custom_date_range_refinement_accepts_exclusive_iso_bounds(self):
+        validate_search_request(
+            SearchRequest(
+                refinement_conditions=(
+                    {
+                        "dimension": "date",
+                        "operator": "between",
+                        "value": {"start": "2026-06-01", "end": "2026-07-01"},
+                    },
+                )
+            )
+        )
+
+    def test_custom_date_range_refinement_rejects_incomplete_or_invalid_bounds(self):
+        invalid_conditions = (
+            {
+                "dimension": "date",
+                "operator": "between",
+                "value": {"start": "2026-06-01"},
+            },
+            {
+                "dimension": "date",
+                "operator": "between",
+                "value": {"end": "2026-07-01"},
+            },
+            {
+                "dimension": "date",
+                "operator": "between",
+                "value": {
+                    "start": "2026-06-01",
+                    "end": "2026-07-01",
+                    "timezone": "UTC",
+                },
+            },
+            {
+                "dimension": "date",
+                "operator": "between",
+                "value": {"start": "2026-02-30", "end": "2026-03-01"},
+            },
+            {
+                "dimension": "date",
+                "operator": "between",
+                "value": {"start": "2026-06-01", "end": "2026-06-01"},
+            },
+            {
+                "dimension": "date",
+                "operator": "between",
+                "value": {"start": "2026-07-01", "end": "2026-06-01"},
+            },
+            {
+                "dimension": "name",
+                "operator": "between",
+                "value": {"start": "2026-06-01", "end": "2026-07-01"},
+            },
+            {
+                "dimension": "date",
+                "operator": "=",
+                "value": {"start": "2026-06-01", "end": "2026-07-01"},
+            },
+            {
+                "dimension": "date",
+                "operator": "between",
+                "value": "2026-06-01",
+            },
+        )
+        for condition in invalid_conditions:
+            with self.subTest(condition=condition):
+                with self.assertRaises(RequestBoundaryError):
+                    validate_search_request(
+                        SearchRequest(refinement_conditions=(condition,))
+                    )
+
     def test_conditions_reject_client_execution_fields(self):
         for key, value in (
             ("model", "res.users"),

@@ -39,7 +39,9 @@ def authorize_fields(model, fields, context):
     return readable
 
 
-def authorize_searchable_fields(env, model, fields, context):
+def authorize_searchable_fields(
+    env, model, fields, context, max_relation_depth=None
+):
     del context
     readable = []
     for field_config in fields:
@@ -64,12 +66,15 @@ def authorize_searchable_fields(env, model, fields, context):
         }.issubset(field_config):
             raise AuthorizationError("CONFIGURATION_ERROR")
         try:
+            validation_options = {
+                "operator_set": field_config.get("operator_set", "exact"),
+                "index_strategy": field_config.get("index_strategy", "none"),
+                "collection_match": field_config.get("collection_match", "any"),
+            }
+            if max_relation_depth is not None:
+                validation_options["max_relation_depth"] = max_relation_depth
             resolved = validate_field_path(
-                model,
-                field_config.get("name"),
-                operator_set=field_config.get("operator_set", "exact"),
-                index_strategy=field_config.get("index_strategy", "none"),
-                collection_match=field_config.get("collection_match", "any"),
+                model, field_config.get("name"), **validation_options
             )
         except FieldPathError as exc:
             raise AuthorizationError("CONFIGURATION_ERROR") from exc

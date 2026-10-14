@@ -110,6 +110,38 @@ class TestPermissionBoundary(TestCase):
 
         self.assertEqual([item["name"] for item in fields], ["partner_id.city"])
 
+    def test_searchable_path_respects_runtime_relation_depth_limit(self):
+        env = FakeEnvironment()
+        env["sale.order"] = FakeModel(
+            {"partner_id"},
+            {"partner_id": FakeField("many2one", "res.partner")},
+            name="sale.order",
+            env=env,
+        )
+        env["res.partner"] = FakeModel(
+            {"country_id"},
+            {"country_id": FakeField("many2one", "res.country")},
+            name="res.partner",
+            env=env,
+        )
+        env["res.country"] = FakeModel(
+            {"name"},
+            {"name": FakeField()},
+            name="res.country",
+            env=env,
+        )
+
+        with self.assertRaises(AuthorizationError) as raised:
+            authorize_searchable_fields(
+                env,
+                env["sale.order"],
+                [{"name": "partner_id.country_id.name"}],
+                None,
+                max_relation_depth=1,
+            )
+
+        self.assertEqual(raised.exception.code, "CONFIGURATION_ERROR")
+
     def test_searchable_path_is_excluded_when_target_model_is_unreadable(self):
         env = FakeEnvironment()
         env["sale.order"] = FakeModel(
