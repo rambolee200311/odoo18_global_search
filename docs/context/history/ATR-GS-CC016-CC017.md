@@ -16,7 +16,7 @@
 |---|---|
 | 环境 | macOS，本地 Odoo 18 CE 工作区 |
 | 测试框架 | Odoo addon namespace unittest、Python 编译、Node.js 语法检查、浏览器观察 |
-| 基线 | `main @ 689ae87` 加本次工作树变更；报告中的运行按各自范围区分 |
+| 当前实现基线 | `main @ 2a360d0`；定向运行针对提交前完全相同的工作树，提交后未改运行代码 |
 | 执行日期 | 2026-10-14 |
 | 执行者 | Copilot assistant（自动化/浏览器辅助观察） |
 
@@ -75,8 +75,8 @@
 |---|---|
 | 运行日期 | 2026-10-14 |
 | 命令/操作 | `test_service_core`（34 tests）、`py_compile`、`node --check`、`git diff --check` |
-| 结果 | 34/34 单元测试通过；三项静态检查通过 |
-| 能证明 | Search Core 当前单元测试及语法/补丁格式有效 |
+| 结果 | 34/34 单元测试通过；Python 编译、JavaScript 语法与 staged diff 检查通过 |
+| 能证明 | Search Core 单元测试及语法/补丁格式有效；实现工作树已作为 `2a360d0` 原样提交 |
 | 不能证明 | CC16-TEST 全量满足、数据库集成全量、CC17 结构化卡片、人工 HVR 或浏览器兼容矩阵 |
 
 ### ATR-RUN-002 — 既有 Odoo 模块套件（历史基线）

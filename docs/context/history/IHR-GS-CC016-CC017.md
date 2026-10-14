@@ -8,7 +8,7 @@
 | CC 基线 | [CC-016 v0.2 FROZEN](../intent/CC-016_condition_builder_visualization.md); [CC-017 v0.4 FROZEN](../intent/CC-017_ui_layout_optimization.md) |
 | 模块 | `wd_global_search` |
 | 当前状态 | 实施范围已完成；CC-016/CC-017 严格 Closure 证据仍有缺口 |
-| 实施基线 | `main @ 689ae87` 加本次工作树变更；最终实现提交由后续 FR 绑定 |
+| 实施基线 | `main @ 2a360d0` |
 | 记录日期 | 2026-10-14 |
 | 记录方式 | 根据实际变更和已执行验证整理；不将回忆或用户总体确认扩写为未观察的事实 |
 
