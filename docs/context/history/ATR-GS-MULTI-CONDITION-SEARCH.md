@@ -9,7 +9,7 @@
 | IHR 文档 | [IHR-GS-MULTI-CONDITION-SEARCH.md](./IHR-GS-MULTI-CONDITION-SEARCH.md) |
 | CC 基线 | [CC-015 v0.5 AMENDED / APPROVED](../intent/CC-015_multi_condition_search.md) |
 | 模块 | `wd_global_search` |
-| 状态 | PARTIAL（待 FR）；42 PASS / 1 SKIPPED，TEST-041 依 CC-015 v0.5 / DEC-027 豁免；audit-event 回归已由 RUN-028 覆盖，用户人工 HVR 已通过并 reaffirm |
+| 状态 | PARTIAL（42 PASS / 1 SKIPPED；TEST-041 依 CC-015 v0.5 / DEC-027 豁免；audit-event 回归由 RUN-028 覆盖；Closure Assessment 见 FR） |
 | 维护原则 | Current Snapshot 可更新；Test Run History 仅追加 |
 
 ATR 记录自动化、Playwright 证据及人工 HVR 确认；不替代 HVR、FR，也不宣布 CC-015 已关闭。
@@ -24,8 +24,8 @@ ATR 记录自动化、Playwright 证据及人工 HVR 确认；不替代 HVR、FR
 | Module | `wd_global_search` |
 | Environment | macOS，Python 3.11，Odoo 18 CE，数据库 `odoo18ce` |
 | Test Framework | 定向 `unittest`、Python `compileall`、`node --check`、`git diff --check`、内置浏览器 Playwright |
-| Code Baseline | `main @ 63a2df2` + 未提交的 CC-015 工作区变更 |
-| Execution Window | 2026-10-13 10:35 onward; latest run RUN-028 on 2026-10-14 |
+| Code Baseline | `main @ 0e43bff` |
+| Execution Window | 2026-10-13 10:35 onward; latest verification RUN-030 on 2026-10-14 |
 | Executed By | Copilot assistant |
 
 Playwright 使用临时 Odoo 实例 `127.0.0.1:8092` 加载当前工作区代码，通过现有认证浏览器会话执行只读搜索。验证结束后临时实例已停止；未发布配置或修改业务数据。
@@ -52,8 +52,8 @@ CC-015 §17、§18 是测试范围的唯一依据；本 ATR 不缩减契约要�
 | 最新有效 CC-015 Run | `ATR-RUN-028`（14 项剩余契约 TransactionCase） |
 | 历史阻塞尝试 | `ATR-RUN-017`（CC15-TEST-041；现按用户指示跳过） |
 | 用户人工 HVR | PASS（ATR-RUN-013；用户于 2026-10-14 09:49 +08:00 再次确认） |
-| Code Baseline | `main @ 63a2df2` + 当前未提交工作区 |
-| Evidence Baseline Match | Yes |
+| Code Baseline | `main @ 0e43bff` |
+| Evidence Baseline Match | Yes；被测工作区代码原样提交为 `0e43bff`，后续仅更新收口文档 |
 | 定向自动化单元测试 | 60 项，60 PASS（RUN-015） |
 | Odoo 模块测试套件 | 77 项，77 PASS（RUN-028；含 14 项 CC15 专项 TransactionCase） |
 | Playwright 页面场景 | 5 项临时实例场景；另有 8091 数据诊断、v0.4 搜索验证和本次只读复核 |
@@ -614,13 +614,13 @@ CC-015 §17、§18 是测试范围的唯一依据；本 ATR 不缩减契约要�
 Required CC test IDs: 43
 PASS: 42   FAIL: 0   SKIPPED: 1 (CC15-TEST-041 waived by CC-015 v0.5 / DEC-027)   BLOCKED: 0   NOT RUN: 0
 Focused automated tests: 60 PASS; post-change targeted regression: 58 PASS; Odoo module suite: 77 PASS (including 14 CC15 contract TransactionCases)
-Latest CC-015 run: ATR-RUN-028 (14 remaining contract tests PASS; includes publish audit-event assertion); TEST-041 remains SKIPPED per approved DEC-027; latest API/browser probe: ATR-RUN-025 (TEST-026 PASS); TEST-020 PASS in RUN-024; TEST-038 PASS in RUN-022; TEST-040 PASS in RUN-020
+Latest CC-015 module run: ATR-RUN-028 (14 remaining contract tests PASS; includes publish audit-event assertion); latest runtime probes: ATR-RUN-029/030; TEST-041 remains SKIPPED per approved DEC-027
 Evidence baseline match: Yes
 Playwright: `001 chair` returned 11 Sales Orders on 8091 with `cc015-v01`; single-token `001` retained 1190; `001 OR chair` failed without conditions
 Human HVR: PASS (ATR-RUN-013; user reaffirmed 2026-10-14 09:49 +08:00)
-Outstanding: FR only. TEST-041 is waived for this implementation; no valid concurrency performance baseline was collected and no performance compliance claim is made.
+Outstanding: no blocking evidence gaps for this CC-015 closure. TEST-041 is waived for this implementation; no valid concurrency performance baseline was collected and no performance compliance claim is made.
 
-→ ATR remains PARTIAL pending FR; TEST-041 is explicitly waived for this implementation and no performance result is claimed.
+→ ATR remains an evidence record, with TEST-041 explicitly waived for this implementation and no performance result claimed; see FR for the closure determination.
 → Playwright 是支持性自动化证据；人工验收以用户在 RUN-013 与 E-018 的确认记录。
 → No Coding Closure / Merge / Release decision is made by this ATR.
 ```
@@ -635,6 +635,7 @@ Outstanding: FR only. TEST-041 is waived for this implementation; no valid concu
 | 2026-10-13 | `main @ 63a2df2` + 当前未提交工作区 | RUN-021 只读核验 Published State Mapping 与 Refinement 行为 | 确认状态映射与静态 UI 选项不一致；TEST-038 FAIL，等待行为澄清 |
 | 2026-10-14 | `main @ 63a2df2` + 当前未提交工作区 | RUN-028 限定 `/wd_global_search` 的 Odoo test tags 执行 77 项模块测试 | 14 项剩余 CC15 TransactionCase 全部通过；矩阵更新为 42 PASS、1 SKIPPED |
 | 2026-10-14 | CC-015 v0.5 / 当前工作区 | 用户批准 DEC-027 豁免 TEST-041；8091 重载并完成 RUN-029 | 明确保留 SKIPPED 与无性能基线；日期/状态折叠交互运行时通过 |
+| 2026-10-14 | `main @ 0e43bff` | RUN-030 验证客户端语言/时区字段不能改变服务端日期 Refinement 结果；提交被测实现 | 被测工作区代码与提交基线一致；后续 FR/证据快照更新仅修改文档 |
 
 ## Appendix B — Version History
 
@@ -651,6 +652,7 @@ Outstanding: FR only. TEST-041 is waived for this implementation; no valid concu
 | v0.9 | 2026-10-13 | TEST-006 通过；TEST-026 运行时日志检查通过；按用户指示将 TEST-041 标记为 SKIPPED，当前剩余 14 项 NOT RUN | PARTIAL |
 | v1.0 | 2026-10-14 | RUN-028 完成此前 14 项 CC15 专项 ORM/权限/配置/Unicode 测试；矩阵为 42 PASS、1 SKIPPED、0 NOT RUN | PARTIAL |
 | v1.1 | 2026-10-14 | 记录 CC-015 v0.5 / DEC-027 测试豁免、audit-event 回归映射、用户 HVR 再确认及 8091 折叠组运行时验证 | PARTIAL（FR 待完成） |
+| v1.2 | 2026-10-14 | 追加 RUN-030、更新当前实现基线至 `0e43bff` 并移交 FR | PARTIAL（Closure Assessment 见 FR） |
 
 ## Appendix C — ATR 自查
 
@@ -663,4 +665,4 @@ Outstanding: FR only. TEST-041 is waived for this implementation; no valid concu
 - [x] 用户人工 HVR 已记录为 PASS（RUN-013）。
 - [x] 43 项 CC 测试均有显式状态：42 PASS、1 SKIPPED、0 NOT RUN；TEST-041 依 CC-015 v0.5 / DEC-027 豁免且未宣称性能通过。
 - [x] audit-event 唯一性回归已映射至 RUN-028；用户人工 HVR 已于 2026-10-14 再次确认。
-- [ ] FR 待完成；ATR 本身不宣告 CC Closure。
+- [x] FR 完成；ATR 本身不宣告 CC Closure，Closure Assessment 见 FR。

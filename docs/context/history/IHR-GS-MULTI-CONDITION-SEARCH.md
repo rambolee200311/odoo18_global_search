@@ -6,7 +6,7 @@
 |---|---|
 | 文档类型 | Implementation History Record |
 | Intent ID | `CC-015` |
-| 状态 | In Progress |
+| 状态 | Implementation Complete；FR v0.1 评估为 SATISFIED |
 | 上游模板 | IHR Standard Template v1.0.0 FROZEN |
 | 维护原则 | Current Snapshot 可更新；Implementation History 与 Stop/Deviation 记录仅追加 |
 
@@ -22,8 +22,9 @@
 | 实施负责人 | Copilot assistant |
 | 开始时间 | 2026-10-13 |
 | 最后更新 | 2026-10-14 |
-| 当前实施状态 | In Progress |
+| 当前实施状态 | Implementation Complete；FR v0.1 评估为 SATISFIED |
 | Branch / Base Commit | `main` / `63a2df2` |
+| Implementation Commit | `0e43bff` |
 
 ## 2. Coding Contract 基线
 
@@ -42,9 +43,9 @@
 | Preservation Impact | 聚焦 harness 60 项通过；定向 Odoo 模块套件 77 项全部通过，其中新增 14 项 CC15 TransactionCase 关闭所有此前 NOT RUN 场景；audit-event 精确断言包含在 RUN-028 77 项模块套件中；TEST-041 按 DEC-027 豁免且无性能通过声明 |
 | Deviation | None |
 | Stop Condition 触发 | No；开始实施前已完成 Published snapshot 核验 |
-| Open Issues | FR 待完成；TEST-041 依 CC15-DEC-027 豁免且没有性能基线；人工 HVR 已由用户确认通过 |
+| Open Issues | 无阻塞 CC-015 收口的事项；TEST-041 依 CC15-DEC-027 豁免且没有性能基线；人工 HVR 已由用户确认通过 |
 | Revert 发生 | No |
-| 当前状态 | In Progress |
+| 当前状态 | Implementation Complete；Closure Assessment 见 FR v0.1 |
 
 当前 Published Sales Order 配置中 `name` 为 Exact，客户与产品路径为 Contains。按 v0.4，多词自由文本会对这些已发布且授权的 Char/Text 字段统一使用 Contains；本轮尚未修改或发布配置。
 
@@ -376,6 +377,20 @@
 - **Limitation：** 本验证仅覆盖 CC-015 相关的客户端上下文边界和日期筛选，不替代 CC-009 的完整 i18n/HVR 验收。
 - **Follow-up：** None for the CC-015 regression scope。
 
+### IHR-026 — 提交实现基线并完成收口评估
+
+- **时间：** 2026-10-14
+- **阶段：** Closure
+- **Action：** 将已验证的实现、契约修订和证据记录提交为 `0e43bff`；对比提交前后代码基线一致性后，依据 CC-015 v0.5、IHR 与 ATR 生成 FR v0.1。
+- **Reason：** 固定当前实现 baseline，并完成用户已批准的 CC-015 收口评估。
+- **Files / Components：** CC-015 实现与契约变更、[ATR-GS-MULTI-CONDITION-SEARCH.md](./ATR-GS-MULTI-CONDITION-SEARCH.md)、本 IHR、[FR-GS-MULTI-CONDITION-SEARCH.md](./FR-GS-MULTI-CONDITION-SEARCH.md)。
+- **Contract Reference：** CC-015 v0.5 §20；CC15-DEC-027；FR §§1–14。
+- **Validation：** 被测代码原样包含在提交 `0e43bff`；提交后未修改运行时代码；静态检查和 RUN-028/RUN-029/RUN-030 证据均映射到该实现基线。
+- **Result：** FR v0.1 判定 CC-015 `SATISFIED`；不构成 Merge 或 Release 批准。
+- **Deviation：** None。
+- **Limitation：** CC15-TEST-041 依批准的 DEC-027 保留 `SKIPPED`；未取得性能基线且不声称性能符合性。
+- **Follow-up：** Human Review；后续独立性能验收另行安排。
+
 ## 5. 实际变更清单（Actual Change Inventory）
 
 | 文件 / 组件 | 动作 | 实际变更 | CC 来源 | IHR |
@@ -447,28 +462,31 @@
 | `docs/context/intent/CC-015_multi_condition_search.md` | Modified | v0.5 正式豁免本轮 CC15-TEST-041 执行；保留 SKIPPED 与无性能符合性声明 | User-approved amendment / CC15-DEC-027 | IHR-023 |
 | Odoo 8091 Workspace | Verified | 重载后确认日期/状态组初始收起、点击展开、Enter 收起 | CC-005 Refinement | IHR-022 |
 | `mymodules/wd_global_search/tests/test_configuration.py` | Verified | 映射 publish audit-event 唯一性断言至 RUN-028 77/77 模块套件 | CC-008 / CC-015 §18 | IHR-024 |
+| 8091 Search API | Verified | 对照基线及伪造客户端 lang/tz/locale/timezone 后结果和日期 Refinement 一致 | CC-009 regression scope | IHR-025 |
+| `docs/context/history/FR-GS-MULTI-CONDITION-SEARCH.md` | Added | 基于 CC-015 v0.5 及当前有效 IHR/ATR/HVR 证据形成 Closure Assessment | FR Template v1.0.0 | IHR-026 |
+| Implementation baseline | Committed | 被验证工作区代码原样提交为 `0e43bff`；后续收口变更限于文档 | CC-015 §20 | IHR-026 |
 
 ## 6. 偏离与停止条件记录（Deviation / Stop Condition Record）
 
 - **Deviation：** None。
-- **Stop Conditions：** None triggered. The 14 previously unrun CC15 contract cases passed in RUN-028; audit-event regression is covered by RUN-028 and IHR-024. TEST-041 is waived for this iteration by CC15-DEC-027; no performance baseline is claimed. FR remains pending.
+- **Stop Conditions：** None triggered. The 14 previously unrun CC15 contract cases passed in RUN-028; audit-event regression is covered by RUN-028 and IHR-024. TEST-041 is waived for this iteration by CC15-DEC-027; no performance baseline is claimed. FR v0.1 records the closure assessment.
 - 后续若 Published version/checksum 与 CC-015 §2.3 不符，或实现要求改变冻结范围，必须停止并追加记录；不得以 IHR 替代契约修订与批准。
 
 ## 7. 遗留问题与后续（Open Issues / Follow-up）
 
-Open Issues: FR remains pending. CC15-TEST-041 is SKIPPED under user-approved CC15-DEC-027; no performance baseline or performance-compliance claim exists. The 14 formerly NOT RUN CC15 IDs passed via IHR-020 / ATR-RUN-028; audit-event regression is covered by RUN-028 / IHR-024; the IHR-021 disclosure group passed live UI verification in IHR-022. TEST-006/ATR-RUN-026, TEST-020/ATR-RUN-024, TEST-026/ATR-RUN-025, TEST-034/ATR-ISSUE-007, TEST-040/ATR-ISSUE-008, and TEST-038/ATR-ISSUE-009 were resolved by tests or authorized 8091 runtime verification. A same-user 20-request attempt hit the per-user limiter and did not produce a valid performance baseline; the user-approved amendment accepts that gap for this contract only. The Odoo module suite passed 77/77 in IHR-020 / ATR RUN-028; human HVR passed per IHR-007 / ATR RUN-013 and was reaffirmed in this session.
+Open Issues: No blocking issue remains for CC-015 closure. CC15-TEST-041 is SKIPPED under user-approved CC15-DEC-027; no performance baseline or performance-compliance claim exists, and independent performance acceptance remains future work. The 14 formerly NOT RUN CC15 IDs passed via IHR-020 / ATR-RUN-028; audit-event regression is covered by RUN-028 / IHR-024; the IHR-021 disclosure group passed live UI verification in IHR-022; CC-009 regression scope passed in RUN-030 without claiming full CC-009 acceptance. TEST-006/ATR-RUN-026, TEST-020/ATR-RUN-024, TEST-026/ATR-RUN-025, TEST-034/ATR-ISSUE-007, TEST-040/ATR-ISSUE-008, and TEST-038/ATR-ISSUE-009 were resolved by tests or authorized 8091 runtime verification. A same-user 20-request attempt hit the per-user limiter and did not produce a valid performance baseline; the user-approved amendment accepts that gap for this contract only. The Odoo module suite passed 77/77 in IHR-020 / ATR RUN-028; human HVR passed per IHR-007 / ATR-RUN-013 and was reaffirmed in this session.
 
 实现中发现的配置、兼容性、安全或上游设计问题应按本节新增条目，并在解决后将状态更新为 Resolved；不得删除历史问题记录。
 
 ## 8. 移交摘要（Handoff）
 
 ```text
-Implemented：核心多词搜索调用链已接入；日期/状态筛选已加入默认收起组并经 8091 live UI 验证（IHR-021/022）；Odoo 模块套件 77 PASS（含 14 项 CC15 TransactionCase，包含 audit-event 唯一性断言）；CC-009 相关服务端上下文/日期回归由 RUN-030 验证；此前 14 项 NOT RUN 已全部关闭；TEST-041 按 CC-015 v0.5 / DEC-027 豁免且无性能通过声明；TEST-040 本地修复定向测试 38 PASS，授权重载后目标端复验 PASS；ATR 仍为 PARTIAL，FR 待完成
+Implemented：核心多词搜索调用链已接入；日期/状态筛选已加入默认收起组并经 8091 live UI 验证（IHR-021/022）；Odoo 模块套件 77 PASS（含 14 项 CC15 TransactionCase，包含 audit-event 唯一性断言）；CC-009 相关服务端上下文/日期回归由 RUN-030 验证；此前 14 项 NOT RUN 已全部关闭；TEST-041 按 CC-015 v0.5 / DEC-027 豁免且无性能通过声明；测试代码基线已提交为 `0e43bff`；FR v0.1 评估为 SATISFIED
 Actual Files：见 §5
-Open Issues：FR 待完成；TEST-041 依 CC-015 v0.5 / DEC-027 豁免且没有性能基线；TEST-006/ATR-RUN-026、TEST-020/ATR-RUN-024、TEST-026/ATR-RUN-025、TEST-034/ATR-ISSUE-007、TEST-038/ATR-ISSUE-009、TEST-040/ATR-ISSUE-008 及此前 14 项 CC15-TEST 已由测试或对应运行时证据关闭；audit-event 回归由 RUN-028 覆盖；CC-009 回归范围由 RUN-030 覆盖但不代表完整 CC-009 验收；人工 HVR 已确认
+Open Issues：无阻塞 CC-015 收口的事项；TEST-041 依 CC-015 v0.5 / DEC-027 豁免且没有性能基线，后续独立性能验收另行安排；此前未完成的 CC15-TEST 已由测试或对应运行时证据关闭；audit-event 回归由 RUN-028 覆盖；CC-009 回归范围由 RUN-030 覆盖但不代表完整 CC-009 验收；人工 HVR 已确认
 Deviation：None
 Stop Conditions Triggered：None
-ATR：见 [ATR-GS-MULTI-CONDITION-SEARCH.md](./ATR-GS-MULTI-CONDITION-SEARCH.md)；状态 PARTIAL，HVR 已通过。FR：待完成。
+ATR：见 [ATR-GS-MULTI-CONDITION-SEARCH.md](./ATR-GS-MULTI-CONDITION-SEARCH.md)；状态 PARTIAL，HVR 已通过。FR：见 [FR-GS-MULTI-CONDITION-SEARCH.md](./FR-GS-MULTI-CONDITION-SEARCH.md)，Closure Status SATISFIED；不构成 Merge/Release 批准。
 ```
 
 IHR 仅记录实施事实；测试通过、人工验收及 CC Closure 由 ATR、HVR、FR 分别处理。
