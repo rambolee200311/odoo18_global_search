@@ -56,7 +56,7 @@ class GlobalSearchController(http.Controller):
         tabs = "".join(
             (
                 '<button class="wd-resource-tab" data-resource="%s" '
-                'data-testid="resource-%s" aria-pressed="false">'
+                'data-states="%s" data-testid="resource-%s" aria-pressed="false">'
                 '<span class="wd-resource-label">%s</span> '
                 '<span class="wd-resource-count" data-count-for="%s">—</span></button>'
             )
@@ -64,6 +64,7 @@ class GlobalSearchController(http.Controller):
                 html.escape(value)
                 for value in (
                     resource["key"],
+                    json.dumps(resource.get("states", []), ensure_ascii=False),
                     resource["key"],
                     resource["label"],
                     resource["key"],
@@ -77,7 +78,7 @@ class GlobalSearchController(http.Controller):
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Global Search</title>
-  <link rel="stylesheet" href="/wd_global_search/static/src/css/preview.css?v=cc013-v02">
+  <link rel="stylesheet" href="/wd_global_search/static/src/css/preview.css?v=cc013-v03">
 </head>
 <body>
   <main class="wd-workspace" data-testid="global-search-workspace"
@@ -105,16 +106,20 @@ class GlobalSearchController(http.Controller):
       </button>
     </div>
     <section class="wd-refinements" aria-label="Refinement">
-      <label>Date preset <select id="wd-date-refinement" data-testid="date-refinement">
-        <option value="">Any time</option><option value="today">Today</option>
-        <option value="this_week">This week</option><option value="this_month">This month</option>
-      </select></label>
-      <label>From <input id="wd-date-start" data-testid="date-start" type="date"></label>
-      <label>To (exclusive) <input id="wd-date-end" data-testid="date-end" type="date"></label>
-      <label>State <select id="wd-state-refinement" data-testid="state-refinement">
-        <option value="">Any state</option><option value="draft">Draft</option>
-        <option value="sale">Confirmed</option><option value="done">Done</option>
-      </select></label>
+      <details class="wd-refinement-group" data-testid="refinement-group">
+        <summary data-testid="refinement-toggle">Date and state filters</summary>
+        <div class="wd-refinement-controls">
+          <label>Date preset <select id="wd-date-refinement" data-testid="date-refinement">
+            <option value="">Any time</option><option value="today">Today</option>
+            <option value="this_week">This week</option><option value="this_month">This month</option>
+          </select></label>
+          <label>From <input id="wd-date-start" data-testid="date-start" type="date"></label>
+          <label>To (exclusive) <input id="wd-date-end" data-testid="date-end" type="date"></label>
+          <label>State <select id="wd-state-refinement" data-testid="state-refinement">
+            <option value="">Any state</option>
+          </select></label>
+        </div>
+      </details>
       <div id="wd-active-refinements" data-testid="active-refinements"></div>
     </section>
     <section class="wd-understanding" data-testid="query-understanding" aria-live="polite">
@@ -142,7 +147,7 @@ class GlobalSearchController(http.Controller):
       </div>
     </section>
   </main>
-  <script src="/wd_global_search/static/src/js/preview.js?v=cc015-v01"></script>
+  <script src="/wd_global_search/static/src/js/preview.js?v=cc015-v02"></script>
 </body>
 </html>""" % (html.escape(str(descriptor_response["config_version"]), quote=True), tabs)
         return request.make_response(page, headers=[("Content-Type", "text/html; charset=utf-8")])

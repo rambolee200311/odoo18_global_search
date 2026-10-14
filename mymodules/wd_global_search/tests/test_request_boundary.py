@@ -2,9 +2,10 @@ from unittest import TestCase
 
 from ..services.request_boundary import (
     RequestBoundaryError,
+    validate_condition_query_object,
     validate_search_request,
 )
-from ..services.types import SearchRequest
+from ..services.types import ConditionQueryObject, KeywordTerm, SearchRequest
 
 
 class TestRequestBoundary(TestCase):
@@ -21,22 +22,77 @@ class TestRequestBoundary(TestCase):
         with self.assertRaises(RequestBoundaryError):
             validate_search_request(
                 SearchRequest(parsed_conditions=(
-                    {"nested": [{"nested": [{"nested": [{"value": "x"}]}]}]},
+                    {
+                        "dimension": "name",
+                        "value": "x",
+                        "nested": [{"nested": [{"nested": [{"value": "x"}]}]}],
+                    },
                 ))
             )
 
     def test_relation_path_is_limited_to_two_segments(self):
         validate_search_request(
             SearchRequest(parsed_conditions=(
-                {"relation_path": "partner_id.country_id"},
+                {
+                    "dimension": "partner_id.name",
+                    "value": "US",
+                    "relation_path": "partner_id.country_id",
+                },
             ))
         )
         with self.assertRaises(RequestBoundaryError):
             validate_search_request(
                 SearchRequest(parsed_conditions=(
-                    {"relation_path": "partner_id.country_id.name"},
+                    {
+                        "dimension": "partner_id.name",
+                        "value": "US",
+                        "relation_path": "partner_id.country_id.name",
+                    },
                 ))
             )
+
+    def test_condition_query_object_rejects_invalid_shape(self):
+        nested = {
+            "dimension": "name",
+            "value": "x",
+            "nested": [{"nested": [{"nested": [{"value": "x"}]}]}],
+        }
+        invalid_objects = (
+            None,
+            ConditionQueryObject(combinator="OR"),
+            ConditionQueryObject(field_conditions=({"dimension": "name"},)),
+            ConditionQueryObject(field_conditions=(nested,)),
+            ConditionQueryObject(keyword_terms=(KeywordTerm(["A"]),)),
+        )
+        for query_object in invalid_objects:
+            with self.subTest(query_object=query_object):
+                with self.assertRaises(RequestBoundaryError):
+                    validate_condition_query_object(query_object)
+
+        valid = ConditionQueryObject(
+            keyword_terms=(KeywordTerm("A"),),
+            field_conditions=(
+                {"dimension": "partner_id.name", "operator": "=", "value": "Acme"},
+            ),
+        )
+        self.assertIs(validate_condition_query_object(valid), valid)
+
+    def test_conditions_require_dimension_and_value(self):
+        for condition in (
+            {"dimension": "name"},
+            {"value": "Acme"},
+            {"dimension": "", "value": "Acme"},
+            {"dimension": "name", "value": None},
+            {"dimension": "name", "value": ["Acme"]},
+            {"dimension": "name", "value": float("nan")},
+            {"dimension": "name", "value": float("inf")},
+            {"dimension": "name", "operator": "", "value": "Acme"},
+        ):
+            with self.subTest(condition=condition):
+                with self.assertRaises(RequestBoundaryError):
+                    validate_search_request(
+                        SearchRequest(parsed_conditions=(condition,))
+                    )
 
     def test_condition_dimension_and_operator_have_bounded_types(self):
         validate_search_request(
@@ -66,6 +122,28 @@ class TestRequestBoundary(TestCase):
                     )
                 )
             )
+
+    def test_conditions_reject_client_execution_fields(self):
+        for key, value in (
+            ("model", "res.users"),
+            ("action", "ir.actions.act_window"),
+            ("domain", [("id", "!=", 0)]),
+            ("relation_expression", "partner_id.user_id"),
+        ):
+            with self.subTest(key=key):
+                with self.assertRaises(RequestBoundaryError):
+                    validate_search_request(
+                        SearchRequest(
+                            parsed_conditions=(
+                                {
+                                    "dimension": "name",
+                                    "operator": "=",
+                                    "value": "S00001",
+                                    key: value,
+                                },
+                            )
+                        )
+                    )
 
     def test_control_characters_are_rejected(self):
         with self.assertRaises(RequestBoundaryError):

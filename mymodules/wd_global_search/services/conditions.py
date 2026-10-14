@@ -17,14 +17,17 @@ def merge(parsed, refinement, deleted=(), *, keyword_terms=()):
         value = condition.get("value")
         if not dimension or value in (None, ""):
             continue
-        key = (dimension, repr(value), condition.get("operator", "contains"))
+        operator = condition.get(
+            "operator", "=" if dimension == "state" else "contains"
+        )
+        key = (dimension, repr(value), operator)
         if key not in seen:
             seen.add(key)
             merged.append(
                 {
                     "dimension": dimension,
                     "value": value,
-                    "operator": condition.get("operator", "contains"),
+                    "operator": operator,
                 }
             )
     return EffectiveConditions(tuple(merged), tuple(keyword_terms))

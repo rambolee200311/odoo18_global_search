@@ -5,20 +5,21 @@
 | 字段 | 内容 |
 |---|---|
 | 文档类型 | Coding Contract |
-| 版本 | v0.4 |
-| 状态 | AMENDED / APPROVED（多词 Contains 语义获用户批准） |
+| 版本 | v0.5 |
+| 状态 | AMENDED / APPROVED（多词 Contains 语义及本轮 TEST-041 豁免获用户批准） |
 | Intent ID | CC-015 |
 | 上游基线 | SRS_global_search v1.5 FROZEN；TDD_global_search v0.4 FROZEN；IMPLEMENTATION_PLAN_global_search v0.3 FROZEN |
 | 前置契约 | CC-001 至 CC-014；CC-014-1；CC-014-2；TD-001 |
 | 模块 | `wd_global_search` |
 | 目标 | 在不改变冻结的外层 Search API、也不侵占 CC-002/003/005/007/012 职责的前提下，增加多条件查询归一化与执行 |
-| 批准 / 冻结 | v0.3 冻结并于 2026-10-13 修订获用户批准（Asia/Shanghai） |
+| 批准 / 冻结 | v0.3 冻结；v0.4 于 2026-10-13、v0.5 于 2026-10-14 经用户批准修订（Asia/Shanghai） |
 
 **版本基线与冻结边界：**
 
 - 本 CC 以 SRS v1.5、TDD v0.4、IMPLEMENTATION_PLAN v0.3 为上游基线；CC-001 至 CC-014、CC-014-1、CC-014-2 和 TD-001 按其各自已批准版本保持冻结。
 - 本 CC 只补充多条件搜索语义，不修改任何上述文档的已冻结接口、权限、错误、计数、分页或兼容行为。
 - v0.3 的多词 Exact-only 决策现由用户批准修订为 Char/Text Contains-on-text；本 CC 的单 token 和结构化条件兼容边界保持不变。
+- v0.5 按用户于 2026-10-14 的明确选择，豁免本轮执行 CC15-TEST-041；测试状态仍为 SKIPPED，不建立性能基线，也不声明继承的性能预算已通过。该豁免不适用于后续独立性能验证。
 - 如实现要求改变其他冻结语义，必须先完成影响评审并取得批准，再更新本 CC；不得以实现便利为由直接变更上游。
 
 本契约冻结以下兼容边界：
@@ -542,6 +543,8 @@ Query Understanding 展示：
 | CC15-TEST-042 | 分别提交中文/组合标记 token、Unicode 控制字符、双向控制字符、U+200B–U+200D、U+2060、U+FEFF 及无效 surrogate | 有效 Unicode 文本按 code point 规则进入 Contains 查询；禁止字符整体以 `INVALID_REQUEST` 拒绝，未执行查询且不回显输入 |
 | CC15-TEST-043 | 对非法语法触发请求并检查响应与 observability 日志 | 响应保持既有 `INVALID_REQUEST` 结构，提示仅为安全固定类别文本；日志只含 CC-008 allowlist 字段，不包含 Raw Query、token 或完整条件 |
 
+**v0.5 本轮测试范围修订：** CC15-TEST-041 的执行按 DEC-027 豁免，仍记录为 SKIPPED；不把该项重分类为 PASS/N/A，也不推断性能预算满足。
+
 ## 18. 回归要求（Regression Requirements）
 
 - **CC-002：** 保留 SearchRequest 字段、路由、`resources[]`、Parsed/Refinement 合并、同维度 OR、不同维度 AND、Count、分页、cursor 和错误响应。
@@ -589,7 +592,7 @@ Query Understanding 展示：
 - Query Understanding 展示已授权有效摘要，不泄露内部路径。
 - Count 在权限、Resource scope、Result Identity 和分页下与有效谓词一致。
 - 从一个 UI checksum 一致的 snapshot 核验 Published version/operator 配置。
-- CC15-TEST-001 至 CC15-TEST-043 及适用的既有回归套件通过并记录证据。
+- CC15-TEST-001 至 CC15-TEST-040、CC15-TEST-042、CC15-TEST-043 及适用的既有回归套件通过并记录证据；CC15-TEST-041 按 CC15-DEC-027 豁免本轮执行，必须保留 SKIPPED 状态，且不得声称性能基线或性能预算已验证。
 - CC-002/003/005/007/008/009/012/013/014/014-1/014-2 与 TD-001 回归要求通过。
 - IHR、ATR 及所需 HVR 证据完成；人工搜索验证使用经过授权的用户账号。
 - 未引入被禁止依赖、路由、权限绕过、官方 Odoo 修改或数据库捷径。
@@ -627,6 +630,7 @@ Query Understanding 展示：
 | CC15-DEC-024 | 不对既有 Published Snapshot 或业务数据做迁移；如需配置变更，仅通过既有正常 Publish 流程。 | CC-015 是运行时条件语义，不要求数据库/schema 迁移，保留旧配置可消费性。 |
 | CC15-DEC-025 | 多条件诊断复用 CC-008 与现有 observability allowlist；不新增 token/condition 原文或未经批准的日志字段。 | 当前实现的日志字段采用严格 allowlist；新增字段须先做 CC-008 影响评审。 |
 | CC15-DEC-026 | 测试 fixture 位置和模块拆分由现有测试结构及批准 IHR 决定。 | 本契约冻结测试覆盖和隔离原则，不提前固定目录或实现文件结构。 |
+| CC15-DEC-027 | 本轮实现豁免 CC15-TEST-041 的性能/并发执行；保留 SKIPPED，不宣称 P50/P95/P99 基线或继承性能预算已验证。 | 用户于 2026-10-14 明确选择正式修订并接受跳过后关闭；该豁免仅限本轮 CC-015 Closure，不免除后续独立性能验收。 |
 
 ## 22. 实施结构（Implementation Structure）
 
@@ -715,7 +719,8 @@ SearchResponse：
 | v0.1 | 2026-10-12 | 核对 CC-002/003/005/012/014-2 与实现后形成初稿；记录 API、字段绑定和 operator 兼容决策 | Superseded |
 | v0.2 | 2026-10-12 | 依据附件评审补充版本基线、只读范围、证据缺口跟进、Unicode/error/权限/展示时机、继承性能预算、迁移/日志/fixture/验收/HVR/浏览器与评审记录 | Superseded |
 | v0.3 | 2026-10-13 | 写入当前授权 Odoo UI 核验的 Published v5/checksum、Sales Order Search Fields 与 Relation Paths；按用户批准冻结 | Superseded |
-| v0.4 | 2026-10-13 | 按用户批准将多词 Char/Text 匹配改为 Contains-on-text；token AND 与单 token/结构化条件兼容边界不变 | AMENDED / APPROVED |
+| v0.4 | 2026-10-13 | 按用户批准将多词 Char/Text 匹配改为 Contains-on-text；token AND 与单 token/结构化条件兼容边界不变 | Superseded |
+| v0.5 | 2026-10-14 | 按用户明确批准，豁免本轮 CC15-TEST-041 执行；保留 SKIPPED 且不声明性能基线/预算通过 | AMENDED / APPROVED |
 
 ### 23.5 迁移与兼容验收
 

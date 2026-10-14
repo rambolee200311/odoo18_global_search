@@ -16,6 +16,70 @@ from ..services.types import KeywordTerm, ResourceOutcome, SearchRequest
 
 
 class TestSearchServiceCore(TestCase):
+    def test_state_refinement_maps_business_state_to_technical_values(self):
+        from .test_field_path import FakeField, field_path_models
+
+        env = field_path_models()
+        env["sale.order"]._fields["state"] = FakeField("selection")
+        domain = executor._condition_domain(
+            env["sale.order"],
+            [],
+            [],
+            {
+                "states": [
+                    {
+                        "business_state": "Quotation",
+                        "technical_values": "draft, sent",
+                    }
+                ]
+            },
+            SimpleNamespace(
+                values=(
+                    {
+                        "dimension": "state",
+                        "value": "Quotation",
+                        "operator": "=",
+                    },
+                ),
+                keyword_terms=(),
+            ),
+            None,
+        )
+
+        self.assertEqual(domain, [("state", "in", ["draft", "sent"])])
+
+    def test_resource_descriptor_exposes_only_readable_business_states(self):
+        resource = {
+            "key": "sales",
+            "label": "Sales",
+            "models": [{"model_name": "sale.order"}],
+            "states": [
+                {
+                    "business_state": "Quotation",
+                    "technical_values": "draft,sent",
+                }
+            ],
+        }
+        context = SimpleNamespace(lang="en_US")
+        with patch.object(facade, "authorize_fields", return_value=["state"]):
+            descriptor = facade._resource_descriptor(
+                {"sale.order": object()}, resource, context
+            )
+        self.assertEqual(descriptor["states"], ["Quotation"])
+        self.assertNotIn("technical_values", descriptor)
+
+        with patch.object(
+            facade,
+            "authorize_fields",
+            side_effect=AuthorizationError("FIELD_NOT_READABLE"),
+        ):
+            self.assertEqual(
+                facade._resource_business_states(
+                    {"sale.order": object()}, resource, context
+                ),
+                [],
+            )
+
     def test_many2one_path_compiles_to_nested_authorized_any_domain(self):
         from .test_field_path import field_path_models
 
@@ -36,7 +100,6 @@ class TestSearchServiceCore(TestCase):
             SimpleNamespace(values=(condition,)),
             None,
         )
-
         self.assertEqual(
             domain,
             [
@@ -53,6 +116,63 @@ class TestSearchServiceCore(TestCase):
                 )
             ],
         )
+
+    def test_effective_conditions_accepts_only_states_common_to_selected_resources(self):
+        resources = [
+            {"key": "sales", "models": [], "business_dates": []},
+            {"key": "purchases", "models": [], "business_dates": []},
+        ]
+        conditions = SimpleNamespace(
+            values=(
+                {
+                    "dimension": "state",
+                    "value": "Confirmed",
+                    "operator": "=",
+                },
+            )
+        )
+        with patch.object(
+            facade,
+            "_resource_business_states",
+            side_effect=[
+                ["Draft", "Confirmed"],
+                ["Confirmed", "Done"],
+            ],
+        ):
+            visible = facade._effective_conditions(
+                {},
+                resources,
+                {"sales", "purchases"},
+                conditions,
+                None,
+            )
+        self.assertEqual(visible, list(conditions.values))
+
+        conditions = SimpleNamespace(
+            values=(
+                {
+                    "dimension": "state",
+                    "value": "Draft",
+                    "operator": "=",
+                },
+            )
+        )
+        with patch.object(
+            facade,
+            "_resource_business_states",
+            side_effect=[
+                ["Draft", "Confirmed"],
+                ["Confirmed", "Done"],
+            ],
+        ):
+            with self.assertRaises(facade.RequestBoundaryError):
+                facade._effective_conditions(
+                    {},
+                    resources,
+                    {"sales", "purchases"},
+                    conditions,
+                    None,
+                )
 
     def test_keyword_terms_are_and_of_authorized_text_field_contains_ors(self):
         from .test_field_path import FakeField, field_path_models
@@ -340,7 +460,7 @@ class TestSearchServiceCore(TestCase):
             list(conditions.values),
             [
                 {"dimension": "name", "value": "Acme", "operator": "contains"},
-                {"dimension": "state", "value": "sale", "operator": "contains"},
+                {"dimension": "state", "value": "sale", "operator": "="},
             ],
         )
 
@@ -531,6 +651,27 @@ class TestSearchServiceCore(TestCase):
                     None,
                 )
 
+    def test_effective_conditions_rejects_unpublished_direct_dimensions(self):
+        resource = {"key": "sales", "models": [], "business_dates": []}
+        conditions = SimpleNamespace(
+            values=(
+                {
+                    "dimension": "not_published_dimension",
+                    "value": "S00001",
+                    "operator": "=",
+                },
+            )
+        )
+
+        with self.assertRaises(facade.RequestBoundaryError):
+            facade._effective_conditions(
+                {},
+                [resource],
+                {"sales"},
+                conditions,
+                None,
+            )
+
     def test_query_understanding_exposes_keyword_values_not_search_paths(self):
         field_config = {
             "name": "partner_id.city",
@@ -677,7 +818,9 @@ class TestSearchServiceCore(TestCase):
             patch.object(executor, "authorize_relation_path"),
             patch.object(executor, "_condition_domain", return_value=[]),
         ):
-            outcome = executor.execute(env, resource, {}, 100, offset=10)
+            outcome = executor.execute(
+                env, resource, SimpleNamespace(values=()), 100, offset=10
+            )
 
         self.assertEqual(outcome.count, 142)
         self.assertEqual(len(outcome.results), 100)
@@ -688,6 +831,54 @@ class TestSearchServiceCore(TestCase):
         )
         self.assertEqual(first_model.search_calls, [(10, 100, "id asc")])
         self.assertEqual(second_model.search_calls, [(0, 98, "id asc")])
+
+    def test_executor_uses_normalized_conditions_without_parser(self):
+        from ..services import request_boundary
+
+        class FakeRecordset:
+            def read(self, fields):
+                return [{"id": 1, "name": "S00001"}]
+
+        class FakeModel:
+            def search_count(self, domain):
+                return 1
+
+            def search(self, domain, offset=0, limit=None, order=None):
+                return FakeRecordset()
+
+        class FakeEnv:
+            def __getitem__(self, model_name):
+                self.assert_model = model_name
+                return FakeModel()
+
+        env = FakeEnv()
+        resource = {
+            "key": "sales",
+            "models": [{"model_name": "sale.order", "fields": []}],
+        }
+        normalized_conditions = SimpleNamespace(values=())
+
+        with (
+            patch.object(
+                request_boundary,
+                "parse_multi_query",
+                side_effect=AssertionError("executor must not invoke the parser"),
+            ),
+            patch.object(executor, "authorize_search_resource"),
+            patch.object(executor, "authorize_searchable_fields", return_value=[]),
+            patch.object(executor, "authorize_fields", side_effect=lambda model, fields, context: fields),
+            patch.object(executor, "authorize_relation_path"),
+            patch.object(executor, "_condition_domain", return_value=[]),
+        ):
+            outcome = executor.execute(env, resource, normalized_conditions, 10)
+
+        self.assertEqual(env.assert_model, "sale.order")
+        self.assertEqual(outcome.status, "SUCCESS")
+        self.assertEqual(outcome.count, 1)
+        self.assertEqual(
+            [(item["_model"], item["id"]) for item in outcome.results],
+            [("sale.order", 1)],
+        )
 
     def test_executor_returns_timeout_without_partial_success_shape(self):
         outcome = executor.execute(

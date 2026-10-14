@@ -31,7 +31,7 @@ class TestObservability(TestCase):
         self.assertEqual(payload["hash_version"], HASH_VERSION)
         self.assertNotIn("raw_query", payload)
 
-    @patch("mymodules.wd_global_search.services.observability._logger")
+    @patch("odoo.addons.wd_global_search.services.observability._logger")
     def test_log_event_uses_structured_json_payload(self, logger):
         payload = log_event("info", "gs.search.completed", {"request_id": "r1"})
         logger.info.assert_called_once()

@@ -32,6 +32,15 @@ class TestConfiguredNavigation(TransactionCase):
                 ).id,
             }
         )
+        self.env["wd.gs.searchable.field"].create(
+            {
+                "resource_id": resource.id,
+                "field_name": "name",
+                "purpose": "identifier",
+                "operator_set": "exact",
+                "index_strategy": "btree",
+            }
+        )
         self.env["wd.gs.business.date.mapping"].create(
             {
                 "resource_id": resource.id,

@@ -147,6 +147,41 @@ h2 {
     border-top: 0;
 }
 
+.wd-refinements {
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.wd-refinement-group {
+    flex: 1 1 100%;
+    min-width: 0;
+}
+
+.wd-refinement-group > summary {
+    color: #243447;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.wd-refinement-group > summary:focus-visible {
+    outline: 2px solid #3667a6;
+    outline-offset: 3px;
+}
+
+.wd-refinement-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    margin-top: 12px;
+}
+
+#wd-active-refinements {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
 .wd-refinements select {
     margin-left: 6px;
     padding: 7px 10px;
@@ -417,6 +452,11 @@ h2 {
 
     .wd-refinements,
     .wd-understanding {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .wd-refinement-controls {
         align-items: flex-start;
         flex-direction: column;
     }

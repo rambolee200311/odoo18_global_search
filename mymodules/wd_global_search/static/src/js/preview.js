@@ -14,9 +14,10 @@
     const pageSizeInput = document.querySelector("[data-testid='page-size']");
     const pageSummary = document.querySelector("[data-testid='page-summary']");
     const pageControls = document.querySelector("[data-testid='page-controls']");
+    const stateInput = document.querySelector("#wd-state-refinement");
     if (!list || !queryInput || !form || !conditionView || !activeView || !workspace
         || !resourceTabs || !resourceEmpty || !reselectAllButton
-        || !pagination || !pageSizeInput || !pageSummary || !pageControls) {
+        || !pagination || !pageSizeInput || !pageSummary || !pageControls || !stateInput) {
         return;
     }
     function isNarrowWorkspace() {
@@ -96,6 +97,7 @@
         activeView.querySelectorAll("button").forEach((button) => {
             button.addEventListener("click", () => {
                 state.refinements.splice(Number(button.dataset.refinementIndex), 1);
+                renderStateOptions();
                 state.cursor = null;
                 state.currentPage = 1;
                 search();
@@ -169,6 +171,9 @@
                 resourceTabs.append(button);
             }
             button.querySelector(".wd-resource-label").textContent = text(descriptor.label || key);
+            button.dataset.states = JSON.stringify(
+                Array.isArray(descriptor.states) ? descriptor.states : []
+            );
         });
         let selectionChanged = false;
         for (const key of state.resources) {
@@ -183,6 +188,73 @@
             : String(configVersion);
         state.resourceSelectionInitialized = true;
         return selectionChanged || previousVersion !== state.configVersion;
+    }
+
+    function resourceBusinessStates(resourceKey) {
+        const button = Array.from(resourceTabs.querySelectorAll(".wd-resource-tab"))
+            .find((item) => item.dataset.resource === resourceKey);
+        if (!button) {
+            return [];
+        }
+        try {
+            const values = JSON.parse(button.dataset.states || "[]");
+            if (
+                !Array.isArray(values)
+                || values.some((value) => typeof value !== "string" || !value)
+            ) {
+                console.error("Invalid Published state descriptor", resourceKey);
+                return [];
+            }
+            return Array.from(new Set(values));
+        } catch (error) {
+            console.error("Unable to parse Published state descriptor", error);
+            return [];
+        }
+    }
+
+    function commonBusinessStates() {
+        const selectedResources = state.resourceSelectionInitialized
+            ? Array.from(state.resources)
+            : resourceKeys();
+        if (!selectedResources.length) {
+            return [];
+        }
+        let common = resourceBusinessStates(selectedResources[0]);
+        for (const resourceKey of selectedResources.slice(1)) {
+            const available = new Set(resourceBusinessStates(resourceKey));
+            common = common.filter((value) => available.has(value));
+        }
+        return common;
+    }
+
+    function renderStateOptions() {
+        const activeCondition = state.refinements.find(
+            (item) => item.dimension === "state"
+        );
+        const available = commonBusinessStates();
+        const selectedValue = activeCondition && available.includes(activeCondition.value)
+            ? activeCondition.value
+            : "";
+        stateInput.replaceChildren();
+        const anyState = document.createElement("option");
+        anyState.value = "";
+        anyState.textContent = "Any state";
+        stateInput.append(anyState);
+        available.forEach((value) => {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = value;
+            stateInput.append(option);
+        });
+        stateInput.disabled = available.length === 0;
+        stateInput.value = selectedValue;
+        if (activeCondition && !selectedValue) {
+            state.refinements = state.refinements.filter(
+                (item) => item.dimension !== "state"
+            );
+            return true;
+        }
+        return false;
     }
 
     function renderCounts(data) {
@@ -232,6 +304,7 @@
             button.hidden = false;
         });
         renderSelectionState();
+        return renderStateOptions();
     }
 
     function showNavigationError(message) {
@@ -554,7 +627,11 @@
                     }
                 }
             }
-            renderCounts(data);
+            if (renderCounts(data)) {
+                state.cursor = null;
+                state.currentPage = 1;
+                return search(scrollToResults);
+            }
             renderResults(data);
             renderUnderstanding(
                 Array.isArray(data.effective_conditions) ? data.effective_conditions : []
@@ -602,6 +679,7 @@
         event.preventDefault();
         state.rawQuery = queryInput.value;
         state.refinements = [];
+        renderStateOptions();
         state.cursor = null;
         state.currentPage = 1;
         document.querySelector("#wd-date-refinement").value = "";
@@ -622,6 +700,7 @@
             state.resources.add(resource);
         }
         renderSelectionState();
+        renderStateOptions();
         state.cursor = null;
         state.currentPage = 1;
         search();
@@ -629,6 +708,7 @@
     reselectAllButton.addEventListener("click", () => {
         state.resources = new Set(resourceKeys());
         renderSelectionState();
+        renderStateOptions();
         state.cursor = null;
         state.currentPage = 1;
         search();
@@ -663,4 +743,5 @@
             event.preventDefault();
         }
     });
+    renderStateOptions();
 }());

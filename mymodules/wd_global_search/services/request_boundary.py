@@ -1,5 +1,6 @@
 """Server-side bounds for SearchRequest input (TD-001)."""
 
+import math
 import unicodedata
 
 from .types import ConditionQueryObject, KeywordTerm
@@ -11,6 +12,9 @@ MAX_RELATION_PATH_DEPTH = 2
 MAX_DIMENSION_LENGTH = 100
 MAX_KEYWORD_TERMS = 10
 MAX_KEYWORD_LENGTH = 100
+_REJECTED_CONDITION_KEYS = frozenset(
+    {"model", "action", "domain", "relation_expression"}
+)
 _BIDI_CONTROLS = frozenset(
     {
         0x061C,
@@ -112,17 +116,49 @@ def _validate_relation_path(value):
 def _validate_condition(condition):
     if not isinstance(condition, dict):
         raise RequestBoundaryError("Conditions must be objects")
+    if _REJECTED_CONDITION_KEYS.intersection(condition):
+        raise RequestBoundaryError("Condition contains unsupported execution fields")
     if _condition_depth(condition) > MAX_CONDITION_DEPTH:
         raise RequestBoundaryError("Condition nesting exceeds the supported depth")
-    if "dimension" in condition and not isinstance(condition["dimension"], str):
-        raise RequestBoundaryError("Condition dimension must be text")
-    if len(condition.get("dimension", "")) > MAX_DIMENSION_LENGTH:
+    dimension = condition.get("dimension")
+    if not isinstance(dimension, str) or not dimension.strip():
+        raise RequestBoundaryError("Condition dimension must be non-empty text")
+    if len(dimension) > MAX_DIMENSION_LENGTH:
         raise RequestBoundaryError("Condition dimension exceeds the supported length")
+    if "value" not in condition or condition["value"] is None:
+        raise RequestBoundaryError("Condition value is required")
+    value = condition["value"]
+    if not isinstance(value, (str, int, float, bool)):
+        raise RequestBoundaryError("Condition value must be a scalar")
+    if isinstance(value, float) and not math.isfinite(value):
+        raise RequestBoundaryError("Condition value must be finite")
     if "operator" in condition and not isinstance(condition["operator"], str):
         raise RequestBoundaryError("Condition operator must be text")
+    if "operator" in condition and not condition["operator"]:
+        raise RequestBoundaryError("Condition operator must be non-empty")
     for key in ("relation_path", "path"):
         if key in condition:
             _validate_relation_path(condition[key])
+
+
+def validate_condition_query_object(query_object):
+    if not isinstance(query_object, ConditionQueryObject):
+        raise RequestBoundaryError("Condition query object is invalid")
+    if query_object.combinator != "AND":
+        raise RequestBoundaryError("Condition query combinator is unsupported")
+    if not isinstance(query_object.keyword_terms, tuple):
+        raise RequestBoundaryError("Condition query keywords are invalid")
+    if not isinstance(query_object.field_conditions, tuple):
+        raise RequestBoundaryError("Condition query fields are invalid")
+    if len(query_object.keyword_terms) + len(query_object.field_conditions) > MAX_CONDITIONS:
+        raise RequestBoundaryError("Too many search conditions")
+    for term in query_object.keyword_terms:
+        if not isinstance(term, KeywordTerm) or not isinstance(term.value, str):
+            raise RequestBoundaryError("Condition query keyword is invalid")
+        _validate_keyword_token(term.value)
+    for condition in query_object.field_conditions:
+        _validate_condition(condition)
+    return query_object
 
 
 def validate_search_request(request):
@@ -158,4 +194,4 @@ def validate_search_request(request):
         raise RequestBoundaryError("Too many search conditions")
     for condition in conditions:
         _validate_condition(condition)
-    return query_object
+    return validate_condition_query_object(query_object)

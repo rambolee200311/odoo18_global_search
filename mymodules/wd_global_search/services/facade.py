@@ -12,7 +12,11 @@ from .cursor import decode, encode
 from .errors import error
 from .executor import authorize_search_resource, execute
 from .limiter import UserLimiter
-from .permission_boundary import AuthorizationError, authorize_searchable_fields
+from .permission_boundary import (
+    AuthorizationError,
+    authorize_fields,
+    authorize_searchable_fields,
+)
 from .provider import ConfigurationError, published_snapshot
 from .request_boundary import RequestBoundaryError, validate_search_request
 from .observability import hash_value, log_event
@@ -148,6 +152,16 @@ def _effective_conditions(env, resources, selected_keys, conditions, context):
     has_business_date = any(
         resource.get("business_dates") for resource in selected_resources
     )
+    has_state_condition = any(
+        condition["dimension"] == "state" for condition in conditions.values
+    )
+    common_states = None
+    if has_state_condition:
+        state_sets = [
+            set(_resource_business_states(env, resource, context))
+            for resource in selected_resources
+        ]
+        common_states = set.intersection(*state_sets) if state_sets else set()
     for resource in selected_resources:
         for model_config in resource.get("models", ()):
             model = env[model_config["model_name"]]
@@ -172,6 +186,16 @@ def _effective_conditions(env, resources, selected_keys, conditions, context):
         elif dimension == "date":
             if has_business_date:
                 visible.append(condition)
+        elif dimension == "state":
+            if (
+                condition.get("operator") != "="
+                or not isinstance(condition.get("value"), str)
+                or condition["value"] not in common_states
+            ):
+                raise RequestBoundaryError(
+                    "State is not available for the selected Resources"
+                )
+            visible.append(condition)
         elif dimension in configured_fields:
             if "." in dimension:
                 value = condition.get("value")
@@ -186,7 +210,7 @@ def _effective_conditions(env, resources, selected_keys, conditions, context):
                     ):
                         raise RequestBoundaryError("Invalid searchable field value")
             visible.append(condition)
-        elif "." in dimension:
+        else:
             raise RequestBoundaryError("Condition is not an available searchable field")
     visible.extend(
         {"dimension": "keyword", "operator": "contains", "value": term.value}
@@ -201,14 +225,38 @@ def _localized_value(translations, fallback, lang):
     return fallback
 
 
-def _resource_descriptor(resource, lang="en_US"):
+def _resource_business_states(env, resource, context):
+    mappings = resource.get("states", ())
+    if not mappings:
+        return []
+    if not isinstance(mappings, (list, tuple)) or any(
+        not isinstance(item, dict)
+        or not isinstance(item.get("business_state"), str)
+        or not item["business_state"]
+        for item in mappings
+    ):
+        raise ConfigurationError()
+    model_configs = resource.get("models", ())
+    if not model_configs:
+        return []
+    for model_config in model_configs:
+        model = env[model_config["model_name"]]
+        try:
+            authorize_fields(model, ["state"], context)
+        except AuthorizationError:
+            return []
+    return list(dict.fromkeys(item["business_state"] for item in mappings))
+
+
+def _resource_descriptor(env, resource, context):
     return {
         "key": resource["key"],
         "label": _localized_value(
             resource.get("name_translations"),
             resource.get("label") or resource.get("name") or resource["key"],
-            lang,
+            context.lang,
         ),
+        "states": _resource_business_states(env, resource, context),
     }
 
 
@@ -260,7 +308,7 @@ class SearchService:
         return {
             "config_version": snapshot_info["version_id"],
             "resources": [
-                _resource_descriptor(resource, context.lang) for resource in resources
+                _resource_descriptor(env, resource, context) for resource in resources
             ],
         }
 
@@ -302,7 +350,7 @@ class SearchService:
             resources = _authorized_resources(env, snapshot.get("resources", []), context)
             performance = _performance_config(snapshot, resources)
             descriptors = [
-                _resource_descriptor(resource, context.lang) for resource in resources
+                _resource_descriptor(env, resource, context) for resource in resources
             ]
             selected_keys = set(request.resource_scope)
 

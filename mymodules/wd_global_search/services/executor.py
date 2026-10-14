@@ -186,10 +186,14 @@ def _condition_domain(model, field_configs, relation_paths, resource, conditions
     grouped = {}
     path_grouped = {}
     date_conditions = []
+    state_conditions = []
     for condition in conditions.values:
         field = condition["dimension"]
         if field == "date":
             date_conditions.append(condition)
+            continue
+        if field == "state":
+            state_conditions.append(condition)
             continue
         if field == "name":
             grouped.setdefault(field, []).append(condition)
@@ -261,6 +265,30 @@ def _condition_domain(model, field_configs, relation_paths, resource, conditions
             else:
                 domain_parts.append(OR(predicates))
 
+    for condition in state_conditions:
+        value = condition.get("value")
+        if condition.get("operator") != "=" or not isinstance(value, str):
+            raise FieldPathError("Invalid business state condition.")
+        mapping = next(
+            (
+                item
+                for item in resource.get("states", ())
+                if item.get("business_state") == value
+            ),
+            None,
+        )
+        if mapping is None:
+            raise FieldPathError("Business state is not configured.")
+        technical_values = mapping.get("technical_values")
+        if not isinstance(technical_values, str):
+            raise FieldPathError("Invalid business state mapping.")
+        values = [item.strip() for item in technical_values.split(",")]
+        if not values or any(not item for item in values):
+            raise FieldPathError("Invalid business state mapping.")
+        if "state" not in model._fields:
+            raise FieldPathError("State field is not available.")
+        domain_parts.append([("state", "in", list(dict.fromkeys(values)))])
+
     for term in getattr(conditions, "keyword_terms", ()):
         domain_parts.append(_keyword_term_domain(model, field_configs, term))
 
@@ -324,6 +352,11 @@ def execute(env, resource, conditions, limit, context=None, offset=0, deadline=N
             field_configs = authorize_searchable_fields(
                 env, model, model_config.get("fields", ()), context
             )
+            if any(
+                condition["dimension"] == "state"
+                for condition in conditions.values
+            ):
+                authorize_fields(model, ["state"], context)
             relation_paths = [
                 path["path"]
                 for path in resource.get("relation_paths", ())
