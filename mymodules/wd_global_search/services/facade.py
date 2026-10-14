@@ -3,7 +3,9 @@ import json
 import math
 import time
 import uuid
+from datetime import date, datetime
 
+from odoo import _
 from odoo.exceptions import AccessError
 
 from .aggregator import merge
@@ -11,6 +13,7 @@ from .conditions import merge as merge_conditions
 from .cursor import decode, encode
 from .errors import error
 from .executor import authorize_search_resource, execute
+from .field_path import FieldPathError, validate_field_path
 from .limiter import UserLimiter
 from .permission_boundary import (
     AuthorizationError,
@@ -40,6 +43,43 @@ def _failure_outcome(code, resource="request"):
             resource=resource,
         ),
     )
+
+
+def _valid_searchable_field_value(field_type, value):
+    if field_type in {"char", "text"}:
+        return isinstance(value, str)
+    if field_type == "integer":
+        return isinstance(value, int) and not isinstance(value, bool)
+    if field_type in {"float", "monetary"}:
+        return (
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and (not isinstance(value, float) or math.isfinite(value))
+        )
+    if field_type == "date":
+        if not isinstance(value, str):
+            return False
+        try:
+            date.fromisoformat(value)
+        except ValueError:
+            return False
+        return True
+    if field_type == "datetime":
+        if not isinstance(value, str):
+            return False
+        try:
+            datetime.fromisoformat(value.replace(" ", "T", 1))
+        except ValueError:
+            return False
+        return True
+    if field_type == "boolean":
+        return isinstance(value, bool)
+    if field_type == "selection":
+        return (
+            isinstance(value, (str, int))
+            and not isinstance(value, bool)
+        )
+    return False
 
 
 def _hash(value):
@@ -144,7 +184,9 @@ def _performance_config(snapshot, resources):
     }
 
 
-def _effective_conditions(env, resources, selected_keys, conditions, context):
+def _effective_conditions(
+    env, resources, selected_keys, conditions, context, submitted_conditions=()
+):
     configured_fields = {}
     selected_resources = [
         resource for resource in resources if resource["key"] in selected_keys
@@ -175,7 +217,24 @@ def _effective_conditions(env, resources, selected_keys, conditions, context):
                 continue
             for field_config in readable_fields:
                 configured_fields.setdefault(field_config["name"], []).append(
-                    field_config
+                    (model, field_config)
+                )
+
+    for condition in submitted_conditions:
+        dimension = condition["dimension"]
+        if dimension in {"name", "date", "state"} or "operator" not in condition:
+            continue
+        field_configs = configured_fields.get(dimension, ())
+        expected_operators = {
+            "exact": "=",
+            "prefix": "prefix",
+            "contains": "contains",
+        }
+        for _model, field_config in field_configs:
+            expected = expected_operators[field_config.get("operator_set", "exact")]
+            if condition["operator"] != expected:
+                raise RequestBoundaryError(
+                    "Operator is not available for the searchable field"
                 )
 
     visible = []
@@ -197,18 +256,26 @@ def _effective_conditions(env, resources, selected_keys, conditions, context):
                 )
             visible.append(condition)
         elif dimension in configured_fields:
-            if "." in dimension:
-                value = condition.get("value")
-                if not isinstance(value, (str, int, float, bool)) or value == "":
+            value = condition.get("value")
+            if not isinstance(value, (str, int, float, bool)) or value == "":
+                raise RequestBoundaryError("Invalid searchable field value")
+            if isinstance(value, float) and not math.isfinite(value):
+                raise RequestBoundaryError("Invalid searchable field value")
+            for model, field_config in configured_fields[dimension]:
+                try:
+                    resolved_path = validate_field_path(
+                        model,
+                        dimension,
+                        operator_set=field_config.get("operator_set", "exact"),
+                        index_strategy=field_config.get("index_strategy", "none"),
+                        collection_match=field_config.get("collection_match", "any"),
+                    )
+                except FieldPathError as exc:
+                    raise ConfigurationError() from exc
+                if not _valid_searchable_field_value(
+                    resolved_path.fields[-1].type, value
+                ):
                     raise RequestBoundaryError("Invalid searchable field value")
-                if isinstance(value, float) and not math.isfinite(value):
-                    raise RequestBoundaryError("Invalid searchable field value")
-                for field_config in configured_fields[dimension]:
-                    if (
-                        field_config.get("operator_set") in {"prefix", "contains"}
-                        and not isinstance(value, str)
-                    ):
-                        raise RequestBoundaryError("Invalid searchable field value")
             visible.append(condition)
         else:
             raise RequestBoundaryError("Condition is not an available searchable field")
@@ -257,7 +324,139 @@ def _resource_descriptor(env, resource, context):
             context.lang,
         ),
         "states": _resource_business_states(env, resource, context),
+        "searchable_fields": _resource_searchable_fields(env, resource, context),
     }
+
+
+def _searchable_field_descriptor(
+    env, model_config, field_config, user_context, metadata_cache
+):
+    field_path = field_config["name"]
+    if field_path in {"name", "date", "state"}:
+        return None
+
+    context = {"lang": user_context.lang}
+    model = env[model_config["model_name"]]
+    labels = []
+    terminal_field = None
+    terminal_metadata = None
+    segments = field_path.split(".")
+    for index, segment in enumerate(segments):
+        field = model._fields.get(segment)
+        if field is None:
+            return None
+        cache_key = (model._name, segment)
+        if cache_key not in metadata_cache:
+            metadata_cache[cache_key] = model.with_context(
+                lang=user_context.lang
+            ).fields_get([segment], ["string", "selection"]).get(segment)
+        metadata = metadata_cache[cache_key]
+        label = metadata.get("string") if isinstance(metadata, dict) else None
+        if not isinstance(label, str) or not label.strip():
+            return None
+        labels.append(label.strip())
+        if index == len(segments) - 1:
+            terminal_field = field
+            terminal_metadata = metadata
+            break
+        if not field.comodel_name:
+            return None
+        model = env[field.comodel_name]
+
+    field_type = terminal_field.type
+    selection = []
+    if field_type == "selection":
+        source = terminal_metadata.get("selection")
+        if not isinstance(source, (list, tuple)):
+            return None
+        for item in source:
+            if (
+                not isinstance(item, (list, tuple))
+                or len(item) != 2
+                or not isinstance(item[0], (str, int))
+                or isinstance(item[0], bool)
+                or not isinstance(item[1], str)
+                or not item[1].strip()
+            ):
+                return None
+            selection.append([item[0], item[1].strip()])
+        if not selection:
+            return None
+
+    operator_set = field_config.get("operator_set", "exact")
+    operator, operator_label = {
+        "exact": ("=", _("is")),
+        "prefix": ("prefix", _("starts with")),
+        "contains": ("contains", _("contains")),
+    }[operator_set]
+    return {
+        "dimension": field_path,
+        "label": " › ".join(labels),
+        "type": field_type,
+        "operator_set": operator_set,
+        "operator": operator,
+        "operator_label": operator_label,
+        "selection": selection,
+    }
+
+
+def _resource_searchable_fields(env, resource, context):
+    model_configs = resource.get("models", ())
+    if not model_configs:
+        return []
+
+    metadata_cache = {}
+    common = None
+    for model_config in model_configs:
+        model = env[model_config["model_name"]]
+        try:
+            fields = authorize_searchable_fields(
+                env, model, model_config.get("fields", ()), context
+            )
+        except AuthorizationError as exc:
+            if exc.code == "CONFIGURATION_ERROR":
+                raise ConfigurationError() from exc
+            fields = []
+
+        options = {}
+        duplicates = set()
+        for field_config in fields:
+            descriptor = _searchable_field_descriptor(
+                env, model_config, field_config, context, metadata_cache
+            )
+            if descriptor is None:
+                continue
+            dimension = descriptor["dimension"]
+            if dimension in options:
+                options.pop(dimension)
+                duplicates.add(dimension)
+            elif dimension not in duplicates:
+                options[dimension] = descriptor
+
+        if common is None:
+            common = options
+        else:
+            common = {
+                dimension: descriptor
+                for dimension, descriptor in common.items()
+                if options.get(dimension) == descriptor
+            }
+
+    if not common:
+        return []
+
+    labels = {}
+    for descriptor in common.values():
+        labels.setdefault(descriptor["label"], 0)
+        labels[descriptor["label"]] += 1
+    return sorted(
+        (
+            descriptor
+            for descriptor in common.values()
+            if labels[descriptor["label"]] == 1
+        ),
+        key=lambda item: (item["label"].casefold(), item["dimension"]),
+    )
 
 
 def _observe_response(response, request, context, secret):
@@ -387,7 +586,12 @@ class SearchService:
                 keyword_terms=query_object.keyword_terms,
             )
             visible_conditions = _effective_conditions(
-                env, resources, selected_keys, conditions, context
+                env,
+                resources,
+                selected_keys,
+                conditions,
+                context,
+                request.parsed_conditions,
             )
             effective_limit = min(
                 [request.limit]

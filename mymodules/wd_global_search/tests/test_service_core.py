@@ -80,6 +80,219 @@ class TestSearchServiceCore(TestCase):
                 [],
             )
 
+    def test_resource_descriptor_exposes_only_safe_localized_search_fields(self):
+        class Field:
+            def __init__(self, field_type, comodel_name=None):
+                self.type = field_type
+                self.comodel_name = comodel_name
+
+        class Model:
+            def __init__(self, name, fields, labels):
+                self._name = name
+                self._fields = fields
+                self.labels = labels
+                self.lang = None
+
+            def with_context(self, **context):
+                self.lang = context["lang"]
+                return self
+
+            def fields_get(self, names, attributes):
+                self.asserted_attributes = attributes
+                return {
+                    name: {
+                        "string": self.labels[name][self.lang],
+                        "selection": [
+                            ("draft", "Brouillon"),
+                            ("sale", "Commande client"),
+                        ]
+                        if self._fields[name].type == "selection"
+                        else [],
+                    }
+                    for name in names
+                }
+
+        partner = Model(
+            "res.partner",
+            {"city": Field("char"), "stage": Field("selection")},
+            {"city": {"fr_FR": "Ville"}, "stage": {"fr_FR": "Étape"}},
+        )
+        order = Model(
+            "sale.order",
+            {"partner_id": Field("many2one", "res.partner"), "name": Field("char")},
+            {"partner_id": {"fr_FR": "Client"}, "name": {"fr_FR": "Nom"}},
+        )
+        env = {"sale.order": order, "res.partner": partner}
+        resource = {
+            "key": "sales",
+            "name": "Sales",
+            "models": [
+                {
+                    "model_name": "sale.order",
+                    "fields": [
+                        {
+                            "name": "partner_id.city",
+                            "operator_set": "contains",
+                            "searchable": True,
+                        },
+                        {
+                            "name": "partner_id.stage",
+                            "operator_set": "exact",
+                            "searchable": True,
+                        },
+                        {"name": "name", "operator_set": "exact", "searchable": True},
+                    ],
+                }
+            ],
+        }
+        context = SimpleNamespace(lang="fr_FR")
+        with patch.object(
+            facade,
+            "authorize_searchable_fields",
+            side_effect=lambda _env, _model, fields, _context: fields,
+        ), patch.object(facade, "_", side_effect=lambda message: message):
+            descriptor = facade._resource_descriptor(env, resource, context)
+
+        self.assertEqual(
+            descriptor["searchable_fields"],
+            [
+                {
+                    "dimension": "partner_id.city",
+                    "label": "Client › Ville",
+                    "type": "char",
+                    "operator_set": "contains",
+                    "operator": "contains",
+                    "operator_label": "contains",
+                    "selection": [],
+                },
+                {
+                    "dimension": "partner_id.stage",
+                    "label": "Client › Étape",
+                    "type": "selection",
+                    "operator_set": "exact",
+                    "operator": "=",
+                    "operator_label": "is",
+                    "selection": [
+                        ["draft", "Brouillon"],
+                        ["sale", "Commande client"],
+                    ],
+                },
+            ],
+        )
+        self.assertEqual(order.lang, "fr_FR")
+        self.assertEqual(partner.lang, "fr_FR")
+        self.assertEqual(order.asserted_attributes, ["string", "selection"])
+
+    def test_resource_searchable_fields_omits_ambiguous_labels_and_non_common_fields(self):
+        class Field:
+            def __init__(self, field_type):
+                self.type = field_type
+                self.comodel_name = None
+
+        class Model:
+            def __init__(self, name, fields):
+                self._name = name
+                self._fields = fields
+
+            def with_context(self, **_context):
+                return self
+
+            def fields_get(self, names, _attributes):
+                return {name: {"string": "City", "selection": []} for name in names}
+
+        first = Model(
+            "first.model",
+            {
+                "city": Field("char"),
+                "shipping_city": Field("char"),
+                "reference": Field("char"),
+            }
+        )
+        second = Model(
+            "second.model",
+            {"city": Field("char"), "reference": Field("char")},
+        )
+        env = {"first.model": first, "second.model": second}
+        resource = {
+            "models": [
+                {
+                    "model_name": "first.model",
+                    "fields": [
+                        {"name": "city", "operator_set": "exact"},
+                        {"name": "shipping_city", "operator_set": "exact"},
+                        {"name": "reference", "operator_set": "contains"},
+                    ],
+                },
+                {
+                    "model_name": "second.model",
+                    "fields": [
+                        {"name": "city", "operator_set": "exact"},
+                        {"name": "reference", "operator_set": "contains"},
+                    ],
+                },
+            ]
+        }
+        with patch.object(
+            facade,
+            "authorize_searchable_fields",
+            side_effect=lambda _env, _model, fields, _context: fields,
+        ), patch.object(facade, "_", side_effect=lambda message: message):
+            options = facade._resource_searchable_fields(
+                env, resource, SimpleNamespace(lang="en_US")
+            )
+
+        self.assertEqual(options, [])
+
+    def test_effective_conditions_rejects_operator_not_allowed_by_published_field(self):
+        from .test_field_path import FakeField, field_path_models
+
+        env = field_path_models()
+        env["sale.order"]._fields["partner_id"] = FakeField(
+            "many2one", "res.partner"
+        )
+        fields = [
+            {
+                "name": "partner_id.city",
+                "operator_set": "contains",
+                "index_strategy": "gin_trgm",
+                "collection_match": "any",
+            }
+        ]
+        resource = {
+            "key": "sales",
+            "models": [{"model_name": "sale.order", "fields": fields}],
+        }
+        conditions = SimpleNamespace(
+            values=(
+                {
+                    "dimension": "partner_id.city",
+                    "operator": "=",
+                    "value": "Acme",
+                },
+            ),
+            keyword_terms=(),
+        )
+        with patch.object(
+            facade,
+            "authorize_searchable_fields",
+            return_value=fields,
+        ):
+            with self.assertRaises(facade.RequestBoundaryError):
+                facade._effective_conditions(
+                    env,
+                    [resource],
+                    {"sales"},
+                    conditions,
+                    None,
+                    [
+                        {
+                            "dimension": "partner_id.city",
+                            "operator": "=",
+                            "value": "Acme",
+                        }
+                    ],
+                )
+
     def test_many2one_path_compiles_to_nested_authorized_any_domain(self):
         from .test_field_path import field_path_models
 
@@ -606,6 +819,8 @@ class TestSearchServiceCore(TestCase):
         )
 
     def test_effective_conditions_only_exposes_authorized_published_paths(self):
+        from .test_field_path import field_path_models
+
         field_config = {
             "name": "partner_id.city",
             "operator_set": "contains",
@@ -632,7 +847,7 @@ class TestSearchServiceCore(TestCase):
             facade, "authorize_searchable_fields", return_value=[field_config]
         ):
             visible = facade._effective_conditions(
-                {"sale.order": object()},
+                field_path_models(),
                 [resource],
                 {"sales"},
                 conditions,
@@ -649,6 +864,38 @@ class TestSearchServiceCore(TestCase):
                     {"sales"},
                     conditions,
                     None,
+                )
+
+    def test_effective_conditions_rejects_value_with_wrong_terminal_field_type(self):
+        from .test_field_path import FakeField, field_path_models
+
+        env = field_path_models()
+        env["sale.order"]._fields["email"] = FakeField("char")
+        field_config = {
+            "name": "email",
+            "operator_set": "exact",
+            "index_strategy": "none",
+            "collection_match": "any",
+        }
+        resource = {
+            "key": "sales",
+            "models": [{"model_name": "sale.order", "fields": [field_config]}],
+            "business_dates": [],
+        }
+        condition = {"dimension": "email", "operator": "=", "value": 123}
+        conditions = SimpleNamespace(values=(condition,))
+
+        with patch.object(
+            facade, "authorize_searchable_fields", return_value=[field_config]
+        ):
+            with self.assertRaises(facade.RequestBoundaryError):
+                facade._effective_conditions(
+                    env,
+                    [resource],
+                    {"sales"},
+                    conditions,
+                    None,
+                    submitted_conditions=(condition,),
                 )
 
     def test_effective_conditions_rejects_unpublished_direct_dimensions(self):

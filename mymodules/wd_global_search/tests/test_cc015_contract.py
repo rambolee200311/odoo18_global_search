@@ -228,9 +228,11 @@ class TestCC015SearchContracts(TransactionCase):
 
         self.assertEqual(raw.status, "SUCCESS")
         self.assertEqual(structured.status, "SUCCESS")
-        self.assertEqual(len(authorized_fields), 2)
+        self.assertEqual(len(authorized_fields), 4)
         self.assertEqual(authorized_fields[0], ("email", "name"))
         self.assertEqual(authorized_fields[0], authorized_fields[1])
+        self.assertEqual(authorized_fields[0], authorized_fields[2])
+        self.assertEqual(authorized_fields[0], authorized_fields[3])
 
     def test_008_executor_does_not_reparse_validated_keyword_terms(self):
         token_a = "cc15a_%s" % uuid4().hex
@@ -728,3 +730,63 @@ class TestCC015SearchContracts(TransactionCase):
 
         self.assertEqual(config_failure.errors[0]["code"], "CONFIGURATION_ERROR")
         self.assertEqual(request_failure.errors[0]["code"], "INVALID_REQUEST")
+
+    def test_043_cc016_resource_descriptor_exposes_searchable_field_metadata(self):
+        domain_key, _ = self._publish_domain([("partner", ("name", "email"))])
+
+        response = facade.SearchService().resource_descriptors(self.env, domain_key)
+
+        fields = response["resources"][0]["searchable_fields"]
+        email = next(field for field in fields if field["dimension"] == "email")
+        self.assertEqual(email["type"], "char")
+        self.assertEqual(email["operator"], "contains")
+        self.assertEqual(email["operator_label"], "contains")
+        self.assertNotIn("name", {field["dimension"] for field in fields})
+
+    def test_044_cc016_resource_descriptor_omits_unreadable_fields(self):
+        portal_user = self._create_user(
+            "CC-016 descriptor portal", self.env.company, "base.group_portal"
+        )
+        user_env = self._user_env(portal_user, self.env.company)
+        domain_key, _ = self._publish_restricted_partner_domain()
+
+        response = facade.SearchService().resource_descriptors(user_env, domain_key)
+
+        fields = response["resources"][0]["searchable_fields"]
+        self.assertNotIn("signup_type", {field["dimension"] for field in fields})
+
+    def test_045_cc016_structured_field_condition_rejects_unavailable_operator(self):
+        _, snapshot = self._publish_domain([("partner", ("email",))])
+        condition = {
+            "dimension": "email",
+            "operator": "=",
+            "value": "contact@example.com",
+        }
+
+        with self.assertRaises(RequestBoundaryError):
+            facade._effective_conditions(
+                self.env,
+                [snapshot["partner"]],
+                {"partner"},
+                merge_conditions((condition,), ()),
+                facade.user_context(self.env),
+                submitted_conditions=(condition,),
+            )
+
+    def test_046_cc016_structured_field_condition_rejects_wrong_value_type(self):
+        _, snapshot = self._publish_domain([("partner", ("email",))])
+        condition = {
+            "dimension": "email",
+            "operator": "contains",
+            "value": 123,
+        }
+
+        with self.assertRaises(RequestBoundaryError):
+            facade._effective_conditions(
+                self.env,
+                [snapshot["partner"]],
+                {"partner"},
+                merge_conditions((condition,), ()),
+                facade.user_context(self.env),
+                submitted_conditions=(condition,),
+            )

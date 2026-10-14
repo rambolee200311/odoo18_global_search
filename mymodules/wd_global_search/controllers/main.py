@@ -56,7 +56,8 @@ class GlobalSearchController(http.Controller):
         tabs = "".join(
             (
                 '<button class="wd-resource-tab" data-resource="%s" '
-                'data-states="%s" data-testid="resource-%s" aria-pressed="false">'
+                'data-states="%s" data-searchable-fields="%s" '
+                'data-testid="resource-%s" aria-pressed="false">'
                 '<span class="wd-resource-label">%s</span> '
                 '<span class="wd-resource-count" data-count-for="%s">—</span></button>'
             )
@@ -65,6 +66,9 @@ class GlobalSearchController(http.Controller):
                 for value in (
                     resource["key"],
                     json.dumps(resource.get("states", []), ensure_ascii=False),
+                    json.dumps(
+                        resource.get("searchable_fields", []), ensure_ascii=False
+                    ),
                     resource["key"],
                     resource["label"],
                     resource["key"],
@@ -78,11 +82,11 @@ class GlobalSearchController(http.Controller):
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Global Search</title>
-  <link rel="stylesheet" href="/wd_global_search/static/src/css/preview.css?v=cc013-v03">
+  <link rel="stylesheet" href="/wd_global_search/static/src/css/preview.css?v=cc017-v03">
 </head>
 <body>
   <main class="wd-workspace" data-testid="global-search-workspace"
-        data-config-version="%s">
+        data-config-version="%s" data-user-timezone="%s">
     <header class="wd-header">
       <div>
         <p class="wd-eyebrow">WD GLOBAL SEARCH</p>
@@ -105,6 +109,33 @@ class GlobalSearchController(http.Controller):
         Reselect all accessible resources
       </button>
     </div>
+    <details class="wd-condition-builder" data-testid="condition-builder">
+      <summary class="wd-disclosure-summary">
+        <span role="heading" aria-level="2">Search by field</span>
+      </summary>
+      <div class="wd-condition-controls">
+        <label for="wd-condition-field">Field</label>
+        <select id="wd-condition-field" data-testid="condition-field">
+          <option value="">Choose an accessible field</option>
+        </select>
+        <label for="wd-condition-operator">Operator</label>
+        <select id="wd-condition-operator" data-testid="condition-operator" disabled>
+          <option value="">Choose an operator</option>
+        </select>
+        <label for="wd-condition-value">Value</label>
+        <div id="wd-condition-value-container" data-testid="condition-value-container">
+          <input id="wd-condition-value" data-testid="condition-value" disabled>
+        </div>
+        <button id="wd-condition-submit" data-testid="condition-submit"
+                type="button" disabled>Add condition</button>
+        <button id="wd-remove-unavailable-conditions"
+                data-testid="remove-unavailable-conditions" type="button" hidden>
+          Remove unavailable conditions
+        </button>
+        <p id="wd-condition-message" class="wd-condition-message" role="status"
+           data-testid="condition-message"></p>
+      </div>
+    </details>
     <section class="wd-refinements" aria-label="Refinement">
       <details class="wd-refinement-group" data-testid="refinement-group">
         <summary data-testid="refinement-toggle">Date and state filters</summary>
@@ -122,9 +153,37 @@ class GlobalSearchController(http.Controller):
       </details>
       <div id="wd-active-refinements" data-testid="active-refinements"></div>
     </section>
-    <section class="wd-understanding" data-testid="query-understanding" aria-live="polite">
-      <strong>Query Understanding</strong><span id="wd-effective-conditions">No conditions</span>
-    </section>
+    <details class="wd-understanding" data-testid="query-understanding">
+      <summary class="wd-disclosure-summary">
+        <span role="heading" aria-level="2">Query Understanding</span>
+      </summary>
+      <div class="wd-understanding-content" aria-live="polite">
+        <div class="wd-condition-partition" data-testid="keyword-partition">
+          <h3>Keywords</h3>
+          <div id="wd-effective-keywords"></div>
+          <span id="wd-keyword-combinator"></span>
+          <div class="wd-keyword-add">
+            <label for="wd-keyword-add">Add keyword</label>
+            <input id="wd-keyword-add" data-testid="keyword-add" type="text">
+            <button id="wd-keyword-add-submit" data-testid="keyword-add-submit"
+                    type="button">Add</button>
+          </div>
+        </div>
+        <div class="wd-condition-partition" data-testid="structured-partition">
+          <h3>Structured conditions</h3>
+          <div id="wd-effective-structured"></div>
+        </div>
+        <div class="wd-condition-partition" data-testid="refinement-partition">
+          <h3>Refinement</h3>
+          <div id="wd-effective-refinements"></div>
+        </div>
+        <p id="wd-condition-combination" class="wd-condition-combination">
+          Conditions from different sources follow existing rules; same-field alternatives
+          retain their existing OR semantics.
+        </p>
+        <span id="wd-effective-conditions" hidden></span>
+      </div>
+    </details>
     <section class="wd-layout">
       <div class="wd-results" data-testid="results-pane">
         <h2>Accessible records</h2>
@@ -147,9 +206,13 @@ class GlobalSearchController(http.Controller):
       </div>
     </section>
   </main>
-  <script src="/wd_global_search/static/src/js/preview.js?v=cc015-v02"></script>
+  <script src="/wd_global_search/static/src/js/preview.js?v=cc016-v02"></script>
 </body>
-</html>""" % (html.escape(str(descriptor_response["config_version"]), quote=True), tabs)
+</html>""" % (
+            html.escape(str(descriptor_response["config_version"]), quote=True),
+            html.escape(str(request.env.user.tz or "UTC"), quote=True),
+            tabs,
+        )
         return request.make_response(page, headers=[("Content-Type", "text/html; charset=utf-8")])
 
     def _require_template_manager(self):
