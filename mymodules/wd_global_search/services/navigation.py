@@ -65,11 +65,9 @@ def resolve_form_navigation(env, resource_key, record_id, domain_key):
             return SAFE_NAVIGATION_FAILURE.copy()
         record.check_access_rule("read")
 
-        action = env["ir.actions.act_window"].browse(action_id).exists()
+        action = env["ir.actions.act_window"].sudo().browse(action_id).exists()
         if not action:
             return SAFE_NAVIGATION_FAILURE.copy()
-        action.check_access_rights("read")
-        action.check_access_rule("read")
         action_form_views = action.view_ids.filtered(
             lambda item: item.view_mode == "form"
         )

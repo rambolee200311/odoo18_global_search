@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 from odoo.tests.common import TransactionCase
 
-from ..controllers.main import GlobalSearchController
+from ..controllers.configuration import ConfigurationController
 
 
 class TestTemplateFieldDescriptor(TransactionCase):
@@ -13,9 +13,11 @@ class TestTemplateFieldDescriptor(TransactionCase):
         )
         for groups, expected_restriction in cases:
             with self.subTest(groups=groups):
-                descriptor = GlobalSearchController._template_field_descriptor(
+                descriptor = ConfigurationController._template_field_descriptor(
                     "name",
-                    SimpleNamespace(groups=groups),
+                    SimpleNamespace(
+                        groups=groups,
+                    ),
                     {"type": "char", "string": "Name"},
                 )
 

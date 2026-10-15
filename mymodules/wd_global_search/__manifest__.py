@@ -8,6 +8,7 @@
         "security/security.xml",
         "security/ir.model.access.csv",
         "views/configuration_views.xml",
+        "views/controller_pages.xml",
     ],
     "assets": {
         "web.assets_backend": [

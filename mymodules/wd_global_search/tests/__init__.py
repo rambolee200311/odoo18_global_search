@@ -1,4 +1,5 @@
 from . import test_configuration
+from . import test_configuration_registry
 from . import test_field_path
 from . import test_i18n_timezone
 from . import test_index_strategy
@@ -9,6 +10,7 @@ from . import test_permission_boundary
 from . import test_navigation
 from . import test_template
 from . import test_template_descriptor
+from . import test_controller_routes
 from . import test_cc015_contract
 from . import test_structured_card
 from . import test_backward_compatibility

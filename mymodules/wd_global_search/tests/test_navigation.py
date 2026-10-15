@@ -1,5 +1,6 @@
 from uuid import uuid4
 
+from odoo.exceptions import AccessError
 from odoo.tests.common import TransactionCase
 
 from ..services.navigation import (
@@ -77,6 +78,37 @@ class TestConfiguredNavigation(TransactionCase):
         self.assertIn("/odoo/action-%s/%s" % (action.id, record.id), result["navigation_url"])
         self.assertIn("model=res.partner", result["navigation_url"])
         self.assertNotIn("javascript:", result["navigation_url"])
+
+    def test_reader_can_resolve_action_metadata_without_action_model_acl(self):
+        resource = self._published_resource()
+        record = self.env["res.partner"].create(
+            {"name": "CC-013 least-privilege navigation fixture"}
+        )
+        reader = self.env["res.users"].create(
+            {
+                "name": "CC-013 navigation reader",
+                "login": "cc013-navigation-%s" % uuid4().hex,
+                "groups_id": [(6, 0, [self.env.ref("base.group_user").id])],
+            }
+        )
+        reader_env = self.env(user=reader.id)
+
+        with self.assertRaises(AccessError):
+            reader_env["ir.actions.act_window"].check_access_rights("read")
+
+        result = resolve_form_navigation(
+            reader_env,
+            resource.key,
+            record.id,
+            resource.version_id.domain_id.key,
+        )
+
+        self.assertEqual(result["status"], "SUCCESS")
+        self.assertIn(
+            "/odoo/action-%s/%s"
+            % (resource.navigation_action_id.id, record.id),
+            result["navigation_url"],
+        )
 
     def test_resolver_safely_rejects_unknown_resource_and_client_model(self):
         resource = self._published_resource()

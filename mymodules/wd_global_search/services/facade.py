@@ -609,11 +609,6 @@ class SearchService:
                 env, snapshot_resources, context, all_performance
             )
             authorized_keys = {resource["key"] for resource in resources}
-            if any(
-                item["resource_key"] not in authorized_keys
-                for item in snapshot.get("performance", ())
-            ):
-                raise ConfigurationError()
             performance = {
                 key: value
                 for key, value in all_performance.items()

@@ -40,3 +40,10 @@ odoo.conf
 Thumbs.db
 
 .vscode
+
+# CC-018 Playwright credentials and runtime evidence
+mymodules/wd_global_search/tests/ui/.auth/
+mymodules/wd_global_search/tests/ui/evidence/*.png
+mymodules/wd_global_search/tests/ui/evidence/*.zip
+mymodules/wd_global_search/tests/ui/evidence/*.webm
+mymodules/wd_global_search/tests/ui/evidence/CC018-performance-*.json
