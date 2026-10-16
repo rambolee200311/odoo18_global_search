@@ -1,0 +1,37 @@
+2026-10-16 06:41:42,312 1836 INFO odoo18ce odoo.tests.common: Importing test framework
+2026-10-16 06:41:42,356 1836 INFO odoo18ce odoo.modules.loading: loading 1 modules...
+2026-10-16 06:41:42,361 1836 INFO odoo18ce odoo.modules.loading: 1 modules loaded in 0.00s, 0 queries (+0 extra)
+2026-10-16 06:41:42,379 1836 INFO odoo18ce odoo.modules.loading: updating modules list
+2026-10-16 06:41:44,131 1836 INFO odoo18ce odoo.modules.loading: loading 83 modules...
+2026-10-16 06:41:44,687 1836 INFO odoo18ce odoo.modules.loading: Loading module llm_openai (46/83)
+2026-10-16 06:41:45,385 1836 INFO odoo18ce odoo.modules.loading: loading llm_openai/data/llm_publisher.xml
+2026-10-16 06:41:46,365 1836 INFO odoo18ce odoo.modules.loading: loading llm_openai/views/llm_model_views.xml
+2026-10-16 06:41:46,612 1836 INFO odoo18ce odoo.modules.loading: Module llm_openai loaded in 1.93s (incl. 0.22s test), 96 queries (+225 test, +96 other)
+2026-10-16 06:41:46,944 1836 INFO odoo18ce odoo.modules.loading: 83 modules loaded in 2.81s, 96 queries (+321 extra)
+2026-10-16 06:41:46,945 1836 INFO odoo18ce odoo.modules.loading: loading 83 modules...
+2026-10-16 06:41:46,946 1836 INFO odoo18ce odoo.modules.loading: 83 modules loaded in 0.00s, 0 queries (+0 extra)
+2026-10-16 06:41:46,947 1836 INFO odoo18ce odoo.modules.loading: loading 83 modules...
+2026-10-16 06:41:46,947 1836 INFO odoo18ce odoo.modules.loading: 83 modules loaded in 0.00s, 0 queries (+0 extra)
+2026-10-16 06:41:47,124 1836 ERROR odoo18ce odoo.modules.loading: Some modules are not loaded, some dependencies or manifest may be missing: ['wd_advanced_m2o_record_panel', 'wd_evidence_album', 'wd_qooling_app']
+2026-10-16 06:41:47,213 1836 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album is declared but cannot be loaded! (Perhaps a module was partially removed or renamed)
+2026-10-16 06:41:47,213 1836 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.config.settings is declared but cannot be loaded! (Perhaps a module was partially removed or renamed)
+2026-10-16 06:41:47,213 1836 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.create.page.upload.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed)
+2026-10-16 06:41:47,213 1836 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.extend.validity.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed)
+2026-10-16 06:41:47,213 1836 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.item is declared but cannot be loaded! (Perhaps a module was partially removed or renamed)
+2026-10-16 06:41:47,213 1836 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.media is declared but cannot be loaded! (Perhaps a module was partially removed or renamed)
+2026-10-16 06:41:47,213 1836 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.page is declared but cannot be loaded! (Perhaps a module was partially removed or renamed)
+2026-10-16 06:41:47,213 1836 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.source.config is declared but cannot be loaded! (Perhaps a module was partially removed or renamed)
+2026-10-16 06:41:47,213 1836 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.source.items.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed)
+2026-10-16 06:41:47,213 1836 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.source.page.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed)
+2026-10-16 06:41:47,213 1836 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.source.record.option is declared but cannot be loaded! (Perhaps a module was partially removed or renamed)
+2026-10-16 06:41:47,213 1836 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.upload.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed)
+2026-10-16 06:41:47,216 1836 INFO odoo18ce odoo.modules.loading: Model wd.preview.configuration is declared but cannot be loaded! (Perhaps a module was partially removed or renamed)
+2026-10-16 06:41:47,216 1836 INFO odoo18ce odoo.modules.loading: Model wd.preview.configuration.line is declared but cannot be loaded! (Perhaps a module was partially removed or renamed)
+2026-10-16 06:41:47,216 1836 INFO odoo18ce odoo.modules.loading: Model wd.qooling.inbound.form is declared but cannot be loaded! (Perhaps a module was partially removed or renamed)
+2026-10-16 06:41:47,216 1836 INFO odoo18ce odoo.modules.loading: Model wd.qooling.media.evidence.mixin is declared but cannot be loaded! (Perhaps a module was partially removed or renamed)
+2026-10-16 06:41:47,216 1836 INFO odoo18ce odoo.modules.loading: Model wd.qooling.outbound.form is declared but cannot be loaded! (Perhaps a module was partially removed or renamed)
+2026-10-16 06:41:47,216 1836 INFO odoo18ce odoo.modules.loading: Model wd.qooling.temperature.record is declared but cannot be loaded! (Perhaps a module was partially removed or renamed)
+2026-10-16 06:41:47,216 1836 INFO odoo18ce odoo.modules.loading: Model wd.qooling.temperature.record.line is declared but cannot be loaded! (Perhaps a module was partially removed or renamed)
+2026-10-16 06:41:47,544 1836 INFO odoo18ce odoo.modules.loading: Modules loaded.
+2026-10-16 06:41:47,687 1836 INFO odoo18ce odoo.tests.stats: llm_openai: 12 tests 0.22s 225 queries
+2026-10-16 06:41:47,687 1836 INFO odoo18ce odoo.tests.result: 0 failed, 0 error(s) of 10 tests when loading database 'odoo18ce'

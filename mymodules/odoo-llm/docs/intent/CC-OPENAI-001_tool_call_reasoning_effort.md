@@ -1,10 +1,12 @@
 # CC-OPENAI-001：OpenAI 工具调用 `reasoning_effort` 兼容修复
 
-> 文档版本：v0.1 Draft  
-> 状态：Draft（待评审；不构成实现授权）  
-> 起草日期：2026-10-16  
-> 模块：`llm_openai`  
-> 上游技术基线：`docs/technical/OPENAI_TOOL_CALL_COMPATIBILITY.md` v1.0.0 Frozen  
+> 文档版本：v1.0.0 Frozen
+> 状态：Frozen
+> 起草日期：2026-10-16
+> 冻结日期：2026-10-16
+> 批准记录：用户于 2026-10-16 明确批准冻结 CC-OPENAI-001 v0.3，并授权进入实施；冻结正文为 v0.3 经批准内容
+> 模块：`llm_openai`
+> 上游技术基线：`docs/technical/OPENAI_TOOL_CALL_COMPATIBILITY.md` v1.0.0 Frozen
 > 代码基线：`odoo-llm` 18.0，commit `609ec6dda3645165f6a4a843d7af5d286081a29d`
 
 ---
@@ -41,6 +43,7 @@
 | 变更类型 | 行为修正；模型配置校验 |
 | 目标 | 允许 OpenAI 模型通过 `llm.model.parameters` 明确配置 `openai.reasoning_effort = "none"`，并将其安全地加入 Chat Completions 请求，使受影响模型可以发起 function tool 请求；无此配置时维持原请求行为。 |
 | 背景 | 对话请求使用 OpenAI Chat Completions 和工具时收到 HTTP 400：`Function tools with reasoning_effort are not supported for gpt-5.6-luna in /v1/chat/completions. To use /v1/responses or set reasoning_effort to 'none'.` 冻结方案记录了当前源码、端点和日志证据，同时注明最终 HTTP body 尚未捕获。 |
+| 预期模型范围 | 本 CC 不预设哪些模型必须配置该参数；部署方按目标模型的实际 API 行为决定是否设置。当前首个已知受影响模型为 `gpt-5.6-luna`。 |
 
 ---
 
@@ -58,7 +61,7 @@
 
 | 基线 | 标题 | 本次相关性 |
 |---|---|---|
-| `OPENAI_TOOL_CALL_COMPATIBILITY.md` v1.0.0 Frozen §1 | 请求来源核验 | 必须先满足脱敏 payload 核验门禁；当前来源尚未完全定案。 |
+| `OPENAI_TOOL_CALL_COMPATIBILITY.md` v1.0.0 Frozen §1 | 请求来源核验 | 在当前 Odoo 运行时通过本地 MockTransport 捕获了 Provider / SDK 序列化请求：`/v1/chat/completions`，字段为 `messages`、`model`、`stream`、`tool_choice`、`tools`，不含 `reasoning_effort`。历史失败请求的真实外发 body 仍未捕获，详见 §12。 |
 | 同上 §2–§3 | 目标、边界与方案比较 | 采用 Provider 专属 JSON 命名空间；不迁移 Responses API。 |
 | 同上 §4.1–§4.3 | 参数契约、校验和请求构造 | 规范保存时 / 请求时校验、命名空间隔离及 payload 合并行为。 |
 | 同上 §5 | 影响范围 | 限定本 CC 的文件白名单。 |
@@ -69,7 +72,7 @@
 
 ### 2.4 Bug 证据
 
-用户在 OpenAI Provider 下使用 `gpt-5.6-luna` 并启用 `odoo_record_retriever` 时，API 返回 §1 所列 HTTP 400。冻结技术方案 §1 记录了错误原文、当前源码构造的请求参数、命中端点和未捕获请求体的事实。该证据证明问题存在，不单独授权新增业务行为或更换 API 架构。
+用户在 OpenAI Provider 下使用 `gpt-5.6-luna` 并启用 `odoo_record_retriever` 时，API 返回 §1 所列 HTTP 400。冻结技术方案 §1 记录了错误原文、当前源码构造的请求参数、命中端点和历史请求体未捕获的事实。本轮使用 `./venv/bin/python odoo-bin shell -c odoo.conf -d odoo18ce` 对当前运行时做只读 ORM 检索，并以虚构 API key、本地 `httpx.MockTransport`、占位消息和占位工具 schema 调用实际 `openai_chat` 方法；捕获到模型 `gpt-5.6-luna` 的请求 endpoint 为 `/v1/chat/completions`，序列化字段包含 `messages`、`model`、`stream`、`tool_choice`、`tools`，其中不含 `reasoning_effort`。Mock 响应包含一个占位 `odoo_record_retriever` tool call，未连接外网、未读取数据库 Provider 凭据、未写 Odoo 记录、未执行工具。本证据覆盖当前 Odoo / SDK 的请求构造与交给 HTTP transport 的序列化请求；不覆盖网络传输之后的代理 / 网关处理、OpenAI 服务端处理，也不能还原历史失败请求的真实 body。它能证明当前受检代码路径未添加该字段，但不能单独定位历史 400 的最终参数来源，也不能验证 OpenAI 对显式 `none` 的真实响应。
 
 ### 2.5 追溯规则
 
@@ -122,10 +125,10 @@
 | 修改 | `llm_openai/models/openai_provider.py` | 校验 / 解析模型参数，并合并 `reasoning_effort` 到现有 Chat Completions 参数。不得改其他 Provider 操作或 API 端点。 |
 | 新增 | `llm_openai/models/llm_model.py` | 通过 `_inherit = "llm.model"` 增加 OpenAI 模型参数约束；不得扩展核心字段定义。 |
 | 修改 | `llm_openai/models/__init__.py` | 注册新增的模型扩展。 |
-| 新增 | `llm_openai/views/llm_model_views.xml` | 继承现有模型表单，提供参数 JSON 用法说明；不得修改核心 `llm` view。 |
+| 新增 | `llm_openai/views/llm_model_views.xml` | 使用 `inherit_id="llm.llm_model_view_form"` 继承现有 `llm.model` 表单，通过 `//field[@name='parameters']` 的 `position="attributes"` 为 `parameters` 字段增加 help，说明 `{"openai":{"reasoning_effort":"none"}}` 用法；不得新建并行表单或修改核心 `llm` view。 |
 | 修改 | `llm_openai/__manifest__.py` | 注册新增的 OpenAI view 数据文件，不改依赖或模块版本，除非依赖条件触发 §12。 |
 | 修改 | `llm_openai/README.md` | 记录命名空间示例、支持值及“不透传未知参数”的配置行为。 |
-| 新增 / 修改 | `llm_openai/tests/__init__.py`、`llm_openai/tests/test_*.py` | 添加本 CC §11 所列自动化测试。 |
+| 新增 / 修改 | `llm_openai/tests/__init__.py`、`llm_openai/tests/test_openai_reasoning_effort.py` | `llm_openai` 当前没有 tests 目录，本次新增目录及此测试文件，覆盖本 CC §11 所列自动化测试。 |
 
 测试实现如确需增加同目录测试辅助文件，须仅服务于本 CC 的测试契约，不扩展生产代码边界。
 
@@ -150,6 +153,28 @@
 | 本场景尚无针对参数合并、配置错误及回归边界的自动化契约。 | 增加 §11 列出的自动化测试，并将真实 Provider 的实际结果按 IHR / ATR 记录。 | CC-CHANGE-004 |
 
 配置行为必须严格符合冻结技术方案 §4.1：`False` / `None` / `""` 表示未配置；`"{}"` 合法且不变更请求；`"null"`、非法 JSON 或非对象顶层对 OpenAI 模型无效；非 OpenAI provider 不解释、不应用 OpenAI 命名空间；未知顶层命名空间和 `openai` 未知键忽略、不透传；`reasoning_effort` 只接受字符串 `"none"`。
+
+完整判定表（`parameters` 字段存储的是 JSON 字符串；`False` / `None` 是 Odoo 空字段值）：
+
+| 配置值 | OpenAI 模型保存时 | OpenAI 请求时 |
+|---|---|---|
+| `False` / `None` | 跳过校验 | 不设置 `reasoning_effort` |
+| `""` | 跳过校验 | 不设置 `reasoning_effort` |
+| `"{}"` | 合法 | 不设置 `reasoning_effort` |
+| `"null"` | 报错 | 报错，不发出请求 |
+| `"[]"` | 报错 | 报错，不发出请求 |
+| `{"openai":{}}` | 合法 | 不设置 `reasoning_effort` |
+| `{"openai":{"reasoning_effort":"none"}}` | 合法 | 设置 `reasoning_effort="none"` |
+| `{"openai":{"reasoning_effort":"low"}}` | 报错 | 报错，不发出请求 |
+| `{"openai":{"reasoning_effort":""}}` | 报错 | 报错，不发出请求 |
+| `{"openai":{"reasoning_effort":1}}` | 报错 | 报错，不发出请求 |
+| `{"openai":{"unknown":"x"}}` | 忽略未知键 | 不设置 effort，不透传未知键 |
+| `{"other":{"x":1}}` | 忽略未知 namespace | 不设置 effort |
+| `{"openai":null}` 或 `{"openai":[]}` | 报错 | 报错，不发出请求 |
+
+非 OpenAI 模型不校验或应用 `openai` namespace；此表只约束 OpenAI Provider 模型。
+
+`openai` 是 `llm_openai` 为 OpenAI Provider 保留的参数命名空间。其他 Provider 对该命名空间按 CC-PRESERVE-003 忽略；若 OpenAI Provider 模型中的 `openai` 值格式非法，则按配置冲突处理并报错。实施时不得把 OpenAI 命名空间写入其他 Provider 的模型配置。
 
 ---
 
@@ -176,6 +201,8 @@
 | §4.2 保存时及请求时校验 | CC-CHANGE-002 | CC-TEST-005、006 |
 | §4.3 不覆盖 Provider 参数、仅有配置时加入 effort | CC-CHANGE-001；CC-PRESERVE-001、002 | CC-TEST-007 至 CC-TEST-010 |
 | §6.2 真实 Provider 和 `mcp` 问题区分 | CC-CHANGE-004；§12 | 人工验证及独立 E2E 状态记录 |
+| §2、§6.2 保留 Chat Completions | CC-PRESERVE-005 | CC-TEST-009、CC-TEST-012 |
+| §6.2、§10 凭据保护 | CC-PRESERVE-006 | CC-TEST-011、CC-TEST-012 及 IHR / ATR 脱敏检查 |
 
 ---
 
@@ -186,6 +213,7 @@
 | 需要数据库迁移 | 否；不新增字段、不迁移模型记录。 |
 | 迁移脚本 | N/A |
 | 配置读取 | 读取现有 `llm.model.parameters`；实现前只读盘点 OpenAI 模型的现存值。 |
+| 盘点方式 | 使用 `./venv/bin/python odoo-bin shell -c odoo.conf -d odoo18ce` 执行只读 ORM 查询，列出 OpenAI 模型的 `parameters` 非空值及模型标识；不得建立隔离数据库，不得用直接 SQL。不得输出 API key 或其他凭据。 |
 | 数据修改 | 本 CC 不允许自动重写、清空或规范化已有记录。 |
 | 回滚策略 | 若模块升级后需要撤销代码，移除 addon 扩展并恢复原代码；本方案不要求数据恢复，因为不写入模型参数。已有用户配置由用户明确管理，不由回滚逻辑删除。 |
 | 验证 | 升级后确认无 schema 迁移；通过自动化测试及只读检查确认模型记录未被改写。 |
@@ -211,7 +239,7 @@
 | 新权限 / ACL | 无。 |
 | 敏感数据 | API key、认证头、请求正文中的用户消息不得写入文档、测试断言输出或 ATR。 |
 | 参数透传 | 只允许由 addon 解析并验证 `openai.reasoning_effort="none"`；不得把任意 JSON 展开给 SDK。 |
-| 配置错误反馈 | 使用 Odoo 配置校验错误和请求前的受控运行时错误；不得包含 key、完整请求体、堆栈或本地路径。 |
+| 配置错误反馈 | 保存时的 `ValidationError` 对模型配置管理员 / 配置者可见。请求时在 Provider 请求前返回受控 `UserError`，由现有聊天错误处理展示给当前聊天用户；文案说明模型配置无效并提示联系管理员，详细诊断仅写入受控日志，不显示 key、完整请求体、堆栈或本地路径。不得新增聊天错误 UI。 |
 | 日志 | 若为脱敏 payload 核验临时启用请求日志，须遮蔽鉴权信息和业务消息，核验后按项目规则处置临时日志。 |
 
 ---
@@ -220,31 +248,34 @@
 
 | 测试 ID | 对应变更 | 上游来源 | 测试类型 | 预期结果 | 人工验证 | 原因 |
 |---|---|---|---|---|---|---|
-| CC-TEST-001 | 空值处理 | 技术方案 §4.1；CC-PRESERVE-001 | 单元 | `False`、`None`、`""` 不设置 `reasoning_effort`。 | 否 | 保留原请求行为。 |
-| CC-TEST-002 | 空对象处理 | 技术方案 §4.1；CC-PRESERVE-001 | 单元 | `"{}"` 作为合法配置，不设置 effort。 | 否 | 明确空 JSON 行为。 |
-| CC-TEST-003 | 命名空间隔离 | 技术方案 §4.1；CC-PRESERVE-003 | 单元 | 未知顶层 namespace 不报错、不应用；其他 Provider 不解释 OpenAI namespace。 | 否 | 验证多 Provider 共存边界。 |
-| CC-TEST-004 | 未知键过滤 | 技术方案 §4.1；CC-PRESERVE-004 | 单元 | `openai` 下未知键忽略、不报错、不出现在 SDK 参数中。 | 否 | 防止无校验透传。 |
-| CC-TEST-005 | JSON / 顶层类型错误 | 技术方案 §4.1–§4.2；CC-CHANGE-002 | ORM 单元 | 对 OpenAI 模型，非空非法 JSON、`null`、数组及非对象顶层在保存时给出配置错误。 | 否 | 保证配置可诊断。 |
-| CC-TEST-006 | OpenAI namespace / effort 非法 | 技术方案 §4.1–§4.2；CC-CHANGE-002 | ORM 单元 | `openai` 非对象、effort 非字符串、空值或非 `none` 值保存失败；运行时遇到绕过约束的同类数据时拒绝请求。 | 否 | 保存和请求边界双重校验。 |
+| CC-TEST-001 | 空值处理 | 技术方案 §4.1；CC-PRESERVE-001 | ORM + 请求构造单元 | `False`、`None`、`""` 在保存时跳过校验，合法保存；请求中均不设置 `reasoning_effort`。 | 否 | 精确固定空字段语义。 |
+| CC-TEST-002 | 空对象处理 | 技术方案 §4.1；CC-PRESERVE-001 | ORM + 请求构造单元 | `"{}"` 与 `{"openai":{}}` 合法保存；请求均不设置 effort。 | 否 | 覆盖合法空配置及空 namespace。 |
+| CC-TEST-003 | 未知 namespace / Provider 隔离 | 技术方案 §4.1；CC-PRESERVE-003 | ORM + 请求构造单元 | `{"other":{"x":1}}` 不报错、不应用；非 OpenAI 模型含 `openai` namespace 时不校验、不注入。 | 否 | 验证多 Provider 共存边界。 |
+| CC-TEST-004 | 未知键过滤 | 技术方案 §4.1；CC-PRESERVE-004 | ORM + 请求构造单元 | `{"openai":{"unknown":"x"}}` 合法忽略；请求不设置 effort，未知键不出现在 SDK 参数中。 | 否 | 防止无校验透传。 |
+| CC-TEST-005 | JSON / 顶层类型错误 | 技术方案 §4.1–§4.2；CC-CHANGE-002 | ORM 单元 | 对 OpenAI 模型，非空非法 JSON、`"null"`、`"[]"` 及其他非对象顶层保存失败；运行时绕过 ORM 约束时也拒绝请求。空字符串属于 CC-TEST-001，不应失败。 | 否 | 保证配置可诊断并消除空字符串歧义。 |
+| CC-TEST-006 | OpenAI namespace / effort 非法 | 技术方案 §4.1–§4.2；CC-CHANGE-002 | ORM + 请求构造单元 | `openai` 为 null / 数组 / 字符串时保存失败。`reasoning_effort` 键存在时，值为 null、非字符串、空字符串或非 `none` 字符串均保存失败；键不存在时合法（见 CC-TEST-002）。运行时绕过约束时拒绝请求。 | 否 | 保存和请求边界双重校验。 |
 | CC-TEST-007 | effort 生效 | 技术方案 §4.3；CC-CHANGE-001 | 请求构造单元 | `{"openai":{"reasoning_effort":"none"}}` 使 SDK 请求恰好带有 `reasoning_effort="none"`。 | 否 | 核心修复断言。 |
 | CC-TEST-008 | Provider 字段不被覆盖 | 技术方案 §4.3；CC-PRESERVE-002 | 请求构造单元 | 设置 effort 时，model、messages、stream、tools、tool_choice 均保持由 Provider 构造的原值。 | 否 | 防止参数注入覆盖请求核心字段。 |
 | CC-TEST-009 | 请求形态矩阵 | 技术方案 §6.1；CC-PRESERVE-005 | 请求构造单元 | 带 / 不带工具与流式 / 非流式组合中，effort 只按当前模型配置生效，其他请求结构不变。 | 否 | 覆盖统一请求路径及分支。 |
 | CC-TEST-010 | 配置错误不出网 | 技术方案 §4.2；CC-CHANGE-002 | 请求构造单元 | 无效配置在 SDK / HTTP 调用前失败；断言外部调用 mock 未被调用。 | 否 | 验证运行时二次校验。 |
-| CC-TEST-011 | 目标模型真实 Provider 验证 | 技术方案 §6.2；CC-CHANGE-004 | 人工集成 | `gpt-5.6-luna` 在安全配置下不再收到该 400，并返回有效 function tool call；API key 与业务消息不进入报告。 | 是 | 真实 API 行为需实测，自动 mock 不足以证明。 |
+| CC-TEST-011 | 目标模型真实 Provider 验证 | 技术方案 §6.2；CC-CHANGE-004 | 人工集成 | **Given**：目标 Odoo 实例已有 OpenAI Provider 与 `gpt-5.6-luna`，该模型 `parameters` 为 `{"openai":{"reasoning_effort":"none"}}`，且 `odoo_record_retriever` 已启用。**When**：仅调用 Provider 请求路径提交“读取 gemini 的 3 个销售订单，返回链接”，捕获原始 Provider 响应并在工具循环前停止。**Then**：HTTP 响应状态为 200，响应 `choices[0].message.tool_calls` 至少一项且其 `function.name == "odoo_record_retriever"`，不含原 400 错误；本测试不执行 Odoo 工具，凭据与业务内容不写入记录。 | 是 | 真实服务需确认是否接受参数；与 Odoo 端工具执行由 CC-TEST-013 分开判定。 |
 | CC-TEST-012 | 其他模型 / endpoint 回归 | 技术方案 §6.2；CC-PRESERVE-001、005 | 人工集成 | 有可用账户时验证一个未配置 effort 的 OpenAI 工具调用模型及一个 OpenAI-compatible endpoint；不可用的场景记为 `NOT RUN`。 | 是 | 验证兼容性范围，避免无证据声称通过。 |
 | CC-TEST-013 | Odoo 工具执行结果区分 | 技术方案 §1.4、§6.2 | 人工集成 | 单独记录 API tool call、Odoo 实际工具执行及回复三种结果；若 `mcp` Schema 问题未解决，真实工具 E2E 记为受阻，不能误报成功。 | 是 | 分离本次 Provider 修复与独立 `mcp` 问题。 |
+
+状态定义：`PASS` 表示测试已执行且符合预期；`FAIL` 表示已执行但不符合预期；`BLOCKED` 表示由外部依赖 / 服务状态阻止执行（如 `mcp` 工具 Schema 问题或 Provider 服务故障）；`NOT RUN` 表示环境、权限或凭据未准备而未执行。环境 / 凭据缺失不得记作 `BLOCKED`，外部依赖实际故障不得伪记为 `NOT RUN`。每项状态需附执行时间、代码基线和证据引用。
 
 ---
 
 ## 12. 停止条件 / 升级闸门
 
-以下门禁必须在本 CC 冻结后、开始实现前关闭。起草阶段状态均为待执行；不得在报告中标为已通过。
+以下门禁必须在本 CC 冻结后、开始实现前关闭。起草阶段状态均为待执行；不得在报告中标为已通过。外发 payload 捕获用于判定 SDK 序列化之后是否还有传输层 / 代理 / 网关改写，以及历史失败请求是否与当前受检路径一致；本地 MockTransport 证据不能回答这些问题。该捕获要求来自冻结技术方案 §1.3、§4.3、§8，CC 不得将它改为非阻塞项；若要取消该门禁，必须先修订并重新冻结技术方案。
 
 | 触发条件 / 门禁 | 要求及升级路径 |
 |---|---|
-| 脱敏请求体来源核验未完成 | 捕获并检查最终序列化请求，记录 endpoint、`reasoning_effort` 是否存在及来源；遮蔽 key、认证头和消息内容。若该参数来自其他 Odoo 层，先修正真实来源并修订 CC。证据进入 IHR / ATR。 |
-| OpenAI 模型参数现值未盘点 | 使用用户指定的 `odoo-bin shell -c odoo.conf` 环境对 `odoo18ce` 做只读盘点；不得建隔离数据库，不得通过直接 SQL 读取或修改。若存在非空非 JSON 值，停止启用约束，先决策兼容处置并修订技术方案 / CC。 |
+| 历史失败请求的真实外发 payload 尚未捕获 | **执行人**：技术负责人或其指定实施者；**时机**：实施前；**环境**：当前开发 Odoo 实例 / 数据库 `odoo18ce`，不建隔离数据库；**操作**：本轮已完成安全的本地运行时序列化捕获，证据为本 CC §2.4；真实外发捕获用于排除 SDK 之后的改写并核对历史请求路径，需在获准的验证窗口进行，记录 endpoint、`reasoning_effort` 是否存在及可确认的来源，遮蔽 key、认证头和业务消息；**产出**：IHR / ATR 中的脱敏 payload 快照及结论。若该参数来自其他 Odoo 层或传输层，先确认其行为并重新评估 / 修订 CC。真实外发捕获因自动审批未授权而未执行；不得绕过审批重试。 |
+| OpenAI 模型参数现值未盘点 | **执行人**：技术负责人或其指定实施者；使用 `./venv/bin/python odoo-bin shell -c odoo.conf -d odoo18ce` 做只读 ORM 查询，列出所有 OpenAI 模型的标识及 `parameters` 非空状态 / 脱敏值；不得建隔离数据库、不得用直接 SQL、不得输出凭据。若存在非空非 JSON 值，停止启用约束，先决策兼容处置并修订技术方案 / CC。 |
 | 当前实现路径或代码基线与冻结基线不同 | 核验运行中的 checkout / commit。若与 `609ec6dda3645165f6a4a843d7af5d286081a29d` 不同，暂停并确认是否需更新上游基线。 |
+| 上游 `odoo-llm` 基线在实施期间变化 | 开始实施前确认 `odoo-llm` commit 仍为 `609ec6dda3645165f6a4a843d7af5d286081a29d`；如上游升级或本地同步新 commit，暂停本 CC，重新核验 §4.1 白名单和 §5 行为是否成立，并修订 / 批准 CC 后再继续。 |
 | 需要改动 CC 白名单外文件、核心字段、公共接口或数据库数据 | 停止，先修订并批准 CC；架构或技术方案变化同时修订技术方案。 |
 | 需要支持其他 effort 值、无条件注入、或迁移 Responses API | 停止；这些改变技术契约，必须先修订并批准冻结技术方案及 CC。 |
 | 保存校验影响现存配置的兼容性未确定 | 停止启用严格校验；不得静默忽略、覆盖或清理记录。升级技术方案 / CC 后继续。 |
@@ -257,6 +288,8 @@
 
 本 CC 只有在评审冻结并获实现授权后才可进入执行。执行关闭至少要求：
 
+自动化测试在既有开发 Odoo 环境 `odoo18ce` 执行，不创建隔离数据库。测试记录须注明运行时 Odoo 版本、Python 版本、PostgreSQL 版本和 `odoo-llm` commit，以便将结果绑定到实际环境与代码基线。
+
 1. §12 的前置门禁已记录状态；要求为硬门禁的项目未通过时不得宣告完整实现关闭。
 2. §4.1 白名单内变更均完成，且没有触碰 §4.2 禁止区域。
 3. CC-TEST-001 至 CC-TEST-010 全部通过，并有可追溯的测试记录。
@@ -264,6 +297,8 @@
 5. CC-PRESERVE-001 至 CC-PRESERVE-006 均有验证证据；未配置时原行为通过回归确认。
 6. 没有将 API key、业务提示内容或敏感请求正文写入报告。
 7. IHR / ATR 记录代码基线、实际文件、自动化测试结果、人工验证证据、未完成项和偏差；本 CC 草稿不填写执行结果。
+
+CC-TEST-011 至 CC-TEST-013 的状态语义按 §11 执行；`BLOCKED` 与 `NOT RUN` 必须分别记录阻塞依赖或未准备条件，不能互换。
 
 ---
 
@@ -289,6 +324,7 @@
 | CC-CHANGE-004 | 技术方案 §6 | 技术方案 |
 | CC-PRESERVE-001 至 CC-PRESERVE-006 | 技术方案 §2–§6 | 技术方案 / 兼容性约束 |
 | CC-TEST-001 至 CC-TEST-013 | 技术方案 §4、§6 | 验收设计 |
+| CC-TEST-013 | 技术方案 §1.4、§6.2 及本 CC §3.2 的 out-of-scope 声明 | 仅记录 API tool call 与 Odoo 工具 E2E 的独立状态；`mcp` 修复明确不在本 CC 范围，不产生修复授权。 |
 
 ### 14.3 无 DDD 路径
 
@@ -303,6 +339,8 @@
 | CC-DEC-001 | 复用现有 `llm.model.parameters`，仅由 `llm_openai` 解释 `openai` 命名空间。 | 新增核心字段；Provider 全局固定注入。 | 这是冻结技术方案选定的最小兼容边界；不增加核心 schema，也不改变无配置时行为。 |
 | CC-DEC-002 | 首期只接受 `reasoning_effort="none"`，未知键忽略且不透传。 | 放行任意 SDK 参数或支持多个值。 | 避免配置绕过和未验证的 API 参数范围。 |
 | CC-DEC-003 | `mcp` Schema 兼容作为独立问题，不扩入本 CC。 | 同一 CC 顺带修复工具执行链。 | 避免把 Provider 请求兼容和另一个 addon 的依赖兼容合并成不可审查的范围。 |
+| CC-DEC-004 | 不在 `llm` 核心增加 OpenAI 参数校验；由 `llm_openai` 解释并校验 `openai` namespace。 | 在 provider-agnostic 核心解析所有 `parameters`，或增加核心字段。 | `parameters` 是跨 Provider 的自由文本字段，各 Provider 可有各自命名空间和校验规则；将 OpenAI 语义留在 `llm_openai` 可保持核心 provider-agnostic，且符合冻结技术方案 §2、§4.1–§4.2。 |
+| CC-DEC-005 | 首期只支持 `reasoning_effort="none"`。 | 同时支持 `low`、`medium`、`high` 等值。 | 本次仅针对错误明确建议的 `none`；其他值对目标模型及 OpenAI-compatible endpoint 的行为未经验证。首期聚焦已知兼容问题，其他值需有独立证据并修订技术方案后再纳入。 |
 
 ## 附录 B — CC 使用说明
 
@@ -324,3 +362,6 @@
 | 版本 | 日期 | 变更说明 | 状态 |
 |---|---|---|---|
 | v0.1 | 2026-10-16 | 初稿：基于冻结技术方案限定 `llm_openai` 工具调用参数兼容修复的文件、行为、测试和实施门禁。 | Draft |
+| v0.2 | 2026-10-16 | 按评审补充继承视图锚点、完整配置判定表、测试状态语义、模型范围、盘点方式、错误可见范围、上游 commit 门禁、追溯及本地脱敏请求序列化证据；真实历史外发 payload 仍列为实施前待核验项。 | Draft |
+| v0.3 | 2026-10-16 | 补充序列化证据覆盖边界、保留 `openai` namespace 规则、澄清 effort 非法值测试、解释真实外发捕获的诊断目标、记录既有测试环境要求，并新增仅支持 `none` 的决策理由。真实外发捕获门禁依冻结技术方案保留。 | Draft |
+| v1.0.0 | 2026-10-16 | 用户批准冻结 v0.3；正文内容不变，登记冻结日期与批准记录。 | Frozen |

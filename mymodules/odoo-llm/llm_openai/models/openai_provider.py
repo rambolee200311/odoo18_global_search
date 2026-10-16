@@ -192,6 +192,11 @@ class LLMProvider(models.Model):
                 # OpenAI-specific: tool_choice param (Ollama doesn't support this)
                 params["tool_choice"] = kwargs.get("tool_choice", "auto")
 
+        # Model-level OpenAI options are validated by the llm.model extension.
+        # Only its allow-listed values are returned, so arbitrary configuration
+        # can never override provider-owned request fields.
+        params.update(model._get_openai_request_parameters())
+
         # Make the API call
         response = self.client.chat.completions.create(**params)
 

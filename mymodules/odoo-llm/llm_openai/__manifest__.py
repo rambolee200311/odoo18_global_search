@@ -15,6 +15,7 @@
     },
     "data": [
         "data/llm_publisher.xml",
+        "views/llm_model_views.xml",
     ],
     "images": [
         "static/description/banner.jpeg",
