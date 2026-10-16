@@ -1,6 +1,6 @@
 # CC-LLM-TOOL-002: Record Retriever Tool Schema Contract
 
-> Document version: v0.1 Draft
+> Document version: v0.2 Draft
 > Status: Draft — not frozen; implementation is not authorized
 > Intent ID: `CC-LLM-TOOL-002`
 > Module: `llm_tool` (with the OpenAI tool formatter as a consumer)
@@ -20,8 +20,8 @@ The project workflow requires a frozen technical design before a CC can be froze
 |---|---|
 | Intent ID | `CC-LLM-TOOL-002` |
 | Work type | Bug investigation and fix |
-| Goal | Ensure `odoo_record_retriever` exposes an accurate input schema to the model and that provider-visible arguments match the parameters validated by Odoo at execution. Schema-generation failures must not silently degrade to an empty object schema. |
-| Triggering evidence | The Odoo chat flow received a tool call with `{}`; `llm.tool.execute()` rejected it because the required `model` argument was missing. No sales-order records were read. See `ATR-CC-OPENAI-001.md` §8.3 and `IHR-CC-OPENAI-001.md` IHR-004. |
+| Goal | Investigate the earlier empty-arguments tool failure and fix the confirmed cause only. Verify that the schema exposed to the model matches runtime validation, and prevent a confirmed schema-generation failure from silently degrading to an empty object schema. |
+| Triggering evidence | An earlier Odoo chat flow sent `{}` and `llm.tool.execute()` rejected it because required `model` was absent; no records were read in that run. A later user-provided screenshot on the same code baseline shows successful `odoo_record_retriever` execution and three purchase-order results with links and summaries. See `ATR-CC-OPENAI-001.md` §§8.3–8.5, `IHR-CC-OPENAI-001.md` IHR-004 / IHR-005, and `HVR-CC-OPENAI-001.md` HVR-RUN-001. |
 
 ## 2. Baselines and Traceability
 
@@ -42,6 +42,8 @@ N/A. This is a tool-contract compatibility bug fix; it does not define a new bus
 - `llm_tool/models/llm_tool.py:execute()` independently builds a Pydantic model from the method signature and validates the returned arguments. This is why an empty argument object is rejected at execution even if the provider was shown an empty fallback schema.
 
 These code paths make a schema contract defect plausible, but the recorded browser evidence does not include the exact function schema sent to the Provider. The implementation investigation must capture and compare the generated schema, provider payload schema, tool-call arguments, and runtime signature before claiming a single root cause.
+
+The later successful run shows that the empty-argument failure is not consistently reproducible on the reviewed baseline. The TDD and final CC must treat reproduction and schema capture as an initial diagnostic gate; if the schema is valid and the Provider emitted `{}` despite it, the fix may be different or no production change may be justified.
 
 ## 3. Scope Proposal
 
@@ -81,7 +83,7 @@ Do not modify these candidate files until the TDD and this CC are reviewed and f
 
 | ID | Current behavior / evidence | Proposed expected behavior |
 |---|---|---|
-| CC-CHANGE-001 | Tool schema generation may rely on MCP SDK metadata; the OpenAI formatter can replace an error with an empty schema. | The model receives a schema that accurately declares `model` as required and the supported optional arguments, or request construction stops with a controlled diagnostic before contacting the Provider. |
+| CC-CHANGE-001 | Tool schema generation may rely on MCP SDK metadata; the OpenAI formatter can replace an error with an empty schema, but the earlier failure was not reproduced in the later successful run. | First reproduce and inspect the generated and transmitted schema. If schema mismatch or silent fallback is confirmed, the model receives a schema that accurately declares `model` as required and the supported optional arguments, or request construction stops with a controlled diagnostic before contacting the Provider. |
 | CC-CHANGE-002 | Runtime argument validation is generated separately from the schema sent to the Provider. | Automated tests demonstrate schema/runtime parity for `odoo_record_retriever`; invalid or missing required arguments do not invoke `search()` / `search_read()`. |
 | CC-CHANGE-003 | The recorded chat execution failure is visible as a lower-level Pydantic validation error. | Tool failure is returned through the existing chat tool-error path without exposing a traceback, filesystem path, credentials, or record contents. Exact user-facing text is to be specified by the TDD. |
 
@@ -134,3 +136,4 @@ This document is a draft only. No item above is implied complete beyond the chec
 | Version | Date | Change | Status |
 |---|---|---|---|
 | v0.1 | 2026-10-16 | Initial draft separating the retriever schema / runtime-argument issue from the OpenAI `reasoning_effort` fix. | Draft |
+| v0.2 | 2026-10-16 | Incorporated the later successful user-provided E2E screenshot; changed the draft to require reproduction and schema capture before selecting a fix. | Draft |

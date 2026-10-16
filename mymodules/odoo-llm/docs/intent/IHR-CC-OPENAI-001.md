@@ -29,8 +29,8 @@ Scope, change boundaries, preservation requirements, test contract, and stop con
 | Preservation impact | Potential impact; automated evidence in ATR |
 | Deviation | None |
 | CC §12 stop condition triggered | No; the authorized outgoing-payload diagnostic found no reasoning_effort field in the captured request |
-| Open issues | Strict CC-TEST-011 evidence and full Odoo tool execution remain open; see §7 |
-| Current state | Implementation Complete; not a CC closure decision |
+| Open issues | Strict CC-TEST-011 procedure and CC-TEST-012 alternate-endpoint regression remain open; see §7 |
+| Current state | Implementation complete; later integrated tool execution passed in HVR-RUN-001; FR closure assessment remains separate |
 
 ## 4. Implementation History Entries
 
@@ -91,6 +91,20 @@ Scope, change boundaries, preservation requirements, test contract, and stop con
 | Deviation | This was a full UI flow, not the Provider-only harness prescribed by CC-TEST-011. |
 | Follow-up | Keep CC verification open; treat `llm_tool` schema repair as a separate contract. |
 
+### IHR-005
+
+| Field | Value |
+|---|---|
+| Time | 2026-10-16 approximately 15:30 Asia/Shanghai (as shown in user-provided screenshot) |
+| Stage | Human end-to-end verification evidence update |
+| Action | The user supplied a screenshot of a later Odoo chat run using the OpenAI `gpt-5.6-luna` model. `odoo_record_retriever` completed successfully, and the assistant returned three purchase-order entries with links and summaries. No record identifiers, suppliers, amounts, credentials, or full payload were transcribed. |
+| Reason | Update the current verification snapshot after the earlier IHR-004 run failed argument validation. |
+| Files / Components | Odoo chat; OpenAI Provider; `odoo_record_retriever` |
+| Contract Reference | CC-TEST-013; supporting integrated-flow evidence for CC-TEST-011; CC-PRESERVE-005 |
+| Result | Latest integrated tool scenario PASS; earlier empty-arguments failure retained as historical evidence. HVR-RUN-001 is the evidence record. |
+| Deviation | The user performed the complete UI flow rather than stopping before the tool loop; the raw Provider response was not captured. |
+| Follow-up | Keep CC-TEST-011 strict procedure and CC-TEST-012 statuses distinct in ATR / FR. |
+
 ## 5. Actual Change Inventory
 
 | File | Action | Change | CC source |
@@ -115,13 +129,13 @@ Deviation: None. No CC §12 stop condition required stopping implementation afte
 
 | ID | Issue | Category | Severity | Status | Owner |
 |---|---|---|---|---|---|
-| OI-001 | Strict CC-TEST-011 still requires a Provider-only response capture that stops before the tool loop. The Browser UI diagnostic observed the expected tool call without the prior 400, but did not capture the raw HTTP response or stop before tool execution. | External integration | Major | Open | User / Provider environment |
-| OI-002 | CC-TEST-012 has no authorized second model or OpenAI-compatible endpoint configured for regression verification. | External integration | Minor | Open | User / Provider environment |
-| OI-003 | CC-TEST-013 is blocked: `odoo_record_retriever` was invoked, but argument validation failed because required `model` was missing from `{}`. No sales data was read; this schema issue is outside this CC. | Dependency / E2E | Major | Open | llm_tool maintenance |
+| OI-001 | Strict CC-TEST-011 still requires a Provider-only response capture that stops before the tool loop. HVR-RUN-001 confirms the successful integrated flow, but does not capture the raw response or follow the isolated procedure. | External integration | Major | Open | User / Provider environment |
+| OI-002 | No alternate model or OpenAI-compatible endpoint was exercised for CC-TEST-012. | External integration | Minor | Open | User / Provider environment |
+| OI-003 | The first CC-TEST-013 run failed because required `model` was missing from `{}`. The later HVR-RUN-001 completed the integrated retrieval successfully; the original failure remains relevant to the separate schema investigation. | Dependency / E2E | Major | Resolved for latest E2E; historical failure retained | llm_tool maintenance |
 | OI-004 | Odoo runtime logs contain pre-existing errors for unavailable custom addons and an unconditional import of wd_global_search.tests in normal server mode. These are outside the CC file boundary; the server nevertheless starts and listens on 8091. | Environment | Minor | Open | Project owner |
 
 ## 8. Handoff to ATR / HVR / FR
 
-Implemented: CC-CHANGE-001–004. Actual files: see §5. Open issues: OI-001–OI-004. Deviation: Browser UI verification did not follow the Provider-only CC-TEST-011 harness; see IHR-004 and ATR §8. Automated test evidence: ATR-CC-OPENAI-001. Provider behavior was observed in the chat UI; actual Odoo tool retrieval remains blocked; see CC-TEST-011–013.
+Implemented: CC-CHANGE-001–004. Actual files: see §5. Open issues: OI-001, OI-002, OI-004. Deviation: the successful full UI flow did not follow the Provider-only CC-TEST-011 procedure; see IHR-005 and HVR-RUN-001. Automated test evidence: ATR-CC-OPENAI-001. The latest Odoo tool retrieval returned three purchase-order results with links and summaries; the first empty-arguments failure remains in IHR-004 / ATR history.
 
 This IHR records implementation facts only. FR / Human Review must decide contract closure and any merge or release action.

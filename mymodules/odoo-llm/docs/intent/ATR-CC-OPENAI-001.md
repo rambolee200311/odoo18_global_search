@@ -49,9 +49,9 @@ Required test set: CC-OPENAI-001 §11, CC-TEST-001 through CC-TEST-013. This rec
 | CC-TEST-008 | test_model_owned_request_fields_are_not_overridden | ATR-RUN-003 | PASS | §5; run log |
 | CC-TEST-009 | test_tool_and_stream_matrix | ATR-RUN-003 | PASS | §5; run log |
 | CC-TEST-010 | test_invalid_runtime_configuration_stops_before_http_call | ATR-RUN-003 | PASS | §5; run log |
-| CC-TEST-011 | Real configured Provider response | — | NOT RUN | §8.1 |
-| CC-TEST-012 | Other model / compatible endpoint regression | — | NOT RUN | §8.2 |
-| CC-TEST-013 | Actual Odoo tool execution | — | BLOCKED | §8.3 |
+| CC-TEST-011 | Real configured Provider response using the prescribed Provider-only capture | — | NOT RUN to strict procedure | §8.2; HVR-RUN-001 is supporting integrated-flow evidence |
+| CC-TEST-012 | Other model / compatible endpoint regression | — | NOT RUN | §8.2; HVR-SCN-003 |
+| CC-TEST-013 | Actual Odoo tool execution | HVR-RUN-001 | PASS | §8.4; HVR-CC-OPENAI-001.md |
 
 ## 5. Test Run History
 
@@ -114,9 +114,9 @@ The run log also reports unrelated unavailable custom addons: wd_advanced_m2o_re
 
 | ID | Test | Run | Type | Reason | Status | Follow-up |
 |---|---|---|---|---|---|---|
-| OI-001 | CC-TEST-011 | Browser UI diagnostic | NOT RUN to strict acceptance criteria | The OpenAI Provider returned the expected tool call, but the chat UI continued into the Odoo tool loop. This did not satisfy the CC requirement to stop before the tool loop or capture the raw Provider response. | Open | Use a Provider-level harness that stops before tool execution if strict CC-TEST-011 evidence is still required |
+| OI-001 | CC-TEST-011 | Browser UI diagnostic | NOT RUN to strict acceptance criteria | A later full chat run returned a successful tool result, but it did not stop before the tool loop or capture the raw Provider response as specified. | Open | Use a Provider-level harness that stops before tool execution if strict CC-TEST-011 evidence is still required |
 | OI-002 | CC-TEST-012 | — | NOT RUN | No second model or compatible endpoint was selected for this authorized request. | Open | Configure a test endpoint/model |
-| OI-003 | CC-TEST-013 | Browser UI diagnostic | BLOCKED | The chat triggered `odoo_record_retriever`, but runtime argument validation failed before retrieval because required field `model` was absent from `{}`. No sales-order records were read. | Open | Resolve the separate tool-schema generation issue in `llm_tool`, then rerun tool E2E |
+| OI-003 | CC-TEST-013 | HVR-RUN-001 | PASS on latest run; earlier run was BLOCKED | The initial run rejected `{}` because `model` was absent. A later run completed the tool call and returned three purchase-order entries with links and summaries. | Resolved for the verified flow | Keep the initial failure as history; investigate the earlier empty-argument event under the separate CC-LLM-TOOL-002 draft |
 
 ## 8. Special Verification — Provider / Tool Integration
 
@@ -126,11 +126,11 @@ One real request was sent through the configured Odoo OpenAI Provider. The redac
 
 ### 8.2 CC-TEST-011 / CC-TEST-012
 
-CC-TEST-011 remains NOT RUN to its strict acceptance criteria. A later Browser UI diagnostic configured the target model with `{"openai":{"reasoning_effort":"none"}}` and observed the expected `odoo_record_retriever` tool call without the prior 400 error. However, the UI flow continued into the tool loop instead of stopping after the raw Provider response, so this is supporting diagnostic evidence rather than a strict CC-TEST-011 PASS. CC-TEST-012 is NOT RUN because no alternate endpoint/model was configured.
+CC-TEST-011 remains NOT RUN to its strict acceptance criteria. HVR-RUN-001 later confirmed a successful integrated chat/tool flow with the configured `gpt-5.6-luna` model and no prior 400 error. That run continued through the tool loop and did not capture the raw Provider response, so it is supporting end-to-end evidence rather than a pass for the prescribed Provider-only procedure. CC-TEST-012 is NOT RUN because no alternate endpoint/model was exercised.
 
 ### 8.3 CC-TEST-013
 
-CC-TEST-013 is BLOCKED by the separate tool-schema generation issue. The Browser UI diagnostic did invoke `odoo_record_retriever`, but the Odoo tool runner rejected the empty arguments object before retrieval: `1 validation error for DynamicModel; model Field required; input_value={}`. No sales-order records or result links were returned or read.
+The first Browser UI run was BLOCKED: the Odoo tool runner rejected `{}` because required `model` was absent, and no records were read. The later successful run below supersedes that status for the latest verification while retaining the initial failure as history.
 
 ### 8.4 Browser UI diagnostic — 2026-10-16
 
@@ -144,9 +144,13 @@ CC-TEST-013 is BLOCKED by the separate tool-schema generation issue. The Browser
 | Result | Provider compatibility behavior observed; CC-TEST-013 remains BLOCKED; no sales-order records were read. |
 | Sensitive data | API key, authorization header, full request body, and business prompt were not recorded. |
 
-### 8.4 Mock / Real transparency
+### 8.5 Successful integrated tool verification — HVR-RUN-001
 
-CC-TEST-001–010 use Odoo ORM tests and a mocked OpenAI SDK client for request-construction assertions. The single real transport request is diagnostic only and timed out. No successful real external integration is claimed.
+The user supplied a screenshot of a later chat run on the same implementation baseline. The chat requested three purchase orders containing the product term “lamp”. The UI showed a successful `odoo_record_retriever` tool card and an assistant response with three purchase-order entries, each with a navigation link and summary. No `reasoning_effort` error appeared. This is PASS evidence for CC-TEST-013 and for the integrated user-visible flow. The screenshot does not expose the raw Provider response and does not satisfy the isolated procedure for CC-TEST-011. Record identifiers, supplier names, amounts, and the screenshot itself are not copied into this repository.
+
+### 8.6 Mock / Real transparency
+
+CC-TEST-001–010 use Odoo ORM tests and a mocked OpenAI SDK client for request-construction assertions. The earlier direct transport probe is diagnostic only and timed out. HVR-RUN-001 later provides successful real Provider and Odoo tool E2E evidence, but does not persist the raw Provider payload.
 
 ## 9. Evidence Inventory
 
@@ -154,9 +158,10 @@ CC-TEST-001–010 use Odoo ORM tests and a mocked OpenAI SDK client for request-
 |---|---|---|---|
 | E-001 | Odoo test-run log | evidence/ATR-CC-OPENAI-001-RUN-003.log | ATR-RUN-003 |
 | E-002 | Redacted runtime output captured in IHR-001 / §8.1 | This record; no raw payload persisted | Diagnostic only |
+| E-003 | User-provided screenshot | HVR-CC-OPENAI-001.md §9 | HVR-RUN-001; integrated tool E2E PASS |
 
 ## 10. Handoff to HVR / FR
 
-Required automated tests: 10. PASS: 10; FAIL: 0; SKIPPED: 0; BLOCKED: 0; NOT RUN: 0. Latest valid run: ATR-RUN-003. Evidence baseline match: Yes. Outstanding: CC-TEST-011 NOT RUN, CC-TEST-012 NOT RUN, CC-TEST-013 BLOCKED.
+Required automated tests: 10. PASS: 10; FAIL: 0; SKIPPED: 0; BLOCKED: 0; NOT RUN: 0. Latest valid run: ATR-RUN-003. Evidence baseline match: Yes. Manual / integrated evidence: CC-TEST-013 PASS in HVR-RUN-001; CC-TEST-011 remains NOT RUN to its strict Provider-only procedure; CC-TEST-012 remains NOT RUN.
 
 This ATR records execution evidence only; it does not decide CC closure, merge, or release.
