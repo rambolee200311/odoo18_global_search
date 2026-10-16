@@ -114,9 +114,9 @@ The run log also reports unrelated unavailable custom addons: wd_advanced_m2o_re
 
 | ID | Test | Run | Type | Reason | Status | Follow-up |
 |---|---|---|---|---|---|---|
-| OI-001 | CC-TEST-011 | — | NOT RUN | Required model setting was not applied to the database; the single diagnostic request used the current unconfigured model and timed out. | Open | User/provider validation window required |
+| OI-001 | CC-TEST-011 | Browser UI diagnostic | NOT RUN to strict acceptance criteria | The OpenAI Provider returned the expected tool call, but the chat UI continued into the Odoo tool loop. This did not satisfy the CC requirement to stop before the tool loop or capture the raw Provider response. | Open | Use a Provider-level harness that stops before tool execution if strict CC-TEST-011 evidence is still required |
 | OI-002 | CC-TEST-012 | — | NOT RUN | No second model or compatible endpoint was selected for this authorized request. | Open | Configure a test endpoint/model |
-| OI-003 | CC-TEST-013 | — | BLOCKED | Known MCP schema-generation compatibility issue remains; tool execution was not attempted. | Open | Resolve separately in llm_tool, then authorize E2E |
+| OI-003 | CC-TEST-013 | Browser UI diagnostic | BLOCKED | The chat triggered `odoo_record_retriever`, but runtime argument validation failed before retrieval because required field `model` was absent from `{}`. No sales-order records were read. | Open | Resolve the separate tool-schema generation issue in `llm_tool`, then rerun tool E2E |
 
 ## 8. Special Verification — Provider / Tool Integration
 
@@ -126,11 +126,23 @@ One real request was sent through the configured Odoo OpenAI Provider. The redac
 
 ### 8.2 CC-TEST-011 / CC-TEST-012
 
-CC-TEST-011 is NOT RUN to its acceptance criteria: the model database parameters was not changed to the required “none” setting, and no HTTP 200 tool-call response was received. No further external call was made after the single authorized attempt. CC-TEST-012 is NOT RUN because no alternate endpoint/model was configured for this turn.
+CC-TEST-011 remains NOT RUN to its strict acceptance criteria. A later Browser UI diagnostic configured the target model with `{"openai":{"reasoning_effort":"none"}}` and observed the expected `odoo_record_retriever` tool call without the prior 400 error. However, the UI flow continued into the tool loop instead of stopping after the raw Provider response, so this is supporting diagnostic evidence rather than a strict CC-TEST-011 PASS. CC-TEST-012 is NOT RUN because no alternate endpoint/model was configured.
 
 ### 8.3 CC-TEST-013
 
-CC-TEST-013 is BLOCKED by the separately known mcp schema-generation compatibility issue. This task did not execute odoo_record_retriever or read any sales-order data.
+CC-TEST-013 is BLOCKED by the separate tool-schema generation issue. The Browser UI diagnostic did invoke `odoo_record_retriever`, but the Odoo tool runner rejected the empty arguments object before retrieval: `1 validation error for DynamicModel; model Field required; input_value={}`. No sales-order records or result links were returned or read.
+
+### 8.4 Browser UI diagnostic — 2026-10-16
+
+| Field | Value |
+|---|---|
+| Environment | Existing development Odoo instance `odoo18ce`, in Codex in-app browser; no isolated database |
+| Model | OpenAI Provider, `gpt-5.6-luna`, Chat; model parameters set in the Odoo form to `{"openai":{"reasoning_effort":"none"}}` for this verification |
+| Action | Sent the CC-TEST-011 approved test query through the existing Odoo chat with `odoo_record_retriever` enabled; exact business prompt omitted from this record |
+| Provider observation | The prior `reasoning_effort` HTTP 400 did not recur. The chat displayed a tool request named `odoo_record_retriever` from `gpt-5.6-luna`, demonstrating that the Provider accepted the configured tool-call request. The raw HTTP response/status was not captured in this UI run. |
+| Tool observation | Odoo attempted to dispatch the tool, then failed argument validation because required `model` was missing from `{}`. The assistant asked for clarification; no sales data or links were produced. |
+| Result | Provider compatibility behavior observed; CC-TEST-013 remains BLOCKED; no sales-order records were read. |
+| Sensitive data | API key, authorization header, full request body, and business prompt were not recorded. |
 
 ### 8.4 Mock / Real transparency
 
