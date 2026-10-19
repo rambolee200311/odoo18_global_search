@@ -173,25 +173,31 @@ class LLMTool(models.Model):
 
         Returns the tool's input schema. Priority:
         1. Use self.input_schema if set (manual override or stored from decorator)
-        2. Generate from method signature using MCP SDK
+        2. Generate from the same signature model used by execute()
         """
         self.ensure_one()
+        from odoo.exceptions import UserError
 
-        # If schema is stored in DB, use it
-        if self.input_schema:
-            return json.loads(self.input_schema)
+        try:
+            if self.input_schema:
+                schema = json.loads(self.input_schema)
+            else:
+                method = self._get_implementation_method()
+                model = self.get_pydantic_model_from_signature(method)
+                schema = model.model_json_schema(by_alias=True)
 
-        # Generate schema from method signature
-        method_func = self._get_implementation_method()
+            if not isinstance(schema, dict) or schema.get("type") != "object":
+                raise ValueError("Tool input schema root must be an object")
 
-        # Use MCP SDK's func_metadata to generate proper schema
-        from mcp.server.fastmcp.utilities.func_metadata import func_metadata
-
-        func_meta = func_metadata(method_func)
-
-        # Get MCP-compatible schema
-        schema = func_meta.arg_model.model_json_schema(by_alias=True)
-        return schema
+            return schema
+        except Exception:
+            _logger.warning(
+                "Unable to prepare input schema for tool %s (schema_generation_failed)",
+                self.name,
+            )
+            raise UserError(
+                _("The input schema for this tool could not be prepared.")
+            ) from None
 
     def execute(self, parameters):
         """Execute this tool with validated parameters"""
