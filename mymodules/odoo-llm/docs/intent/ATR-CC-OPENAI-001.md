@@ -49,7 +49,7 @@ Required test set: CC-OPENAI-001 §11, CC-TEST-001 through CC-TEST-013. This rec
 | CC-TEST-008 | test_model_owned_request_fields_are_not_overridden | ATR-RUN-003 | PASS | §5; run log |
 | CC-TEST-009 | test_tool_and_stream_matrix | ATR-RUN-003 | PASS | §5; run log |
 | CC-TEST-010 | test_invalid_runtime_configuration_stops_before_http_call | ATR-RUN-003 | PASS | §5; run log |
-| CC-TEST-011 | Real configured Provider response using the prescribed Provider-only capture | — | NOT RUN to strict procedure | §8.2; HVR-RUN-001 is supporting integrated-flow evidence |
+| CC-TEST-011 | Real configured Provider response using the prescribed Provider-only capture | ATR-RUN-004 | PASS | §8.2; Provider-only response stopped before tool dispatch |
 | CC-TEST-012 | Other model / compatible endpoint regression | — | NOT RUN | §8.2; HVR-SCN-003 |
 | CC-TEST-013 | Actual Odoo tool execution | HVR-RUN-001 | PASS | §8.4; HVR-CC-OPENAI-001.md |
 
@@ -126,7 +126,20 @@ One real request was sent through the configured Odoo OpenAI Provider. The redac
 
 ### 8.2 CC-TEST-011 / CC-TEST-012
 
-CC-TEST-011 remains NOT RUN to its strict acceptance criteria. HVR-RUN-001 later confirmed a successful integrated chat/tool flow with the configured `gpt-5.6-luna` model and no prior 400 error. That run continued through the tool loop and did not capture the raw Provider response, so it is supporting end-to-end evidence rather than a pass for the prescribed Provider-only procedure. CC-TEST-012 is NOT RUN because no alternate endpoint/model was exercised.
+The original CC-TEST-011 UI run did not satisfy the provider-only procedure and remains recorded as historical evidence. A supplemental provider-only run, ATR-RUN-004, subsequently satisfied the frozen acceptance criteria. The successful integrated HVR-RUN-001 remains separate supporting evidence. CC-TEST-012 is NOT RUN because no alternate endpoint/model was exercised.
+
+#### ATR-RUN-004 — Provider-only response capture
+
+| Field | Value |
+|---|---|
+| Timestamp | 2026-10-16 (current execution) |
+| Code baseline | `odoo-llm` HEAD `609ec6dda3645165f6a4a843d7af5d286081a29d` plus the existing CC-OPENAI-001 implementation working tree |
+| Environment | Existing Odoo `odoo18ce`; `venv/bin/python odoo-bin shell -c odoo.conf`; no database writes |
+| Invocation | Called configured `llm.provider.openai_chat()` for OpenAI `gpt-5.6-luna`, with the existing `odoo_record_retriever` tool; stopped at the parsed Provider response before tool dispatch |
+| Observed | HTTP status 200; response model `gpt-5.6-luna`; response included `odoo_record_retriever` tool call |
+| Result | PASS for CC-TEST-011 |
+| Evidence | Redacted terminal observation recorded here; API key, full prompt, arguments and business data were not retained |
+| Follow-up | HVR-SCN-002 remains NOT RUN as a human-verification scenario; this provider-level test is execution evidence and does not claim human observation. CC-TEST-012 remains NOT RUN. |
 
 ### 8.3 CC-TEST-013
 
@@ -162,6 +175,6 @@ CC-TEST-001–010 use Odoo ORM tests and a mocked OpenAI SDK client for request-
 
 ## 10. Handoff to HVR / FR
 
-Required automated tests: 10. PASS: 10; FAIL: 0; SKIPPED: 0; BLOCKED: 0; NOT RUN: 0. Latest valid run: ATR-RUN-003. Evidence baseline match: Yes. Manual / integrated evidence: CC-TEST-013 PASS in HVR-RUN-001; CC-TEST-011 remains NOT RUN to its strict Provider-only procedure; CC-TEST-012 remains NOT RUN.
+Required automated tests: 10. PASS: 10; FAIL: 0; SKIPPED: 0; BLOCKED: 0; NOT RUN: 0. Latest automated test run: ATR-RUN-003. Evidence baseline match: Yes. Integration evidence: CC-TEST-011 PASS in ATR-RUN-004; CC-TEST-013 PASS in HVR-RUN-001; CC-TEST-012 NOT RUN. HVR-SCN-002 remains NOT RUN because no human verifier performed or observed the provider-only capture.
 
 This ATR records execution evidence only; it does not decide CC closure, merge, or release.
