@@ -1,0 +1,69 @@
+{
+  "inventory_id": "TV-OFFICE-ENGINE-M1-P0-ENV",
+  "inventory_date": "2026-10-19",
+  "inventory_scope": "Current local development workspace only; not the confirmed target Odoo deployment host.",
+  "commands": [
+    "./venv/bin/python package and platform inventory",
+    "soffice --version",
+    "./odoo-bin --version",
+    "non-sensitive Odoo runtime key scan in odoo.conf",
+    "repository Office-file inventory"
+  ],
+  "odoo": {
+    "version_command_output": "Odoo Server 18.0",
+    "deployment_identity": "Local development checkout; target host equivalence not confirmed",
+    "config_file": "odoo.conf",
+    "present_relevant_non_sensitive_config": {
+      "http_port": "8091"
+    },
+    "missing_or_not_explicitly_configured_budget_keys": [
+      "workers",
+      "limit_time_cpu",
+      "limit_time_real",
+      "limit_memory_soft",
+      "limit_memory_hard"
+    ],
+    "proxy_timeout": "NOT PROVIDED / NOT VERIFIED",
+    "queue_job": "NOT PROVIDED / NOT VERIFIED"
+  },
+  "host": {
+    "os": "macOS 27.0.1",
+    "architecture": "arm64",
+    "logical_cpu_count": 10,
+    "physical_memory_bytes": 17179869184,
+    "available_memory_bytes_at_inventory": 3772956672,
+    "memory_source": "psutil.virtual_memory() in project venv; local host snapshot, not a service or container memory limit"
+  },
+  "python_environment": {
+    "version": "3.11.9",
+    "executable": "/Users/lijianqiang/Documents/odoo18_global_search/venv/bin/python",
+    "packages": {
+      "openpyxl": "3.0.9",
+      "python-docx": null,
+      "lxml": "4.9.3",
+      "Pillow": "9.4.0",
+      "psutil": "5.9.4",
+      "xlrd": "1.2.0",
+      "xlwt": "1.3.0"
+    },
+    "dependency_changes": "None; no packages installed or upgraded"
+  },
+  "libreoffice": {
+    "executable": "/Users/lijianqiang/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override/soffice",
+    "version": "LibreOfficeDev 26.8.0.0.alpha0 2c87e51eeaa2b413ff4ae097b2705eea1995d8e5",
+    "release_status": "Development/Alpha; not stable release",
+    "target_host_version": "NOT PROVIDED / NOT VERIFIED"
+  },
+  "sample_inventory": {
+    "authorized_real_docx_count": 0,
+    "authorized_real_xlsx_count": 0,
+    "repository_candidates_excluded_as_fixtures_or_addon_templates": true,
+    "details_file": "P0_Sample_Inventory.json"
+  },
+  "safety": {
+    "odoo_started": false,
+    "database_accessed": false,
+    "business_files_modified": false,
+    "secrets_recorded": false
+  }
+}

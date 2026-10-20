@@ -1,0 +1,39 @@
+{
+  "inventory_date": "2026-10-19",
+  "scope": "Repository scan for .docx and .xlsx, excluding .git, venv, node_modules, and mymodules/odoo-llm.",
+  "authorized_real_business_samples": {
+    "docx": [],
+    "xlsx": []
+  },
+  "excluded_repository_candidates": [
+    {
+      "path": "odoo/addons/test_mimetypes/tests/testfiles/case.docx",
+      "reason": "Odoo MIME test fixture; not user-approved business template"
+    },
+    {
+      "path": "odoo/addons/test_mimetypes/tests/testfiles/case.xlsx",
+      "reason": "Odoo MIME test fixture; not user-approved business template"
+    },
+    {
+      "path": "odoo/addons/base/static/xls/res_partner.xlsx",
+      "reason": "Odoo core static/import template; not user-approved business template"
+    },
+    {
+      "path": "addons/account/static/xls/aml_import_template.xlsx",
+      "reason": "Odoo addon import template; not user-approved business template"
+    },
+    {
+      "path": "addons/account/static/xls/coa_import_template.xlsx",
+      "reason": "Odoo addon import template; not user-approved business template"
+    },
+    {
+      "path": "addons/stock/static/xlsx/stock_quant.xlsx",
+      "reason": "Odoo addon static template; not user-approved business template"
+    },
+    {
+      "path": "addons/test_import_export/data/test_import.xlsx",
+      "reason": "Odoo import/export test data; not user-approved business template"
+    }
+  ],
+  "interpretation": "No qualifying real business template was found in the repository. This inventory does not establish whether samples exist outside the workspace. Excluded files were not used as substitutes and were not modified."
+}

@@ -1,0 +1,45 @@
+{
+  "verification_id": "TV-OFFICE-ENGINE-M1-P0-C-QUEUE-JOB",
+  "inspection_date": "2026-10-19",
+  "status": "SOURCE_AND_LOCAL_CONFIG_REVIEWED_TARGET_RUNTIME_BLOCKED",
+  "database_accessed": false,
+  "module_source": {
+    "path": "mymodules/queue/queue_job",
+    "directory_present": true,
+    "manifest_version": "18.0.3.1.3",
+    "manifest_external_python_dependency": "requests",
+    "requests_in_project_venv": "2.31.0",
+    "manifest_installable": true
+  },
+  "current_odoo_conf_effective_nonsecret_values": {
+    "addons_path": ["addons", "odoo/addons", "mymodules", "mymodules/odoo-llm"],
+    "server_wide_modules": "base,web",
+    "workers": 0,
+    "explicit_resource_budget_values_present": {
+      "limit_time_cpu": false,
+      "limit_time_real": false,
+      "limit_memory_soft": false,
+      "limit_memory_hard": false
+    }
+  },
+  "module_discovery_check": {
+    "method": "Odoo config.parse_config(['-c','odoo.conf']) followed by initialize_sys_path() and get_module_path('queue_job'); no ORM/database operation",
+    "resolved": false,
+    "reason": "Configured addons_path does not contain mymodules/queue; queue_job source is nested at mymodules/queue/queue_job."
+  },
+  "source_documentation_findings": {
+    "runner_role": "Jobrunner dispatches queued jobs to available Odoo workers through the queue_job HTTP endpoint; job execution occurs in a separate transaction.",
+    "production_configuration_guidance": "queue_job README Configure says to load queue_job and use workers greater than 1; its sample includes server_wide_modules=web,queue_job and a channels setting.",
+    "source_reference": "mymodules/queue/queue_job/readme/CONFIGURE.md and mymodules/queue/queue_job/jobrunner/runner.py"
+  },
+  "not_verified": [
+    "Whether queue_job is installed in any Odoo database",
+    "Whether a Jobrunner is running",
+    "Target host Odoo/OS/Python/LibreOffice versions",
+    "Target workers, CPU/real-time and soft/hard memory budgets",
+    "Container/host resource limits and reverse-proxy timeouts",
+    "Target channels and expected concurrent file jobs",
+    "Full Python/LibreOffice process-tree RSS under actual document workload"
+  ],
+  "interpretation": "Queue-job source is present and its Python dependency is installed, but current local Odoo config cannot discover or load the module as configured. This does not establish target deployment status or whether an asynchronous queue is required."
+}

@@ -1,0 +1,11 @@
+python_executable= /Users/lijianqiang/Documents/odoo18_global_search/venv/bin/python
+python_version= 3.11.9
+openpyxl==3.1.5; license=MIT; requires_python=>=3.8
+python-docx==1.1.2; license=MIT; requires_python=>=3.7
+xlrd==2.0.1; license=BSD; requires_python=>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*
+lxml==4.9.3; license=BSD-3-Clause; requires_python=>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, != 3.4.*
+typing-extensions==4.16.0; license=None; requires_python=>=3.9
+et-xmlfile==2.0.0; license=MIT; requires_python=>=3.8
+xlsx_read_write=PASS
+docx_read_write=PASS
+license_notice_review=MIT openpyxl/python-docx/et-xmlfile; BSD xlrd and lxml; Python Software Foundation license typing-extensions. xlrd requires retaining copyright/conditions/disclaimer and no endorsement; lxml distribution includes third-party notices in LICENSES.txt.

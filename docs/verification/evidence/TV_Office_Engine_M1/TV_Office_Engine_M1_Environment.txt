@@ -1,0 +1,60 @@
+{
+  "python": "3.11.9 (v3.11.9:de54cf5be3, Apr  2 2024, 07:12:50) [Clang 13.0.0 (clang-1300.0.29.30)]",
+  "python_executable": "/Users/lijianqiang/Documents/odoo18_global_search/venv/bin/python",
+  "platform": "macOS-27.0.1-arm64-arm-64bit",
+  "machine": "arm64",
+  "cpu_count": 10,
+  "memory_total_bytes": 17179869184,
+  "packages": {
+    "openpyxl": "3.0.9",
+    "python-docx": "NOT_INSTALLED",
+    "xlrd": "1.2.0",
+    "xlwt": "1.3.0",
+    "psutil": "5.9.4",
+    "Pillow": "9.4.0"
+  },
+  "soffice_path": "/Users/lijianqiang/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override/soffice",
+  "baseline_soffice_processes": [
+    {
+      "enumeration_status": "DENIED_BY_RUNTIME_SANDBOX",
+      "error": "[Errno 1] Operation not permitted (originated from sysctl(KERN_PROC_ALL))"
+    }
+  ],
+  "soffice_version": "LibreOfficeDev 26.8.0.0.alpha0 2c87e51eeaa2b413ff4ae097b2705eea1995d8e5",
+  "soffice_version_stderr": "",
+  "soffice_version_result": {
+    "returncode": 0,
+    "elapsed_seconds": 0.4192,
+    "peak_rss_bytes": 2408448,
+    "termination_reason": null
+  },
+  "fc-list": {
+    "path": "/opt/homebrew/bin/fc-list",
+    "matching_families": [
+      ".CJK Symbols Fallback HK",
+      ".CJK Symbols Fallback JA",
+      ".CJK Symbols Fallback MO",
+      ".CJK Symbols Fallback SC",
+      ".CJK Symbols Fallback TC",
+      ".CJK Symbols Fallback Watch HK",
+      ".CJK Symbols Fallback Watch JA",
+      ".CJK Symbols Fallback Watch MO",
+      ".CJK Symbols Fallback Watch SC",
+      ".CJK Symbols Fallback Watch TC",
+      "Heiti SC,黑體\\-簡,黒体\\-簡,Heiti\\-간체,黑体\\-简",
+      "Heiti TC,黑體\\-繁,黒体\\-繁,Heiti\\-번체,黑体\\-繁",
+      "STHeiti",
+      "Songti SC,宋體\\-簡,宋体\\-简",
+      "Songti TC,宋體\\-繁,宋体\\-繁"
+    ],
+    "stderr": "\nFontconfig error: No writable cache directories\n\t/opt/homebrew/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\t/Users/lijianqiang/.fontconfig\n\nFontconfig error: No writable cache directories\n\t/opt/homebrew/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\t/Users/lijianqiang/.fontconfig\n\nFontconfig error: No writable cache directories\n\t/opt/homebrew/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\t/Users/lijianqiang/.fontconfig\n\nFontconfig error: No writable cache directories\n\t/opt/homebrew/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\t/Users/lijianqiang/.fontconfig\n\nFontconfig error: No writable cache directories\n\t/opt/homebrew/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\t/Users/lijianqiang/.fontconfig\n\nFontconfig error: No writable cache directories\n\t/opt/homebrew/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\t/Users/lijianqiang/.fontconfig\n\nFontconfig error: No writable cache directories\n\t/opt/homebrew/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\t/Users/lijianqiang/.fontconfig\n\nFontconfig error: No writable cache directories\n\t/opt/homebrew/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\t/Users/lijianqiang/.fontconfig\n\nFontconfig error: No writable cache directories\n\t/opt/homebrew/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\t/Users/lijianqiang/.fontconfig\n\nFontconfig error: No writable cache directories\n\t/opt/homebrew/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\t/Users/lijianqiang/.fontconfig\n",
+    "returncode": 0
+  },
+  "pdftoppm": {
+    "path": "/Users/lijianqiang/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override/pdftoppm",
+    "stdout": "",
+    "stderr": "pdftoppm version 26.05.0\nCopyright 2005-2026 The Poppler Developers - http://poppler.freedesktop.org\nCopyright 1996-2011, 2022 Glyph & Cog, LLC\n",
+    "returncode": 0
+  },
+  "odoo_runtime_budget_keys": "NOT_FOUND_OR_NOT_CONFIGURED"
+}

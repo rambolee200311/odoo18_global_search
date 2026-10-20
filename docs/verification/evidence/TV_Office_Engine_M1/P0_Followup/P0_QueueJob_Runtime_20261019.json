@@ -1,0 +1,67 @@
+{
+  "record_id": "TV-OFFICE-ENGINE-M1-P0-C-RUNTIME-20261019",
+  "executed_at_local": "2026-10-19 Asia/Shanghai",
+  "database": "odoo18ce",
+  "database_access_method": "Odoo ORM via venv/bin/python odoo-bin shell -c odoo.conf -d odoo18ce --no-http",
+  "python": "3.11.9",
+  "queue_job": {
+    "source_path": "mymodules/queue/queue_job",
+    "version": "18.0.3.1.3",
+    "state": "installed",
+    "models_registered": ["queue.job", "queue.job.channel"],
+    "external_dependency": {
+      "name": "requests",
+      "version": "2.31.0",
+      "available": true
+    }
+  },
+  "final_runtime_config": {
+    "addons_path_includes": "mymodules/queue",
+    "server_wide_modules": ["base", "web", "queue_job"],
+    "workers": 0,
+    "queue_channels": "root:1",
+    "runner_host": "127.0.0.1",
+    "runner_port": 8091,
+    "service_port": 8091,
+    "mode_scope": "threaded local development validation; not production prefork evidence"
+  },
+  "prefork_trial": {
+    "workers": 2,
+    "result": "not suitable for direct browser topology as currently configured",
+    "observed": "Odoo websocket requests reached HTTP port 8091 and logged that the websocket must be opened on evented port 8072; no reverse proxy route was configured",
+    "action": "returned local dev config to workers=0"
+  },
+  "runner_callback_failure_and_recovery": {
+    "initial_host_source": "http_interface=0.0.0.0",
+    "initial_request": "http://0.0.0.0:8091/queue_job/runjob",
+    "initial_result": "HTTP 502; job remained pending/enqueued until runner callback configuration was corrected",
+    "correction": "[queue_job] host=127.0.0.1, port=8091",
+    "recovery_job_uuid": "5587deb2-b1c1-4e12-b737-d45209fe3775",
+    "recovery_final_state": "done",
+    "recovery_method": "ir.config_parameter().get_param('web.base.url')",
+    "recovery_date_enqueued_utc": "2026-10-19 10:10:59",
+    "recovery_date_started_utc": "2026-10-19 10:10:59.455642",
+    "recovery_date_done_utc": "2026-10-19 10:10:59.465450",
+    "recovery_exec_seconds": 0.009808
+  },
+  "final_config_task": {
+    "uuid": "c948845e-f980-4f07-a2ae-dbd6f301926d",
+    "name": "TV-P0-C-final-host-98105411804c4772a96d9d3a227448b4",
+    "method": "ir.config_parameter().get_param('web.base.url')",
+    "state": "done",
+    "date_created_utc": "2026-10-19 10:13:39.662354",
+    "date_enqueued_utc": "2026-10-19 10:13:39",
+    "date_started_utc": "2026-10-19 10:13:39.708463",
+    "date_done_utc": "2026-10-19 10:13:39.711379",
+    "exec_seconds": 0.002916,
+    "created_to_done_seconds_approx": 0.049025,
+    "side_effect_scope": "queue job technical record only; no business records read or written"
+  },
+  "limitations": [
+    "No real Office rendering workload was enqueued.",
+    "No complete process-tree RSS or LibreOffice child-process monitoring was performed.",
+    "No production worker, reverse-proxy, timeout, memory, or concurrency budget was supplied or validated.",
+    "P0-C local queue execution passes; production resource budget and synchronous/asynchronous decision remain inconclusive."
+  ],
+  "secrets_recorded": false
+}

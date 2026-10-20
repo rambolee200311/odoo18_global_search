@@ -1,0 +1,21 @@
+test_container_rejects_empty_mismatch_truncated_and_unknown_parts (test_office_core.OfficeCoreTests.test_container_rejects_empty_mismatch_truncated_and_unknown_parts) ... ok
+test_declared_file_expanded_entry_and_count_budgets (test_office_core.OfficeCoreTests.test_declared_file_expanded_entry_and_count_budgets) ... ok
+test_disabled_legacy_and_macro_formats_are_refused (test_office_core.OfficeCoreTests.test_disabled_legacy_and_macro_formats_are_refused) ... ok
+test_docx_inspection_and_candidate_render_for_plain_paragraph_and_table (test_office_core.OfficeCoreTests.test_docx_inspection_and_candidate_render_for_plain_paragraph_and_table) ... ok
+test_docx_textbox_is_rejected_as_unverified_structure (test_office_core.OfficeCoreTests.test_docx_textbox_is_rejected_as_unverified_structure) ... ok
+test_external_relationship_is_rejected (test_office_core.OfficeCoreTests.test_external_relationship_is_rejected) ... ok
+test_formula_workbook_candidate_is_disabled_to_avoid_cache_loss (test_office_core.OfficeCoreTests.test_formula_workbook_candidate_is_disabled_to_avoid_cache_loss) ... ok
+test_hostile_xml_doctype_is_rejected_without_entity_resolution (test_office_core.OfficeCoreTests.test_hostile_xml_doctype_is_rejected_without_entity_resolution) ... ok
+test_invalid_policy_and_timeout_are_stable_and_cleanup_worker (test_office_core.OfficeCoreTests.test_invalid_policy_and_timeout_are_stable_and_cleanup_worker) ... ok
+test_mapping_distinguishes_empty_string_zero_and_invalid_null (test_office_core.OfficeCoreTests.test_mapping_distinguishes_empty_string_zero_and_invalid_null) ... ok
+test_mapping_rejects_unknown_missing_null_duplicate_and_formula_targets (test_office_core.OfficeCoreTests.test_mapping_rejects_unknown_missing_null_duplicate_and_formula_targets) ... ok
+test_package_boundary_has_no_forbidden_imports_or_ignore_warning (test_office_core.OfficeCoreTests.test_package_boundary_has_no_forbidden_imports_or_ignore_warning) ... ok
+test_real_business_samples_with_unverified_parts_fail_closed (test_office_core.OfficeCoreTests.test_real_business_samples_with_unverified_parts_fail_closed) ... ok
+test_warning_classifier_fails_closed (test_office_core.OfficeCoreTests.test_warning_classifier_fails_closed) ... ok
+test_xlsx_candidate_render_preserves_source_and_uses_new_bytes (test_office_core.OfficeCoreTests.test_xlsx_candidate_render_preserves_source_and_uses_new_bytes) ... ok
+test_xlsx_inspection_identifies_cells_and_formulas_as_read_only (test_office_core.OfficeCoreTests.test_xlsx_inspection_identifies_cells_and_formulas_as_read_only) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 7.822s
+
+OK
