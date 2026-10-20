@@ -1,0 +1,8 @@
+ATR-RUN-001 — historical failed run (preserved)
+Date: 2026-10-20
+Command: PYTHONPATH=mymodules ./venv/bin/python -m unittest discover -s mymodules/office_verify/tests -v
+Environment: Python 3.11.9; macOS; lxml 4.9.3
+Observed suite size at this run: 13 tests
+Result: FAIL — 8 failures, 5 errors.
+Cause: every public verification attempt requiring the worker failed before XML parsing because macOS rejected RLIMIT_AS=4 GiB; the Python process virtual address reservation exceeded that limit. Functional assertions consequently observed the stable resource error instead of reaching their intended cases.
+Disposition: retained as implementation history; IHR-003 replaced the address-space cap with parent-side process RSS monitoring and the full suite was rerun as ATR-RUN-002.

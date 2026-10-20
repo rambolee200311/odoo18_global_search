@@ -1,0 +1,21 @@
+CC-OFFICE-M1-002 dependency/runtime evidence
+Captured: 2026-10-20
+
+./venv/bin/python --version
+Python 3.11.9
+
+./venv/bin/python -m pip show lxml
+Name: lxml
+Version: 4.9.3
+License: BSD-3-Clause
+Location: /Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages
+Requires:
+Required-by: ofxparse, python-docx, zeep
+
+mymodules/office_verify/requirements.txt
+lxml==4.9.3
+
+./venv/bin/python -m pip check
+No broken requirements found.
+
+No package install or upgrade was performed for this CC.

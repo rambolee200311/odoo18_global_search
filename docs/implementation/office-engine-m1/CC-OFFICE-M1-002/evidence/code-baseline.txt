@@ -1,0 +1,5 @@
+CC-OFFICE-M1-002 current code baseline
+Base commit: d3045d43609bd7b3898f803074457e27f138dca5
+Working-tree package hash: 694ae1ee324d9dcfb7e100ba72f35a3c8f0a89f1cbb97459c1cf5fd1abddabfd
+Hash scope: mymodules/office_verify; all non-pycache files sorted by relative path; SHA-256 updated with relative_path + NUL + byte_length + NUL + file_bytes.
+Git status: implementation is uncommitted; unrelated existing working-tree changes are preserved.

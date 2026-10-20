@@ -1,0 +1,28 @@
+ATR-RUN-002 — latest valid run
+Date: 2026-10-20
+Command: PYTHONPATH=mymodules ./venv/bin/python -m unittest discover -s mymodules/office_verify/tests -v
+Environment: Python 3.11.9; macOS; lxml 4.9.3
+Scope: mymodules/office_verify/tests
+
+test_dependencies_and_package_boundary ... ok
+test_doctype_entities_rejected_and_predefined_entities_accepted ... ok
+test_docx_non_target_run_style_change_is_warning_or_fatal_by_policy ... ok
+test_docx_plain_text_is_compared_across_run_splits ... ok
+test_docx_table_target_and_non_target_change ... ok
+test_docx_unsupported_control_structure_fails_closed ... ok
+test_empty_fake_truncated_crc_and_path_traversal_fail ... ok
+test_merge_structure_and_required_parts_are_enforced ... ok
+test_resource_budgets_are_enforced_without_partial_pass ... ok
+test_styles_are_warning_unless_policy_requires_them ... ok
+test_target_value_mismatch_and_non_target_mutation_fail ... ok
+test_unknown_parts_external_links_and_old_format_are_rejected ... ok
+test_valid_xlsx_value_formula_cache_and_structure ... ok
+test_xlsx_formula_change_fails_and_cache_value_not_exposed ... ok
+test_xlsx_unknown_mapping_formula_target_and_null_fail ... ok
+
+Ran 15 tests in 2.213s
+OK
+
+Additional checks in the same command chain:
+./venv/bin/python -m compileall -q mymodules/office_verify — PASS
+git diff --check — PASS
