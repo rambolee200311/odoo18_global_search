@@ -5,7 +5,7 @@
 | 字段 | 值 |
 |---|---|
 | Coding Contract | `CC-OFFICE-M1-005` |
-| 版本 | `v0.1 Draft` |
+| 版本 | `v0.2 Draft` |
 | 状态 | **DRAFT — 仅供评审；未授权实施** |
 | Intent ID | `OFFICE-ENGINE-M1-PROVIDER-PRE-ROUTE-SPIKE` |
 | 类型 | 验证性 Spike；不交付产品功能 |
@@ -17,9 +17,11 @@
 
 ### 0.1 冻结前置状态
 
-本 CC 现在仅为 Draft。Implementation Plan V0.3 Phase 5 的正式前置条件是 Part I 模型封装已通过阶段验收；当前 CC-004 的成功处理探针因 spawn 子进程无法导入 `odoo.addons.office_core` 而失败，且冻结计划仍列 CC-004 为 Draft。CC-004 的负责人行政关闭不改变此证据，也不等于 Phase 4 PASS。
+本 CC 现在仅为 Draft。CC-004 的成功处理探针因 spawn 子进程无法导入 `odoo.addons.office_core` 而失败；其 FR 必须继续保持 `NOT SATISFIED`，冻结 Implementation Plan V0.3 也仍保留原始阶段状态，不得伪称 Phase 4 PASS。
 
-因此，本 CC 可供技术评审和 Spike 范围澄清；**不得在上述前置条件未解决、计划基线未完成影响复核前冻结或执行**。解除方式须通过新批准基线明确：修复并验证 Part I 成功路径、更新实施计划阶段映射，或由负责人正式修订并批准相应阶段准入规则。不得在本 Draft 内自行豁免冻结计划门禁。
+**负责人技术债接受与风险降低决策：** 负责人 `lijianqiang` 于 2026-10-21 在本轮评审意见中明确要求：若不能在现有冻结基线内修复该问题，则记录负责人接受该技术债并批准降低风险。本轮不改动已关闭 CC-004 的实现/冻结核心；该批准据此记为接受 `spawn` 导入故障这一已知技术债，并仅允许把本 Spike 限定为**合成文件、mock/stub Provider、只验证 Provider 前路由与 payload 隔离**。该决定同时构成本次验证性 CC 对 Implementation Plan V0.3 Phase 5 “Part I 已通过阶段验收”前置条件的一次性窄范围例外：只允许执行 Provider 前安全路由和 payload 隔离验证，不改变计划文档、Phase 4 状态或 CC-004 FR，不构成聊天功能实施授权。它不证明文件生成/附件交付成功、不允许真实业务文件或外部 Provider 调用，也不授权 Phase 6 或用户启用 Office 生成。上述限制是本次风险降低措施。
+
+本 CC 的范围不包含修复 spawn/import 故障。该故障仍须在独立技术/实施基线中处理，且在修复与验证完成前，CC-006、完整聊天工作流和任何用户可用文件生成继续禁止。当前 Odoo-LLM 的精确源码基线已在 §2 锁定为干净 HEAD；若 freeze 前该 commit/工作树变化，必须重新核对。
 
 ## 1. 目标与问题
 
@@ -37,7 +39,7 @@ Odoo-LLM 当前聊天链路可能在附件被分类、解析或序列化后交�
 | 输入 | 基线 / 约束 |
 |---|---|
 | SRS / TDD / Implementation Plan | 仅使用 §0 列出的冻结版本；若任何版本被替换，暂停并执行影响复核 |
-| Odoo-LLM 源码 | 当前仓库子目录 `mymodules/odoo-llm/` 的 HEAD 记录为 `609ec6dda3645165f6a4a843d7af5d286081a29d`；检查时工作树有未提交修改，本值仅作导航，不是可复现 Spike 基线。冻结前必须记录准确文件快照/提交并确认目标实例加载的是同一代码 |
+| Odoo-LLM 源码 | `mymodules/odoo-llm/` HEAD：`609ec6dda3645165f6a4a843d7af5d286081a29d`；2026-10-21 已将原有 tracked/untracked 修改保存至 `stash@{0}`（stash commit `4d3e359688d8404e310a98881975808ebb32e066`）。当前 `git status --porcelain --untracked-files=all` 为空；tracked 与 untracked 工作树均干净。冻结及执行前须确认目标实例加载此 HEAD |
 | Odoo 实例 | 仅获准的 Odoo 18 开发实例 `odoo18ce`、项目 `venv` 和 `odoo.conf`；不得创建隔离数据库 |
 | Provider 验证 | 使用本地 mock/stub 或具备脱敏请求捕获能力的受控端点；默认禁止向真实外部 Provider 发送测试附件或内容 |
 | 数据 | 仅使用合成 Office 附件与合成消息；不得记录 API Key、客户数据、文件原文、完整 Base64 或可恢复的文档片段 |
@@ -77,6 +79,7 @@ Odoo-LLM 当前聊天链路可能在附件被分类、解析或序列化后交�
 | CC-TEST-007 | 非 Office 回归 | 对普通文本及明确允许的非 Office 附件运行对照；Spike 不改变既有 Provider 路径，也不误拦截不相关请求 | 否 |
 | CC-TEST-008 | 扩展实现边界 | 验证独立 Addon 是否可在 Provider 调用前完成识别、阻断及受权转交；若依赖官方源码改动或无法证明全部路径，结论 FAIL/INCONCLUSIVE，不实现聊天功能 | 否 |
 | CC-TEST-009 | 证据脱敏与复现 | 检查报告/日志不含密钥、文件内容、Base64、敏感字段或绝对临时路径；另一轮运行可由记录的 commit、配置与步骤复现 | 否 |
+| CC-TEST-010 | 临时钩子/Monkey Patch 清理 | 若本轮使用注入钩子，必须物理删除；IHR 记录 Odoo-LLM 的 `git status --short --untracked-files=all`、产品目录精确 `rg`/`grep` 无残留结果及临时路径不存在证明。即使未使用 hook，也记录未使用声明和干净状态；残留或证明缺失不得 PASS | 否 |
 
 ### 4.1 结果判定
 
@@ -90,11 +93,21 @@ Odoo-LLM 当前聊天链路可能在附件被分类、解析或序列化后交�
 | 类别 | 允许 |
 |---|---|
 | 验证资料 | 新建 `docs/implementation/office-engine-m1/CC-OFFICE-M1-005/` 下 IHR、ATR、HVR（若适用）、运行脚本、脱敏日志及 Spike 报告 |
-| 临时验证钩子 | 仅本地、测试专用、可撤销；不得作为产品功能启用，不得改变用户数据或持久化业务数据 |
+| 临时验证钩子 | 仅本地、测试专用、可撤销；不得作为产品功能启用，不得改变用户数据或持久化业务数据。所有 hook、monkey patch、临时扩展及注入脚本在每次验证结束后必须从工作区和临时目录物理删除；不得仅禁用或留作后续复用 |
 | 产品代码 | 不在范围内；若验证必须修改产品/上游源码，停止并升级到新 TDD/CC |
 | 配置/数据库 | 不改 Odoo 全局配置或 schema，不新增数据库/模块；仅使用既有批准开发环境和已安装的测试模块 |
 
 必需交付物：IHR、ATR、Spike 报告、基线快照、脱敏 payload 核验产物、当前 Provider/路径覆盖矩阵、未决项和推荐结论。HVR 是否 N/A 按本 CC 冻结时的验证方式确定；不得以浏览器观察替代 Provider payload/权限运行证据。
+
+### 5.1 临时钩子删除证明（强制）
+
+若验证确实需要临时 hook、monkey patch 或测试扩展，IHR 必须记录注入前状态、创建的每个文件/临时目录、用途和清理命令。验证完成后须物理删除这些文件，并在 IHR 附上：
+
+1. Odoo-LLM 仓库的 `git status --short --untracked-files=all` 输出，证明没有残留修改或未跟踪钩子；
+2. 对被触及产品目录的精确 `rg`/`grep` 扫描命令及结果，证明没有 Spike 标记、monkey patch 或注入代码；
+3. 对仓库外临时目录的路径存在性检查，证明临时脚本/文件已删除。
+
+上述清理证据缺失、代码仍留在工作树、或无法证明删除完成时，`CC-TEST-010` 必须 FAIL/BLOCKED，Spike 不得判 PASS。报告只记录输出/文件名，不得包含 Provider secrets 或 Office 内容。
 
 ## 6. 安全与数据治理
 
@@ -106,14 +119,16 @@ Odoo-LLM 当前聊天链路可能在附件被分类、解析或序列化后交�
 
 ## 7. 完成定义与 Gate
 
-1. 先关闭 §0.1 的 Part I/计划基线门禁，随后重新审查并冻结本 CC；Draft 不授权运行 Spike。
-2. `CC-TEST-001—009` 均有原生状态、命令/步骤、环境和当前代码基线证据；没有 PASS 外推或遗漏 Provider 路径。
-3. IHR、ATR、Spike 报告及证据目录完成，payload 检查不含 Office 内容或 secret；保留所有 FAIL/BLOCKED/NOT RUN。
-4. 结论明确回答独立 Addon 可否安全路由；若失败，记录所需上游技术变更，不实施聊天功能。
-5. 负责人审阅并决定是否允许进入 Phase 6；Spike PASS 本身不授权 CC-006 实施。
+1. 负责人接受 CC-004 的 spawn/import 技术债与限定风险降低措施；FR 仍为 NOT SATISFIED；不把 CC-004 或 Phase 4 宣称通过。
+2. Odoo-LLM HEAD 为 `609ec6dda3645165f6a4a843d7af5d286081a29d`，且冻结/执行时 tracked 和 untracked 工作树均干净；目标运行实例加载同一源码。
+3. `CC-TEST-001—010` 均有原生状态、命令/步骤、环境和当前代码基线证据；没有 PASS 外推或遗漏 Provider 路径。
+4. IHR、ATR、Spike 报告及证据目录完成，payload 检查不含 Office 内容或 secret；所有临时钩子物理删除且清理证明完整；保留所有 FAIL/BLOCKED/NOT RUN。
+5. 结论明确回答独立 Addon 可否安全路由；若失败，记录所需上游技术变更，不实施聊天功能。
+6. 负责人审阅并决定是否允许进入 Phase 6；Spike PASS 本身不授权 CC-006 实施，CC-004 成功生成缺口解决前不得开放用户文件生成。
 
 ## 8. 版本历史
 
 | 版本 | 日期 | 状态 | 说明 |
 |---|---|---|---|
 | v0.1 | 2026-10-21 | Draft | 按 Implementation Plan V0.3 Phase 5 起草；明示 CC-004 成功路径 FAIL 与冻结计划前置条件，未授权实施。 |
+| v0.2 | 2026-10-21 | Draft — Resubmitted | 负责人 `lijianqiang` 接受 spawn/import 技术债并批准仅限 Spike 的风险降低及一次性 Phase 5 验证范围例外；Odoo-LLM 工作树 stash 后锁定干净 commit；增加临时注入钩子物理删除及 git/grep/临时路径清理证明门禁。FR 仍 NOT SATISFIED；不授权 CC-006/产品生成。 |
