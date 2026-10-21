@@ -1,0 +1,7 @@
+Command:
+OFFICE_SPIKE_TOKEN=ff5508dd8be3 ./venv/bin/python odoo-bin shell -c odoo.conf -d odoo18ce
+
+Observed output:
+OFFICE_SPIKE_FINAL_AUDIT={"direct_filestore_delete": false, "global_gc_executed": false, "objects_are_exactly_the_two_spike_candidates": true, "objects_left_for_native_gc": {"control": {"exact_name_record_count": 0, "filestore_object_exists": true, "gc_entry_exists": true, "store_fname_reference_count": 0}, "rollback": {"exact_name_record_count": 0, "filestore_object_exists": true, "gc_entry_exists": true, "store_fname_reference_count": 0}}, "records_and_references_absent": true, "status": "PASS", "storage_mode": "file", "user_a_su": false}
+
+Result: PASS. Final exact-marker audit as User A confirmed both records and both store_fname references are absent. Exactly the two synthetic files and matching Odoo GC checklist entries remain pending native garbage collection.

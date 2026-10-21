@@ -1,0 +1,7 @@
+Command:
+OFFICE_SPIKE_TOKEN=ff5508dd8be3 ./venv/bin/python odoo-bin shell -c odoo.conf -d odoo18ce
+
+Observed output:
+OFFICE_SPIKE_ORM_CLEANUP={"cleanup_id": "4062fa55-d52d-41c5-973b-a29e2895ee90", "control_filestore_object_exists_after_unlink": true, "control_gc_entry_exists_after_unlink": true, "direct_filestore_delete": false, "exact_name_record_count_after_cleanup": 0, "global_gc_executed": false, "repeated_orm_cleanup": "PASS_NOOP", "status": "PASS", "user_a_su": false}
+
+Result: PASS. The committed control attachment was deleted via owner User A's ORM; a second exact-name ORM unlink was a safe no-op. No file was deleted directly and no global GC was run.

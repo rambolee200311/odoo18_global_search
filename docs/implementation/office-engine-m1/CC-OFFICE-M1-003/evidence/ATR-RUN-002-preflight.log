@@ -1,0 +1,7 @@
+Command:
+OFFICE_SPIKE_TOKEN=ff5508dd8be3 ./venv/bin/python odoo-bin shell -c odoo.conf -d odoo18ce
+
+Observed output:
+OFFICE_SPIKE_PREFLIGHT={"candidate_paths": [{"expected_store_fname": "dc/dc6a49aab38a11bb25bb612cb5df2ed9999c016a", "gc_entry_exists": false, "object_exists": false}, {"expected_store_fname": "34/34de6936a35011a07ecc06bc0521f9961ccb51f7", "gc_entry_exists": false, "object_exists": false}], "markers_absent": true, "payload_checksums": ["dc6a49aab38a11bb25bb612cb5df2ed9999c016a", "34de6936a35011a07ecc06bc0521f9961ccb51f7"], "preflight_id": "1a32b7e4-6786-4569-b1f8-4df3af3d3c0e", "runtime": {"database": "odoo18ce", "odoo_version": "18.0", "postgresql_version": 160014, "python_version": "3.11.9", "storage_mode": "file"}, "token": "ff5508dd8be3", "users": {"user_a_id": 97, "user_a_su": false, "user_b_id": 98, "user_b_su": false}}
+
+Result: PASS. Exact unique names and deterministic checksum paths were absent before writes; both users were active non-system internal users and both operation environments had su=False. Storage mode was file.

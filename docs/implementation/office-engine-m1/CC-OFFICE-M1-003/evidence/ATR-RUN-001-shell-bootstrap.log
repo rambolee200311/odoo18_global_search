@@ -1,0 +1,5 @@
+Command:
+OFFICE_SPIKE_TOKEN=<redacted-test-token> ./venv/bin/python odoo-bin shell -c odoo.conf -d odoo18ce
+
+Result: BLOCKED before Odoo registry/database access. Queue Job's patched server shutdown enumerated process IDs through psutil and the sandbox returned PermissionError from sysctl(KERN_PROC_ALL). No ORM operation or database mutation occurred.
+Follow-up: Re-ran the same approved Odoo shell operation under the authorized development environment; see ATR-RUN-002 onward.

@@ -1,0 +1,17 @@
+{
+  "captured_on": "2026-10-21",
+  "project_git_commit": "ab89f54727807a25b16f3ad7e699fd05c782f3d9",
+  "odoo_version": "18.0",
+  "python_version": "3.11.9",
+  "postgresql_version": "16.14",
+  "database": "odoo18ce",
+  "attachment_storage_mode": "file",
+  "filestore_root": "REDACTED; resolved from Odoo ir.attachment._filestore()",
+  "user_a": {"uid": 97, "internal": true, "system_group": false, "su": false},
+  "user_b": {"uid": 98, "internal": true, "system_group": false, "su": false},
+  "notes": [
+    "No module, dependency, configuration, or schema changes were made.",
+    "No isolated database was created.",
+    "No sudo(), env(su=True), direct filestore deletion, or global GC invocation was used."
+  ]
+}
