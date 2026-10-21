@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="office_document_request_owner_rule" model="ir.rule">
+        <field name="name">Office document requests: owner only</field>
+        <field name="model_id" ref="model_office_document_request"/>
+        <field name="domain_force">[('owner_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+</odoo>
