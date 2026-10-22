@@ -4,32 +4,60 @@ from __future__ import annotations
 
 import contextvars
 import hashlib
+import importlib
 import json
 import logging
 import os
 import re
+import sys
 import time
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
+from pathlib import Path
 
 import psycopg2
 
-from odoo import _, api, fields, models
+from odoo import _, api, conf, fields, models
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.modules.registry import Registry
-from odoo.addons.office_core import (
-    OfficeCoreError,
-    ResourceBudget,
-    inspect_document,
-    render_candidate,
-)
-from odoo.addons.office_verify import (
-    OfficeVerifyError,
-    VerificationBudget,
-    VerificationPolicy,
-    verify_output,
-)
+
+
+def _load_trusted_python_package(package_name):
+    """Load a pure-Python package from this adapter's configured addon root.
+
+    Odoo's dynamic ``odoo.addons.*`` module name cannot be re-imported by a
+    fresh multiprocessing ``spawn`` interpreter. Keep a single stable,
+    ordinary Python package identity for the parent and worker.
+    """
+    addon_root = Path(__file__).resolve().parents[2]
+    configured_roots = {
+        Path(path).resolve()
+        for path in getattr(conf, "addons_paths", [])
+        if path
+    }
+    if addon_root not in configured_roots:
+        raise ImportError("Office engine package root is not a configured Odoo addon path")
+    root_string = str(addon_root)
+    if root_string not in sys.path:
+        sys.path.insert(0, root_string)
+    package = importlib.import_module(package_name)
+    expected_init = (addon_root / package_name / "__init__.py").resolve()
+    if Path(package.__file__).resolve() != expected_init:
+        raise ImportError("Office engine package resolved outside its configured addon path")
+    return package
+
+
+_office_core = _load_trusted_python_package("office_core")
+_office_verify = _load_trusted_python_package("office_verify")
+OfficeCoreError = _office_core.OfficeCoreError
+ResourceBudget = _office_core.ResourceBudget
+inspect_document = _office_core.inspect_document
+render_candidate = _office_core.render_candidate
+OfficeVerifyError = _office_verify.OfficeVerifyError
+VerificationBudget = _office_verify.VerificationBudget
+VerificationPolicy = _office_verify.VerificationPolicy
+verify_output = _office_verify.verify_output
 
 
 _logger = logging.getLogger(__name__)
@@ -40,7 +68,7 @@ _MIME_TYPES = {
     "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 }
 _MAX_MAPPING_BYTES = 1 * 1024 * 1024
-_MAX_FILE_SIZE = 20 * 1024 * 1024
+_MAX_FILE_SIZE = 32 * 1024 * 1024
 _MAX_EXPANDED_SIZE = 100 * 1024 * 1024
 _MAX_ZIP_ENTRIES = 512
 _MAX_ENTRY_SIZE = 20 * 1024 * 1024
@@ -143,6 +171,46 @@ class OfficeDocumentRequest(models.Model):
     _sql_constraints = [
         ("request_uuid_unique", "unique(request_uuid)", "The request UUID must be unique."),
     ]
+
+    @api.model
+    def _inspect_chat_attachment(self, source, thread, input_message):
+        """Inspect a supported chat upload under the current user's access."""
+        source.ensure_one()
+        thread.ensure_one()
+        input_message.ensure_one()
+        source.check("read")
+        if source.type != "binary" or source.url:
+            raise UserError(_("Only a binary Office attachment can be inspected."))
+        self._validate_input_context(self.env, self.env.uid, source, thread.id, input_message.id)
+        filename = source.name or ""
+        mimetype = (source.mimetype or "").lower().split(";", 1)[0].strip()
+        extension = os.path.splitext(filename)[1].lower()
+        fmt = {".xlsx": "xlsx", ".docx": "docx"}.get(extension)
+        if not fmt or mimetype not in {_MIME_TYPES[fmt], "application/octet-stream"}:
+            raise UserError(_("The Office extension and content type do not match a supported format."))
+        if source.file_size <= 0 or source.file_size > _MAX_FILE_SIZE:
+            raise UserError(_("The Office attachment is empty or exceeds the file size limit."))
+        content = source.raw or b""
+        if not content or len(content) != source.file_size or len(content) > _MAX_FILE_SIZE:
+            raise UserError(_("The Office attachment could not be read within the configured limit."))
+        inspection = inspect_document(content, filename, mimetype, _resource_budget())
+        if inspection.format != fmt:
+            raise UserError(_("The attachment contents do not match the declared Office format."))
+        sheet_names = sorted(
+            {
+                item.element_id.split(":", 1)[1].rsplit("!", 1)[0]
+                for item in inspection.elements
+                if item.element_id.startswith("xlsx:") and "!" in item.element_id
+            }
+        )
+        formula_count = sum(item.kind == "formula" for item in inspection.elements)
+        return {
+            "format": inspection.format,
+            "element_count": len(inspection.elements),
+            "formula_count": formula_count,
+            "sheet_names": sheet_names,
+            "template_sha256": inspection.template_sha256,
+        }
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -283,7 +351,7 @@ class OfficeDocumentRequest(models.Model):
                 filename,
                 mimetype,
                 mapping_plan,
-                VerificationPolicy(enabled_formats=("xlsx", "docx")),
+                VerificationPolicy(enabled_formats=("xlsx", "docx"), require_styles=True),
                 verify_budget,
             )
             if verification.status != "PASS":

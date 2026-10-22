@@ -1,0 +1,41 @@
+{
+  "scenario": "valid_xlsx_core_functional_probe",
+  "user_uid": 2,
+  "source_attachment_id": 6405,
+  "source_sha256": "58bc022435ec49b52b6063014261e07c0b2bcaccf7e1e0049f4d1fe8bbf10cc3",
+  "source_bytes": 4863,
+  "resource_budget": "TV functional-only 2 TB virtual-address limit; not the Odoo product budget and not a production safety pass",
+  "inspect_document": "PASS",
+  "inspection_format": "xlsx",
+  "A1": "客户名称",
+  "mapping_plan": {
+    "schema_version": "1",
+    "template_sha256": "58bc022435ec49b52b6063014261e07c0b2bcaccf7e1e0049f4d1fe8bbf10cc3",
+    "writes": [
+      {
+        "element_id": "xlsx:Sheet1!B1",
+        "operation": "set_value",
+        "value": {
+          "type": "string",
+          "data": "测试客户"
+        }
+      }
+    ]
+  },
+  "render_candidate": "PASS",
+  "applied_writes": 1,
+  "B1": "测试客户",
+  "office_verify": {
+    "status": "PASS",
+    "format": "xlsx",
+    "input_sha256": "58bc022435ec49b52b6063014261e07c0b2bcaccf7e1e0049f4d1fe8bbf10cc3",
+    "output_sha256": "743b82861de7860d51790093ab5ac705071232c9a3ff9c05c21396eca9fa27ac",
+    "checked_targets": 1,
+    "checked_formulas": 0,
+    "cached_value_changed": false,
+    "formula_cache_status": [],
+    "warnings": [],
+    "summary": "完整性回读检查通过；此结果不代表附件已获准交付。"
+  },
+  "elapsed_ms": 1126.23
+}

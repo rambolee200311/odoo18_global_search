@@ -64,7 +64,7 @@ class TestAttachmentIdentity(TransactionCase):
                 True,
                 True,
             ),
-            ("plain.txt", "text/plain", b"PK\x03\x04zip payload", True, False),
+            ("plain.txt", "text/plain", b"PK\x03\x04zip payload", False, False),
         ]
         for name, mime, header, candidate, mismatch in cases:
             with self.subTest(name=name, mime=mime):
@@ -79,25 +79,15 @@ class TestAttachmentIdentity(TransactionCase):
         self.assertFalse(result.is_office_candidate)
 
     def _minimal_xlsx(self):
-        package = io.BytesIO()
-        with zipfile.ZipFile(package, mode="w", compression=zipfile.ZIP_STORED) as archive:
-            archive.writestr(
-                "[Content_Types].xml",
-                '<?xml version="1.0" encoding="UTF-8"?>'
-                '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
-                '<Default Extension="xml" ContentType="application/xml"/>'
-                '<Override PartName="/xl/workbook.xml" '
-                'ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
-                "</Types>",
-            )
-            archive.writestr(
-                "xl/workbook.xml",
-                '<?xml version="1.0" encoding="UTF-8"?>'
-                '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
-                "<sheets/>"
-                "</workbook>",
-            )
-        return package.getvalue()
+        from openpyxl import Workbook
+
+        workbook = Workbook()
+        workbook.active.title = "Sheet1"
+        workbook.active["A1"] = "客户名称"
+        output = io.BytesIO()
+        workbook.save(output)
+        workbook.close()
+        return output.getvalue()
 
     def test_valid_minimal_ooxml_and_damaged_central_directory_fail_closed(self):
         thread = self._thread()
@@ -122,13 +112,24 @@ class TestAttachmentIdentity(TransactionCase):
         self.assertTrue(valid_identity.is_office_candidate)
         self.assertFalse(valid_identity.is_mismatch)
 
-        valid_message = thread.message_post(
-            body="synthetic valid OOXML package",
-            llm_role="user",
-            attachment_ids=[valid_attachment.id],
-        )
-        with self.assertRaises(UserError):
-            thread._prepare_chat_kwargs(valid_message, False)
+        with patch.object(
+            type(thread.model_id), "chat", side_effect=AssertionError("Office files must not reach Provider")
+        ):
+            events = list(
+                thread.generate(
+                    user_message_body="请读取这个 Excel",
+                    attachment_ids=[valid_attachment.id],
+                )
+            )
+        self.assertEqual(len(events), 2)
+        self.assertEqual(events[0]["type"], "message_create")
+        self.assertEqual(events[1]["type"], "message_create")
+        office_user_message = self.env["mail.message"].browse(events[0]["message"]["id"])
+        self.assertFalse(office_user_message.is_error)
+        response_message = self.env["mail.message"].browse(events[1]["message"]["id"])
+        self.assertFalse(response_message.is_error)
+        self.assertIn("文件已接收并完成安全结构检查", response_message.body)
+        self.assertNotIn(valid_attachment.id, thread.get_llm_messages().mapped("attachment_ids").ids)
 
         damaged_package = bytearray(valid_package)
         central_directory = damaged_package.find(b"PK\x01\x02")
@@ -141,11 +142,6 @@ class TestAttachmentIdentity(TransactionCase):
         damaged_attachment = self._attachment(
             "damaged-central-directory.xlsx", mimetype, bytes(damaged_package)
         )
-        damaged_message = thread.message_post(
-            body="synthetic malformed OOXML package",
-            llm_role="user",
-            attachment_ids=[damaged_attachment.id],
-        )
         damaged_header = thread._office_engine_attachment_header(damaged_attachment)
         damaged_identity = inspect_attachment_identity(
             damaged_attachment.name,
@@ -154,15 +150,22 @@ class TestAttachmentIdentity(TransactionCase):
             damaged_attachment.file_size,
         )
         self.assertTrue(damaged_identity.is_office_candidate)
-        # The frozen gate does not parse ZIP packages: it rejects all Office
-        # candidates before Provider dispatch, including malformed containers.
-        with patch(
-            "zipfile.ZipFile",
-            side_effect=AssertionError("provider gate must not parse ZIP packages"),
-        ) as zip_open:
-            with self.assertRaises(UserError):
-                thread._prepare_chat_kwargs(damaged_message, False)
-        zip_open.assert_not_called()
+        # Valid OOXML enters the internal parser; a corrupt central directory
+        # is rejected before any Provider call and rendered as an error event.
+        with patch.object(
+            type(thread.model_id), "chat", side_effect=AssertionError("invalid Office must not reach Provider")
+        ):
+            events = list(
+                thread.generate(
+                    user_message_body="damaged package",
+                    attachment_ids=[damaged_attachment.id],
+                )
+            )
+        self.assertEqual(len(events), 2)
+        rejected = self.env["mail.message"].browse(events[0]["message"]["id"])
+        self.assertTrue(rejected.is_error)
+        error = self.env["mail.message"].browse(events[1]["message"]["id"])
+        self.assertTrue(error.is_error)
 
     def test_ordinary_attachments_reach_real_openai_message_serializer(self):
         thread = self._thread()
@@ -238,7 +241,7 @@ class TestAttachmentIdentity(TransactionCase):
             }
         )
 
-    def test_spoofed_office_is_rejected_and_error_message_isolated(self):
+    def test_spoofed_office_posts_error_message_and_stays_out_of_next_round(self):
         thread = self._thread()
         secret_body = "SPOOFED_ATTACHMENT_BODY_" + uuid4().hex
         attachment = self._attachment(
@@ -251,66 +254,44 @@ class TestAttachmentIdentity(TransactionCase):
             return iter([{"content": "local stub response"}])
 
         with patch.object(type(thread.model_id), "chat", provider_stub):
-            generation = thread.generate(
+            rejected_events = list(thread.generate(
                 user_message_body=secret_body,
                 attachment_ids=[attachment.id],
-            )
-            created_event = next(generation)
-            try:
-                next(generation)
-            except UserError as error:
-                raised_message = str(error)
-            else:
-                self.fail("The spoofed Office attachment was not rejected")
+            ))
         self.assertEqual(dispatched_histories, [])
-        self.assertNotIn(secret_body, raised_message)
-        rejected_id = created_event["message"]["id"]
-        rejected = self.env["mail.message"].browse(rejected_id)
-        rejected.invalidate_recordset(["is_error"])
-        self.assertTrue(rejected.is_error)
-
-        error_message = thread.message_post(
-            body="PRIVATE_REJECTION_NOTICE_" + uuid4().hex,
-            llm_role="assistant",
-            author_id=False,
-            is_error=True,
-        )
-        next_message = thread.message_post(
-            body="NEXT_ROUND_TEXT_" + uuid4().hex,
-            llm_role="user",
-        )
+        self.assertEqual([event["type"] for event in rejected_events], ["message_create"])
+        error_id = rejected_events[0]["message"]["id"]
+        error_message = self.env["mail.message"].browse(error_id)
+        self.assertTrue(rejected_events[0]["message"]["is_error"])
+        self.assertTrue(error_message.is_error)
+        self.assertNotIn(secret_body, error_message.body)
+        next_text = "NEXT_ROUND_TEXT_" + uuid4().hex
 
         with patch.object(type(thread.model_id), "chat", provider_stub):
-            list(thread._generate_assistant_response())
+            list(thread.generate(user_message_body=next_text))
 
         self.assertEqual(len(dispatched_histories), 1)
         history = dispatched_histories[0]
-        self.assertNotIn(rejected.id, history.ids)
         self.assertNotIn(error_message.id, history.ids)
-        self.assertIn(next_message.id, history.ids)
+        self.assertIn(next_text, "\n".join(history.mapped("body")))
         self.assertNotIn(secret_body, "\n".join(history.mapped("body")))
         self.assertNotIn(attachment.id, history.mapped("attachment_ids").ids)
 
-    def test_provider_preparation_rejects_office_attachment_in_history(self):
+    def test_provider_preparation_excludes_office_attachment_in_history(self):
         thread = self._thread()
         attachment = self._attachment(
             "report.xlsx",
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            b"not a zip file",
+            self._minimal_xlsx(),
         )
         message = thread.message_post(
             body="historical attachment",
             llm_role="user",
             attachment_ids=[attachment.id],
         )
-        try:
-            thread._prepare_chat_kwargs(message, False)
-        except UserError as error:
-            self.assertIn("Office attachments are not available", str(error))
-        else:
-            self.fail("The Office attachment in history was not rejected")
-        message.invalidate_recordset(["is_error"])
-        self.assertTrue(message.is_error)
+        prepared = thread._prepare_chat_kwargs(message, False)
+        self.assertFalse(prepared["messages"])
+        self.assertFalse(message.is_error)
 
     def test_malformed_office_candidates_fail_closed_without_archive_parsing(self):
         thread = self._thread()
@@ -331,21 +312,14 @@ class TestAttachmentIdentity(TransactionCase):
                 b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1synthetic OLE header",
             ),
         ]
-        with patch("zipfile.ZipFile", side_effect=AssertionError("ZIP parsing is out of scope")) as zip_open:
-            for name, mimetype, content in samples:
-                attachment = self._attachment(name, mimetype, content)
-                message = thread.message_post(
-                    body="synthetic malformed attachment",
-                    llm_role="user",
-                    attachment_ids=[attachment.id],
-                )
-                try:
-                    thread._prepare_chat_kwargs(message, False)
-                except UserError:
-                    pass
-                else:
-                    self.fail("Office candidate was not rejected before provider preparation")
-        zip_open.assert_not_called()
+        for name, mimetype, content in samples:
+            attachment = self._attachment(name, mimetype, content)
+            with patch.object(
+                type(thread.model_id), "chat", side_effect=AssertionError("malformed Office must not reach Provider")
+            ):
+                events = list(thread.generate(user_message_body="broken", attachment_ids=[attachment.id]))
+            self.assertTrue(events)
+            self.assertTrue(self.env["mail.message"].browse(events[-1]["message"]["id"]).is_error)
 
     def test_ordinary_text_and_png_are_preserved_in_provider_stub_history(self):
         thread = self._thread()
@@ -403,10 +377,10 @@ class TestAttachmentIdentity(TransactionCase):
         )
         with patch(
             "zipfile.ZipFile",
-            side_effect=AssertionError("the provider gate must not parse ZIP packages"),
+            side_effect=AssertionError("provider preparation must not parse Office packages"),
         ) as zip_open:
-            with self.assertRaises(UserError):
-                thread._prepare_chat_kwargs(message, False)
+            prepared = thread._prepare_chat_kwargs(message, False)
+        self.assertFalse(prepared["messages"])
         zip_open.assert_not_called()
 
     def test_header_read_uses_current_user_attachment_access(self):

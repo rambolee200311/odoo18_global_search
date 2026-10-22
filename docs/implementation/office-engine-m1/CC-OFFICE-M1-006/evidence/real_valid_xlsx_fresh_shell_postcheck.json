@@ -1,0 +1,12 @@
+{
+  "database": "odoo18ce",
+  "uid": 2,
+  "request_ids": [
+    61
+  ],
+  "request_states": [
+    "failed"
+  ],
+  "request_output_ids": [],
+  "source_attachment_6405_exists": false
+}

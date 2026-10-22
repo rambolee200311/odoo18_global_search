@@ -1,11 +1,21 @@
+from io import BytesIO
 from uuid import uuid4
 
 import psycopg2
+from openpyxl import Workbook
 
 from odoo.exceptions import AccessError, ValidationError
 from odoo.tests import TransactionCase
 
-from ..models.office_document_request import _internal_mutation
+from ..models.office_document_request import (
+    _internal_mutation,
+    _resource_budget,
+    _verification_budget,
+    inspect_document,
+    render_candidate,
+    verify_output,
+    VerificationPolicy,
+)
 
 
 class TestOfficeDocumentRequest(TransactionCase):
@@ -61,6 +71,57 @@ class TestOfficeDocumentRequest(TransactionCase):
         self.assertFalse({"queue_job_id", "retry_count", "progress_percent", "mapping_plan"} & set(request._fields))
         self.assertEqual(request.owner_id, self.user_a)
         self.assertEqual(request.state, "accepted")
+
+    def test_spawn_core_and_independent_verify_golden_path(self):
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = "Sheet1"
+        sheet["A1"] = "客户名称"
+        sheet["B1"] = "待填"
+        sheet["C1"] = "=1+1"
+        stream = BytesIO()
+        workbook.save(stream)
+        source = stream.getvalue()
+        mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+        inspection = inspect_document(source, "spawn-smoke.xlsx", mime, _resource_budget())
+        self.assertEqual(inspection.format, "xlsx")
+        self.assertIn("xlsx:Sheet1!A1", {element.element_id for element in inspection.elements})
+
+        plan = {
+            "schema_version": "1",
+            "template_sha256": inspection.template_sha256,
+            "writes": [
+                {
+                    "element_id": "xlsx:Sheet1!B1",
+                    "operation": "set_value",
+                    "value": {"type": "string", "data": "测试客户"},
+                }
+            ],
+        }
+        candidate = render_candidate(source, "spawn-smoke.xlsx", mime, plan, _resource_budget())
+        report = verify_output(
+            source,
+            candidate.content,
+            "spawn-smoke.xlsx",
+            mime,
+            plan,
+            VerificationPolicy(enabled_formats=("xlsx", "docx")),
+            _verification_budget(),
+        )
+        self.assertEqual(report.status, "PASS")
+        self.assertEqual(report.checked_formulas, 1)
+        self.assertFalse(report.cached_value_changed)
+        self.assertEqual(report.formula_cache_status[0]["source_cache"], "missing")
+        self.assertEqual(report.formula_cache_status[0]["output_cache"], "missing")
+        # Verify using the independent reader contract; this final value assertion
+        # uses openpyxl only as test code, never as production verification.
+        from openpyxl import load_workbook
+
+        rendered = load_workbook(BytesIO(candidate.content), data_only=False)
+        self.assertEqual(rendered["Sheet1"]["B1"].value, "测试客户")
+        self.assertEqual(rendered["Sheet1"]["C1"].value, "=1+1")
+        rendered.close()
 
     def test_uuid_database_constraint_rejects_duplicate(self):
         request_uuid = str(uuid4())

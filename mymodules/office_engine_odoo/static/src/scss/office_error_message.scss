@@ -1,0 +1,7 @@
+.o-mail-Message.o-office-chat-error {
+    .o-mail-Message-content {
+        color: var(--bs-danger-text-emphasis, #58151c);
+        background-color: var(--bs-danger-bg-subtle, #f8d7da);
+        border: 1px solid var(--bs-danger-border-subtle, #f1aeb5);
+    }
+}

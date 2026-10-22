@@ -1,0 +1,16 @@
+{
+  "database": "odoo18ce",
+  "uid": 2,
+  "request_preserved_as_failure_evidence": [
+    {
+      "id": 61,
+      "state": "failed",
+      "error_code": "OFFICE_ENGINE_FAILED",
+      "failed_stage": "inspect",
+      "output_attachment_id": false
+    }
+  ],
+  "source_attachment_6405_removed": true,
+  "no_output_attachment": true,
+  "transaction": "committed"
+}

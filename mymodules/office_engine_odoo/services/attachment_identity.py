@@ -95,7 +95,10 @@ def inspect_attachment_identity(name, mimetype, header, file_size):
     else:
         signature_family = None
 
-    candidate = bool(extension_family or mime_family or signature_family)
+    # A ZIP signature by itself is not evidence of an Office document (many
+    # ordinary formats and arbitrary user files are ZIP containers). Only an
+    # Office extension or Office MIME declaration enters this gate.
+    candidate = bool(extension_family or mime_family)
     if not candidate:
         return AttachmentIdentity(False, False, "not_office")
 

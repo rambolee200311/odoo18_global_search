@@ -1,0 +1,35 @@
+Odoo shell verification — valid real_valid.xlsx
+Date: 2026-10-22 (Asia/Shanghai)
+Command: ./venv/bin/python odoo-bin shell -c odoo.conf -d odoo18ce
+Database: odoo18ce
+Thread: llm.thread_48
+Thread owner uid: 2
+Fixture: documents/files/real_valid.xlsx (4863 bytes, sha256=58bc022435ec49b52b6063014261e07c0b2bcaccf7e1e0049f4d1fe8bbf10cc3)
+Fixture cells: Sheet1!A1=客户名称; Sheet1!B1=待填客户名称
+
+Product-budget public API attempt:
+  office_core.inspect_document: FAIL (OfficeCoreError; 当前运行环境无法落实调用方声明的内存上限，已拒绝处理。)
+  Odoo office.document.request wrapper: state=failed; error_code=OFFICE_ENGINE_FAILED; failed_stage=inspect; output_attachment_id=False
+  Spawn child stderr: ModuleNotFoundError: No module named 'odoo.addons.office_core'
+
+Core functionality-only probe (explicitly not the Odoo product budget):
+  ResourceBudget.max_memory_bytes=2,000,000,000,000 (TV-only virtual-address limit; not production-safe evidence)
+  inspect_document: PASS; format=xlsx; Sheet1!A1=客户名称
+  render_candidate: PASS; applied_writes=1
+  office_verify.status: PASS; checked_targets=1
+  independent workbook readback: Sheet1!B1=测试客户
+  elapsed_ms=1126.23
+  Candidate file: documents/files/real_valid_rendered.xlsx
+
+ORM cleanup:
+  Test input attachment id 6405 removed by thread owner uid 2 and committed: True
+  Failed request record preserved for audit: {'id': 61, 'state': 'failed', 'error_code': 'OFFICE_ENGINE_FAILED', 'failed_stage': 'inspect', 'output_attachment_id': False}
+  Fresh shell confirms request state=['failed'], output attachments=[], source attachment exists=False
+  The user-context cleanup cannot unlink office.document.request due its ACL; no sudo was used. The failed request has no output attachment.
+
+Browser HVR:
+  Real file upload and message attachment card: PASS
+  Provider/chat route outcome: rejected before internal Office handoff; no generated result/download link
+  Composer editable after rejection: PASS; browser console errors: 0
+  Refresh persistence: PASS
+  Screenshots: captured and displayed inline in the Codex in-app browser tool output; this runtime did not expose a local screenshot-file export path.

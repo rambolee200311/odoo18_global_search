@@ -1,0 +1,25 @@
+{
+  "scenario": "valid_xlsx_read_write_readback",
+  "database": "odoo18ce",
+  "thread_id": 48,
+  "owner_uid": 2,
+  "shell_uid": 1,
+  "source_size": 4863,
+  "source_sha256": "58bc022435ec49b52b6063014261e07c0b2bcaccf7e1e0049f4d1fe8bbf10cc3",
+  "source_attachment_id": 6405,
+  "attachment_bytes_match_fixture": true,
+  "core_failure_type": "OfficeCoreError",
+  "core_failure": "当前运行环境无法落实调用方声明的内存上限，已拒绝处理。",
+  "request_wrapper_response": {
+    "request_uuid": "47cff856-8511-4b49-969a-bd544ddd05b3",
+    "state": "failed",
+    "error_code": "OFFICE_ENGINE_FAILED",
+    "failed_stage": "inspect",
+    "message": "Office 处理进程异常退出。",
+    "output_attachment_id": false
+  },
+  "request_uuid": "47cff856-8511-4b49-969a-bd544ddd05b3",
+  "request_records": 0,
+  "source_attachment_cleanup_error": "SerializationFailure",
+  "final_thread_messages": 0
+}
