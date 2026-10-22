@@ -1,0 +1,23 @@
+CC-TEST-010 临时钩子清理证明（2026-10-21）
+
+1. 临时探针路径存在性检查：
+   /tmp/cc005_runtime_probe.py: ABSENT
+   /tmp/cc005_runtime_probe.log: ABSENT
+   /tmp/cc005_diagnostic_probe.py: ABSENT
+   /tmp/cc005_readonly_check.py: ABSENT
+   /tmp/cc005_env_snapshot.py: ABSENT
+   最终检查输出：TEMP_PATHS_REMOVED 5 of 5
+
+2. Odoo-LLM 嵌套仓库：
+   命令：git -C mymodules/odoo-llm status --porcelain --untracked-files=all
+   输出：空（工作树 clean）。HEAD = 609ec6dda3645165f6a4a843d7af5d286081a29d。
+
+3. 产品目录扫描：
+   命令：rg -n 'CC005_SPIKE|CC005_DIAG|stub_openai_chat|stub_execute_tool|trace_check' mymodules/odoo-llm/llm_thread mymodules/odoo-llm/llm_openai mymodules/odoo-llm/llm/models
+   输出：无匹配（退出码 1，表示未发现残留）。
+
+4. Monkey patch 只存在于 `odoo-bin shell --no-http` 子进程；该子进程退出后 patch 随进程销毁。常驻 Odoo 进程 PID 41995 未加载该 shell patch。
+
+5. Odoo 服务日志 `/tmp/office_m1_cc005_odoo.log` 保留为开发服务运行日志，不包含临时 hook/探针；服务继续监听 8091。
+
+6. 唯一标记的合成线程、消息、附件通过 Odoo ORM unlink；最终剩余线程数 0、附件数 0。未直接删除或读取 filestore 文件；按已批准的 Odoo 延迟 GC 语义处理。

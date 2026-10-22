@@ -1,0 +1,75 @@
+{
+  "run_id": "c23b629f521a",
+  "date": "2026-10-21",
+  "database": "odoo18ce",
+  "provider_mode": "in-process mock; no HTTP calls",
+  "owner_uid": 6,
+  "owner_su": false,
+  "attacker_uid": 103,
+  "attacker_su": false,
+  "cleanup_uid": 2,
+  "cleanup_su": false,
+  "enabled_provider_services": [
+    "openai"
+  ],
+  "results": [
+    {
+      "test": "CC-TEST-001",
+      "status": "PASS",
+      "note": "Pinned source and runtime verified"
+    },
+    {
+      "test": "CC-TEST-002",
+      "status": "PASS",
+      "note": "Four recognized Office MIME types rejected before provider dispatch"
+    },
+    {
+      "test": "CC-TEST-003",
+      "status": "PASS_LIMITED",
+      "note": "Recognized Office MIME payload excluded; direct formatter check found no sentinel"
+    },
+    {
+      "test": "CC-TEST-004",
+      "status": "PASS_CURRENT_CONFIG",
+      "note": "OpenAI chat/multimodal and stubbed tools-enabled cycle only"
+    },
+    {
+      "test": "CC-TEST-005",
+      "status": "BLOCKED",
+      "note": "Cross-user denial passed; internal service handoff path absent"
+    },
+    {
+      "test": "CC-TEST-006",
+      "status": "FAIL",
+      "note": "Office-looking .xlsx with text content became text/plain; precheck rejected zero; mock payload included synthetic sentinel"
+    },
+    {
+      "test": "CC-TEST-007",
+      "status": "PASS",
+      "note": "Ordinary text attachment remained available to mock provider"
+    },
+    {
+      "test": "CC-TEST-008",
+      "status": "BLOCKED",
+      "note": "Independent addon and authorized service handoff not implemented/tested",
+      "conclusion": "INCONCLUSIVE"
+    },
+    {
+      "test": "CC-TEST-009",
+      "status": "PASS",
+      "note": "No secrets, source bytes, base64, or actual provider calls in retained evidence"
+    },
+    {
+      "test": "CC-TEST-010",
+      "status": "PASS",
+      "note": "All temporary hooks/scripts physically removed; nested repo clean"
+    }
+  ],
+  "cleanup": {
+    "remaining_threads": 0,
+    "remaining_attachments": 0,
+    "method": "Odoo ORM unlink",
+    "direct_filestore_operations": 0
+  },
+  "overall": "FAIL"
+}

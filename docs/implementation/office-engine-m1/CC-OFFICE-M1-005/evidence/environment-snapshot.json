@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-21",
+  "odoo": "18.0",
+  "database": "odoo18ce",
+  "python": "3.11.9",
+  "postgresql": "16.14",
+  "config": "odoo.conf",
+  "http_port": 8091,
+  "runtime_pid": 41995,
+  "root_repository_head": "e91bf5a502b8970bfa9c795335e5ee2dce0e57b7",
+  "root_worktree_note": "Pre-existing unrelated dirty files; official odoo/ and addons/ directories clean; no application code changed by CC-005",
+  "odoo_llm_head": "609ec6dda3645165f6a4a843d7af5d286081a29d",
+  "odoo_llm_worktree": "clean tracked and untracked",
+  "odoo_llm_saved_prior_changes": "stash@{0}, commit 4d3e359688d8404e310a98881975808ebb32e066",
+  "installed_modules": ["llm", "llm_thread", "llm_assistant", "llm_openai"],
+  "active_provider_services": ["openai"],
+  "provider_count": 1,
+  "module_install_or_upgrade": false,
+  "database_schema_changes": false,
+  "real_external_provider_calls": 0,
+  "startup_notes": [
+    "Odoo startup reported optional modules wd_advanced_m2o_record_panel, wd_evidence_album, wd_qooling_app missing; LLM modules were installed and queryable.",
+    "Odoo service log later recorded concurrent bus_presence serialization errors on unrelated UI requests; port remained listening."
+  ]
+}

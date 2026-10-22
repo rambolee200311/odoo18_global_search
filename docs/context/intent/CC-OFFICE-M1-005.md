@@ -5,8 +5,8 @@
 | 字段 | 值 |
 |---|---|
 | Coding Contract | `CC-OFFICE-M1-005` |
-| 版本 | `v0.2 Draft` |
-| 状态 | **DRAFT — 仅供评审；未授权实施** |
+| 版本 | `v1.0.0 Frozen` |
+| 状态 | **FROZEN — 负责人于 2026-10-21 批准冻结并授权实施** |
 | Intent ID | `OFFICE-ENGINE-M1-PROVIDER-PRE-ROUTE-SPIKE` |
 | 类型 | 验证性 Spike；不交付产品功能 |
 | 上游 SRS | [Office 自动化 SRS](../../requirement/SRS_office_document_automation.md) `V1.0.0 Frozen` |
@@ -17,11 +17,13 @@
 
 ### 0.1 冻结前置状态
 
-本 CC 现在仅为 Draft。CC-004 的成功处理探针因 spawn 子进程无法导入 `odoo.addons.office_core` 而失败；其 FR 必须继续保持 `NOT SATISFIED`，冻结 Implementation Plan V0.3 也仍保留原始阶段状态，不得伪称 Phase 4 PASS。
+起草时，CC-004 的成功处理探针因 spawn 子进程无法导入 `odoo.addons.office_core` 而失败；其 FR 必须继续保持 `NOT SATISFIED`，冻结 Implementation Plan V0.3 也仍保留原始阶段状态，不得伪称 Phase 4 PASS。
 
 **负责人技术债接受与风险降低决策：** 负责人 `lijianqiang` 于 2026-10-21 在本轮评审意见中明确要求：若不能在现有冻结基线内修复该问题，则记录负责人接受该技术债并批准降低风险。本轮不改动已关闭 CC-004 的实现/冻结核心；该批准据此记为接受 `spawn` 导入故障这一已知技术债，并仅允许把本 Spike 限定为**合成文件、mock/stub Provider、只验证 Provider 前路由与 payload 隔离**。该决定同时构成本次验证性 CC 对 Implementation Plan V0.3 Phase 5 “Part I 已通过阶段验收”前置条件的一次性窄范围例外：只允许执行 Provider 前安全路由和 payload 隔离验证，不改变计划文档、Phase 4 状态或 CC-004 FR，不构成聊天功能实施授权。它不证明文件生成/附件交付成功、不允许真实业务文件或外部 Provider 调用，也不授权 Phase 6 或用户启用 Office 生成。上述限制是本次风险降低措施。
 
-本 CC 的范围不包含修复 spawn/import 故障。该故障仍须在独立技术/实施基线中处理，且在修复与验证完成前，CC-006、完整聊天工作流和任何用户可用文件生成继续禁止。当前 Odoo-LLM 的精确源码基线已在 §2 锁定为干净 HEAD；若 freeze 前该 commit/工作树变化，必须重新核对。
+**冻结与授权记录：** 负责人于 2026-10-21 明确批准本 CC 冻结并进入实施。仅授权 §3—§7 规定的合成数据、mock/stub Provider、开发库 Spike 及其证据记录；不授权产品聊天代码、真实外部 Provider 请求、真实业务附件、CC-004 修复或 CC-006。
+
+本 CC 的范围不包含修复 spawn/import 故障。该故障仍须在独立技术/实施基线中处理，且在修复与验证完成前，CC-006、完整聊天工作流和任何用户可用文件生成继续禁止。当前 Odoo-LLM 的精确源码基线已在 §2 锁定为干净 HEAD；执行期间若该 commit/工作树变化，必须停止并重新核对。
 
 ## 1. 目标与问题
 
@@ -66,7 +68,7 @@ Odoo-LLM 当前聊天链路可能在附件被分类、解析或序列化后交�
 
 ## 4. 验证设计与测试契约
 
-所有测试冻结时均为 `NOT RUN`。本文件仍为 Draft，以下预期不能当作已验证事实。
+冻结时所有测试状态均为 `NOT RUN`；以下测试契约定义验证要求，不代表执行结果。实际运行状态与证据以本 CC 对应的 ATR 为准。
 
 | 测试 ID | 验证项 | 方法与通过判据 | 人工验证 |
 |---|---|---|---|
@@ -132,3 +134,6 @@ Odoo-LLM 当前聊天链路可能在附件被分类、解析或序列化后交�
 |---|---|---|---|
 | v0.1 | 2026-10-21 | Draft | 按 Implementation Plan V0.3 Phase 5 起草；明示 CC-004 成功路径 FAIL 与冻结计划前置条件，未授权实施。 |
 | v0.2 | 2026-10-21 | Draft — Resubmitted | 负责人 `lijianqiang` 接受 spawn/import 技术债并批准仅限 Spike 的风险降低及一次性 Phase 5 验证范围例外；Odoo-LLM 工作树 stash 后锁定干净 commit；增加临时注入钩子物理删除及 git/grep/临时路径清理证明门禁。FR 仍 NOT SATISFIED；不授权 CC-006/产品生成。 |
+| v1.0.0 | 2026-10-21 | Frozen | 负责人批准冻结并实施；§0.1 风险接受与范围限制、§2 源码基线和 §5.1 临时钩子清理门禁作为执行约束。 |
+
+**冻结版本编辑勘误：** 冻结后首次执行前，修正 §0.1 将起草阶段误写为当前 Draft 的时态、§4 将当前文档状态误写为 Draft，以及 §0 末尾将“执行期间”误写为“freeze 前”。不改变范围、测试契约、风险接受或授权边界。
