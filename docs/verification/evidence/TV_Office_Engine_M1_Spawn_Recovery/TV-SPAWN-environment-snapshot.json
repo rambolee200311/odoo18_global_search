@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-22",
+  "root_commit": "19499b84a9b62b1ee5561fae81c3ff33d4fc64ca",
+  "source_paths_status": "mymodules/office_core, mymodules/office_verify, mymodules/office_engine_odoo have no staged, modified, or untracked changes at snapshot time",
+  "workspace_status": "The wider checkout contains unrelated pre-existing dirty/untracked paths; no staging or commit performed.",
+  "python": "3.11.9 (v3.11.9:de54cf5be3, Apr 2 2024, 07:12:50) [Clang 13.0.0 (clang-1300.0.29.30)]",
+  "platform": "macOS-27.0.1-arm64-arm-64bit",
+  "packages": {"openpyxl": "3.1.5", "python-docx": "1.1.2", "lxml": "4.9.3"},
+  "odoo": "18.0",
+  "postgresql": "PostgreSQL 16.14 on x86_64-apple-darwin24.6.0, compiled by Apple clang version 17.0.0 (clang-1700.6.3.2), 64-bit",
+  "database": "odoo18ce",
+  "uid": 1,
+  "env_su": true,
+  "office_engine_odoo": {"state": "installed", "version": "18.0.1.1.0"},
+  "resource": {"RLIMIT_AS": [9223372036854775807, 9223372036854775807], "core_service_budget_bytes": 4294967296, "rss_probe_limit_bytes": 100663296},
+  "provider_http_calls": 0
+}

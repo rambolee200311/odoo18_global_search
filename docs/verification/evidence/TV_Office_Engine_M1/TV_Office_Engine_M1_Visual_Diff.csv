@@ -1,0 +1,3 @@
+﻿case,before_size,after_size,status,different_pixel_ratio,different_pixels,total_pixels
+xls-roundtrip,"(1170, 827)","(1170, 827)",COMPARED,0.000559121115348443,541,967590
+docx-to-doc-to-docx,"(827, 1170)","(827, 1170)",COMPARED,0.004809888485825608,4654,967590

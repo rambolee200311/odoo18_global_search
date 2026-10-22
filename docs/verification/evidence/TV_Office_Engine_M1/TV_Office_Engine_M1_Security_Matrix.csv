@@ -1,0 +1,32 @@
+﻿case,tool,status,exception_type,message,returncode,termination_reason,elapsed_seconds,peak_rss_bytes,stderr,stdout,reason
+empty,openpyxl subprocess,CAUGHT_EXCEPTION,zipfile.BadZipFile,File is not a zip file,0,,0.1459,45367296,,,
+empty,LibreOffice isolated conversion,OUTPUT_CREATED_UNVERIFIED_MUST_REJECT_BY_PREVALIDATION,,,0,,1.0047,153075712,"Fontconfig warning: no <cachedir> elements found. Check configuration.
+Fontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>
+Fontconfig warning: adding <cachedir prefix=""xdg"">fontconfig</cachedir>
+",,
+masquerade,openpyxl subprocess,CAUGHT_EXCEPTION,zipfile.BadZipFile,File is not a zip file,0,,0.1946,46104576,,,
+masquerade,LibreOffice isolated conversion,OUTPUT_CREATED_UNVERIFIED_MUST_REJECT_BY_PREVALIDATION,,,0,,1.5297,129351680,"Fontconfig warning: no <cachedir> elements found. Check configuration.
+Fontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>
+Fontconfig warning: adding <cachedir prefix=""xdg"">fontconfig</cachedir>
+",,
+truncated_zip,openpyxl subprocess,CAUGHT_EXCEPTION,zipfile.BadZipFile,File is not a zip file,0,,0.2204,46088192,,,
+truncated_zip,LibreOffice isolated conversion,REJECTED_OR_ERROR,,,1,,1.1655,135102464,"Fontconfig warning: no <cachedir> elements found. Check configuration.
+Fontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>
+Fontconfig warning: adding <cachedir prefix=""xdg"">fontconfig</cachedir>
+Error: source file could not be loaded
+",,
+invalid_ooxml,openpyxl subprocess,CAUGHT_EXCEPTION,lxml.etree.XMLSyntaxError,"Premature end of data in tag Types line 1, line 1, column 8 (<string>, line 1)",0,,0.1919,45580288,,,
+invalid_ooxml,LibreOffice isolated conversion,REJECTED_OR_ERROR,,,1,,0.9728,135053312,"Fontconfig warning: no <cachedir> elements found. Check configuration.
+Fontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>
+Fontconfig warning: adding <cachedir prefix=""xdg"">fontconfig</cachedir>
+Error: source file could not be loaded
+",,
+high_ratio_zip,openpyxl subprocess,CAUGHT_EXCEPTION,openpyxl.utils.exceptions.InvalidFileException,"openpyxl does not support .zip file format, please check you can open it with Excel first. Supported formats are: .xlsx,.xlsm,.xltx,.xltm",0,,0.1762,45547520,,,
+high_ratio_zip,bounded zip reader,OK,,,0,,0.0629,16760832,,"{""total_read_bytes"": 0, ""entries"": [{""name"": ""large.txt"", ""declared"": 16777216, ""status"": ""REJECTED_SIZE_LIMIT""}]}
+",
+high_ratio_zip,LibreOffice isolated conversion,REJECTED_OR_ERROR,,,1,,1.1694,135331840,"Fontconfig warning: no <cachedir> elements found. Check configuration.
+Fontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>
+Fontconfig warning: adding <cachedir prefix=""xdg"">fontconfig</cachedir>
+Error: source file could not be loaded
+",,
+encrypted-office,fixture availability,NOT RUN,,,,,,,,,No encryption fixture generator was configured; malformed/masquerade probes do not substitute for encryption testing

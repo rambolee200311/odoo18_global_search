@@ -1,0 +1,9 @@
+﻿object_type,before,after,preserved
+sheetnames,"[""Modern Orders""]","[""Modern Orders""]",True
+formula_cells,"{""C12"": ""=SUM(C2:C11)"", ""F2"": ""='[source.xlsx]Source'!A1""}","{""C12"": ""=SUM(C2:C11)"", ""F2"": ""='[source.xlsx]Source'!A1""}",True
+merged_ranges,"[""A1:C1""]","[""A1:C1""]",True
+conditional_formatting_count,1,1,True
+data_validation_count,1,1,True
+image_count,1,1,True
+defined_names,"[""OrderTotal""]","[""OrderTotal""]",True
+external_link_count,1,1,True

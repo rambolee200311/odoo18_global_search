@@ -1,0 +1,112 @@
+{
+  "verification_id": "TV-OFFICE-ENGINE-M1-P0-A-TARGET-20261019",
+  "source": {
+    "path": "mymodules/odoo-llm/docs/tv_docs/TARGET.docx",
+    "size_bytes": 462827,
+    "sha256": "10f37d9fe8c924da3f790313451cba121d3b943fdd7e6c80b85dc8c786839d9a",
+    "zip_entries": 17,
+    "zip_test": "OK"
+  },
+  "test_runtime": {
+    "runtime": "workspace bundled Python",
+    "python": "3.12.14",
+    "python_docx": "1.2.0",
+    "lxml": "6.1.1",
+    "odoo_venv_python": "3.11.9",
+    "python_docx_in_odoo_venv": false,
+    "changed_project_dependencies": false
+  },
+  "edit": {
+    "test_copy_path": "/private/tmp/odoo-office-p0a-20261019/work/TARGET_modified.docx",
+    "paragraph_index_zero_based": 3,
+    "original_paragraph_char_count": 14,
+    "marker_added": " [TV-P0-A]",
+    "marker_found_after_reopen": true,
+    "load_seconds": 0.005169,
+    "save_seconds": 0.012704
+  },
+  "before_structure": {
+    "paragraphs": 319,
+    "tables": 3,
+    "textboxes": 0,
+    "vml_shapes": 0,
+    "drawing_nodes": 3,
+    "picture_nodes": 3,
+    "header_parts": 2,
+    "footer_parts": 1
+  },
+  "after_structure": {
+    "paragraphs": 319,
+    "tables": 3,
+    "textboxes": 0,
+    "vml_shapes": 0,
+    "drawing_nodes": 3,
+    "picture_nodes": 3,
+    "header_parts": 2,
+    "footer_parts": 1
+  },
+  "package_diff": {
+    "entries_before": 17,
+    "entries_after": 17,
+    "added_parts": [],
+    "removed_parts": [],
+    "changed_parts": [
+      "word/document.xml"
+    ],
+    "media_parts_before": 3,
+    "media_parts_after": 3,
+    "media_hashes_identical": true,
+    "relationship_parts_before": 1,
+    "relationship_parts_after": 1,
+    "relationship_hashes_identical": true
+  },
+  "output": {
+    "size_bytes": 462841,
+    "sha256": "48d6893d830494136961fedb8e445d2be61b21054e01ecd5410f95f2dda5c9a2",
+    "zip_test": "OK",
+    "reopened_by_python_docx": true
+  },
+  "status": "PARTIAL",
+  "content_disclosed": false,
+  "content_inventory": {
+    "body_paragraphs": 216,
+    "tables": 3,
+    "sections": 3,
+    "inline_images": 3,
+    "header_parts_with_text": 2,
+    "footer_parts_with_text": 1,
+    "textboxes": 0,
+    "vml_shapes": 0,
+    "external_relationships": 0,
+    "hyperlinks": 0,
+    "comments_parts": 0,
+    "footnotes_parts": 0,
+    "endnotes_parts": 0,
+    "tracked_insertions": 0,
+    "tracked_deletions": 0,
+    "embedded_objects": 0,
+    "alt_chunks": 0,
+    "macro_or_embedded_parts": []
+  },
+  "render_review": {
+    "renderer": "documents/render_docx.py with LibreOfficeDev 26.8.0.0.alpha0",
+    "pages_before": 38,
+    "pages_after": 38,
+    "png_dimensions": "1414x2000",
+    "pixel_comparison": "Page 1 differs only in the edited paragraph region (diff ratio 0.00001101); pages 2-38 are pixel-identical.",
+    "page_1_manually_inspected": true,
+    "layout_effect": "Expected marker is visible; no pagination change or clipping observed.",
+    "font_probe": {
+      "Noto Sans CJK SC": "fell back to Verdana",
+      "SimSun": "fell back to Times New Roman"
+    },
+    "visual_verdict": "INCONCLUSIVE: renderer lacks the document CJK fonts; source render shows missing-glyph boxes, so this run cannot establish Chinese typography fidelity."
+  },
+  "coverage_limits": [
+    "This document contains no text boxes or VML, so their preservation was not tested.",
+    "python-docx 1.2.0 from the workspace runtime was tested; the project Odoo venv has no python-docx package, so deployment-runtime integration remains unverified.",
+    "The TV Plan candidate range is python-docx 1.1.x; this run used 1.2.0 and did not alter project dependencies.",
+    "The renderer used LibreOfficeDev Alpha, not a target stable release."
+  ],
+  "status_reason": "The supplied DOCX was opened, edited on an isolated copy, saved, reopened, and structurally compared with python-docx 1.2.0 without losing package parts, images, relationships, headers/footers, or tables. Visual review is inconclusive because CJK fonts are missing; the project Odoo venv lacks python-docx and the planned 1.1.x candidate was not tested."
+}

@@ -1,0 +1,123 @@
+{
+  "verification_id": "TV-OFFICE-ENGINE-M1-P0-B",
+  "verification_date": "2026-10-19",
+  "status": "PARTIAL",
+  "sample": {
+    "path": "mymodules/odoo-llm/docs/tv_docs/销售管理模板.xlsx",
+    "user_supplied_and_authorized_for_local_test": true,
+    "size_bytes": 30395,
+    "sha256": "4bc43b901a26d467c3772feaf892105019b952bcf26ca223fc8a2bf92e14bfe7",
+    "zip_entry_count": 37,
+    "zip_declared_expanded_bytes": 81791,
+    "zip_test": "passed",
+    "vba_part_present": false,
+    "external_workbook_links": 0,
+    "original_modified": false,
+    "test_copies": "isolated temporary directory; removed after run"
+  },
+  "environment": {
+    "python": "3.11.9",
+    "openpyxl": "3.0.9",
+    "openpyxl_candidate_in_tv_plan": "3.1.x",
+    "libreoffice": "LibreOfficeDev 26.8.0.0.alpha0 2c87e51eeaa2b413ff4ae097b2705eea1995d8e5"
+  },
+  "sample_structure": {
+    "sheets": ["销售明细", "汇总分析", "使用说明", "参数设置"],
+    "sheet_count": 4,
+    "formula_count": 89,
+    "merged_range_count": 10,
+    "standard_conditional_formatting_rule_count": 4,
+    "data_validation_count": 1,
+    "image_count": 4,
+    "formula_categories": ["arithmetic", "SUM", "COUNTIF", "SUMIF", "COUNTIFS", "IFERROR", "HYPERLINK"]
+  },
+  "controlled_edit": {
+    "cell": "使用说明!D3",
+    "cell_was_blank_and_styled": true,
+    "edit": "TV_P0B_MARKER in test copy only",
+    "marker_roundtrip_verified": true
+  },
+  "formula_results": {
+    "original": {
+      "formula_texts_read": 89,
+      "formula_caches_present": 89,
+      "independently_evaluated": 75,
+      "independent_checks_matched": 75,
+      "independent_check_mismatches": 0,
+      "unsupported_by_test_evaluator": 14
+    },
+    "after_openpyxl_save": {
+      "formula_map_sha256_same_as_original": true,
+      "formula_caches_present": 0,
+      "formula_caches_lost": 89
+    },
+    "after_libreoffice_default_xlsx_save": {
+      "returncode": 0,
+      "output_created": true,
+      "formula_texts_same_as_original": true,
+      "formula_caches_present": 89,
+      "cached_results_equal_to_original_cache": 89,
+      "cached_result_mismatches": 0,
+      "independent_checks_matched": 75,
+      "unsupported_by_test_evaluator": 14
+    },
+    "independent_check_scope": "75 formula cells were independently recalculated by a local test evaluator and matched cached results. Fourteen nested IFERROR formula cases were not independently evaluated; matching original caches does not count as independent correctness evidence for those fourteen. No cell values were persisted."
+  },
+  "openpyxl_structure_and_style": {
+    "warnings": [
+      "Conditional Formatting extension is not supported and will be removed",
+      "Unknown extension is not supported and will be removed"
+    ],
+    "extension_nodes_before_after": [8, 4],
+    "lost_extension_parts": ["xl/styles.xml", "xl/workbook.xml", "xl/worksheets/sheet1.xml"],
+    "ooxml_entries_before_after": [37, 28],
+    "removed_file_parts": ["docProps/custom.xml", "xl/sharedStrings.xml"],
+    "interpretation": {
+      "docProps_custom_xml": "removed; its values were not read or recorded",
+      "sharedStrings_xml": "removed during serialization; strings were rewritten in inline form",
+      "standard_merge_conditional_format_data_validation_and_image_counts": "readable after save, but this does not establish retention of unsupported extension details"
+    },
+    "compared_style_cells": 335,
+    "style_signature_differences_after_openpyxl": 0
+  },
+  "libreoffice_style_effects_after_openpyxl": {
+    "compared_style_cells": 335,
+    "number_format_differences": 58,
+    "font_summary_differences": 153,
+    "fill_summary_differences": 34,
+    "alignment_summary_differences": 332,
+    "border_summary_differences": 0,
+    "interpretation": "Attribute-level differences; not by themselves proof of visual damage or visual fidelity."
+  },
+  "visual_comparison": {
+    "engine": "LibreOfficeDev 26.8 Alpha",
+    "before_after_pdf_pages": [6, 6],
+    "pixel_diff_fraction_per_page": [0.0831457539, 0.0417718248, 0.0444423775, 0.0190741946, 0.0038818094, 0.0077119441],
+    "fontconfig_warnings": true,
+    "human_visual_review": false,
+    "status": "INCONCLUSIVE"
+  },
+  "libreoffice_attempt_history": [
+    {
+      "attempt": "explicit Calc MS Excel 2007 XML export filter on openpyxl output",
+      "returncode": 1,
+      "output_created": false,
+      "outcome": "failed; retained as failed attempt"
+    },
+    {
+      "attempt": "default xlsx export on original copy and openpyxl output copy, each with isolated profile",
+      "returncode": 0,
+      "output_created": true,
+      "outcome": "both conversions completed"
+    }
+  ],
+  "limits": [
+    "Only one user-provided workbook was tested.",
+    "openpyxl 3.0.9 is below the planned 3.1.x candidate and was not upgraded.",
+    "LibreOffice is Alpha, not the target stable release.",
+    "Fourteen formula cases lack independent calculation evidence.",
+    "No human page-by-page visual acceptance was performed; Fontconfig reported warnings.",
+    "Results are not a general .xlsx compatibility or target Odoo deployment claim."
+  ],
+  "evidence_privacy": "No raw cell values or test workbook copies are stored in this JSON."
+}

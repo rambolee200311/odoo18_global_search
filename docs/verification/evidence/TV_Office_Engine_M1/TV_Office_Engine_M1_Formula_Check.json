@@ -1,0 +1,316 @@
+{
+  "sample_id": "XLSX-SYN-01",
+  "cell": "C12",
+  "before_save": {
+    "formula": "=SUM(C2:C11)",
+    "cached_value": 687.5
+  },
+  "after_openpyxl_save": {
+    "formula": "=SUM(C2:C11)",
+    "cached_value": null
+  },
+  "formula_text_preserved": true,
+  "cache_preserved": false,
+  "structure_before": {
+    "sheetnames": [
+      "Modern Orders"
+    ],
+    "formula_cells": {
+      "F2": "='[source.xlsx]Source'!A1",
+      "C12": "=SUM(C2:C11)"
+    },
+    "merged_ranges": [
+      "A1:C1"
+    ],
+    "conditional_formatting_count": 1,
+    "data_validation_count": 1,
+    "image_count": 1,
+    "defined_names": [
+      "OrderTotal"
+    ],
+    "external_link_count": 1,
+    "styles": {
+      "A1": {
+        "style_id": 1,
+        "number_format": "General"
+      },
+      "C2": {
+        "style_id": 2,
+        "number_format": "€#,##0.00"
+      },
+      "C3": {
+        "style_id": 2,
+        "number_format": "€#,##0.00"
+      },
+      "C4": {
+        "style_id": 2,
+        "number_format": "€#,##0.00"
+      },
+      "C5": {
+        "style_id": 2,
+        "number_format": "€#,##0.00"
+      },
+      "C6": {
+        "style_id": 2,
+        "number_format": "€#,##0.00"
+      },
+      "C7": {
+        "style_id": 2,
+        "number_format": "€#,##0.00"
+      },
+      "C8": {
+        "style_id": 2,
+        "number_format": "€#,##0.00"
+      },
+      "C9": {
+        "style_id": 2,
+        "number_format": "€#,##0.00"
+      },
+      "C10": {
+        "style_id": 2,
+        "number_format": "€#,##0.00"
+      },
+      "C11": {
+        "style_id": 2,
+        "number_format": "€#,##0.00"
+      }
+    }
+  },
+  "structure_after": {
+    "sheetnames": [
+      "Modern Orders"
+    ],
+    "formula_cells": {
+      "F2": "='[source.xlsx]Source'!A1",
+      "C12": "=SUM(C2:C11)"
+    },
+    "merged_ranges": [
+      "A1:C1"
+    ],
+    "conditional_formatting_count": 1,
+    "data_validation_count": 1,
+    "image_count": 1,
+    "defined_names": [
+      "OrderTotal"
+    ],
+    "external_link_count": 1,
+    "styles": {
+      "A1": {
+        "style_id": 1,
+        "number_format": "General"
+      },
+      "C2": {
+        "style_id": 2,
+        "number_format": "€#,##0.00"
+      },
+      "C3": {
+        "style_id": 2,
+        "number_format": "€#,##0.00"
+      },
+      "C4": {
+        "style_id": 2,
+        "number_format": "€#,##0.00"
+      },
+      "C5": {
+        "style_id": 2,
+        "number_format": "€#,##0.00"
+      },
+      "C6": {
+        "style_id": 2,
+        "number_format": "€#,##0.00"
+      },
+      "C7": {
+        "style_id": 2,
+        "number_format": "€#,##0.00"
+      },
+      "C8": {
+        "style_id": 2,
+        "number_format": "€#,##0.00"
+      },
+      "C9": {
+        "style_id": 2,
+        "number_format": "€#,##0.00"
+      },
+      "C10": {
+        "style_id": 2,
+        "number_format": "€#,##0.00"
+      },
+      "C11": {
+        "style_id": 2,
+        "number_format": "€#,##0.00"
+      }
+    }
+  },
+  "libreoffice_recalc": {
+    "returncode": 0,
+    "elapsed_seconds": 1.2511,
+    "peak_rss_bytes": 163741696,
+    "output_exists": true,
+    "formula_cache_after": {
+      "formula": "=SUM(C2:C11)",
+      "cached_value": 687.5
+    },
+    "structure_after": {
+      "sheetnames": [
+        "Modern Orders"
+      ],
+      "formula_cells": {
+        "F2": "=[1]Source!A1",
+        "C12": "=SUM(C2:C11)"
+      },
+      "merged_ranges": [
+        "A1:C1"
+      ],
+      "conditional_formatting_count": 1,
+      "data_validation_count": 1,
+      "image_count": 1,
+      "defined_names": [
+        "OrderTotal"
+      ],
+      "external_link_count": 1,
+      "styles": {
+        "A1": {
+          "style_id": 3,
+          "number_format": "General"
+        },
+        "A2": {
+          "style_id": 4,
+          "number_format": "General"
+        },
+        "B2": {
+          "style_id": 4,
+          "number_format": "General"
+        },
+        "C2": {
+          "style_id": 5,
+          "number_format": "\\€#,##0.00"
+        },
+        "D2": {
+          "style_id": 4,
+          "number_format": "General"
+        },
+        "F2": {
+          "style_id": 4,
+          "number_format": "General"
+        },
+        "A3": {
+          "style_id": 4,
+          "number_format": "General"
+        },
+        "B3": {
+          "style_id": 4,
+          "number_format": "General"
+        },
+        "C3": {
+          "style_id": 5,
+          "number_format": "\\€#,##0.00"
+        },
+        "A4": {
+          "style_id": 4,
+          "number_format": "General"
+        },
+        "B4": {
+          "style_id": 4,
+          "number_format": "General"
+        },
+        "C4": {
+          "style_id": 5,
+          "number_format": "\\€#,##0.00"
+        },
+        "A5": {
+          "style_id": 4,
+          "number_format": "General"
+        },
+        "B5": {
+          "style_id": 4,
+          "number_format": "General"
+        },
+        "C5": {
+          "style_id": 5,
+          "number_format": "\\€#,##0.00"
+        },
+        "A6": {
+          "style_id": 4,
+          "number_format": "General"
+        },
+        "B6": {
+          "style_id": 4,
+          "number_format": "General"
+        },
+        "C6": {
+          "style_id": 5,
+          "number_format": "\\€#,##0.00"
+        },
+        "A7": {
+          "style_id": 4,
+          "number_format": "General"
+        },
+        "B7": {
+          "style_id": 4,
+          "number_format": "General"
+        },
+        "C7": {
+          "style_id": 5,
+          "number_format": "\\€#,##0.00"
+        },
+        "A8": {
+          "style_id": 4,
+          "number_format": "General"
+        },
+        "B8": {
+          "style_id": 4,
+          "number_format": "General"
+        },
+        "C8": {
+          "style_id": 5,
+          "number_format": "\\€#,##0.00"
+        },
+        "A9": {
+          "style_id": 4,
+          "number_format": "General"
+        },
+        "B9": {
+          "style_id": 4,
+          "number_format": "General"
+        },
+        "C9": {
+          "style_id": 5,
+          "number_format": "\\€#,##0.00"
+        },
+        "A10": {
+          "style_id": 4,
+          "number_format": "General"
+        },
+        "B10": {
+          "style_id": 4,
+          "number_format": "General"
+        },
+        "C10": {
+          "style_id": 5,
+          "number_format": "\\€#,##0.00"
+        },
+        "A11": {
+          "style_id": 4,
+          "number_format": "General"
+        },
+        "B11": {
+          "style_id": 4,
+          "number_format": "General"
+        },
+        "C11": {
+          "style_id": 5,
+          "number_format": "\\€#,##0.00"
+        },
+        "B12": {
+          "style_id": 4,
+          "number_format": "General"
+        },
+        "C12": {
+          "style_id": 4,
+          "number_format": "General"
+        }
+      }
+    },
+    "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n"
+  }
+}

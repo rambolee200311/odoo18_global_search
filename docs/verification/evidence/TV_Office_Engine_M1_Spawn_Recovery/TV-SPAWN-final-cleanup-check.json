@@ -1,0 +1,10 @@
+{
+  "command": "venv/bin/python odoo-bin shell -c odoo.conf -d odoo18ce --no-http < TV-SPAWN-final-cleanup-check.py",
+  "database": "odoo18ce",
+  "fresh_shell": true,
+  "results": [
+    {"request_uuid": "40dd56ed-ec37-4b7a-8812-549aa23ac44e", "request_count": 0, "attachment_count": 0},
+    {"request_uuid": "d8c5b6aa-3484-41da-a7a5-b297f0565c41", "request_count": 0, "attachment_count": 0}
+  ],
+  "method": "Read-only ORM search; no sudo and no direct filestore access"
+}

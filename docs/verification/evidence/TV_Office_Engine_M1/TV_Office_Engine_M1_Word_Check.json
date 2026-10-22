@@ -1,0 +1,66 @@
+[
+  {
+    "case": "python-docx-read-write",
+    "status": "INCONCLUSIVE",
+    "reason": "python-docx is not installed in the specified venv; no dependency installation was performed"
+  },
+  {
+    "case": "handcrafted-docx-structure-baseline",
+    "status": "PARSED",
+    "structure": {
+      "entries": 8,
+      "paragraphs": 6,
+      "tables": 1,
+      "vml_shapes": 1,
+      "drawings": 1,
+      "document_text": "Synthetic Chinese CMR 文档 — header/footer and VML text box testCustomerExample CustomerTextbox instruction: copy delivery address line by line",
+      "header_present": true,
+      "footer_present": true,
+      "media": [
+        "word/media/pixel.png"
+      ]
+    }
+  },
+  {
+    "case": "lo-docx-to-doc",
+    "status": "OK",
+    "returncode": 0,
+    "elapsed_seconds": 1.3584,
+    "peak_rss_bytes": 154910720,
+    "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n"
+  },
+  {
+    "case": "lo-doc-to-docx-roundtrip",
+    "status": "OK",
+    "returncode": 0,
+    "elapsed_seconds": 1.0842,
+    "structure": {
+      "entries": 13,
+      "paragraphs": 7,
+      "tables": 1,
+      "vml_shapes": 0,
+      "drawings": 2,
+      "document_text": "Synthetic Chinese CMR 文档 — header/footer and VML text box testCustomerExample CustomerTextbox instruction: copy delivery address line by lineTextbox instruction: copy delivery address line by line",
+      "header_present": true,
+      "footer_present": true,
+      "media": [
+        "word/media/image1.png"
+      ]
+    },
+    "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n"
+  },
+  {
+    "case": "lo-docx-to-pdf",
+    "status": "OK",
+    "returncode": 0,
+    "elapsed_seconds": 1.2637,
+    "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n"
+  },
+  {
+    "case": "lo-docx-roundtrip-pdf",
+    "status": "OK",
+    "returncode": 0,
+    "elapsed_seconds": 1.2672,
+    "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n"
+  }
+]

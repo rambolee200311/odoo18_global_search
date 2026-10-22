@@ -1,0 +1,449 @@
+{
+  "verification_id": "TV-OFFICE-ENGINE-M1-P0-B",
+  "verification_date": "2026-10-19",
+  "status": "PARTIAL",
+  "test_executed": true,
+  "sample": {
+    "path": "mymodules/odoo-llm/docs/tv_docs/销售管理模板.xlsx",
+    "size_bytes": 30395,
+    "modified": "2026-10-19 15:54:43 +0800",
+    "sha256": "4bc43b901a26d467c3772feaf892105019b952bcf26ca223fc8a2bf92e14bfe7",
+    "format": "OOXML xlsx; ZIP integrity passed",
+    "zip_metadata": {
+      "entry_count": 37,
+      "expanded_bytes": 81791,
+      "max_entry_bytes": 25424,
+      "testzip": null,
+      "vba_part_present": false
+    },
+    "user_supplied_authorized_sample": true,
+    "original_modified": false
+  },
+  "environment": {
+    "python": "3.11.9",
+    "openpyxl": "3.0.9",
+    "libreoffice": "LibreOfficeDev 26.8.0.0.alpha0 2c87e51eeaa2b413ff4ae097b2705eea1995d8e5"
+  },
+  "sample_structure_before": {
+    "sheet_count": 4,
+    "sheet_names": [
+      "销售明细",
+      "汇总分析",
+      "使用说明",
+      "参数设置"
+    ],
+    "formula_count": 89,
+    "formula_counts_by_sheet": {
+      "销售明细": 23,
+      "汇总分析": 64,
+      "使用说明": 2,
+      "参数设置": 0
+    },
+    "formula_map_sha256": "8e4241c214aa91448f94281b4004f88a619114095b0e28ffb9debe13e53890a4",
+    "formula_pattern_counts": {
+      "=EN*FN": 20,
+      "=COUNTIF(销售明细!CN:CN,AN)": 8,
+      "=SUMIF(销售明细!CN:CN,AN,销售明细!EN:EN)": 8,
+      "=SUMIF(销售明细!CN:CN,AN,销售明细!GN:GN)": 8,
+      "=IFERROR(DN/$D$N,N)": 8,
+      "=COUNTIF(销售明细!DN:DN,AN)": 7,
+      "=SUMIF(销售明细!DN:DN,AN,销售明细!EN:EN)": 7,
+      "=SUMIF(销售明细!DN:DN,AN,销售明细!GN:GN)": 7,
+      "=IFERROR(COUNTIFS(销售明细!DN:DN,AN,销售明细!HN:HN,\"已完成\")/COUNTIF(销售明细!DN:DN,AN),N)": 7,
+      "=SUM(EN:EN)": 1,
+      "=SUM(GN:GN)": 1,
+      "=COUNTIF(HN:HN,\"已完成\")&\"笔已完成\"": 1,
+      "=SUM(BN:BN)": 1,
+      "=SUM(CN:CN)": 1,
+      "=SUM(DN:DN)": 1,
+      "=DN/参数设置!$E$N": 1,
+      "=HYPERLINK(\"HTTPS://SUPPORT.MICROSOFT.COM/EXCEL\",\"点击访问 EXCEL 帮助中心\")": 1,
+      "=HYPERLINK(\"HTTPS://LEARN.MICROSOFT.COM/OFFICE/OPEN-PORTAL\",\"点击访问 MICROSOFT LEARN\")": 1
+    },
+    "cache_formula_count": 89,
+    "cache_present_count": 89,
+    "sheets": {
+      "销售明细": {
+        "state": "visible",
+        "max_row": 24,
+        "max_column": 8,
+        "nonempty_cells": 175,
+        "merged_ranges": [
+          "A1:H1",
+          "A24:D24",
+          "A2:H2"
+        ],
+        "conditional_formatting_rules": 3,
+        "data_validation_count": 1,
+        "image_count": 1,
+        "chart_count": 0
+      },
+      "汇总分析": {
+        "state": "visible",
+        "max_row": 24,
+        "max_column": 5,
+        "nonempty_cells": 94,
+        "merged_ranges": [
+          "A15:E15",
+          "A1:E1",
+          "A2:E2",
+          "A4:E4"
+        ],
+        "conditional_formatting_rules": 1,
+        "data_validation_count": 0,
+        "image_count": 1,
+        "chart_count": 0
+      },
+      "使用说明": {
+        "state": "visible",
+        "max_row": 14,
+        "max_column": 4,
+        "nonempty_cells": 36,
+        "merged_ranges": [
+          "A1:D1"
+        ],
+        "conditional_formatting_rules": 0,
+        "data_validation_count": 0,
+        "image_count": 1,
+        "chart_count": 0
+      },
+      "参数设置": {
+        "state": "visible",
+        "max_row": 12,
+        "max_column": 5,
+        "nonempty_cells": 26,
+        "merged_ranges": [
+          "A1:C1",
+          "A2:C2"
+        ],
+        "conditional_formatting_rules": 0,
+        "data_validation_count": 0,
+        "image_count": 1,
+        "chart_count": 0
+      }
+    },
+    "warnings": [
+      "Conditional Formatting extension is not supported and will be removed",
+      "Unknown extension is not supported and will be removed"
+    ],
+    "package": {
+      "parts": [
+        "[Content_Types].xml",
+        "_rels/",
+        "_rels/.rels",
+        "docProps/",
+        "docProps/app.xml",
+        "docProps/core.xml",
+        "docProps/custom.xml",
+        "xl/",
+        "xl/_rels/",
+        "xl/_rels/workbook.xml.rels",
+        "xl/drawings/",
+        "xl/drawings/_rels/",
+        "xl/drawings/_rels/drawing1.xml.rels",
+        "xl/drawings/_rels/drawing2.xml.rels",
+        "xl/drawings/_rels/drawing3.xml.rels",
+        "xl/drawings/_rels/drawing4.xml.rels",
+        "xl/drawings/drawing1.xml",
+        "xl/drawings/drawing2.xml",
+        "xl/drawings/drawing3.xml",
+        "xl/drawings/drawing4.xml",
+        "xl/media/",
+        "xl/media/image1.png",
+        "xl/sharedStrings.xml",
+        "xl/styles.xml",
+        "xl/theme/",
+        "xl/theme/theme1.xml",
+        "xl/workbook.xml",
+        "xl/worksheets/",
+        "xl/worksheets/_rels/",
+        "xl/worksheets/_rels/sheet1.xml.rels",
+        "xl/worksheets/_rels/sheet2.xml.rels",
+        "xl/worksheets/_rels/sheet3.xml.rels",
+        "xl/worksheets/_rels/sheet4.xml.rels",
+        "xl/worksheets/sheet1.xml",
+        "xl/worksheets/sheet2.xml",
+        "xl/worksheets/sheet3.xml",
+        "xl/worksheets/sheet4.xml"
+      ],
+      "part_count": 37,
+      "extension_nodes": [
+        {
+          "part": "xl/drawings/drawing1.xml",
+          "uri": null
+        },
+        {
+          "part": "xl/drawings/drawing2.xml",
+          "uri": null
+        },
+        {
+          "part": "xl/drawings/drawing3.xml",
+          "uri": null
+        },
+        {
+          "part": "xl/drawings/drawing4.xml",
+          "uri": null
+        },
+        {
+          "part": "xl/styles.xml",
+          "uri": "{EB79DEF2-80B8-43e5-95BD-54CBDDF9020C}"
+        },
+        {
+          "part": "xl/workbook.xml",
+          "uri": "{B58B0392-4F1F-4190-BB64-5DF3571DCE5F}"
+        },
+        {
+          "part": "xl/worksheets/sheet1.xml",
+          "uri": "{B025F937-C7B1-47D3-B67F-A62EFF666E3E}"
+        },
+        {
+          "part": "xl/worksheets/sheet1.xml",
+          "uri": "{78C0D931-6437-407d-A8EE-F0AAD7539E65}"
+        }
+      ],
+      "styles_xml_bytes": 25424,
+      "drawing_parts": [
+        "xl/drawings/drawing1.xml",
+        "xl/drawings/drawing2.xml",
+        "xl/drawings/drawing3.xml",
+        "xl/drawings/drawing4.xml"
+      ],
+      "media_parts": [
+        "xl/media/image1.png"
+      ],
+      "external_link_parts": []
+    }
+  },
+  "formula_cache_baseline": {
+    "formula_count": 89,
+    "supported_by_independent_evaluator": 82,
+    "unsupported_formula_count": 7,
+    "cache_present_count": 89,
+    "cache_match_count": 82,
+    "cache_mismatch_count": 0,
+    "cache_missing_count": 0
+  },
+  "openpyxl_roundtrip": {
+    "output_sha256": "12cab145c3460d5e0c604e01aae3716ab54c369489d2a0e3bdfd575a1007c4f4",
+    "formula_map_equal": true,
+    "formula_cell_count_before": 89,
+    "formula_cell_count_after": 89,
+    "formula_cache_before": {
+      "formula_count": 89,
+      "supported_by_independent_evaluator": 82,
+      "unsupported_formula_count": 7,
+      "cache_present_count": 89,
+      "cache_match_count": 82,
+      "cache_mismatch_count": 0,
+      "cache_missing_count": 0
+    },
+    "formula_cache_after": {
+      "formula_count": 89,
+      "supported_by_independent_evaluator": 82,
+      "unsupported_formula_count": 7,
+      "cache_present_count": 0,
+      "cache_match_count": 0,
+      "cache_mismatch_count": 0,
+      "cache_missing_count": 82
+    },
+    "merged_ranges_preserved": true,
+    "conditional_formatting_count_before": {
+      "销售明细": 3,
+      "汇总分析": 1,
+      "使用说明": 0,
+      "参数设置": 0
+    },
+    "conditional_formatting_count_after": {
+      "销售明细": 3,
+      "汇总分析": 1,
+      "使用说明": 0,
+      "参数设置": 0
+    },
+    "data_validation_count_before": {
+      "销售明细": 1,
+      "汇总分析": 0,
+      "使用说明": 0,
+      "参数设置": 0
+    },
+    "data_validation_count_after": {
+      "销售明细": 1,
+      "汇总分析": 0,
+      "使用说明": 0,
+      "参数设置": 0
+    },
+    "image_count_before": {
+      "销售明细": 1,
+      "汇总分析": 1,
+      "使用说明": 1,
+      "参数设置": 1
+    },
+    "image_count_after": {
+      "销售明细": 1,
+      "汇总分析": 1,
+      "使用说明": 1,
+      "参数设置": 1
+    },
+    "style_cells_compared": 335,
+    "changed_style_signatures": 0,
+    "marker_persisted": true,
+    "warnings": [
+      "Conditional Formatting extension is not supported and will be removed",
+      "Unknown extension is not supported and will be removed",
+      "unclosed file <_io.BufferedReader name='/var/folders/lx/qszgx8zs25q67qyv53bn10sr0000gn/T/tv_m1_p0b_0suhb5uk/source.xlsx'>"
+    ],
+    "extension_nodes_before": [
+      {
+        "part": "xl/drawings/drawing1.xml",
+        "uri": null
+      },
+      {
+        "part": "xl/drawings/drawing2.xml",
+        "uri": null
+      },
+      {
+        "part": "xl/drawings/drawing3.xml",
+        "uri": null
+      },
+      {
+        "part": "xl/drawings/drawing4.xml",
+        "uri": null
+      },
+      {
+        "part": "xl/styles.xml",
+        "uri": "{EB79DEF2-80B8-43e5-95BD-54CBDDF9020C}"
+      },
+      {
+        "part": "xl/workbook.xml",
+        "uri": "{B58B0392-4F1F-4190-BB64-5DF3571DCE5F}"
+      },
+      {
+        "part": "xl/worksheets/sheet1.xml",
+        "uri": "{B025F937-C7B1-47D3-B67F-A62EFF666E3E}"
+      },
+      {
+        "part": "xl/worksheets/sheet1.xml",
+        "uri": "{78C0D931-6437-407d-A8EE-F0AAD7539E65}"
+      }
+    ],
+    "extension_nodes_after": [
+      {
+        "part": "xl/drawings/drawing1.xml",
+        "uri": null
+      },
+      {
+        "part": "xl/drawings/drawing2.xml",
+        "uri": null
+      },
+      {
+        "part": "xl/drawings/drawing3.xml",
+        "uri": null
+      },
+      {
+        "part": "xl/drawings/drawing4.xml",
+        "uri": null
+      }
+    ],
+    "ooxml_part_count_before": 37,
+    "ooxml_part_count_after": 28,
+    "missing_ooxml_parts": [
+      "_rels/",
+      "docProps/",
+      "docProps/custom.xml",
+      "xl/",
+      "xl/_rels/",
+      "xl/drawings/",
+      "xl/drawings/_rels/",
+      "xl/media/",
+      "xl/sharedStrings.xml",
+      "xl/theme/",
+      "xl/worksheets/",
+      "xl/worksheets/_rels/"
+    ],
+    "output_package": {
+      "parts": [
+        "[Content_Types].xml",
+        "_rels/.rels",
+        "docProps/app.xml",
+        "docProps/core.xml",
+        "xl/_rels/workbook.xml.rels",
+        "xl/drawings/_rels/drawing1.xml.rels",
+        "xl/drawings/_rels/drawing2.xml.rels",
+        "xl/drawings/_rels/drawing3.xml.rels",
+        "xl/drawings/_rels/drawing4.xml.rels",
+        "xl/drawings/drawing1.xml",
+        "xl/drawings/drawing2.xml",
+        "xl/drawings/drawing3.xml",
+        "xl/drawings/drawing4.xml",
+        "xl/media/image1.png",
+        "xl/media/image2.png",
+        "xl/media/image3.png",
+        "xl/media/image4.png",
+        "xl/styles.xml",
+        "xl/theme/theme1.xml",
+        "xl/workbook.xml",
+        "xl/worksheets/_rels/sheet1.xml.rels",
+        "xl/worksheets/_rels/sheet2.xml.rels",
+        "xl/worksheets/_rels/sheet3.xml.rels",
+        "xl/worksheets/_rels/sheet4.xml.rels",
+        "xl/worksheets/sheet1.xml",
+        "xl/worksheets/sheet2.xml",
+        "xl/worksheets/sheet3.xml",
+        "xl/worksheets/sheet4.xml"
+      ],
+      "part_count": 28,
+      "extension_nodes": [
+        {
+          "part": "xl/drawings/drawing1.xml",
+          "uri": null
+        },
+        {
+          "part": "xl/drawings/drawing2.xml",
+          "uri": null
+        },
+        {
+          "part": "xl/drawings/drawing3.xml",
+          "uri": null
+        },
+        {
+          "part": "xl/drawings/drawing4.xml",
+          "uri": null
+        }
+      ],
+      "styles_xml_bytes": 25286,
+      "drawing_parts": [
+        "xl/drawings/drawing1.xml",
+        "xl/drawings/drawing2.xml",
+        "xl/drawings/drawing3.xml",
+        "xl/drawings/drawing4.xml"
+      ],
+      "media_parts": [
+        "xl/media/image1.png",
+        "xl/media/image2.png",
+        "xl/media/image3.png",
+        "xl/media/image4.png"
+      ],
+      "external_link_parts": []
+    }
+  },
+  "libreoffice_recalc_candidate": {
+    "returncode": 1,
+    "timed_out": false,
+    "output_created": false,
+    "stdout_summary": "convert /var/folders/lx/qszgx8zs25q67qyv53bn10sr0000gn/T/tv_m1_p0b_0suhb5uk/openpyxl_saved.xlsx as a Calc document -> /private/var/folders/lx/qszgx8zs25q67qyv53bn10sr0000gn/T/tv_m1_p0b_0suhb5uk/lo_out/openpyxl_saved.xlsx using filter : \"Calc MS Excel 2007 XML\"\n",
+    "stderr_summary": "______________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\nError: Please verify input parameters... (SfxBaseModel::impl_store <file:///private/var/folders/lx/qszgx8zs25q67qyv53bn10sr0000gn/T/tv_m1_p0b_0suhb5uk/lo_out/openpyxl_saved.xlsx> failed: 0x81a(Error Area:Io Class:Parameter Code:26))\n"
+  },
+  "limits": [
+    "openpyxl 3.0.9 is below the TV Plan candidate 3.1.x; no dependency was installed or upgraded.",
+    "LibreOffice is an Alpha development build, not the stable target release.",
+    "The workbook is one sample only; results are not a general .xlsx compatibility claim.",
+    "No PDF visual comparison was run in this P0 structural/formula pass.",
+    "No workbook cell values are included in this result file."
+  ],
+  "test_edit": {
+    "cell": "使用说明!D3",
+    "reason": "Existing blank styled cell, changed only in isolated copy",
+    "marker_persisted": true
+  },
+  "status_reason": "Real template read/write completed on isolated copies. Formula expressions were compared, but current openpyxl emitted unsupported-extension warnings and the tested runtime/version is not the frozen target candidate; formula cache and OOXML losses require review before production use.",
+  "privacy": "Business cell values were not printed or persisted in evidence; only structural summaries, hashes, coordinates, and counts were recorded."
+}

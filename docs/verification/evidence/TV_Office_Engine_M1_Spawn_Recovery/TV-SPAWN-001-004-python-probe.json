@@ -1,0 +1,156 @@
+{
+  "environment": {
+    "python": "3.11.9 (v3.11.9:de54cf5be3, Apr  2 2024, 07:12:50) [Clang 13.0.0 (clang-1300.0.29.30)]",
+    "platform": "macOS-27.0.1-arm64-arm-64bit",
+    "pid": 21145,
+    "RLIMIT_AS": [
+      9223372036854775807,
+      9223372036854775807
+    ],
+    "packages": {
+      "openpyxl": "3.1.5",
+      "python-docx": "1.1.2",
+      "lxml": "4.9.3"
+    }
+  },
+  "sample_sha256": "e340412bdcf0b74410a27cb9c9499b82dbedfbd0a2fbc6921ff12913e533cb3b",
+  "docx_sample_sha256": "a37b8d56e07fb108b62ebfe83aae009c0aaedf83a04d43f107f0891fab48a9f0",
+  "addon_path": "/Users/lijianqiang/Documents/odoo18_global_search/mymodules",
+  "spawn_identity": {
+    "result": {
+      "office_core_file": "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_core/__init__.py",
+      "office_core_service_module": "office_core.service",
+      "resource_budget_class_module": "office_core.models",
+      "office_verify_file": "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_verify/__init__.py",
+      "office_verify_service_module": "office_verify.service",
+      "verification_budget_class_module": "office_verify.models",
+      "sys_path_addons_count": 1
+    },
+    "elapsed_ms": 143.294,
+    "exitcode": 0
+  },
+  "existing_core_public_inspect": {
+    "status": "FAIL",
+    "error_code": "OFFICE_RESOURCE_LIMIT",
+    "stage": "worker_limits",
+    "message": "当前运行环境无法落实调用方声明的内存上限，已拒绝处理。"
+  },
+  "rss_supervised_core_inspect": {
+    "payload": [
+      "ok",
+      "DocumentInspection(format='xlsx', template_sha256='e340412bdcf0b74410a27cb9c9499b82dbedfbd0a2fbc6921ff12913e533cb3b', elements=(Element(element_id='xlsx:Sheet1!A1', kind='cell', value='old', writable=True, order=1), Element(element_id='xlsx:Sheet1!B1', kind='cell', value='keep', writable=True, order=2)), unknown_structures=(), warnings=(), capability='xlsx_basic_cells_candidate; formula_cells_read_only; advanced_parts_rejected')"
+    ],
+    "elapsed_ms": 144.156,
+    "max_sampled_rss_bytes": 51822592,
+    "limit_seen_rss_bytes": null,
+    "samples": 12,
+    "exitcode": 0,
+    "alive_after": false,
+    "timed_out": false,
+    "overshoot_bytes": 0
+  },
+  "rss_supervised_core_render": {
+    "elapsed_ms": 149.161,
+    "max_sampled_rss_bytes": 51560448,
+    "limit_seen_rss_bytes": null,
+    "samples": 12,
+    "exitcode": 0,
+    "alive_after": false,
+    "timed_out": false,
+    "overshoot_bytes": 0,
+    "worker_payload_summary": [
+      "ok",
+      "RenderCandidate",
+      "xlsx",
+      "0076bc422e2e540416d4598b1a63633b32e62e5c7fd1e4f0922ef19a0a1eb2e4",
+      1
+    ]
+  },
+  "rss_supervised_verify": {
+    "status": "PASS",
+    "elapsed_ms": 214.613,
+    "output_sha256": "0076bc422e2e540416d4598b1a63633b32e62e5c7fd1e4f0922ef19a0a1eb2e4",
+    "checked_targets": 1,
+    "checked_formulas": 0,
+    "rss_worker_monitor": "verify_output built-in RSS sampler"
+  },
+  "docx_rss_supervised_inspect": {
+    "elapsed_ms": 252.925,
+    "max_sampled_rss_bytes": 60719104,
+    "limit_seen_rss_bytes": null,
+    "samples": 19,
+    "exitcode": 0,
+    "alive_after": false,
+    "timed_out": false,
+    "overshoot_bytes": 0
+  },
+  "docx_rss_supervised_render": {
+    "elapsed_ms": 210.617,
+    "max_sampled_rss_bytes": 71745536,
+    "limit_seen_rss_bytes": null,
+    "samples": 17,
+    "exitcode": 0,
+    "alive_after": false,
+    "timed_out": false,
+    "overshoot_bytes": 0,
+    "worker_payload_summary": [
+      "ok",
+      "RenderCandidate",
+      "docx",
+      "8428e6b6af4164e8a0ed106d46419eae86754d04d2f0f325959d1d45ca52a5f1",
+      1
+    ]
+  },
+  "docx_rss_supervised_verify": {
+    "status": "PASS",
+    "elapsed_ms": 384.037,
+    "output_sha256": "8428e6b6af4164e8a0ed106d46419eae86754d04d2f0f325959d1d45ca52a5f1",
+    "checked_targets": 1,
+    "checked_formulas": 0
+  },
+  "verify_below_baseline_budget": {
+    "status": "REJECTED",
+    "error_type": "OfficeVerifyError",
+    "error_code": "OFFICE_RESOURCE_LIMIT",
+    "stage": "worker_limits",
+    "message": "OFFICE_RESOURCE_LIMIT:worker_limits: 回读进程超过内存限制，已终止处理。"
+  },
+  "rss_monitor_trials": [
+    {
+      "elapsed_ms": 258.155,
+      "max_sampled_rss_bytes": 108019712,
+      "limit_seen_rss_bytes": 108019712,
+      "samples": 24,
+      "exitcode": -15,
+      "alive_after": false,
+      "timed_out": false,
+      "overshoot_bytes": 7356416,
+      "trial": 1,
+      "limit_bytes": 100663296
+    },
+    {
+      "elapsed_ms": 235.607,
+      "max_sampled_rss_bytes": 108118016,
+      "limit_seen_rss_bytes": 108118016,
+      "samples": 22,
+      "exitcode": -15,
+      "alive_after": false,
+      "timed_out": false,
+      "overshoot_bytes": 7454720,
+      "trial": 2,
+      "limit_bytes": 100663296
+    },
+    {
+      "elapsed_ms": 225.819,
+      "max_sampled_rss_bytes": 106889216,
+      "limit_seen_rss_bytes": 106889216,
+      "samples": 21,
+      "exitcode": -15,
+      "alive_after": false,
+      "timed_out": false,
+      "overshoot_bytes": 6225920,
+      "trial": 3,
+      "limit_bytes": 100663296
+    }
+  ]
+}

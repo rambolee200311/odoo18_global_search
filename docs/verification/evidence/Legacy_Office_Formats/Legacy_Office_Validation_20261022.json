@@ -1,0 +1,856 @@
+{
+  "environment": {
+    "python": "3.11.9 (project venv)",
+    "xlrd": "2.0.1",
+    "xlwt": "1.3.0",
+    "openpyxl": "3.1.5",
+    "python_docx": "1.1.2",
+    "libreoffice": "LibreOfficeDev 26.8.0.0.alpha0 2c87e51eeaa2b413ff4ae097b2705eea1995d8e5",
+    "soffice_path": "/Users/lijianqiang/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override/soffice"
+  },
+  "samples": {
+    "xls_mrp_import_template": {
+      "source_relative_path": "addons/mrp/static/xls/mrp_bom.xls",
+      "source_bytes": 31232,
+      "sha256": "92b0f00b1e9b54b5990f53d5b735d3e4aff031ec519aae10f5a3da2ad9ae5977",
+      "magic": "d0cf11e0a1b11ae1",
+      "current_office_core": {
+        "result": "rejected_as_unsupported_or_invalid",
+        "error_code": "OFFICE_UNSUPPORTED_FEATURE",
+        "stage": "format"
+      },
+      "openpyxl_direct": {
+        "result": "rejected",
+        "exception_type": "InvalidFileException",
+        "message": "openpyxl does not support the old .xls file format, please use xlrd to read this file, or convert it to the more recent .xlsx file format."
+      },
+      "xlrd_source": {
+        "sheets": [
+          {
+            "name": "Template",
+            "rows": 6,
+            "cols": 7,
+            "merged_regions": [],
+            "nonempty_cells": 42,
+            "used_xf_ids": [
+              21,
+              22
+            ],
+            "used_xf_count": 2
+          },
+          {
+            "name": "Import FAQ",
+            "rows": 33,
+            "cols": 1,
+            "merged_regions": [],
+            "nonempty_cells": 33,
+            "used_xf_ids": [
+              23,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29
+            ],
+            "used_xf_count": 7
+          }
+        ],
+        "xf_record_count": 30
+      },
+      "lo_xls_to_xlsx": {
+        "returncode": 0,
+        "elapsed_seconds": 0.603,
+        "stdout": "convert /tmp/legacy-office-tv-20261022/mrp_bom.xls as a Calc document -> /private/tmp/legacy-office-tv-20261022/xls_mrp_import_template_to_xlsx/mrp_bom.xlsx using filter : Calc Office Open XML\n",
+        "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n",
+        "output_path": "/tmp/legacy-office-tv-20261022/xls_mrp_import_template_to_xlsx/mrp_bom.xlsx",
+        "output_bytes": 12995
+      },
+      "converted_xlsx": {
+        "sheets": [
+          {
+            "name": "Template",
+            "rows": 6,
+            "cols": 7,
+            "merged_ranges": [],
+            "formula_count": 0,
+            "formula_cells": [],
+            "images": 0,
+            "conditional_formatting_count": 0,
+            "data_validation_count": 0
+          },
+          {
+            "name": "Import FAQ",
+            "rows": 33,
+            "cols": 1,
+            "merged_ranges": [],
+            "formula_count": 0,
+            "formula_cells": [],
+            "images": 0,
+            "conditional_formatting_count": 0,
+            "data_validation_count": 0
+          }
+        ]
+      },
+      "lo_xlsx_to_xls": {
+        "returncode": 0,
+        "elapsed_seconds": 0.64,
+        "stdout": "convert /tmp/legacy-office-tv-20261022/xls_mrp_import_template_to_xlsx/mrp_bom.xlsx as a Calc document -> /private/tmp/legacy-office-tv-20261022/xls_mrp_import_template_roundtrip_to_xls/mrp_bom.xls using filter : MS Excel 97\n",
+        "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n",
+        "output_path": "/tmp/legacy-office-tv-20261022/xls_mrp_import_template_roundtrip_to_xls/mrp_bom.xls",
+        "output_bytes": 32256
+      },
+      "roundtrip_xls": {
+        "sheets": [
+          {
+            "name": "Template",
+            "rows": 6,
+            "cols": 7,
+            "merged_regions": [],
+            "nonempty_cells": 42,
+            "used_xf_ids": [
+              22,
+              23
+            ],
+            "used_xf_count": 2
+          },
+          {
+            "name": "Import FAQ",
+            "rows": 33,
+            "cols": 1,
+            "merged_regions": [],
+            "nonempty_cells": 33,
+            "used_xf_ids": [
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30
+            ],
+            "used_xf_count": 7
+          }
+        ],
+        "xf_record_count": 31
+      },
+      "pdf_source": {
+        "returncode": 0,
+        "elapsed_seconds": 0.587,
+        "stdout": "convert /tmp/legacy-office-tv-20261022/mrp_bom.xls as a Calc document -> /private/tmp/legacy-office-tv-20261022/xls_mrp_import_template_source_pdf/mrp_bom.pdf using filter : calc_pdf_Export\n",
+        "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n",
+        "output_path": "/tmp/legacy-office-tv-20261022/xls_mrp_import_template_source_pdf/mrp_bom.pdf",
+        "output_bytes": 55845
+      },
+      "pdf_roundtrip": {
+        "returncode": 0,
+        "elapsed_seconds": 0.584,
+        "stdout": "convert /tmp/legacy-office-tv-20261022/xls_mrp_import_template_roundtrip_to_xls/mrp_bom.xls as a Calc document -> /private/tmp/legacy-office-tv-20261022/xls_mrp_import_template_roundtrip_pdf/mrp_bom.pdf using filter : calc_pdf_Export\n",
+        "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n",
+        "output_path": "/tmp/legacy-office-tv-20261022/xls_mrp_import_template_roundtrip_pdf/mrp_bom.pdf",
+        "output_bytes": 55826
+      },
+      "pdf_source_info": {
+        "page_count": 3,
+        "page_sizes": [
+          [
+            595.303955078125,
+            841.8897705078125
+          ],
+          [
+            595.303955078125,
+            841.8897705078125
+          ],
+          [
+            595.303955078125,
+            841.8897705078125
+          ]
+        ]
+      },
+      "pdf_roundtrip_info": {
+        "page_count": 3,
+        "page_sizes": [
+          [
+            595.303955078125,
+            841.8897705078125
+          ],
+          [
+            595.303955078125,
+            841.8897705078125
+          ],
+          [
+            595.303955078125,
+            841.8897705078125
+          ]
+        ]
+      },
+      "page_render": {
+        "source": {
+          "returncode": 0,
+          "image": "/tmp/legacy-office-tv-20261022/xls_mrp_import_template_source_page-1.png",
+          "stderr": ""
+        },
+        "roundtrip": {
+          "returncode": 0,
+          "image": "/tmp/legacy-office-tv-20261022/xls_mrp_import_template_roundtrip_page-1.png",
+          "stderr": ""
+        },
+        "pixel_difference_ratio": 0.0032620478566532224
+      }
+    },
+    "xls_odoo_mimetype_fixture": {
+      "source_relative_path": "odoo/addons/test_mimetypes/tests/testfiles/case.xls",
+      "source_bytes": 7168,
+      "sha256": "2fbbd5c9f7a096e1bd8c091ef7042265f85ec0de94874f763a1b2dc6974bbcfe",
+      "magic": "d0cf11e0a1b11ae1",
+      "current_office_core": {
+        "result": "rejected_as_unsupported_or_invalid",
+        "error_code": "OFFICE_UNSUPPORTED_FEATURE",
+        "stage": "format"
+      },
+      "openpyxl_direct": {
+        "result": "rejected",
+        "exception_type": "InvalidFileException",
+        "message": "openpyxl does not support the old .xls file format, please use xlrd to read this file, or convert it to the more recent .xlsx file format."
+      },
+      "xlrd_source": {
+        "sheets": [
+          {
+            "name": "Sheet1",
+            "rows": 4,
+            "cols": 3,
+            "merged_regions": [],
+            "nonempty_cells": 12,
+            "used_xf_ids": [
+              15
+            ],
+            "used_xf_count": 1
+          },
+          {
+            "name": "Sheet2",
+            "rows": 0,
+            "cols": 0,
+            "merged_regions": [],
+            "nonempty_cells": 0,
+            "used_xf_ids": [],
+            "used_xf_count": 0
+          },
+          {
+            "name": "Sheet3",
+            "rows": 0,
+            "cols": 0,
+            "merged_regions": [],
+            "nonempty_cells": 0,
+            "used_xf_ids": [],
+            "used_xf_count": 0
+          }
+        ],
+        "xf_record_count": 21
+      },
+      "lo_xls_to_xlsx": {
+        "returncode": 0,
+        "elapsed_seconds": 0.626,
+        "stdout": "convert /tmp/legacy-office-tv-20261022/case.xls as a Calc document -> /private/tmp/legacy-office-tv-20261022/xls_odoo_mimetype_fixture_to_xlsx/case.xlsx using filter : Calc Office Open XML\n",
+        "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n",
+        "output_path": "/tmp/legacy-office-tv-20261022/xls_odoo_mimetype_fixture_to_xlsx/case.xlsx",
+        "output_bytes": 7719
+      },
+      "converted_xlsx": {
+        "sheets": [
+          {
+            "name": "Sheet1",
+            "rows": 4,
+            "cols": 3,
+            "merged_ranges": [],
+            "formula_count": 0,
+            "formula_cells": [],
+            "images": 0,
+            "conditional_formatting_count": 0,
+            "data_validation_count": 0
+          },
+          {
+            "name": "Sheet2",
+            "rows": 1,
+            "cols": 1,
+            "merged_ranges": [],
+            "formula_count": 0,
+            "formula_cells": [],
+            "images": 0,
+            "conditional_formatting_count": 0,
+            "data_validation_count": 0
+          },
+          {
+            "name": "Sheet3",
+            "rows": 1,
+            "cols": 1,
+            "merged_ranges": [],
+            "formula_count": 0,
+            "formula_cells": [],
+            "images": 0,
+            "conditional_formatting_count": 0,
+            "data_validation_count": 0
+          }
+        ]
+      },
+      "lo_xlsx_to_xls": {
+        "returncode": 0,
+        "elapsed_seconds": 0.645,
+        "stdout": "convert /tmp/legacy-office-tv-20261022/xls_odoo_mimetype_fixture_to_xlsx/case.xlsx as a Calc document -> /private/tmp/legacy-office-tv-20261022/xls_odoo_mimetype_fixture_roundtrip_to_xls/case.xls using filter : MS Excel 97\n",
+        "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n",
+        "output_path": "/tmp/legacy-office-tv-20261022/xls_odoo_mimetype_fixture_roundtrip_to_xls/case.xls",
+        "output_bytes": 6656
+      },
+      "roundtrip_xls": {
+        "sheets": [
+          {
+            "name": "Sheet1",
+            "rows": 4,
+            "cols": 3,
+            "merged_regions": [],
+            "nonempty_cells": 12,
+            "used_xf_ids": [
+              21
+            ],
+            "used_xf_count": 1
+          },
+          {
+            "name": "Sheet2",
+            "rows": 0,
+            "cols": 0,
+            "merged_regions": [],
+            "nonempty_cells": 0,
+            "used_xf_ids": [],
+            "used_xf_count": 0
+          },
+          {
+            "name": "Sheet3",
+            "rows": 0,
+            "cols": 0,
+            "merged_regions": [],
+            "nonempty_cells": 0,
+            "used_xf_ids": [],
+            "used_xf_count": 0
+          }
+        ],
+        "xf_record_count": 22
+      },
+      "pdf_source": {
+        "returncode": 0,
+        "elapsed_seconds": 0.621,
+        "stdout": "convert /tmp/legacy-office-tv-20261022/case.xls as a Calc document -> /private/tmp/legacy-office-tv-20261022/xls_odoo_mimetype_fixture_source_pdf/case.pdf using filter : calc_pdf_Export\n",
+        "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n",
+        "output_path": "/tmp/legacy-office-tv-20261022/xls_odoo_mimetype_fixture_source_pdf/case.pdf",
+        "output_bytes": 23067
+      },
+      "pdf_roundtrip": {
+        "returncode": 0,
+        "elapsed_seconds": 0.594,
+        "stdout": "convert /tmp/legacy-office-tv-20261022/xls_odoo_mimetype_fixture_roundtrip_to_xls/case.xls as a Calc document -> /private/tmp/legacy-office-tv-20261022/xls_odoo_mimetype_fixture_roundtrip_pdf/case.pdf using filter : calc_pdf_Export\n",
+        "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n",
+        "output_path": "/tmp/legacy-office-tv-20261022/xls_odoo_mimetype_fixture_roundtrip_pdf/case.pdf",
+        "output_bytes": 23065
+      },
+      "pdf_source_info": {
+        "page_count": 1,
+        "page_sizes": [
+          [
+            612.0,
+            792.0
+          ]
+        ]
+      },
+      "pdf_roundtrip_info": {
+        "page_count": 1,
+        "page_sizes": [
+          [
+            612.0,
+            792.0
+          ]
+        ]
+      },
+      "page_render": {
+        "source": {
+          "returncode": 0,
+          "image": "/tmp/legacy-office-tv-20261022/xls_odoo_mimetype_fixture_source_page-1.png",
+          "stderr": ""
+        },
+        "roundtrip": {
+          "returncode": 0,
+          "image": "/tmp/legacy-office-tv-20261022/xls_odoo_mimetype_fixture_roundtrip_page-1.png",
+          "stderr": ""
+        },
+        "pixel_difference_ratio": 0.0021580180893906384
+      }
+    },
+    "doc_odoo_mimetype_fixture": {
+      "source_relative_path": "odoo/addons/test_mimetypes/tests/testfiles/case.doc",
+      "source_bytes": 49664,
+      "sha256": "3ef9bbd34efcab2465d5b739ab1fcefbca044af6edd0f1e64754ce5d7891d453",
+      "magic": "d0cf11e0a1b11ae1",
+      "current_office_core": {
+        "result": "rejected_as_unsupported_or_invalid",
+        "error_code": "OFFICE_UNSUPPORTED_FEATURE",
+        "stage": "format"
+      },
+      "python_docx_direct": {
+        "result": "rejected",
+        "exception_type": "BadZipFile",
+        "message": "File is not a zip file"
+      },
+      "lo_doc_to_docx": {
+        "returncode": 0,
+        "elapsed_seconds": 0.581,
+        "stdout": "convert /tmp/legacy-office-tv-20261022/case.doc as a Writer document -> /private/tmp/legacy-office-tv-20261022/doc_odoo_mimetype_fixture_to_docx/case.docx using filter : Office Open XML Text\n",
+        "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n",
+        "output_path": "/tmp/legacy-office-tv-20261022/doc_odoo_mimetype_fixture_to_docx/case.docx",
+        "output_bytes": 41186
+      },
+      "pdf_source": {
+        "returncode": 0,
+        "elapsed_seconds": 0.615,
+        "stdout": "convert /tmp/legacy-office-tv-20261022/case.doc as a Writer document -> /private/tmp/legacy-office-tv-20261022/doc_odoo_mimetype_fixture_source_pdf/case.pdf using filter : writer_pdf_Export\n",
+        "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n",
+        "output_path": "/tmp/legacy-office-tv-20261022/doc_odoo_mimetype_fixture_source_pdf/case.pdf",
+        "output_bytes": 36523
+      },
+      "converted_docx": {
+        "paragraph_count": 1,
+        "table_count": 0,
+        "table_rows": 0,
+        "section_count": 1,
+        "inline_images": 0,
+        "package_part_count": 13,
+        "media_parts": 1,
+        "vml_shapes": 0,
+        "drawing_nodes": 1,
+        "text_chars": 2,
+        "text_sha256": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070",
+        "has_toc_field": false,
+        "has_external_relationship": false
+      },
+      "lo_docx_to_doc": {
+        "returncode": 0,
+        "elapsed_seconds": 0.634,
+        "stdout": "convert /tmp/legacy-office-tv-20261022/doc_odoo_mimetype_fixture_to_docx/case.docx as a Writer document -> /private/tmp/legacy-office-tv-20261022/doc_odoo_mimetype_fixture_roundtrip_to_doc/case.doc using filter : MS Word 97\n",
+        "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n",
+        "output_path": "/tmp/legacy-office-tv-20261022/doc_odoo_mimetype_fixture_roundtrip_to_doc/case.doc",
+        "output_bytes": 45568
+      },
+      "lo_doc_to_docx_roundtrip": {
+        "returncode": 0,
+        "elapsed_seconds": 0.588,
+        "stdout": "convert /tmp/legacy-office-tv-20261022/doc_odoo_mimetype_fixture_roundtrip_to_doc/case.doc as a Writer document -> /private/tmp/legacy-office-tv-20261022/doc_odoo_mimetype_fixture_roundtrip_to_docx/case.docx using filter : Office Open XML Text\n",
+        "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n",
+        "output_path": "/tmp/legacy-office-tv-20261022/doc_odoo_mimetype_fixture_roundtrip_to_docx/case.docx",
+        "output_bytes": 41524
+      },
+      "roundtrip_docx": {
+        "paragraph_count": 1,
+        "table_count": 0,
+        "table_rows": 0,
+        "section_count": 1,
+        "inline_images": 0,
+        "package_part_count": 14,
+        "media_parts": 1,
+        "vml_shapes": 0,
+        "drawing_nodes": 1,
+        "text_chars": 2,
+        "text_sha256": "75a11da44c802486bc6f65640aa48a730f0f684c5c07a42ba3cd1735eb3fb070",
+        "has_toc_field": false,
+        "has_external_relationship": false
+      },
+      "text_hash_preserved": true,
+      "structure_comparison": {
+        "paragraph_count": {
+          "before": 1,
+          "after": 1
+        },
+        "table_count": {
+          "before": 0,
+          "after": 0
+        },
+        "section_count": {
+          "before": 1,
+          "after": 1
+        },
+        "inline_images": {
+          "before": 0,
+          "after": 0
+        },
+        "package_part_count": {
+          "before": 13,
+          "after": 14
+        },
+        "media_parts": {
+          "before": 1,
+          "after": 1
+        },
+        "vml_shapes": {
+          "before": 0,
+          "after": 0
+        },
+        "drawing_nodes": {
+          "before": 1,
+          "after": 1
+        }
+      },
+      "pdf_roundtrip": {
+        "returncode": 0,
+        "elapsed_seconds": 0.604,
+        "stdout": "convert /tmp/legacy-office-tv-20261022/doc_odoo_mimetype_fixture_roundtrip_to_docx/case.docx as a Writer document -> /private/tmp/legacy-office-tv-20261022/doc_odoo_mimetype_fixture_roundtrip_pdf/case.pdf using filter : writer_pdf_Export\n",
+        "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n",
+        "output_path": "/tmp/legacy-office-tv-20261022/doc_odoo_mimetype_fixture_roundtrip_pdf/case.pdf",
+        "output_bytes": 36526
+      },
+      "pdf_source_info": {
+        "page_count": 1,
+        "page_sizes": [
+          [
+            595.303955078125,
+            841.8897705078125
+          ]
+        ]
+      },
+      "pdf_roundtrip_info": {
+        "page_count": 1,
+        "page_sizes": [
+          [
+            595.303955078125,
+            841.8897705078125
+          ]
+        ]
+      },
+      "page_render": {
+        "source": {
+          "returncode": 0,
+          "image": "/tmp/legacy-office-tv-20261022/doc_odoo_mimetype_fixture_source_page-1.png",
+          "stderr": ""
+        },
+        "roundtrip": {
+          "returncode": 0,
+          "image": "/tmp/legacy-office-tv-20261022/doc_odoo_mimetype_fixture_roundtrip_page-1.png",
+          "stderr": ""
+        },
+        "pixel_difference_ratio": 0.00044636452039726444
+      }
+    },
+    "doc_hr_demo_cv": {
+      "source_relative_path": "addons/hr_recruitment/data/hr_recruitment_demo_williams_cv.doc",
+      "source_bytes": 10240,
+      "sha256": "1269075447d87f3439f478e5bc4c2d795713880b065682944bf0c0b882b4e304",
+      "magic": "d0cf11e0a1b11ae1",
+      "current_office_core": {
+        "result": "rejected_as_unsupported_or_invalid",
+        "error_code": "OFFICE_UNSUPPORTED_FEATURE",
+        "stage": "format"
+      },
+      "python_docx_direct": {
+        "result": "rejected",
+        "exception_type": "BadZipFile",
+        "message": "File is not a zip file"
+      },
+      "lo_doc_to_docx": {
+        "returncode": 0,
+        "elapsed_seconds": 0.627,
+        "stdout": "convert /tmp/legacy-office-tv-20261022/hr_recruitment_demo_williams_cv.doc as a Writer document -> /private/tmp/legacy-office-tv-20261022/doc_hr_demo_cv_to_docx/hr_recruitment_demo_williams_cv.docx using filter : Office Open XML Text\n",
+        "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n",
+        "output_path": "/tmp/legacy-office-tv-20261022/doc_hr_demo_cv_to_docx/hr_recruitment_demo_williams_cv.docx",
+        "output_bytes": 5242
+      },
+      "pdf_source": {
+        "returncode": 0,
+        "elapsed_seconds": 0.582,
+        "stdout": "convert /tmp/legacy-office-tv-20261022/hr_recruitment_demo_williams_cv.doc as a Writer document -> /private/tmp/legacy-office-tv-20261022/doc_hr_demo_cv_source_pdf/hr_recruitment_demo_williams_cv.pdf using filter : writer_pdf_Export\n",
+        "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n",
+        "output_path": "/tmp/legacy-office-tv-20261022/doc_hr_demo_cv_source_pdf/hr_recruitment_demo_williams_cv.pdf",
+        "output_bytes": 22192
+      },
+      "converted_docx": {
+        "paragraph_count": 17,
+        "table_count": 0,
+        "table_rows": 0,
+        "section_count": 1,
+        "inline_images": 0,
+        "package_part_count": 10,
+        "media_parts": 0,
+        "vml_shapes": 0,
+        "drawing_nodes": 0,
+        "text_chars": 271,
+        "text_sha256": "50eff32e047599183ab36399b7d1565ca8ecdc71584768e77bd478c59fb8f9d4",
+        "has_toc_field": false,
+        "has_external_relationship": false
+      },
+      "lo_docx_to_doc": {
+        "returncode": 0,
+        "elapsed_seconds": 0.589,
+        "stdout": "convert /tmp/legacy-office-tv-20261022/doc_hr_demo_cv_to_docx/hr_recruitment_demo_williams_cv.docx as a Writer document -> /private/tmp/legacy-office-tv-20261022/doc_hr_demo_cv_roundtrip_to_doc/hr_recruitment_demo_williams_cv.doc using filter : MS Word 97\n",
+        "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n",
+        "output_path": "/tmp/legacy-office-tv-20261022/doc_hr_demo_cv_roundtrip_to_doc/hr_recruitment_demo_williams_cv.doc",
+        "output_bytes": 10240
+      },
+      "lo_doc_to_docx_roundtrip": {
+        "returncode": 0,
+        "elapsed_seconds": 0.557,
+        "stdout": "convert /tmp/legacy-office-tv-20261022/doc_hr_demo_cv_roundtrip_to_doc/hr_recruitment_demo_williams_cv.doc as a Writer document -> /private/tmp/legacy-office-tv-20261022/doc_hr_demo_cv_roundtrip_to_docx/hr_recruitment_demo_williams_cv.docx using filter : Office Open XML Text\n",
+        "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n",
+        "output_path": "/tmp/legacy-office-tv-20261022/doc_hr_demo_cv_roundtrip_to_docx/hr_recruitment_demo_williams_cv.docx",
+        "output_bytes": 5570
+      },
+      "roundtrip_docx": {
+        "paragraph_count": 17,
+        "table_count": 0,
+        "table_rows": 0,
+        "section_count": 1,
+        "inline_images": 0,
+        "package_part_count": 11,
+        "media_parts": 0,
+        "vml_shapes": 0,
+        "drawing_nodes": 0,
+        "text_chars": 271,
+        "text_sha256": "50eff32e047599183ab36399b7d1565ca8ecdc71584768e77bd478c59fb8f9d4",
+        "has_toc_field": false,
+        "has_external_relationship": false
+      },
+      "text_hash_preserved": true,
+      "structure_comparison": {
+        "paragraph_count": {
+          "before": 17,
+          "after": 17
+        },
+        "table_count": {
+          "before": 0,
+          "after": 0
+        },
+        "section_count": {
+          "before": 1,
+          "after": 1
+        },
+        "inline_images": {
+          "before": 0,
+          "after": 0
+        },
+        "package_part_count": {
+          "before": 10,
+          "after": 11
+        },
+        "media_parts": {
+          "before": 0,
+          "after": 0
+        },
+        "vml_shapes": {
+          "before": 0,
+          "after": 0
+        },
+        "drawing_nodes": {
+          "before": 0,
+          "after": 0
+        }
+      },
+      "pdf_roundtrip": {
+        "returncode": 0,
+        "elapsed_seconds": 0.561,
+        "stdout": "convert /tmp/legacy-office-tv-20261022/doc_hr_demo_cv_roundtrip_to_docx/hr_recruitment_demo_williams_cv.docx as a Writer document -> /private/tmp/legacy-office-tv-20261022/doc_hr_demo_cv_roundtrip_pdf/hr_recruitment_demo_williams_cv.pdf using filter : writer_pdf_Export\n",
+        "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n",
+        "output_path": "/tmp/legacy-office-tv-20261022/doc_hr_demo_cv_roundtrip_pdf/hr_recruitment_demo_williams_cv.pdf",
+        "output_bytes": 22192
+      },
+      "pdf_source_info": {
+        "page_count": 1,
+        "page_sizes": [
+          [
+            612.0,
+            792.0
+          ]
+        ]
+      },
+      "pdf_roundtrip_info": {
+        "page_count": 1,
+        "page_sizes": [
+          [
+            612.0,
+            792.0
+          ]
+        ]
+      },
+      "page_render": {
+        "source": {
+          "returncode": 0,
+          "image": "/tmp/legacy-office-tv-20261022/doc_hr_demo_cv_source_page-1.png",
+          "stderr": ""
+        },
+        "roundtrip": {
+          "returncode": 0,
+          "image": "/tmp/legacy-office-tv-20261022/doc_hr_demo_cv_roundtrip_page-1.png",
+          "stderr": ""
+        },
+        "pixel_difference_ratio": 0.0
+      }
+    },
+    "xls_synthetic_formula_merged": {
+      "source_relative_path": "synthetic fixture generated for this run",
+      "source_bytes": 5632,
+      "sha256": "98997974ae15b31c95a8ef63521fe9e2cdb2bf858fe84133ad3d2cb348aa8776",
+      "magic": "d0cf11e0a1b11ae1",
+      "current_office_core": {
+        "result": "rejected_as_unsupported_or_invalid",
+        "error_code": "OFFICE_UNSUPPORTED_FEATURE",
+        "stage": "format"
+      },
+      "openpyxl_direct": {
+        "result": "rejected",
+        "exception_type": "InvalidFileException",
+        "message": "openpyxl does not support the old .xls file format, please use xlrd to read this file, or convert it to the more recent .xlsx file format."
+      },
+      "xlrd_source": {
+        "sheets": [
+          {
+            "name": "Legacy Orders",
+            "rows": 13,
+            "cols": 3,
+            "merged_regions": [
+              [
+                0,
+                1,
+                0,
+                3
+              ]
+            ],
+            "nonempty_cells": 38,
+            "used_xf_ids": [
+              17,
+              18,
+              19
+            ],
+            "used_xf_count": 3
+          }
+        ],
+        "xf_record_count": 20
+      },
+      "lo_xls_to_xlsx": {
+        "returncode": 0,
+        "elapsed_seconds": 0.607,
+        "stdout": "convert /tmp/legacy-office-tv-20261022/synthetic_formula_merged.xls as a Calc document -> /private/tmp/legacy-office-tv-20261022/xls_synthetic_formula_merged_to_xlsx/synthetic_formula_merged.xlsx using filter : Calc Office Open XML\n",
+        "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n",
+        "output_path": "/tmp/legacy-office-tv-20261022/xls_synthetic_formula_merged_to_xlsx/synthetic_formula_merged.xlsx",
+        "output_bytes": 6136
+      },
+      "converted_xlsx": {
+        "sheets": [
+          {
+            "name": "Legacy Orders",
+            "rows": 13,
+            "cols": 3,
+            "merged_ranges": [
+              "A1:C1"
+            ],
+            "formula_count": 1,
+            "formula_cells": [
+              "C13"
+            ],
+            "images": 0,
+            "conditional_formatting_count": 0,
+            "data_validation_count": 0
+          }
+        ]
+      },
+      "lo_xlsx_to_xls": {
+        "returncode": 0,
+        "elapsed_seconds": 0.625,
+        "stdout": "convert /tmp/legacy-office-tv-20261022/xls_synthetic_formula_merged_to_xlsx/synthetic_formula_merged.xlsx as a Calc document -> /private/tmp/legacy-office-tv-20261022/xls_synthetic_formula_merged_roundtrip_to_xls/synthetic_formula_merged.xls using filter : MS Excel 97\n",
+        "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n",
+        "output_path": "/tmp/legacy-office-tv-20261022/xls_synthetic_formula_merged_roundtrip_to_xls/synthetic_formula_merged.xls",
+        "output_bytes": 6656
+      },
+      "roundtrip_xls": {
+        "sheets": [
+          {
+            "name": "Legacy Orders",
+            "rows": 13,
+            "cols": 3,
+            "merged_regions": [
+              [
+                0,
+                1,
+                0,
+                3
+              ]
+            ],
+            "nonempty_cells": 38,
+            "used_xf_ids": [
+              22,
+              23,
+              24
+            ],
+            "used_xf_count": 3
+          }
+        ],
+        "xf_record_count": 25
+      },
+      "pdf_source": {
+        "returncode": 0,
+        "elapsed_seconds": 0.584,
+        "stdout": "convert /tmp/legacy-office-tv-20261022/synthetic_formula_merged.xls as a Calc document -> /private/tmp/legacy-office-tv-20261022/xls_synthetic_formula_merged_source_pdf/synthetic_formula_merged.pdf using filter : calc_pdf_Export\n",
+        "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n",
+        "output_path": "/tmp/legacy-office-tv-20261022/xls_synthetic_formula_merged_source_pdf/synthetic_formula_merged.pdf",
+        "output_bytes": 32474
+      },
+      "pdf_roundtrip": {
+        "returncode": 0,
+        "elapsed_seconds": 0.585,
+        "stdout": "convert /tmp/legacy-office-tv-20261022/xls_synthetic_formula_merged_roundtrip_to_xls/synthetic_formula_merged.xls as a Calc document -> /private/tmp/legacy-office-tv-20261022/xls_synthetic_formula_merged_roundtrip_pdf/synthetic_formula_merged.pdf using filter : calc_pdf_Export\n",
+        "stderr": "Fontconfig warning: no <cachedir> elements found. Check configuration.\nFontconfig warning: adding <cachedir>/@.__________________________________________________OOO/var/cache/fontconfig</cachedir>\nFontconfig warning: adding <cachedir prefix=\"xdg\">fontconfig</cachedir>\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n\nFontconfig error: No writable cache directories\n\t/@.__________________________________________________OOO/var/cache/fontconfig\n\t/Users/lijianqiang/.cache/fontconfig\n",
+        "output_path": "/tmp/legacy-office-tv-20261022/xls_synthetic_formula_merged_roundtrip_pdf/synthetic_formula_merged.pdf",
+        "output_bytes": 32484
+      },
+      "pdf_source_info": {
+        "page_count": 1,
+        "page_sizes": [
+          [
+            595.303955078125,
+            841.8897705078125
+          ]
+        ]
+      },
+      "pdf_roundtrip_info": {
+        "page_count": 1,
+        "page_sizes": [
+          [
+            595.303955078125,
+            841.8897705078125
+          ]
+        ]
+      },
+      "page_render": {
+        "source": {
+          "returncode": 0,
+          "image": "/tmp/legacy-office-tv-20261022/xls_synthetic_formula_merged_source_page-1.png",
+          "stderr": ""
+        },
+        "roundtrip": {
+          "returncode": 0,
+          "image": "/tmp/legacy-office-tv-20261022/xls_synthetic_formula_merged_roundtrip_page-1.png",
+          "stderr": ""
+        },
+        "pixel_difference_ratio": 0.03712597044429211
+      },
+      "formula_roundtrip_validation": {
+        "formula_cell": "Legacy Orders!C13",
+        "formula_after_initial_xls_to_xlsx": "=SUM(C3:C12)",
+        "cached_value_after_initial_xls_to_xlsx": 687.5,
+        "formula_after_xls_roundtrip_and_reconversion": "=SUM(C3:C12)",
+        "cached_value_after_xls_roundtrip_and_reconversion": 687.5,
+        "third_reconversion_returncode": 0,
+        "merged_range_after_roundtrip": "A1:C1",
+        "source_xf_records": 20,
+        "roundtrip_xf_records": 25,
+        "first_page_pixel_difference_ratio": 0.03712597044429211,
+        "interpretation": "Formula text, cached result, and merge retained in this synthetic sample; style metadata and visible alignment changed."
+      }
+    }
+  },
+  "notes": [
+    "All conversions run in temporary directories with per-job LibreOffice profiles and 60 second process timeout. No macros were executed.",
+    "Samples are repository Odoo fixtures/demo files, not user business attachments."
+  ],
+  "results": {}
+}

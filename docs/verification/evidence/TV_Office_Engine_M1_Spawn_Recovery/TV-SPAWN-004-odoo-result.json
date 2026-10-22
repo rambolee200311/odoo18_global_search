@@ -1,0 +1,31 @@
+{
+  "command": "venv/bin/python odoo-bin shell -c odoo.conf -d odoo18ce --no-http < TV-SPAWN-004-odoo-shell-probe.py",
+  "environment": {
+    "odoo": "18.0",
+    "python": "3.11.9",
+    "postgresql": "16.14 on x86_64-apple-darwin24.6.0",
+    "database": "odoo18ce",
+    "uid": 1,
+    "env_su": true,
+    "office_engine_odoo": "installed 18.0.1.1.0"
+  },
+  "request_uuid": "d8c5b6aa-3484-41da-a7a5-b297f0565c41",
+  "source_attachment_id": 6328,
+  "source_sha256": "851b8232963278108429d26c622804d26732bf08982a7376b966da97a1ca8f9f",
+  "observed_spawn_error": "ModuleNotFoundError: No module named 'odoo.addons.office_core'",
+  "result": {
+    "state": "failed",
+    "error_code": "OFFICE_ENGINE_FAILED",
+    "failed_stage": "inspect",
+    "output_attachment_id": false
+  },
+  "output_attachment": null,
+  "cleanup": {
+    "method": "Odoo ORM, no direct filestore deletion",
+    "committed": true,
+    "fresh_shell_request_count": 0,
+    "fresh_shell_source_attachment_count": 0
+  },
+  "provider_http_calls": 0,
+  "product_code_or_dependency_changes": 0
+}

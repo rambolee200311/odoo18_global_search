@@ -1,0 +1,11 @@
+﻿sample_id,format,bytes,sha256,source,features
+XLS-SYN-01,.xls,5632,805eb2e78882a8f59b64e955f5074905c60e17851da5d2dd06b4054f793e94f2,synthetic; temporary only,formula; merged; styles; print setup
+XLSX-SYN-01,.xlsx,7744,60f6ba53ddc601c5aefa06857d00764c9885bb9a1fb6568fe6f2b14e750108ad,synthetic; temporary only,formula with injected cached value; merged; conditional formatting; image; external link; named range; validation
+DOCX-SYN-01,.docx,3055,6622cfd5d9cc41acbb0745722526f5975c2e4cc8d2da50fd85704a46883fd054,synthetic; temporary only,table; header/footer; VML textbox; DrawingML image; Chinese text
+XLSX-LARGE-50K,.xlsx,975879,898629b411ceb98679746f969bc88c82f2d6f1aa3d1378781119e7a6d1da1fac,synthetic; temporary only,50000 rows; 3 columns
+DOCX-LARGE-10MB,.docx,9727610,6a97fc67a4fbd4d57f3ae9c8e7e4efb9a18e5fc2152d7f8c8f28d24fa6ead3b3,synthetic; temporary only,synthetic document with high-entropy embedded PNG
+MAL-empty,.xlsx,0,e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855,synthetic; temporary only,empty
+MAL-masquerade,.xlsx,42,6394fdbc4c1cddfb3c8fdfd37c45c8162981172600a8c768b67e581b2118d995,synthetic; temporary only,masquerade
+MAL-truncated_zip,.xlsx,52,549dd376d2973ff5877a3a679dc5de139c7198228478c760189cc1ea4e11b468,synthetic; temporary only,truncated_zip
+MAL-invalid_ooxml,.xlsx,275,96ea285e345ff87771b5278bb1b18680de38222495d0fcd18abb250f72fd9385,synthetic; temporary only,invalid_ooxml
+MAL-high_ratio_zip,.zip,16427,2bf97835e30a4bfe2f39b07e6d22756e68cf35727862e7fb61b732a4ba0830b0,synthetic; temporary only,high_ratio_zip

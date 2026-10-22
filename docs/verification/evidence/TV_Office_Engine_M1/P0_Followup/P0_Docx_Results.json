@@ -1,0 +1,31 @@
+{
+  "verification_id": "TV-OFFICE-ENGINE-M1-P0-A",
+  "verification_date": "2026-10-19",
+  "status": "BLOCKED",
+  "status_reason": "No user-provided, authorized, anonymized business .docx sample was present in the workspace; python-docx is not installed in the project venv and dependency installation was not authorized by the task constraints.",
+  "test_executed": false,
+  "business_samples": [],
+  "non_qualifying_repository_files": [
+    "odoo/addons/test_mimetypes/tests/testfiles/case.docx"
+  ],
+  "dependency_inventory": {
+    "python": "3.11.9",
+    "python_docx": null,
+    "lxml": "4.9.3",
+    "libreoffice": "LibreOfficeDev 26.8.0.0.alpha0"
+  },
+  "evidence": [],
+  "next_required_inputs": [
+    "User-approved anonymized real .docx template",
+    "Identification of safe text location for minimal reversible edit",
+    "Confirmation whether the actual template uses text boxes, VML, floating objects, or other critical structures"
+  ],
+  "planned_checks_when_unblocked": [
+    "Record original filename, byte size, SHA-256, format identification, and exact dependency versions",
+    "Copy original into an isolated test directory and preserve it unchanged",
+    "Modify one approved paragraph or table cell using the planned python-docx version",
+    "Reopen output and compare document, header/footer, relationship, media, section, paragraph, and table structures",
+    "Inspect DrawingML/VML/text-box nodes and relationship targets when present",
+    "Render before/after with existing LibreOffice where supported and inspect pages"
+  ]
+}

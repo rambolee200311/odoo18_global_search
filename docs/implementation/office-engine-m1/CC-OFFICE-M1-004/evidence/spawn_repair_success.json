@@ -1,0 +1,31 @@
+{
+  "result": "PASS",
+  "database": "odoo18ce",
+  "uid": 2,
+  "env_su": false,
+  "request_uuid": "915b7085-cd97-4c43-9778-de089c7eb7c2",
+  "request_state": "generated",
+  "source_attachment_id": 6460,
+  "source_sha256": "58bc022435ec49b52b6063014261e07c0b2bcaccf7e1e0049f4d1fe8bbf10cc3",
+  "core_inspection_import_module": "office_core.service",
+  "inspection_format": "xlsx",
+  "inspection_A1": "客户名称",
+  "output_attachment_id": 6461,
+  "output_name": "office-output-915b7085-cd97-4c43-9778-de089c7eb7c2.xlsx",
+  "output_private": true,
+  "output_sha256": "39327a4b7bba53eaef89ec470ddacd164baa51a3cdb30c2ee5e7479e5b7801d3",
+  "output_B1": "测试客户",
+  "independent_verify": {
+    "status": "PASS",
+    "format": "xlsx",
+    "input_sha256": "58bc022435ec49b52b6063014261e07c0b2bcaccf7e1e0049f4d1fe8bbf10cc3",
+    "output_sha256": "39327a4b7bba53eaef89ec470ddacd164baa51a3cdb30c2ee5e7479e5b7801d3",
+    "checked_targets": 1,
+    "checked_formulas": 0,
+    "cached_value_changed": false,
+    "formula_cache_status": [],
+    "warnings": [],
+    "summary": "完整性回读检查通过；此结果不代表附件已获准交付。"
+  },
+  "addons_root_configured": "True"
+}

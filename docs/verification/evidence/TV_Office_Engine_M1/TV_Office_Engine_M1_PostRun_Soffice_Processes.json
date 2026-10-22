@@ -1,0 +1,14 @@
+{
+  "processes": [
+    {
+      "enumeration_status": "DENIED_BY_RUNTIME_SANDBOX",
+      "error": "[Errno 1] Operation not permitted (originated from sysctl(KERN_PROC_ALL))"
+    }
+  ],
+  "baseline": [
+    {
+      "enumeration_status": "DENIED_BY_RUNTIME_SANDBOX",
+      "error": "[Errno 1] Operation not permitted (originated from sysctl(KERN_PROC_ALL))"
+    }
+  ]
+}

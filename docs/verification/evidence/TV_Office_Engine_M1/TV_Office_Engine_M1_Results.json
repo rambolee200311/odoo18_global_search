@@ -1,0 +1,28 @@
+{
+  "plan_baseline": "TV Office Engine M1 Plan 1.0.0 Frozen",
+  "execution_date": "2026-10-19 15:01:10 +0800",
+  "environment": {
+    "platform": "macOS-27.0.1-arm64-arm-64bit",
+    "python": "3.11.9 (v3.11.9:de54cf5be3, Apr  2 2024, 07:12:50) [Clang 13.0.0 (clang-1300.0.29.30)]",
+    "soffice": "LibreOfficeDev 26.8.0.0.alpha0 2c87e51eeaa2b413ff4ae097b2705eea1995d8e5",
+    "docx_library": "NOT_INSTALLED"
+  },
+  "cases": {
+    "legacy_xls_direct_and_conversion": "EXECUTED_WITH_PER_CASE_RESULTS",
+    "legacy_doc_conversion": "EXECUTED_WITH_PER_CASE_RESULTS",
+    "modern_xlsx_formula_and_ooxml": "EXECUTED_WITH_PER_CASE_RESULTS",
+    "python_docx_write_preservation": "INCONCLUSIVE_DEPENDENCY_MISSING",
+    "performance_xlsx_50k": "EXECUTED_WITH_PER_TRIAL_RESULTS",
+    "performance_docx_10mb": "EXECUTED_WITH_PER_TRIAL_RESULTS",
+    "security_encrypted_office": "NOT_RUN_FIXTURE_MISSING",
+    "security_macro_legacy_xls": "NOT_RUN_FIXTURE_MISSING",
+    "concurrency_global_process_snapshot": "INCONCLUSIVE_RUNTIME_SANDBOX_DENIED_PROCESS_ENUMERATION",
+    "openpyxl_formula_cache_behavior": "CONFIRMED_CACHE_CLEARED_ON_SAVE_FOR_SYNTHETIC_FIXTURE",
+    "libreoffice_formula_recalc": "SYNTHETIC_FIXTURE_CACHE_RESTORED; VERIFY_STABLE_RELEASE_AND_REAL_FILES",
+    "external_links_openpyxl_roundtrip": "EXECUTED_WITH_SYNTHETIC_LINK",
+    "authorized_real_business_samples": "NOT_AVAILABLE; SYNTHETIC_FIXTURES_ONLY",
+    "odoo_sync_async_decision": "INCONCLUSIVE; EXPLICIT_RUNTIME_BUDGETS_NOT_FOUND"
+  },
+  "synthetic_fixtures_are_removed_after_run": true,
+  "overall_status": "PARTIAL_NOT_CLOSED"
+}
