@@ -6,7 +6,7 @@
 |---|---|
 | Coding Contract | `CC-OFFICE-M1-PRE-ROUTE-FIX` |
 | 版本 | `v1.0.0 Frozen` |
-| 状态 | **FROZEN — 负责人于 2026-10-21 批准冻结并进入实施** |
+| 状态 | **CLOSED BY OWNER — 负责人于 2026-10-22 批准关闭；冻结范围未变** |
 | Intent ID | `OFFICE-ENGINE-M1-PRE-ROUTE-FIX` |
 | 工作类型 | Bug 修复 / 安全边界修复 |
 | 模块 | 现有独立 Odoo Addon `office_engine_odoo`，通过标准模型继承扩展 `llm.thread` |
@@ -21,6 +21,8 @@
 负责人于 2026-10-21 批准本 CC 冻结并进入实施。CC-005 已证明 `.xlsx` 文件名配合合成纯文本、Odoo MIME 为 `text/plain` 时，附件预检未拒绝，文本进入本地 Provider mock payload。CC-005 的原始报告和 ATR 是 append-only 证据，不在本 CC 中改写。
 
 上游技术与计划基线已经闭环：TDD V0.4 + 专项补充 V1.0.0 均 Frozen；Implementation Plan V0.4 Frozen 已将本 CC 列为 Phase 5R。本 CC 已获负责人批准冻结并实施；实施结果按独立 IHR/ATR/HVR/FR 记录，不改变 CC-004/005 的历史状态。
+
+负责人于 2026-10-22 批准关闭本 CC。关闭依据为 SATISFIED FR 及通过的 ATR/HVR；本关闭只接受本 CC 冻结范围内的实现与验证，不改变冻结要求，不代表曲别针上传草稿 Bug 已修复，也不改变 CC-004/005 的状态。
 
 ## 1. 变更概述
 
@@ -248,3 +250,4 @@ Implementation Plan V0.4 Frozen 已登记 CC-005 的实际 FAIL/BLOCKED 结果�
 | v0.1 | 2026-10-21 | Draft — 历史版本 | 根据 CC-005 ATR-RUN-001 的 CC-TEST-006 FAIL 起草。 |
 | v0.2 | 2026-10-21 | Draft — 重新提交负责人评审 | 采用 Frozen TDD 补充 V1.0.0 和 Implementation Plan V0.4；增加跨轮次上下文污染测试、2048 字节头部读取硬限制及 OOXML 单条 1 MiB/累计 5 MiB 解压上限。 |
 | v1.0.0 | 2026-10-21 | Frozen — 负责人批准实施 | 负责人批准冻结并进入实施；冻结范围与测试契约不变。 |
+| v1.0.0 lifecycle | 2026-10-22 | Closed by owner | 负责人批准关闭；FR SATISFIED；冻结范围及未解决的独立前端上传缺陷不变。 |

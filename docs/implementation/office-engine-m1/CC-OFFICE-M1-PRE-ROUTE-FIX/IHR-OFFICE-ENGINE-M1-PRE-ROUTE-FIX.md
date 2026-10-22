@@ -10,7 +10,7 @@
 | Odoo 数据库 | `odoo18ce`（通过 `odoo-bin shell -c odoo.conf` 只读核验） |
 | Python | 项目 `venv` |
 | 实施日期 | 2026-10-21 至 2026-10-22 |
-| 结果 | 代码及自动化测试完成；用户批准的 ORM 注入 + 内置浏览器 HVR 已完成；FR SATISFIED，等待负责人批准关闭 CC |
+| 结果 | 代码及自动化测试完成；用户批准的 ORM 注入 + 内置浏览器 HVR 已完成；负责人于 2026-10-22 批准关闭 CC，FR SATISFIED |
 
 ## 2. 实施变更
 
@@ -41,3 +41,7 @@
 按负责人要求，补齐 CC-TEST-003 的有效最小 OOXML 与坏中央目录场景、CC-TEST-004 的真实 OpenAI message serializer 断言，并使用用户批准的服务端 ORM 注入方式完成 HVR：在空白线程 `llm.thread_48` 中构造伪装 Office 附件及消息，调用 `thread.generate()`，捕获 `UserError`、确认用户消息 `is_error=True`；为验证 UI 呈现，捕获异常后调用现有 `_post_error_message()` 创建 `is_error=True` 的机器人错误消息。内置浏览器截图中可见 Office 拒绝消息及普通附件/本地 stub 回复。普通附件未发给真实 Provider。
 
 前端曲别针上传组件仍导致附件不进入草稿，因此 HVR 的 ORM 注入路径绕过了该前端行为。该偏差已在 HVR 中明确记录，不把它描述为上传链路 E2E 通过。HVR 结束后测试消息和附件均通过当前用户 ORM 删除；清理证明及精确 ID 见 `evidence/cleanup-proof.txt`。本轮没有清除或提交工作区内既存的无关修改；只会在提交时暂存本 CC 所属的明确文件。
+
+## 5. 关闭记录（2026-10-22）
+
+负责人批准关闭 `CC-OFFICE-M1-PRE-ROUTE-FIX`。批准依据为 ATR 中冻结测试矩阵 PASS、HVR 中经授权的 ORM 注入与内置浏览器可见性模拟，以及 FR 的 SATISFIED 判定。关闭不扩展 CC 范围、不代表上传组件缺陷已修复，不改变 CC-004/005 其他状态。

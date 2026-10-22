@@ -7,8 +7,8 @@
 | Intent ID | `OFFICE-ENGINE-M1-PRE-ROUTE-FIX` |
 | CC | `CC-OFFICE-M1-PRE-ROUTE-FIX v1.0.0 Frozen` |
 | IHR / ATR / HVR | [IHR](IHR-OFFICE-ENGINE-M1-PRE-ROUTE-FIX.md) / [ATR](ATR-OFFICE-ENGINE-M1-PRE-ROUTE-FIX.md) / [HVR](HVR-OFFICE-ENGINE-M1-PRE-ROUTE-FIX.md) |
-| FR 状态 | **SATISFIED — CC 实施与规定范围的验证完成，等待负责人批准关闭 CC** |
-| CC 关闭 | 未请求、未批准 |
+| FR 状态 | **SATISFIED — CC 实施与规定范围的验证完成** |
+| CC 关闭 | **负责人已于 2026-10-22 批准关闭** |
 
 ## 2. 追溯判定
 
@@ -28,7 +28,7 @@
 
 冻结 CC 的自动化测试均有通过证据，包含本轮新增的真实最小 OOXML/坏中央目录测试、OpenAI 消息序列化断言、5 MiB 文件头有界读取，以及按负责人指示执行的 ORM 注入 + 内置浏览器 HVR。伪装 Office 附件在 Provider 调用前得到 `UserError`；普通 `.txt` / `.png` 序列化保持既有结构；所有验证均未请求真实 Provider。
 
-因此本 FR 记为 **SATISFIED**，提交负责人进行最终关闭审批。该状态不等于 CC 已关闭；CC 仍保持 Frozen/实施待审批状态。CC-005 的 handoff BLOCKED / INCONCLUSIVE 与 CC-004 的既有 FR 状态不变。
+因此本 FR 记为 **SATISFIED**。负责人已于 2026-10-22 批准关闭本 CC。关闭接受本 CC 冻结范围内已验证的实现，不代表前端曲别针上传草稿问题已修复，也不改变 CC-005 的 handoff BLOCKED / INCONCLUSIVE 与 CC-004 的既有 FR 状态。
 
 ## 4. 未覆盖的独立问题
 
