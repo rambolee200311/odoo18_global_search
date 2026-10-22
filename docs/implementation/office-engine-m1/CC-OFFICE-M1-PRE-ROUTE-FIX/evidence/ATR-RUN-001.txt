@@ -1,0 +1,18 @@
+CC-OFFICE-M1-PRE-ROUTE-FIX — sanitized automated run evidence
+Date: 2026-10-21
+Database: odoo18ce (approved development database)
+Config: odoo.conf
+Python: project venv
+Root HEAD: e91bf5a502b8970bfa9c795335e5ee2dce0e57b7 (working tree not clean before this task)
+Module: office_engine_odoo installed_version=18.0.1.1.0 latest_version=18.0.1.1.0
+Runtime hooks: _check_unsupported_attachments=True; _prepare_chat_kwargs=True
+
+Command:
+./venv/bin/python odoo-bin -c odoo.conf --http-port=8092 --stop-after-init --test-enable --test-tags /office_engine_odoo:TestAttachmentIdentity -u office_engine_odoo --max-cron-threads=0 --log-handler=odoo.tests:INFO --logfile=/tmp/office_engine_pre_route_fix_final_tests.log
+
+Result: exit code 0; 0 failed, 0 error(s) of 9 tests; 11 tests stats / 0.40s / 526 queries.
+Provider: process-local mock only; no real Provider request was made.
+Unrelated module warnings: wd_advanced_m2o_record_panel, wd_evidence_album, wd_qooling_app not loaded.
+Browser: IAB chose synthetic spoofed .xlsx and ordinary .txt; Odoo created transient mail.compose.message attachment records, but the composer displayed no attachment chips/state. No message sent; HVR blocked.
+Cleanup: 4 temporary synthetic composer attachments removed through Odoo ORM unlink and committed; exact follow-up search_count=0; no direct filestore deletion.
+No credentials, business payload, or attachment body included in this evidence.

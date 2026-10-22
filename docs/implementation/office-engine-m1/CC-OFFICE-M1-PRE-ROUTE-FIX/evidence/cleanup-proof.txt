@@ -1,0 +1,21 @@
+CC-OFFICE-M1-PRE-ROUTE-FIX synthetic browser upload cleanup
+Date: 2026-10-22 (client timezone Asia/Shanghai)
+Database: odoo18ce
+Method: ./venv/bin/python odoo-bin shell -c odoo.conf
+Operation: ORM search by exact synthetic names, res_model=mail.compose.message, res_id=0; unlink(); env.cr.commit(); exact follow-up search_count.
+Removed in first cleanup: attachment IDs 6218, 6219, 6242.
+Removed in second cleanup: attachment ID 6243.
+Final exact search_count: 0.
+No direct filestore filesystem deletion was performed.
+
+CC-OFFICE-M1-PRE-ROUTE-FIX ORM-injected HVR cleanup
+Date: 2026-10-22 (client timezone Asia/Shanghai)
+Database: odoo18ce
+Method: ./venv/bin/python odoo-bin shell -c odoo.conf; current user ORM only.
+Test thread: llm.thread_48 (dedicated blank thread).
+Removed mail.message IDs: 26195, 26196, 26197, 26198.
+Removed ir.attachment IDs: 6309, 6310, 6311.
+Verification: exact post-cleanup ORM searches for those message and attachment IDs returned 0; test marker search_count returned 0.
+Transaction: cleanup committed with env.cr.commit().
+No direct filestore filesystem deletion was performed.
+Browser: refreshed thread after cleanup; UI showed “The conversation is empty.”
