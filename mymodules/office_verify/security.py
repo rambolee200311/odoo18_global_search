@@ -53,10 +53,12 @@ def _safe_name(name: str) -> bool:
 
 
 def _allowed_part(kind: str, name: str) -> bool:
-    if name in {"[Content_Types].xml", "_rels/.rels", "docProps/app.xml", "docProps/core.xml"}:
+    if name in {"[Content_Types].xml", "_rels/.rels", "docProps/app.xml", "docProps/core.xml", "docProps/custom.xml"}:
         return True
     if kind == "xlsx":
         return bool(
+            name == "docProps/custom.xml"
+            or
             re.fullmatch(r"xl/workbook\.xml", name)
             or re.fullmatch(r"xl/_rels/workbook\.xml\.rels", name)
             or re.fullmatch(r"xl/styles\.xml", name)
@@ -68,13 +70,16 @@ def _allowed_part(kind: str, name: str) -> bool:
         )
     return bool(
         re.fullmatch(r"word/document\.xml", name)
+        or re.fullmatch(r"word/header\d+\.xml", name)
+        or re.fullmatch(r"word/footer\d+\.xml", name)
+        or re.fullmatch(r"word/media/image\d+\.(?:png|jpe?g)", name, re.IGNORECASE)
         or re.fullmatch(r"word/styles\.xml", name)
         or re.fullmatch(r"word/settings\.xml", name)
         or re.fullmatch(r"word/numbering\.xml", name)
         or re.fullmatch(r"word/fontTable\.xml", name)
         or re.fullmatch(r"word/webSettings\.xml", name)
         or re.fullmatch(r"word/theme/theme\d+\.xml", name)
-        or re.fullmatch(r"word/_rels/document\.xml\.rels", name)
+        or re.fullmatch(r"word/_rels/(document|header\d+|footer\d+)\.xml\.rels", name)
         or re.fullmatch(r"word/_rels/(styles|settings|numbering|fontTable|webSettings)\.xml\.rels", name)
     )
 
@@ -151,18 +156,74 @@ def _read_relationships(rel_name: str, root: etree._Element, names: set[str]) ->
     return tuple(sorted(result))
 
 
+def _validate_docx_media_signatures(raw_parts: dict[str, bytes]) -> None:
+    for name, data in raw_parts.items():
+        if not name.startswith("word/media/"):
+            continue
+        extension = name.rsplit(".", 1)[-1].lower()
+        valid = data.startswith(b"\x89PNG\r\n\x1a\n") if extension == "png" else data.startswith(b"\xff\xd8\xff")
+        if not valid:
+            raise _invalid("media_signature")
+
+
+def _is_safe_picture_drawing(node: etree._Element, part_name: str, package: Package) -> bool:
+    namespaces = {
+        "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing": {
+            "inline", "extent", "docPr", "cNvGraphicFramePr", "effectExtent",
+        },
+        "http://schemas.openxmlformats.org/drawingml/2006/main": {
+            "graphic", "graphicData", "blip", "srcRect", "stretch", "fillRect",
+            "xfrm", "off", "ext", "prstGeom", "avLst", "solidFill",
+            "graphicFrameLocks", "picLocks",
+        },
+        "http://schemas.openxmlformats.org/drawingml/2006/picture": {
+            "pic", "nvPicPr", "cNvPr", "cNvPicPr", "blipFill", "spPr",
+        },
+    }
+    wp_ns = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+    drawing_ns = "http://schemas.openxmlformats.org/drawingml/2006/main"
+    picture_ns = "http://schemas.openxmlformats.org/drawingml/2006/picture"
+    rel_ns = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}"
+    if node.tag != "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}drawing":
+        return False
+    if not any(item.tag == f"{{{wp_ns}}}inline" for item in node.iter()):
+        return False
+    rel_name = posixpath.join(posixpath.dirname(part_name), "_rels", posixpath.basename(part_name) + ".rels")
+    rel_targets = {rid: (rel_type, target) for rid, rel_type, target in package.relationships.get(rel_name, ())}
+    graphics = [item for item in node.iter() if item.tag == f"{{{drawing_ns}}}graphicData"]
+    pictures = [item for item in node.iter() if item.tag == f"{{{picture_ns}}}pic"]
+    blips = [item for item in node.iter() if item.tag == f"{{{drawing_ns}}}blip"]
+    if len(graphics) != 1 or graphics[0].get("uri") != picture_ns or len(pictures) != 1 or not blips:
+        return False
+    for item in node.iter():
+        if not isinstance(item.tag, str) or item is node:
+            continue
+        qname = etree.QName(item)
+        if qname.namespace not in namespaces or qname.localname not in namespaces[qname.namespace]:
+            return False
+    for blip in blips:
+        rid = blip.get(rel_ns + "embed", "")
+        relationship = rel_targets.get(rid)
+        if not relationship or not relationship[0].endswith("/image"):
+            return False
+        target = relationship[1]
+        if not target.startswith("word/media/image") or not re.fullmatch(r"word/media/image\d+\.(?:png|jpe?g)", target, re.IGNORECASE):
+            return False
+    return True
+
+
 def _validate_content_types(root: etree._Element, names: set[str]) -> None:
     if root.tag != CT_NS + "Types":
         raise _invalid("content_types")
-    defaults: set[str] = set()
-    overrides: set[str] = set()
+    defaults: dict[str, str] = {}
+    overrides: dict[str, str] = {}
     for node in root:
         if node.tag == CT_NS + "Default":
             extension = node.get("Extension", "").lower()
             content_type = node.get("ContentType", "")
-            if not extension or extension in defaults or extension not in {"xml", "rels"} or not content_type:
+            if not extension or extension in defaults or extension not in {"xml", "rels", "png", "jpeg", "jpg"} or not content_type:
                 raise _unsupported("content_types")
-            defaults.add(extension)
+            defaults[extension] = content_type
         elif node.tag == CT_NS + "Override":
             part_name = node.get("PartName", "")
             content_type = node.get("ContentType", "")
@@ -171,9 +232,34 @@ def _validate_content_types(root: etree._Element, names: set[str]) -> None:
                 raise _invalid("content_types")
             if any(marker in content_type.lower() for marker in ("macroenabled", "vbaproject", "oleobject", "externallink")):
                 raise _unsupported("content_types")
-            overrides.add(normalized)
+            overrides[normalized] = content_type
         else:
             raise _unsupported("content_types")
+
+
+def _validate_docx_content_types(root: etree._Element, names: set[str]) -> None:
+    defaults: dict[str, str] = {}
+    overrides: dict[str, str] = {}
+    for node in root:
+        if node.tag == CT_NS + "Default":
+            defaults[node.get("Extension", "").lower()] = node.get("ContentType", "").lower()
+        elif node.tag == CT_NS + "Override":
+            overrides[node.get("PartName", "").lstrip("/")] = node.get("ContentType", "").lower()
+    image_types = {"png": "image/png", "jpeg": "image/jpeg", "jpg": "image/jpeg"}
+    for name in names:
+        if name.startswith("word/media/"):
+            extension = name.rsplit(".", 1)[-1].lower()
+            if defaults.get(extension) != image_types[extension]:
+                raise _invalid("content_types")
+        elif re.fullmatch(r"word/header\d+\.xml", name):
+            if overrides.get(name) != "application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml":
+                raise _invalid("content_types")
+        elif re.fullmatch(r"word/footer\d+\.xml", name):
+            if overrides.get(name) != "application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml":
+                raise _invalid("content_types")
+        elif name == "docProps/custom.xml":
+            if overrides.get(name) != "application/vnd.openxmlformats-officedocument.custom-properties+xml":
+                raise _invalid("content_types")
 
 
 def read_package(data: bytes, filename: str, mime_type: str, budget: VerificationBudget) -> Package:
@@ -199,13 +285,12 @@ def read_package(data: bytes, filename: str, mime_type: str, budget: Verificatio
     if len(infos) > budget.max_zip_entries:
         raise _resource("container")
     names: set[str] = set()
+    seen_members: set[str] = set()
     declared_total = 0
     for info in infos:
-        if not _safe_name(info.filename) or info.filename in names:
+        if not _safe_name(info.filename) or info.filename in seen_members:
             raise _invalid("container")
-        if info.is_dir():
-            raise _unsupported("container")
-        names.add(info.filename)
+        seen_members.add(info.filename)
         if info.flag_bits & 0x1:
             raise _unsupported("container")
         if info.file_size > budget.max_entry_size:
@@ -215,6 +300,9 @@ def read_package(data: bytes, filename: str, mime_type: str, budget: Verificatio
             raise _resource("container")
         if ((info.external_attr >> 16) & 0xF000) == 0xA000:
             raise _unsupported("container")
+        if info.is_dir():
+            continue
+        names.add(info.filename)
         if not _allowed_part(kind, info.filename):
             raise _unsupported("container")
     document_part = "xl/workbook.xml" if kind == "xlsx" else "word/document.xml"
@@ -256,6 +344,8 @@ def read_package(data: bytes, filename: str, mime_type: str, budget: Verificatio
         raise _invalid("container") from exc
     relationships: dict[str, tuple[tuple[str, str, str], ...]] = {}
     _validate_content_types(roots["[Content_Types].xml"], names)
+    if kind == "docx":
+        _validate_docx_content_types(roots["[Content_Types].xml"], names)
     for part_name, root in roots.items():
         if part_name.endswith(".rels"):
             relationships[part_name] = _read_relationships(part_name, root, names)
@@ -265,11 +355,13 @@ def read_package(data: bytes, filename: str, mime_type: str, budget: Verificatio
         raise _invalid("container") from exc
     if bad_name:
         raise _invalid("container")
+    if kind == "docx":
+        _validate_docx_media_signatures(raw_parts)
     return Package(kind, tuple(sorted(names)), raw_parts, roots, relationships)
 
 
 BLOCKED_LOCAL_NAMES = {
-    "extLst", "AlternateContent", "oleObject", "control", "externalLink", "txbxContent",
+    "AlternateContent", "oleObject", "control", "externalLink", "txbxContent",
     "pict", "altChunk", "fldSimple", "instrText", "del", "ins", "sdt", "customXml",
     "commentRangeStart", "commentRangeEnd", "drawing", "hyperlink", "hyperlinks", "bookmarkStart", "bookmarkEnd",
     "dataValidations", "conditionalFormatting", "phoneticPr", "legacyDrawing", "gridSpan", "vMerge",
@@ -277,9 +369,57 @@ BLOCKED_LOCAL_NAMES = {
 
 
 def reject_unsupported_nodes(package: Package) -> None:
-    for root in package.roots.values():
+    safe_word_fields = {"TOC", "PAGEREF", "PAGE", "NUMPAGES", "DATE", "TIME", "SEQ", "REF", "STYLEREF", "NOTEREF", "SECTION", "SECTIONPAGES"}
+    for part_name, root in package.roots.items():
         for node in root.iter():
             if not isinstance(node.tag, str):
                 continue
-            if etree.QName(node).localname in BLOCKED_LOCAL_NAMES:
+            local = etree.QName(node).localname
+            if local == "extLst" and package.kind == "xlsx":
+                if _safe_xlsx_extension_list(node):
+                    continue
                 raise _unsupported("structure")
+            if package.kind == "docx" and local == "instrText":
+                instruction = " ".join((node.text or "").upper().split())
+                field_type = instruction.split(" ", 1)[0] if instruction else ""
+                if field_type in safe_word_fields:
+                    continue
+                raise _unsupported("word_field")
+            if package.kind == "docx" and local == "drawing":
+                if _is_safe_picture_drawing(node, part_name, package):
+                    continue
+                raise _unsupported("word_drawing")
+            if package.kind == "docx" and local in {"bookmarkStart", "bookmarkEnd"}:
+                continue
+            if local in BLOCKED_LOCAL_NAMES:
+                raise _unsupported("structure")
+
+
+def _safe_xlsx_extension_list(node: etree._Element) -> bool:
+    main_ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+    safe_extensions = {
+        "{http://schemas.microsoft.com/office/spreadsheetml/2018/calcfeatures}calcFeatures": {"feature"},
+        "{http://schemas.microsoft.com/office/spreadsheetml/2009/9/main}slicerStyles": set(),
+    }
+    if node.tag != f"{{{main_ns}}}extLst" or not len(node):
+        return False
+    for extension in node:
+        if extension.tag != f"{{{main_ns}}}ext" or len(extension) != 1:
+            return False
+        payload = extension[0]
+        allowed_children = safe_extensions.get(payload.tag)
+        if allowed_children is None:
+            return False
+        for child in payload.iter():
+            if child is payload:
+                continue
+            qname = etree.QName(child)
+            if qname.namespace != etree.QName(payload).namespace or qname.localname not in allowed_children:
+                return False
+            if qname.localname == "feature" and child.get("name", "") not in {
+                "microsoft.com:RD", "microsoft.com:Single", "microsoft.com:FV",
+                "microsoft.com:CNMTM", "microsoft.com:LET_WF", "microsoft.com:LAMBDA_WF",
+                "microsoft.com:ARRAYTEXT_WF",
+            }:
+                return False
+    return True

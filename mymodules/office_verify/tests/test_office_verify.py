@@ -69,6 +69,50 @@ def changed_xlsx(value: str = "new", formula: str = "SUM(A1:A1)", cache: str | N
     )
 
 
+def xlsx_with_custom_properties(*, include_directories: bool = True, value: str = "stable") -> bytes:
+    base = xlsx()
+    with zipfile.ZipFile(io.BytesIO(base), "r") as source:
+        parts = {item.filename: source.read(item.filename) for item in source.infolist() if not item.is_dir()}
+    parts["_rels/.rels"] = parts["_rels/.rels"].replace(
+        b"</Relationships>",
+        b'<Relationship Id="rIdCustom" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/custom-properties" Target="docProps/custom.xml"/></Relationships>',
+    )
+    parts["[Content_Types].xml"] = parts["[Content_Types].xml"].replace(
+        b"</Types>",
+        b'<Override PartName="/docProps/custom.xml" ContentType="application/vnd.openxmlformats-officedocument.custom-properties+xml"/></Types>',
+    )
+    parts["docProps/custom.xml"] = (
+        '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/custom-properties" '
+        'xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">'
+        f'<property name="Probe" fmtid="{{D5CDD505-2E9C-101B-9397-08002B2CF9AE}}" pid="2"><vt:lpwstr>{value}</vt:lpwstr></property>'
+        "</Properties>"
+    ).encode()
+    output = io.BytesIO()
+    with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as archive:
+        for name, content in parts.items():
+            archive.writestr(name, content)
+        if include_directories:
+            archive.writestr("docProps/", b"")
+            archive.writestr("xl/", b"")
+    return output.getvalue()
+
+
+def replace_xlsx_text(source: bytes, old: bytes, new: bytes, *, include_directories: bool = False) -> bytes:
+    output = io.BytesIO()
+    with zipfile.ZipFile(io.BytesIO(source), "r") as original, zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as candidate:
+        for item in original.infolist():
+            if item.is_dir():
+                continue
+            content = original.read(item.filename)
+            if item.filename == "xl/worksheets/sheet1.xml":
+                content = content.replace(old, new)
+            candidate.writestr(item.filename, content)
+        if include_directories:
+            candidate.writestr("docProps/", b"")
+            candidate.writestr("xl/", b"")
+    return output.getvalue()
+
+
 class OfficeVerifyTests(unittest.TestCase):
     def verify(self, source: bytes, candidate: bytes, filename: str, mime: str, plan: dict[str, object], **kwargs):
         return verify_output(source, candidate, filename, mime, plan, **kwargs)
@@ -116,6 +160,76 @@ class OfficeVerifyTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256(source).hexdigest(), before)
         self.assertEqual(hashlib.sha256(candidate).hexdigest(), after)
         self.assertEqual(report.as_dict()["cached_value_changed"], True)
+
+    def test_blank_cells_between_used_cells_are_valid_targets(self):
+        source = xlsx(
+            f'<worksheet xmlns="{MAIN}"><sheetData>'
+            '<row r="1"><c r="A1" t="inlineStr"><is><t>客户名称</t></is></c><c r="C1"><f>B2*1.13</f></c></row>'
+            '<row r="2"><c r="A2" t="inlineStr"><is><t>金额</t></is></c><c r="C2"><f>SUM(B2:B5)</f></c></row>'
+            '</sheetData></worksheet>'
+        )
+        candidate = xlsx(
+            f'<worksheet xmlns="{MAIN}"><sheetData>'
+            '<row r="1"><c r="A1" t="inlineStr"><is><t>客户名称</t></is></c><c r="B1" t="inlineStr"><is><t>Acme Corporation</t></is></c><c r="C1"><f>B2*1.13</f></c></row>'
+            '<row r="2"><c r="A2" t="inlineStr"><is><t>金额</t></is></c><c r="B2"><v>2000</v></c><c r="C2"><f>SUM(B2:B5)</f></c></row>'
+            '</sheetData></worksheet>'
+        )
+        plan = {
+            "schema_version": "1",
+            "template_sha256": hashlib.sha256(source).hexdigest(),
+            "writes": [
+                {"element_id": "xlsx:Sheet1!B1", "operation": "set_value", "value": {"type": "string", "data": "Acme Corporation"}},
+                {"element_id": "xlsx:Sheet1!B2", "operation": "set_value", "value": {"type": "number", "data": 2000}},
+            ],
+        }
+        report = self.verify(source, candidate, "complex.xlsx", XLSX_MIME, plan)
+        self.assertEqual(report.status, "PASS")
+        self.assertEqual(report.checked_targets, 2)
+        self.assertEqual(report.checked_formulas, 2)
+
+    def test_hidden_sheet_visibility_change_fails(self):
+        source = xlsx()
+        with zipfile.ZipFile(io.BytesIO(source), "r") as archive:
+            parts = {item.filename: archive.read(item.filename) for item in archive.infolist() if not item.is_dir()}
+        parts["xl/workbook.xml"] = parts["xl/workbook.xml"].replace(
+            b'name="Sheet1" sheetId="1"', b'name="Sheet1" sheetId="1" state="hidden"'
+        )
+        hidden_source = make_zip(parts)
+        changed = dict(parts)
+        changed["xl/workbook.xml"] = changed["xl/workbook.xml"].replace(b'state="hidden"', b'state="veryHidden"')
+        changed_output = make_zip(changed)
+        with self.assertRaises(OfficeVerifyError) as caught:
+            self.verify(
+                hidden_source,
+                changed_output,
+                "sample.xlsx",
+                XLSX_MIME,
+                plan_for(hidden_source, "xlsx:Sheet1!A1", "string", "old"),
+            )
+        self.assertEqual(caught.exception.code, "OFFICE_STRUCTURE_MISMATCH")
+
+    def test_custom_properties_and_explicit_zip_directories_are_supported(self):
+        source = xlsx_with_custom_properties()
+        candidate = replace_xlsx_text(source, b">old</t>", b">new</t>")
+        report = self.verify(
+            source,
+            candidate,
+            "custom.xlsx",
+            XLSX_MIME,
+            plan_for(source, "xlsx:Sheet1!A1", "string", "new"),
+        )
+        self.assertEqual(report.status, "PASS")
+
+        changed_metadata = xlsx_with_custom_properties(include_directories=False, value="changed")
+        with self.assertRaises(OfficeVerifyError) as caught:
+            self.verify(
+                source,
+                replace_xlsx_text(changed_metadata, b">old</t>", b">new</t>"),
+                "custom.xlsx",
+                XLSX_MIME,
+                plan_for(source, "xlsx:Sheet1!A1", "string", "new"),
+            )
+        self.assertEqual(caught.exception.code, "OFFICE_STRUCTURE_MISMATCH")
 
     def test_xlsx_formula_change_fails_and_cache_value_not_exposed(self):
         source = xlsx()
@@ -197,7 +311,7 @@ class OfficeVerifyTests(unittest.TestCase):
         unsafe = docx(f'<w:document xmlns:w="{DOC}"><w:body><w:p><w:r><w:tab/></w:r></w:p><w:tbl><w:tr><w:tc><w:p><w:r><w:t>old cell</w:t></w:r></w:p></w:tc></w:tr></w:tbl><w:sectPr/></w:body></w:document>')
         with self.assertRaises(OfficeVerifyError) as caught:
             self.verify(source, unsafe, "sample.docx", DOCX_MIME, plan_for(source, "docx:p:1", "string", "x"))
-        self.assertEqual(caught.exception.code, "OFFICE_UNSUPPORTED_FEATURE")
+        self.assertEqual(caught.exception.code, "OFFICE_STRUCTURE_MISMATCH")
 
     def test_styles_are_warning_unless_policy_requires_them(self):
         style_a = f'<styleSheet xmlns="{MAIN}"><fonts count="1"/></styleSheet>'

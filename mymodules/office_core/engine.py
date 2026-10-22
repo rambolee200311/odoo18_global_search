@@ -6,6 +6,8 @@ import hashlib
 import math
 import re
 import warnings
+import zipfile
+from copy import deepcopy
 from io import BytesIO
 
 from docx import Document
@@ -17,7 +19,7 @@ from openpyxl.cell.cell import MergedCell
 
 from .errors import OfficeCoreError
 from .models import DocumentInspection, Element, RenderCandidate, ResourceBudget
-from .security import Package, inspect_package, reject_unsupported_ooxml_nodes
+from .security import Package, _safe_xlsx_extension_list, inspect_package, reject_unsupported_ooxml_nodes
 
 
 def _parser_warning_gate(caught: list[warnings.WarningMessage], stage: str) -> tuple[str, ...]:
@@ -57,22 +59,39 @@ def _xlsx_inspection(data: bytes, package: Package, budget: ResourceBudget) -> D
         if sheet.max_row * sheet.max_column > budget.max_cells:
             raise OfficeCoreError("OFFICE_RESOURCE_LIMIT", "xlsx_structure", "工作表单元格范围超过限制。")
         for row in sheet.iter_rows():
+            total_cells += len(row)
+            if total_cells > budget.max_cells:
+                raise OfficeCoreError("OFFICE_RESOURCE_LIMIT", "xlsx_structure", "工作簿单元格数量超过限制。")
+            populated_columns = [cell.column for cell in row if cell.value is not None]
+            target_columns = {cell.column for cell in row if cell.has_style and not isinstance(cell, MergedCell)}
+            if populated_columns:
+                # Empty input cells between labelled/formula cells in the same
+                # row are valid explicit Mapping Plan targets. Leading/trailing
+                # blank worksheet space is not exposed as writable structure.
+                target_columns.update(range(min(populated_columns), max(populated_columns) + 1))
             for cell in row:
-                total_cells += 1
-                if total_cells > budget.max_cells:
-                    raise OfficeCoreError("OFFICE_RESOURCE_LIMIT", "xlsx_structure", "工作簿单元格数量超过限制。")
-                if cell.value is None:
+                if cell.column not in target_columns or isinstance(cell, MergedCell):
                     continue
                 order += 1
+                if cell.value is None:
+                    elements.append(
+                        Element(
+                            f"xlsx:{sheet.title}!{cell.coordinate}",
+                            "cell",
+                            None,
+                            True,
+                            order,
+                        )
+                    )
+                    continue
                 is_formula = isinstance(cell.value, str) and cell.value.startswith("=")
-                merged = isinstance(cell, MergedCell)
                 value = {"formula": cell.value} if is_formula else cell.value
                 elements.append(
                     Element(
                         f"xlsx:{sheet.title}!{cell.coordinate}",
                         "formula" if is_formula else "cell",
                         value,
-                        not is_formula and not merged,
+                        not is_formula,
                         order,
                     )
                 )
@@ -89,20 +108,24 @@ def _xlsx_inspection(data: bytes, package: Package, budget: ResourceBudget) -> D
 
 def _paragraph_text(paragraph: Paragraph) -> tuple[str, bool]:
     p = paragraph._p
-    # Only plain runs are in the first capability. Non-text children are not
-    # reconstructed or silently discarded by python-docx.
+    simple_paragraph = True
     for child in p:
         name = _qname(child)
         if name == "pPr":
             continue
         if name != "r":
-            raise OfficeCoreError("OFFICE_UNSUPPORTED_FEATURE", "docx_structure", "Word 段落包含当前未启用的非文本结构。")
+            simple_paragraph = False
+            continue
         for run_child in child:
             if _qname(run_child) not in {"rPr", "t"}:
-                raise OfficeCoreError("OFFICE_UNSUPPORTED_FEATURE", "docx_structure", "Word 文本包含当前未启用的域或格式结构。")
+                simple_paragraph = False
     runs = list(paragraph.runs)
-    text = "".join(run.text for run in runs)
-    writable = len(runs) == 1 and bool(runs[0]._r.findall("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t"))
+    text = "".join(node.text or "" for node in p.iter() if node.tag == "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t")
+    writable = (
+        simple_paragraph
+        and len(runs) == 1
+        and bool(runs[0]._r.findall("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t"))
+    )
     return text, writable
 
 
@@ -157,7 +180,7 @@ def _docx_inspection(data: bytes, package: Package, budget: ResourceBudget) -> D
         tuple(elements),
         (),
         (),
-        "docx_basic_plain_paragraph_and_table_text_candidate; advanced_parts_rejected",
+        "docx_text_inspection; standard_png_jpeg_images_headers_footers_and_safe_fields_preserved; active_or_unknown_objects_rejected",
     )
 
 
@@ -234,10 +257,10 @@ def _render_xlsx(data: bytes, filename: str, mime_type: str, mapping: object, bu
     writes = _validate_mapping(mapping, inspection)
     try:
         workbook = load_workbook(BytesIO(data), data_only=False, keep_links=False, read_only=False)
-        # openpyxl serializes formulas without cached results. Since this CC has
-        # no independent readback engine, formula-bearing workbooks stay closed.
-        if any(isinstance(cell.value, str) and cell.value.startswith("=") for sheet in workbook.worksheets for row in sheet.iter_rows() for cell in row):
-            raise OfficeCoreError("OFFICE_UNSUPPORTED_FEATURE", "xlsx_render", "含公式的工作簿在本阶段保持只读，避免丢失公式缓存。")
+        # Formula cells are read-only mapping targets, but their presence does
+        # not prevent edits to other cells. openpyxl preserves formula text but
+        # does not calculate cached results; office_verify independently checks
+        # formula expressions and reports cache changes to the caller.
         for element, value in writes:
             _, location = element.element_id.split(":", 1)
             sheet_name, coordinate = location.rsplit("!", 1)
@@ -252,7 +275,7 @@ def _render_xlsx(data: bytes, filename: str, mime_type: str, mapping: object, bu
             workbook.save(out)
             warning_text = _parser_warning_gate(caught, "xlsx_serialize")
         workbook.close()
-        candidate = out.getvalue()
+        candidate = _restore_safe_xlsx_extensions(data, out.getvalue())
     except OfficeCoreError:
         raise
     except Exception as exc:
@@ -263,6 +286,47 @@ def _render_xlsx(data: bytes, filename: str, mime_type: str, mapping: object, bu
     # office_verify contract introduced in CC-002.
     inspect_package(candidate, filename, mime_type, budget)
     return RenderCandidate("xlsx", inspection.template_sha256, hashlib.sha256(candidate).hexdigest(), candidate, len(writes), warning_text)
+
+
+def _restore_safe_xlsx_extensions(source: bytes, candidate: bytes) -> bytes:
+    """Restore whitelisted passive extLst blocks that openpyxl does not model."""
+    source_zip = zipfile.ZipFile(BytesIO(source), "r")
+    candidate_zip = zipfile.ZipFile(BytesIO(candidate), "r")
+    replacements: dict[str, bytes] = {}
+    for part_name in ("xl/workbook.xml", "xl/styles.xml"):
+        if part_name not in source_zip.namelist() or part_name not in candidate_zip.namelist():
+            continue
+        try:
+            original_root = etree.fromstring(source_zip.read(part_name))
+            candidate_root = etree.fromstring(candidate_zip.read(part_name))
+        except etree.XMLSyntaxError as exc:
+            raise OfficeCoreError("OFFICE_INVALID_OR_MISMATCHED", "xlsx_serialize", "Excel 扩展结构无法安全回读。") from exc
+        original_extensions = [node for node in original_root if _qname(node) == "extLst"]
+        candidate_extensions = [node for node in candidate_root if _qname(node) == "extLst"]
+        if candidate_extensions:
+            # The candidate parser does not currently emit extension lists;
+            # avoid merging where a writer starts managing them differently.
+            continue
+        for extension in original_extensions:
+            if not _safe_xlsx_extension_list(extension):
+                raise OfficeCoreError("OFFICE_UNSUPPORTED_FEATURE", "xlsx_serialize", "Excel 扩展结构不在安全保留白名单中。")
+            candidate_root.append(deepcopy(extension))
+        if original_extensions:
+            replacements[part_name] = etree.tostring(
+                candidate_root,
+                xml_declaration=True,
+                encoding="UTF-8",
+                standalone=True,
+            )
+    source_zip.close()
+    candidate_zip.close()
+    if not replacements:
+        return candidate
+    merged = BytesIO()
+    with zipfile.ZipFile(BytesIO(candidate), "r") as archive, zipfile.ZipFile(merged, "w", zipfile.ZIP_DEFLATED) as output:
+        for info in archive.infolist():
+            output.writestr(info, replacements.get(info.filename, archive.read(info.filename)))
+    return merged.getvalue()
 
 
 def _locate_docx_paragraph(document, element_id: str) -> Paragraph:

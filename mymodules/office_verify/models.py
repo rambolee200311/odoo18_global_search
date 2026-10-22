@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class VerificationBudget:
-    max_file_size: int = 20 * 1024 * 1024
+    max_file_size: int = 32 * 1024 * 1024
     max_expanded_size: int = 100 * 1024 * 1024
     max_zip_entries: int = 512
     max_entry_size: int = 20 * 1024 * 1024

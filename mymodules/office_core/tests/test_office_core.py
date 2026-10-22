@@ -7,17 +7,20 @@ import sys
 import struct
 import warnings
 import zipfile
+import zlib
 from zipfile import ZipFile
 from io import BytesIO
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
 from docx import Document
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 from lxml import etree
 
 from office_core import OfficeCoreError, ResourceBudget, inspect_document, render_candidate
 from office_core.engine import _parser_warning_gate
+from office_verify import VerificationBudget, VerificationPolicy, verify_output
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -53,14 +56,8 @@ def make_xlsx(*, formula=False):
     return output.getvalue()
 
 
-def make_docx():
-    document = Document()
-    document.add_paragraph("Existing title")
-    table = document.add_table(rows=1, cols=1)
-    table.cell(0, 0).text = "Existing cell"
-    output = BytesIO()
-    document.save(output)
-    source = ZipFile(BytesIO(output.getvalue()), "r")
+def sanitize_docx(content):
+    source = ZipFile(BytesIO(content), "r")
     clean = BytesIO()
     type_ns = "{http://schemas.openxmlformats.org/package/2006/content-types}"
     with zipfile.ZipFile(clean, "w", zipfile.ZIP_DEFLATED) as dst:
@@ -92,6 +89,66 @@ def make_docx():
                 raw = etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
             dst.writestr(name, raw)
     return clean.getvalue()
+
+
+def make_docx():
+    document = Document()
+    document.add_paragraph("Existing title")
+    table = document.add_table(rows=1, cols=1)
+    table.cell(0, 0).text = "Existing cell"
+    output = BytesIO()
+    document.save(output)
+    return sanitize_docx(output.getvalue())
+
+
+def make_docx_with_standard_parts():
+    def png_chunk(kind, value):
+        return struct.pack(">I", len(value)) + kind + value + struct.pack(">I", zlib.crc32(kind + value) & 0xFFFFFFFF)
+
+    png = (
+        b"\x89PNG\r\n\x1a\n"
+        + png_chunk(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 6, 0, 0, 0))
+        + png_chunk(b"IDAT", zlib.compress(b"\x00\x00\x00\x00\xff"))
+        + png_chunk(b"IEND", b"")
+    )
+    document = Document()
+    paragraph = document.add_paragraph("Word with standard parts")
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+
+    bookmark_start = OxmlElement("w:bookmarkStart")
+    bookmark_start.set(qn("w:id"), "1")
+    bookmark_start.set(qn("w:name"), "Contents")
+    paragraph._p.insert(0, bookmark_start)
+    field_run = paragraph.add_run()
+    begin = OxmlElement("w:fldChar")
+    begin.set(qn("w:fldCharType"), "begin")
+    field_run._r.append(begin)
+    instruction_run = paragraph.add_run()
+    instruction = OxmlElement("w:instrText")
+    instruction.set(qn("xml:space"), "preserve")
+    instruction.text = " PAGE "
+    instruction_run._r.append(instruction)
+    separate_run = paragraph.add_run()
+    separate = OxmlElement("w:fldChar")
+    separate.set(qn("w:fldCharType"), "separate")
+    separate_run._r.append(separate)
+    result_run = paragraph.add_run("1")
+    end = OxmlElement("w:fldChar")
+    end.set(qn("w:fldCharType"), "end")
+    result_run._r.append(end)
+    paragraph.add_run().add_picture(BytesIO(png))
+    bookmark_end = OxmlElement("w:bookmarkEnd")
+    bookmark_end.set(qn("w:id"), "1")
+    paragraph._p.append(bookmark_end)
+    section = document.sections[0]
+    section.header.paragraphs[0].text = "Document header"
+    section.footer.paragraphs[0].text = "Document footer"
+    table = document.add_table(rows=1, cols=1)
+    table.cell(0, 0).text = "Editable table value"
+    output = BytesIO()
+    document.save(output)
+    return sanitize_docx(output.getvalue())
 
 
 def mapping_for(inspection, element_id, value):
@@ -148,6 +205,43 @@ class OfficeCoreTests(unittest.TestCase):
         self.assertFalse(items["xlsx:Sheet1!B1"].writable)
         self.assertEqual(items["xlsx:Sheet1!B1"].kind, "formula")
 
+    def test_xlsx_blank_cells_between_used_cells_are_writable_mapping_targets(self):
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = "Sheet1"
+        sheet["A1"] = "客户名称"
+        sheet["C1"] = "=B2*1.13"
+        sheet["A2"] = "金额"
+        sheet["C2"] = "=SUM(B2:B5)"
+        output = BytesIO()
+        workbook.save(output)
+        workbook.close()
+        source = output.getvalue()
+        mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        inspected = inspect_document(source, "blank-targets.xlsx", mime, budget())
+        elements = {item.element_id: item for item in inspected.elements}
+        self.assertIn("xlsx:Sheet1!B1", elements)
+        self.assertIn("xlsx:Sheet1!B2", elements)
+        self.assertIsNone(elements["xlsx:Sheet1!B1"].value)
+        self.assertTrue(elements["xlsx:Sheet1!B1"].writable)
+        self.assertTrue(elements["xlsx:Sheet1!B2"].writable)
+        self.assertFalse(elements["xlsx:Sheet1!C1"].writable)
+        plan = {
+            "schema_version": "1",
+            "template_sha256": inspected.template_sha256,
+            "writes": [
+                {"element_id": "xlsx:Sheet1!B1", "operation": "set_value", "value": {"type": "string", "data": "Acme Corporation"}},
+                {"element_id": "xlsx:Sheet1!B2", "operation": "set_value", "value": {"type": "number", "data": 2000}},
+            ],
+        }
+        candidate = render_candidate(source, "blank-targets.xlsx", mime, plan, budget())
+        rendered = load_workbook(BytesIO(candidate.content), data_only=False)
+        self.assertEqual(rendered["Sheet1"]["B1"].value, "Acme Corporation")
+        self.assertEqual(rendered["Sheet1"]["B2"].value, 2000)
+        self.assertEqual(rendered["Sheet1"]["C1"].value, "=B2*1.13")
+        self.assertEqual(rendered["Sheet1"]["C2"].value, "=SUM(B2:B5)")
+        rendered.close()
+
     def test_docx_inspection_and_candidate_render_for_plain_paragraph_and_table(self):
         source = make_docx()
         source_hash = hashlib.sha256(source).hexdigest()
@@ -168,6 +262,32 @@ class OfficeCoreTests(unittest.TestCase):
         self.assertEqual(reopened.paragraphs[0].text, "Changed")
         self.assertEqual(hashlib.sha256(source).hexdigest(), source_hash)
 
+    def test_docx_standard_images_headers_footers_and_safe_fields_roundtrip(self):
+        source = make_docx_with_standard_parts()
+        mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        inspected = inspect_document(source, "standard-parts.docx", mime, budget())
+        writable = next(element for element in inspected.elements if element.writable)
+        plan = mapping_for(inspected, writable.element_id, {"type": "string", "data": "Updated table value"})
+        candidate = render_candidate(source, "standard-parts.docx", mime, plan, budget())
+        report = verify_output(
+            source,
+            candidate.content,
+            "standard-parts.docx",
+            mime,
+            plan,
+            VerificationPolicy(enabled_formats=("xlsx", "docx")),
+            VerificationBudget(),
+        )
+        self.assertEqual(report.status, "PASS")
+        self.assertEqual(report.checked_targets, 1)
+        with ZipFile(BytesIO(source)) as original, ZipFile(BytesIO(candidate.content)) as rendered:
+            self.assertIn("word/header1.xml", original.namelist())
+            self.assertIn("word/footer1.xml", original.namelist())
+            image_parts = [name for name in original.namelist() if name.startswith("word/media/")]
+            self.assertTrue(image_parts)
+            for name in image_parts + ["word/header1.xml", "word/footer1.xml"]:
+                self.assertEqual(original.read(name), rendered.read(name))
+
     def test_xlsx_candidate_render_preserves_source_and_uses_new_bytes(self):
         source = make_xlsx()
         inspected = inspect_document(
@@ -183,19 +303,21 @@ class OfficeCoreTests(unittest.TestCase):
         self.assertEqual(load_cell(source), "old")
         self.assertEqual(candidate.applied_writes, 1)
 
-    def test_formula_workbook_candidate_is_disabled_to_avoid_cache_loss(self):
+    def test_formula_workbook_can_render_non_formula_cells_and_preserves_formula_text(self):
         source = make_xlsx(formula=True)
         inspected = inspect_document(
             source, "source.xlsx",
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", budget(),
         )
         plan = mapping_for(inspected, "xlsx:Sheet1!A1", {"type": "string", "data": "changed"})
-        with self.assertRaises(OfficeCoreError) as caught:
-            render_candidate(
-                source, "source.xlsx",
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", plan, budget(),
-            )
-        self.assertEqual(caught.exception.code, "OFFICE_UNSUPPORTED_FEATURE")
+        candidate = render_candidate(
+            source, "source.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", plan, budget(),
+        )
+        workbook = load_workbook(BytesIO(candidate.content), data_only=False)
+        self.assertEqual(workbook["Sheet1"]["A1"].value, "changed")
+        self.assertEqual(workbook["Sheet1"]["B1"].value, "=1+1")
+        workbook.close()
 
     def test_mapping_rejects_unknown_missing_null_duplicate_and_formula_targets(self):
         source = make_xlsx(formula=True)
@@ -342,14 +464,32 @@ class OfficeCoreTests(unittest.TestCase):
             )
         self.assertEqual(caught.exception.code, "OFFICE_RESOURCE_LIMIT")
         self.assertEqual(multiprocessing.active_children(), [])
-        if sys.platform == "darwin":
-            with self.assertRaises(OfficeCoreError) as memory_caught:
-                inspect_document(
-                    make_xlsx(), "source.xlsx",
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    budget(max_memory_bytes=4_000_000_000),
-                )
-            self.assertEqual(memory_caught.exception.code, "OFFICE_RESOURCE_LIMIT")
+
+    def test_rss_budget_allows_normal_worker_and_fails_closed_when_unobservable(self):
+        source = make_xlsx()
+        mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        result = inspect_document(
+            source, "source.xlsx", mime,
+            budget(max_memory_bytes=4_000_000_000),
+        )
+        self.assertEqual(result.format, "xlsx")
+
+        with patch("office_core.service._process_rss_bytes", return_value=None):
+            with self.assertRaises(OfficeCoreError) as caught:
+                inspect_document(source, "source.xlsx", mime, budget())
+        self.assertEqual(caught.exception.code, "OFFICE_RESOURCE_LIMIT")
+        self.assertEqual(multiprocessing.active_children(), [])
+
+    def test_rss_budget_terminates_worker_above_limit(self):
+        with self.assertRaises(OfficeCoreError) as caught:
+            inspect_document(
+                make_xlsx(),
+                "source.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                budget(max_memory_bytes=1),
+            )
+        self.assertEqual(caught.exception.code, "OFFICE_RESOURCE_LIMIT")
+        self.assertEqual(multiprocessing.active_children(), [])
 
     def test_synthetic_xlsx_extension_structure_fails_closed(self):
         source = with_xml_child(
