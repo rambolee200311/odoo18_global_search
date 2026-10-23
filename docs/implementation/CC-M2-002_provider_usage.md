@@ -379,4 +379,4 @@ N/A。追溯链为 `SRS / TDD / Implementation Plan → CC → ATR/IHR → FR`�
 
 ## 15. 关闭记录
 
-负责人于 2026-10-23 批准关闭本 CC。CC-TEST-001–008 均为 PASS，ATR/IHR 已更新，FR 根据冻结契约及实际证据独立判定。契约基线保持 FROZEN V1.0.0；关闭批准不改变其规范范围。
+负责人于 2026-10-23 批准关闭本 CC。CC-TEST-001–008 均为 PASS，ATR/IHR 已更新；需求追溯结论见 [`FR-M2-002_provider_usage.md`](FR-M2-002_provider_usage.md)。实施 commit `091942a2cd2b0feadf0a41c3c3c7fc345c4fc186` 已推送。契约基线保持 FROZEN V1.0.0；关闭批准不改变其规范范围。

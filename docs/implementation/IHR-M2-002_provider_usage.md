@@ -4,7 +4,9 @@
 |---|---|
 | CC | `CC-M2-002` — FROZEN V1.0.0 |
 | 状态 | CLOSED — 负责人于 2026-10-23 批准关闭 CC-M2-002 |
-| 上游基线 | 本地提交 `9e0d32be7b166ef7710d7a6a8fd7174ebdb5f943` (`chore: stable baseline before M2-002`) |
+| 上游基线 | 提交 `9e0d32be7b166ef7710d7a6a8fd7174ebdb5f943` (`chore: stable baseline before M2-002`) |
+| 实施提交 | `091942a2cd2b0feadf0a41c3c3c7fc345c4fc186` (`feat: add M2 provider usage metering`) |
+| 需求关闭记录 | [`FR-M2-002_provider_usage.md`](FR-M2-002_provider_usage.md) |
 | 分支 | `main` |
 | Odoo / Python | Odoo 18.0；Python 3.11.9 |
 | 数据库 / 配置 | `odoo18ce` / `odoo.conf`；沿用既有开发环境 |
@@ -12,7 +14,7 @@
 
 ## 基线裁定
 
-负责人明确要求以 `git add .` 创建本地稳定基线。上述 commit 收录了该时点整个工作区（380 个文件，45,145 insertions、3,355 deletions）；因此它也固化了当时的 Odoo-LLM 源码与文档/模块迁移状态。CC-M2-002 实施补丁以该 commit 为父基线。该基线提交尚未推送。
+负责人明确要求以 `git add .` 创建稳定基线。上述基线 commit 收录了该时点整个工作区（380 个文件，45,145 insertions、3,355 deletions）；因此它也固化了当时的 Odoo-LLM 源码与文档/模块迁移状态。CC-M2-002 实施补丁以该 commit 为父基线。基线与实施提交均已推送至 `origin/main`。
 
 基线创建后开始实施的文件变更仅按 `CC-M2-002` §4 白名单进行；Provider 方法级差异与工作树文件清单见 ATR 差异范围图。
 
@@ -27,6 +29,7 @@
 | 2026-10-23 | 对 `odoo18ce` 执行模块升级和 Odoo TransactionCase。 | `office_engine_m2: 19 tests 0.63s 578 queries`；`0 failed, 0 error(s) of 13 tests`；日志 `/private/tmp/cc_m2_002_odoo_test_pass.log` |
 | 2026-10-23 | Python 编译、XML 解析、`git diff --check` 与 Provider 方法范围复核。 | 全部通过；详见 [`ATR-M2-002.md`](ATR-M2-002.md) |
 | 2026-10-23 | 负责人批准关闭 CC-M2-002。 | 已关闭；FR 根据 IHR/ATR 证据单独判定 |
+| 2026-10-23 | CC-M2-002 实施提交已推送，FR 与追溯链接已归档。 | 实施 commit `091942a2cd2b0feadf0a41c3c3c7fc345c4fc186` |
 
 ## 变更范围核对
 
@@ -35,7 +38,7 @@
 - `mymodules/odoo-llm/llm_openai/models/openai_provider.py`：仅 `_openai_process_non_streaming_response()` 方法体。
 - `mymodules/office_engine_m2/`：M2 Usage Addon、模型、服务、组/ACL 和 TransactionCase。
 
-未修改 Odoo 官方源码、其他 Provider、`llm_assistant` 或 `llm_thread` 生产代码。自上游基线以来的状态清单仅含上述 Provider 文件、`mymodules/office_engine_m2/`、本 CC 的 ATR/IHR 和差异证据图；`git diff --check HEAD` 通过。Provider 文件差异为 69 insertions、1 deletion，修改范围限于规定方法体。负责人已批准提交推送，提交标识将在完成后补入本记录。
+未修改 Odoo 官方源码、其他 Provider、`llm_assistant` 或 `llm_thread` 生产代码。自上游基线以来的状态清单仅含上述 Provider 文件、`mymodules/office_engine_m2/`、本 CC 的 ATR/IHR 和差异证据图；`git diff --check HEAD` 通过。Provider 文件差异为 69 insertions、1 deletion，修改范围限于规定方法体。实施提交已按负责人授权推送。
 
 ## 关闭前证据
 
