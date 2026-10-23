@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+    <t t-name="office_engine_m2.OfficeMappingCard">
+        <section class="o_office_mapping_card border rounded p-3 mt-2" data-testid="office-mapping-card">
+            <h5>Review document mapping</h5>
+            <table class="table table-sm">
+                <thead>
+                    <tr><th>Template target</th><th>Odoo field</th></tr>
+                </thead>
+                <tbody>
+                    <tr t-foreach="state.targets" t-as="target" t-key="target.element_id">
+                        <td>
+                            <span t-esc="target.label" />
+                            <span t-if="target.required" class="text-danger" aria-label="required">*</span>
+                        </td>
+                        <td>
+                            <select class="form-select form-select-sm"
+                                t-att-data-target-index="target_index"
+                                t-att-value="target.source_field"
+                                t-on-change="onFieldChange"
+                                t-att-disabled="state.busy">
+                                <option value="">Select a field</option>
+                                <option t-foreach="state.fields" t-as="field" t-key="field.field_id"
+                                    t-att-value="field.field_id"
+                                    t-att-selected="target.source_field === field.field_id">
+                                    <t t-esc="field.label" />
+                                </option>
+                            </select>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="d-flex gap-2">
+                <button class="btn btn-secondary btn-sm" data-testid="mapping-save"
+                    t-on-click="save" t-att-disabled="state.busy">Save</button>
+                <button class="btn btn-primary btn-sm" data-testid="mapping-confirm"
+                    t-on-click="confirm" t-att-disabled="state.busy">Confirm</button>
+                <button class="btn btn-outline-secondary btn-sm" data-testid="mapping-cancel"
+                    t-on-click="cancel" t-att-disabled="state.busy">Cancel</button>
+            </div>
+            <p class="mb-0 mt-2" role="status" aria-live="polite" data-testid="mapping-status">
+                <t t-esc="state.status" />
+            </p>
+        </section>
+    </t>
+
+    <t t-name="office_engine_m2.MessageExtension" t-inherit="mail.Message" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('o-mail-Message-textContent')]" position="attributes">
+            <attribute name="t-if">!isOfficeMappingCard</attribute>
+        </xpath>
+        <xpath expr="//div[hasclass('o-mail-Message-content')]" position="inside">
+            <t t-if="isOfficeMappingCard">
+                <OfficeMappingCard message="message" />
+            </t>
+        </xpath>
+    </t>
+</templates>

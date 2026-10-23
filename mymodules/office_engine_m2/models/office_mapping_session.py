@@ -1,3 +1,4 @@
+import json
 import re
 
 from odoo import _, api, fields, models
@@ -37,6 +38,12 @@ ALLOWED_TRANSITIONS = {
 }
 
 _ERROR_CODE_RE = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
+_EMPTY_PROPOSAL = {
+    "schema_version": "m2.mapping-proposal.v1",
+    "mappings": [],
+    "clarifications": [],
+    "skipped_targets": [],
+}
 
 
 class OfficeMappingSession(models.Model):
@@ -79,6 +86,13 @@ class OfficeMappingSession(models.Model):
         index=True,
     )
     revision = fields.Integer(required=True, readonly=True, copy=False, default=1)
+    mapping_rules_json = fields.Text(
+        readonly=True,
+        copy=False,
+        default=lambda self: json.dumps(_EMPTY_PROPOSAL, separators=(",", ":")),
+    )
+    confirmed_revision = fields.Integer(readonly=True, copy=False, default=0)
+    context_json = fields.Text(readonly=True, copy=False, default="{}")
     error_code = fields.Char(readonly=True, copy=False, size=64)
 
     _sql_constraints = [
@@ -159,7 +173,7 @@ class OfficeMappingSession(models.Model):
             raise AccessError(_("The mapping session is unavailable."))
         current_state, current_revision = row
         if current_revision != expected_revision:
-            raise ValidationError(_("The mapping session has changed; reload and retry."))
+            raise ValidationError(_("MAPPING_REVISION_STALE: reload the mapping card and retry."))
         if target_state not in ALLOWED_TRANSITIONS[current_state]:
             raise ValidationError(_("This mapping session state transition is not allowed."))
 
@@ -169,3 +183,106 @@ class OfficeMappingSession(models.Model):
         super(OfficeMappingSession, self).write(update)
         self.invalidate_recordset(["state", "revision", "error_code"])
         return {"session_id": self.id, "state": target_state, "revision": current_revision + 1}
+
+    def _set_context_from_service(self, context_json):
+        """Persist server-owned schema metadata; never accept it through ORM write."""
+        self.ensure_one()
+        self.check_access("write")
+        try:
+            context = json.loads(context_json)
+        except (TypeError, json.JSONDecodeError) as exc:
+            raise ValidationError(_("Invalid mapping context.")) from exc
+        if (
+            not isinstance(context, dict)
+            or set(context) != {"target_manifest", "allowed_fields"}
+            or not isinstance(context["target_manifest"], list)
+            or not isinstance(context["allowed_fields"], dict)
+        ):
+            raise ValidationError(_("Invalid mapping context."))
+        super(OfficeMappingSession, self).write(
+            {"context_json": json.dumps(context, ensure_ascii=False, separators=(",", ":"))}
+        )
+        self.invalidate_recordset(["context_json"])
+
+    def _save_mapping_from_service(self, mapping_rules_json, expected_revision, target_state):
+        """Atomically save validator-approved mapping and advance its revision."""
+        self.ensure_one()
+        self.check_access("write")
+        if target_state not in ("needs_clarification", "awaiting_confirmation", "editing"):
+            raise ValidationError(_("Invalid mapping state."))
+        if type(expected_revision) is not int or expected_revision < 1:
+            raise ValidationError(_("Invalid mapping session revision."))
+        try:
+            rules = json.loads(mapping_rules_json)
+        except (TypeError, json.JSONDecodeError) as exc:
+            raise ValidationError(_("Invalid mapping rules.")) from exc
+        if not isinstance(rules, dict) or set(rules) != {
+            "schema_version", "mappings", "clarifications", "skipped_targets"
+        }:
+            raise ValidationError(_("Invalid mapping rules."))
+
+        self.flush_recordset(["state", "revision"])
+        self.env.cr.execute(
+            "SELECT state, revision FROM office_mapping_session WHERE id = %s FOR UPDATE",
+            [self.id],
+        )
+        row = self.env.cr.fetchone()
+        if not row:
+            raise AccessError(_("The mapping session is unavailable."))
+        current_state, current_revision = row
+        if current_revision != expected_revision:
+            raise ValidationError(_("MAPPING_REVISION_STALE: reload the mapping card and retry."))
+        if target_state != current_state and target_state not in ALLOWED_TRANSITIONS[current_state]:
+            raise ValidationError(_("This mapping session state transition is not allowed."))
+
+        new_revision = current_revision + 1
+        super(OfficeMappingSession, self).write(
+            {
+                "mapping_rules_json": json.dumps(rules, ensure_ascii=False, separators=(",", ":")),
+                "confirmed_revision": 0,
+                "state": target_state,
+                "revision": new_revision,
+                "error_code": False,
+            }
+        )
+        self.invalidate_recordset(
+            ["mapping_rules_json", "confirmed_revision", "state", "revision", "error_code"]
+        )
+        return {"session_id": self.id, "state": target_state, "revision": new_revision}
+
+    def _confirm_mapping_from_service(self, expected_revision):
+        """Bind explicit confirmation to the current, already validated mapping."""
+        self.ensure_one()
+        self.check_access("write")
+        if type(expected_revision) is not int or expected_revision < 1:
+            raise ValidationError(_("Invalid mapping session revision."))
+        self.flush_recordset(["state", "revision"])
+        self.env.cr.execute(
+            "SELECT state, revision FROM office_mapping_session WHERE id = %s FOR UPDATE",
+            [self.id],
+        )
+        row = self.env.cr.fetchone()
+        if not row:
+            raise AccessError(_("The mapping session is unavailable."))
+        current_state, current_revision = row
+        if current_revision != expected_revision:
+            raise ValidationError(_("MAPPING_REVISION_STALE: reload the mapping card and retry."))
+        if current_state not in ("awaiting_confirmation", "editing"):
+            raise ValidationError(_("The mapping session cannot be confirmed in its current state."))
+        if current_state == "editing" and "awaiting_confirmation" not in ALLOWED_TRANSITIONS[current_state]:
+            raise ValidationError(_("This mapping session state transition is not allowed."))
+        new_revision = current_revision + 1
+        super(OfficeMappingSession, self).write(
+            {
+                "state": "awaiting_confirmation",
+                "revision": new_revision,
+                "confirmed_revision": new_revision,
+            }
+        )
+        self.invalidate_recordset(["state", "revision", "confirmed_revision"])
+        return {
+            "session_id": self.id,
+            "state": "awaiting_confirmation",
+            "revision": new_revision,
+            "confirmed_revision": new_revision,
+        }

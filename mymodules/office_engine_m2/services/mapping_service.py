@@ -1,5 +1,8 @@
+import json
+
 from odoo import _
 from odoo.exceptions import AccessError, ValidationError
+from office_mapping_verify import validate_user_revision
 
 
 _UNAVAILABLE = "The mapping session context is unavailable."
@@ -120,3 +123,159 @@ def transition_session(env, session_id, target_state, expected_revision, *, erro
         error_code=error_code,
     )
     return result
+
+
+def _owned_session(env, session_id):
+    session_id = _positive_id(session_id, "mapping session")
+    session = env["office.mapping.session"].browse(session_id).exists()
+    if not session:
+        raise AccessError(_(_UNAVAILABLE))
+    session.check_access("read")
+    if session.owner_id.id != env.uid or session.company_id.id not in env.companies.ids:
+        raise AccessError(_(_UNAVAILABLE))
+    return session
+
+
+def _load_mapping_data(session):
+    try:
+        rules = json.loads(session.mapping_rules_json or "{}")
+        context = json.loads(session.context_json or "{}")
+    except (TypeError, json.JSONDecodeError) as exc:
+        raise ValidationError(_("The mapping context is invalid.")) from exc
+    if (
+        not isinstance(rules, dict)
+        or not isinstance(context, dict)
+        or set(context) != {"target_manifest", "allowed_fields"}
+    ):
+        raise ValidationError(_("The mapping context is invalid."))
+    return rules, context["target_manifest"], context["allowed_fields"]
+
+
+def set_mapping_context(env, session_id, target_manifest, allowed_fields):
+    """Install server-owned TargetManifest/allowlist metadata for a session.
+
+    This internal Python service is not exposed as an RPC route. It exists for
+    trusted orchestration and deterministic test fixtures; browser input never
+    supplies these values.
+    """
+    session = _owned_session(env, session_id)
+    if not isinstance(target_manifest, list) or not isinstance(allowed_fields, dict):
+        raise ValidationError(_("Invalid mapping context."))
+    proposal = {
+        "schema_version": "m2.mapping-proposal.v1",
+        "mappings": [],
+        "clarifications": [],
+        "skipped_targets": [],
+    }
+    report = validate_user_revision(proposal, [], target_manifest, allowed_fields)
+    if report.status == "invalid":
+        raise ValidationError(_("Invalid mapping context."))
+    session._set_context_from_service(
+        json.dumps(
+            {"target_manifest": target_manifest, "allowed_fields": allowed_fields},
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+    )
+    return {"session_id": session.id, "revision": session.revision}
+
+
+def post_mapping_card(env, session_id):
+    """Post a server-authored card reference without persisting business data."""
+    session = _owned_session(env, session_id)
+    return session.thread_id.message_post(
+        body=_("Review the proposed document mapping."),
+        llm_role="assistant",
+        body_json={
+            "office_mapping_card": {
+                "type": "office_mapping_card_v1",
+                "session_id": session.id,
+                "revision": session.revision,
+            }
+        },
+    )
+
+
+def get_mapping_card_context(env, session_id, expected_revision):
+    session = _owned_session(env, session_id)
+    if type(expected_revision) is not int or expected_revision < 1:
+        raise ValidationError(_("Invalid mapping session revision."))
+    rules, manifest, allowed_fields = _load_mapping_data(session)
+    if not isinstance(manifest, list) or not isinstance(allowed_fields, dict):
+        raise ValidationError(_("The mapping context is invalid."))
+    mapped = {item["element_id"]: item for item in rules.get("mappings", [])}
+    return {
+        "session_id": session.id,
+        "revision": session.revision,
+        "state": session.state,
+        "stale": expected_revision != session.revision,
+        "targets": [
+            {
+                "element_id": item["element_id"],
+                "label": item["element_id"],
+                "required": item["required"],
+                "source_field": mapped.get(item["element_id"], {}).get("source_field", ""),
+            }
+            for item in manifest
+        ],
+        "fields": [
+            {"field_id": field_id, "label": field_id, "value_type": value_type}
+            for field_id, value_type in sorted(allowed_fields.items())
+        ],
+    }
+
+
+def save_mapping_edits(env, session_id, expected_revision, edits):
+    session = _owned_session(env, session_id)
+    if type(expected_revision) is not int or expected_revision < 1:
+        raise ValidationError(_("Invalid mapping session revision."))
+    if not isinstance(edits, list):
+        raise ValidationError(_("Invalid mapping edits."))
+    rules, manifest, allowed_fields = _load_mapping_data(session)
+    report = validate_user_revision(rules, edits, manifest, allowed_fields)
+    if report.status == "invalid":
+        raise ValidationError(_("One or more mapping choices are invalid."))
+
+    edits_by_target = {item["element_id"]: dict(item) for item in edits}
+    updated = dict(rules)
+    updated["mappings"] = [
+        edits_by_target.pop(item["element_id"], dict(item))
+        for item in rules.get("mappings", [])
+    ]
+    updated["mappings"].extend(edits_by_target.values())
+    edited_ids = {item["element_id"] for item in edits}
+    updated["clarifications"] = [
+        item for item in rules.get("clarifications", [])
+        if item.get("element_id") not in edited_ids
+    ]
+    updated["skipped_targets"] = [
+        item for item in rules.get("skipped_targets", []) if item not in edited_ids
+    ]
+
+    if session.state == "collecting":
+        new_state = "awaiting_confirmation" if report.ready_for_review else "needs_clarification"
+    elif session.state == "needs_clarification":
+        new_state = "editing" if report.ready_for_review else "needs_clarification"
+    elif session.state == "awaiting_confirmation":
+        new_state = "editing"
+    elif session.state == "editing":
+        new_state = "editing" if report.ready_for_review else "needs_clarification"
+    else:
+        raise ValidationError(_("The mapping session cannot be edited in its current state."))
+
+    return session._save_mapping_from_service(
+        json.dumps(updated, ensure_ascii=False, separators=(",", ":")),
+        expected_revision,
+        new_state,
+    )
+
+
+def confirm_mapping(env, session_id, expected_revision):
+    session = _owned_session(env, session_id)
+    if type(expected_revision) is not int or expected_revision < 1:
+        raise ValidationError(_("Invalid mapping session revision."))
+    rules, manifest, allowed_fields = _load_mapping_data(session)
+    report = validate_user_revision(rules, [], manifest, allowed_fields)
+    if not report.ready_for_review:
+        raise ValidationError(_("Complete all required mapping choices before confirming."))
+    return session._confirm_mapping_from_service(expected_revision)
