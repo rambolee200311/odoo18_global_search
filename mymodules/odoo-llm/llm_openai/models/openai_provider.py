@@ -224,7 +224,75 @@ class LLMProvider(models.Model):
                     for tc in message.tool_calls
                 ]
 
-            if "content" in result or "tool_calls" in result:
+            # Usage is optional telemetry. Parse only the small allowlisted
+            # numeric fields; never let malformed telemetry alter the actual
+            # assistant content or tool-call response.
+            missing = object()
+            invalid_attribute = object()
+
+            def safe_attribute(obj, attribute):
+                try:
+                    return getattr(obj, attribute)
+                except AttributeError:
+                    return missing
+                except Exception:
+                    return invalid_attribute
+
+            sdk_usage = safe_attribute(response, "usage")
+            if sdk_usage is not missing and sdk_usage is not None:
+                normalized_usage = {}
+                invalid_usage = False
+                missing_required = False
+                required_fields = (
+                    "prompt_tokens",
+                    "completion_tokens",
+                    "total_tokens",
+                )
+                for field_name in required_fields:
+                    value = safe_attribute(sdk_usage, field_name)
+                    if value is invalid_attribute:
+                        normalized_usage[field_name] = None
+                        invalid_usage = True
+                    elif value is missing or value is None:
+                        normalized_usage[field_name] = None
+                        missing_required = True
+                    elif type(value) is not int or value < 0:
+                        normalized_usage[field_name] = None
+                        invalid_usage = True
+                    else:
+                        normalized_usage[field_name] = value
+
+                details = safe_attribute(sdk_usage, "completion_tokens_details")
+                reasoning_tokens = (
+                    safe_attribute(details, "reasoning_tokens")
+                    if details is not missing and details is not None
+                    else None
+                )
+                if reasoning_tokens is missing:
+                    reasoning_tokens = None
+                elif reasoning_tokens is invalid_attribute:
+                    reasoning_tokens = None
+                    invalid_usage = True
+                elif reasoning_tokens is not None and (
+                    type(reasoning_tokens) is not int or reasoning_tokens < 0
+                ):
+                    reasoning_tokens = None
+                    invalid_usage = True
+                normalized_usage["reasoning_tokens"] = reasoning_tokens
+                normalized_usage["status"] = (
+                    "invalid"
+                    if invalid_usage
+                    else "partial"
+                    if missing_required
+                    else "available"
+                )
+                result["usage"] = normalized_usage
+
+            response_id = safe_attribute(response, "id")
+            if isinstance(response_id, str) and response_id.strip() and len(response_id) <= 255:
+                result["response_id"] = response_id
+
+            if any(key in result for key in ("content", "tool_calls", "usage", "response_id")):
                 return result
             _logger.warning(
                 "OpenAI non-streaming response had no content or tool calls.",

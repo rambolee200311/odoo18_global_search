@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_office_llm_usage_system,office.llm.usage system read,model_office_llm_usage,base.group_system,1,0,0,0
+access_office_llm_usage_operator,office.llm.usage operator read,model_office_llm_usage,office_engine_m2.group_office_usage_operator,1,0,0,0

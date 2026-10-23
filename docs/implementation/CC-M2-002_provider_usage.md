@@ -376,3 +376,7 @@ N/A。追溯链为 `SRS / TDD / Implementation Plan → CC → ATR/IHR → FR`�
 |---|---|---|---|
 | V0.1 | 2026-10-23 | Draft | 按负责人授权起草；依据 M2 SRS/TDD/Implementation Plan 冻结基线定义 Provider Usage、最小计量模型、内部记录服务、ACL 与 Mock/ORM 验收契约。 |
 | V1.0.0 | 2026-10-23 | FROZEN | 负责人批准附录 B 四项裁定；OIP-M2-003 本地基线 hash 见 IHR；授权实施。 |
+
+## 15. 关闭记录
+
+负责人于 2026-10-23 批准关闭本 CC。CC-TEST-001–008 均为 PASS，ATR/IHR 已更新，FR 根据冻结契约及实际证据独立判定。契约基线保持 FROZEN V1.0.0；关闭批准不改变其规范范围。
