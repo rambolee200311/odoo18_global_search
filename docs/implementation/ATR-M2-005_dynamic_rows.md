@@ -5,6 +5,7 @@
 | CC | `CC-M2-005` 动态列表映射 V1.0.0 |
 | ATR 状态 | **PARTIAL（原生证据状态不变）；CC 处置：CONDITIONALLY CLOSED** |
 | 环境 | 项目 `venv`、`odoo.conf`、既有数据库 `odoo18ce` |
+| 最终验证代码基线 | `87acdd054cb2ad50de39fedddfcce51936941710`（动态行实现提交；最终定向回归对应此代码内容） |
 | Odoo / Python | Odoo 18.0 / Python 3.11.9 |
 | Provider | Mock；未发送真实业务数据或调用外网 |
 | 日志 | 原定向：`/private/tmp/cc_m2_005_dynamic_rows_final.log`、`/private/tmp/cc_m2_005_dynamic_rows_render_engine_v3.log`；全量：`/private/tmp/cc_m2_005_dynamic_rows_final_all.log`；本轮最终定向回归：`/private/tmp/cc_m2_005_conditional_final.log` |
