@@ -106,24 +106,6 @@ thread.message_post(
 4. Enter your OpenAI API key
 5. Click "Fetch Models" to import available models
 
-### OpenAI model parameters
-
-The optional `llm.model.parameters` field accepts a JSON object. To explicitly
-disable reasoning effort for an OpenAI model that requires this setting when
-using function tools, set:
-
-```json
-{"openai":{"reasoning_effort":"none"}}
-```
-
-The `openai` namespace is only interpreted by the OpenAI provider. Currently,
-`reasoning_effort` accepts only the string `"none"`. Unknown namespaces and
-unknown keys are ignored and are never forwarded to the API. Invalid JSON,
-non-object values, an invalid `openai` namespace, or an unsupported
-`reasoning_effort` value are rejected when saving the model and checked again
-before each OpenAI chat request. Leaving the field empty preserves the
-provider's existing request behavior.
-
 ## OpenAI-Compatible Endpoints
 
 Many AI providers offer OpenAI-compatible endpoints, allowing you to use the same code and configuration with different services. This module supports connecting to any of these compatible endpoints by changing the base URL in the provider configuration.

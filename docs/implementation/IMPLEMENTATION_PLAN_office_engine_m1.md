@@ -11,32 +11,32 @@ Template synchronization check: PASS, 2026-10-20
 | Item | Value |
 |---|---|
 | Document | `IMPLEMENTATION_PLAN_office_engine_m1` |
-| Version | V0.2 |
-| Status | **Frozen — approved by business owner; each CC requires separate approval** |
-| Baseline validity | VALID |
+| Version | V0.5 |
+| Status | **Frozen — approved by business/technical owner** |
+| Baseline validity | **VALID** |
 | Project / Module | Odoo 通用 Office 文档自动化引擎 M1 |
-| Plan owner | 项目技术负责人（待指定） |
-| Created | 2026-10-20 |
-| Baseline date | 2026-10-20 |
-| Approval / baseline record | 业务负责人在本会话批准冻结；2026-10-20 |
+| Plan owner | 项目技术负责人 |
+| Created | 2026-10-21 |
+| Baseline date | 2026-10-22 |
+| Approval / baseline record | 负责人于 2026-10-22 明确批准 CC-006 实施先行；Phase 5/CC-004 验收门禁保持未通过 |
 
 ### Freeze Gate
 
-本计划基于冻结的 TDD V0.3 起草并已由业务负责人批准冻结。计划冻结本身不等于 CC 批准或编码授权；每个 CC 仍须单独建立、评审并冻结。当前 First CC Gate 已解除为可起草 CC-001；不得在 CC-001 自身冻结前安装依赖或开始实现。
+本文件为 Implementation Plan V0.5 Frozen 当前计划。它继承 V0.4 并记录负责人于 2026-10-22 对 Phase 6 开工顺序的批准：CC-006 可先进行不开放 Office handoff 的独立适配实现，CC-004/005 的修复和验证可并行进行。该决定只放行开发工作，不更改验收门禁或历史结果。CC-005 Provider 前 Spike 的实际结果仍为：`CC-TEST-006 FAIL`（`ISSUE-005-01`）；CC-005 `CC-TEST-005/008` handoff 验证仍为 `BLOCKED/INCONCLUSIVE`；CC-004 FR 仍为 `NOT SATISFIED`。新增 `CC-OFFICE-M1-PRE-ROUTE-FIX` 修复阶段，作为恢复 Provider 前安全门禁的前置工作。计划及 TDD 补充冻结均不授权修复 CC 实施；该 CC 仍须单独冻结并获明确授权。V0.3 保留为历史计划版本。
 
-本计划安排的顺序是：纯 Python `office_core` 同步文件读写及容器安全校验 → 独立回读校验引擎 → `ir.attachment` 事务 Spike → Odoo 模型封装。聊天拦截适配为独立第二部分，先做 Provider 前路由 Spike，只有 Spike 通过后才可起草并实施适配 CC。
+本计划安排的顺序是：纯 Python `office_core` 同步文件读写及容器安全校验 → 独立回读校验引擎 → `ir.attachment` 事务 Spike → Odoo 模型封装。聊天适配作为独立第二部分：CC-005 已记录的伪装附件漏洞先由 Phase 5R 修复；随后仍须完成 Provider 前 handoff/隔离恢复 Gate，完整通过后才能开放 Office handoff 并通过依赖该能力的验收。
 
 #### First CC Gate Checklist
 
 - [x] SRS V1.0.0 Frozen。
 - [x] DDD 适用性：业务负责人确认 N/A。理由：M1 的 `office_core` 是无状态文件处理技术引擎，不引入业务聚合根或复杂领域流转；Odoo 请求/附件封装按 TDD 直接使用 Odoo ORM，不单独建立领域模型。
-- [x] TV Plan 已执行，原始 TV 与 P0-A/B/C 结果保留原态；TDD V0.3 已冻结逐格式 fail-closed 处置。Partial 项不阻止纯核心设计/实施，但逐项格式能力开放仍须通过该格式 Gate；CC 必须明确实际范围，不得声称未验证能力通过。
-- [x] TDD-OFFICE-ENGINE-M1 V0.3 Frozen；SRS / TDD 版本与本计划引用一致。
+- [x] TV Plan 已执行，原始 TV 与 P0-A/B/C 结果保留原态；TDD V0.4 已冻结逐格式 fail-closed 处置。Partial 项不阻止纯核心设计/实施，但逐项格式能力开放仍须通过该格式 Gate；CC 必须明确实际范围，不得声称未验证能力通过。
+- [x] TDD-OFFICE-ENGINE-M1 V0.4 Frozen；SRS / TDD 版本与本计划引用一致。
 - [x] CC-001 运行时库存已记录；业务负责人批准在 CC-001 中选择、安装并锁定所需依赖。精确包版本须在 CC-001 冻结前确定，且在代码变更前完成兼容性核验。
-- [x] 本计划已批准并建立 V0.2 Frozen 基线；后续上游变化按 §11 变更控制。
+- [x] 本计划 V0.4 已获负责人明确批准并建立 Frozen 基线；本次新增专项 TDD 补充 V1.0.0 Frozen；后续变化按 §11 变更控制。
 - [x] 已为每个实施阶段列出拟建 CC ID 和范围；实际 CC 创建后须回填路径/ID。
 
-**Gate result:** **READY — 可起草 CC-OFFICE-M1-001。此状态不表示 CC 已批准，也不授权在 CC 冻结前安装依赖或编写实现。**
+**Gate result:** 首 CC Gate 已通过，不重新打开 Phase 1。V0.5 保留 Phase 3 PASS、Phase 4 与 Phase 5 当前证据状态；负责人批准 CC-006 独立实现先行，但 Office handoff、成功交付和 CC 关闭继续受 Phase 5/CC-004 Gate 约束。
 
 **Evidence / approval reference:** SRS、TDD、TV 及 P0 报告路径见 §1；业务负责人于 2026-10-20 在本会话确认 DDD N/A、批准 CC-001 依赖选择/安装/锁定并批准计划冻结。CC-001 仍须定义精确依赖版本和执行范围。
 
@@ -49,7 +49,8 @@ Template synchronization check: PASS, 2026-10-20
 | TV Plan | V1.0.0 | Frozen | `docs/verification/TV_Office_Engine_M1_Plan.md` |
 | 原始 TV 报告 | V0.1 | Partial | `docs/verification/TV_Office_Engine_M1_Report.md` |
 | P0 补验报告 | V0.2 / V0.3 / V0.4 | 最新状态见 V0.4；原件保留 | `docs/verification/evidence/TV_Office_Engine_M1/P0_Followup/` |
-| TDD | TDD-OFFICE-ENGINE-M1 V0.3 | Frozen，2026-10-20 | `docs/design/TDD_office_engine_m1.md`；V0.2、V0.1 历史版另存 |
+| TDD 当前基线 | TDD-OFFICE-ENGINE-M1 V0.4 | Frozen，2026-10-21 | `docs/design/TDD_office_engine_m1_v0.4.md`；V0.3、V0.2、V0.1 历史版另存 |
+| Provider 前伪装拦截补充 | TDD 补充 V1.0.0 | Frozen，2026-10-21 | `docs/design/TDD_office_engine_m1_pre_route_fix_addendum_v1.0.0.md`；仅适用于本修复 CC |
 | 源码调查 | 当前 Draft | 调查输入，不覆盖 TDD | `docs/analysis/office_automation_source_review.md` |
 
 TV 状态按原报告保留：P0-A DOCX `PARTIAL`；P0-B XLSX `PARTIAL`；P0-C 本机 Queue Job 链路 `PASS`、生产资源预算 `INCONCLUSIVE`；M1 TV 总体 `Partial`。P0-C 的生产异步容量缺口不阻塞同步核心。若上游基线变更，须先评估受影响阶段、验收和 CC 映射。
@@ -58,7 +59,7 @@ TV 状态按原报告保留：P0-A DOCX `PARTIAL`；P0-B XLSX `PARTIAL`；P0-C �
 
 ### 2.1 Objective
 
-按冻结 SRS 和 TDD 交付 M1 Office 同步底座：以无状态纯 Python 核心安全检查 Office 容器、读取声明范围内结构并按显式 Mapping Plan 写出候选文件；使用独立回读引擎验证候选；再由 Odoo 模型封装处理用户/附件权限、请求状态及结果附件。聊天适配作为第二部分，在独立 Provider 前路由 Spike 通过后推进。
+按冻结 SRS 和 TDD 交付 M1 Office 同步底座：以无状态纯 Python 核心安全检查 Office 容器、读取声明范围内结构并按显式 Mapping Plan 写出候选文件；使用独立回读引擎验证候选；再由 Odoo 模型封装处理用户/附件权限、请求状态及结果附件。聊天适配作为第二部分，按负责人批准可先实施不开放 Office handoff 的独立 UI/错误适配；接入 Office 服务、成功结果交付与相关验收仍受 Phase 5/CC-004 门禁控制。
 
 本计划不承诺任意 Office 文件无损兼容。每种格式仅开放已有目标运行时证据支持的结构能力；未知、损坏、超预算或无保真证据的输入必须受控拒绝。若 SRS 的格式验收要求不能在声明能力范围满足，须走 SRS 变更，不得由实现缩小需求。
 
@@ -67,7 +68,7 @@ TV 状态按原报告保留：P0-A DOCX `PARTIAL`；P0-B XLSX `PARTIAL`；P0-C �
 - Part I：纯 Python `office_core`，容器/格式/资源校验、结构读取、受限映射写入及隔离候选输出。
 - Part I：与写入服务分离的 `office_verify` 回读校验，校验格式、Mapping 目标值、公式文本和已声明结构。
 - Part I：在 `ir.attachment` Spike 通过后，最后实现最小 Odoo 请求/附件模型封装；M1 Mapping Plan 由 Python 单元测试或内部服务调用提供。
-- Part II：Provider 前聊天拦截 Spike；Spike 通过后，按批准的 Addon 扩展路径实现聊天适配。
+- Part II：聊天安全与 UI 适配。CC-006 已获批，可先实施上传/消息/受控错误呈现等独立工作；Office handoff、服务调用和成功交付须在专项修复、handoff 与 CC-004 路径门禁分别闭环后开放，不能将拒绝性修复等同于内部路由通过。
 - 四种扩展名 `.xlsx`、`.docx`、`.xls`、`.doc` 的分格式准入、支持范围、拒绝行为和验收证据。
 - 同步资源限制、无长业务锁、失败清理、附件权限、错误脱敏和回归追溯。
 
@@ -77,7 +78,6 @@ TV 状态按原报告保留：P0-A DOCX `PARTIAL`；P0-B XLSX `PARTIAL`；P0-C �
 - Queue Job 核心依赖、通用异步任务系统、自动重试、取消、断点恢复、生产队列容量建设；异步增强在同步核心验收后另行设计。
 - PDF、图片、PPT/PPTX、宏执行、业务数据导入，以及未通过格式门禁的 Office 高级对象。
 - 修改 Odoo 官方源码或官方 Addon；安装/升级依赖、启用模块、修改环境配置或实现代码不属于本次文档任务。
-- 当前任务中创建实际 CC、启动编码或声称 TV/功能验收通过。
 
 ### 2.4 Constraints
 
@@ -94,14 +94,14 @@ TV 状态按原报告保留：P0-A DOCX `PARTIAL`；P0-B XLSX `PARTIAL`；P0-C �
 
 | Prerequisite | Required state / evidence | Owner | Priority | Status |
 |---|---|---|---|---|
-| SRS / DDD / TDD baselines | SRS V1.0.0 Frozen、TDD V0.3 Frozen；DDD 适用性有明确结论 | 业务/技术负责人 | P0 | SRS/TDD 就绪；DDD N/A 已由业务负责人确认 |
+| SRS / DDD / TDD baselines | SRS V1.0.0 Frozen、TDD V0.4 Frozen；DDD 适用性有明确结论 | 业务/技术负责人 | P0 | SRS/TDD 就绪；DDD N/A 已由业务负责人确认 |
 | 按 CC 范围执行 TV 处置 | CC 明确引用 TDD 的逐格式拒绝/启用策略；未验证能力不在该 CC 中开放；发现已存在 Failed/Skipped/Blocked/Missing 证据时按工作流取得逐项处置/授权 | 技术负责人 | P0（按能力） | TDD 已有 fail-closed 处置；P0-A/B 仍 Partial，分别阻塞其未验证能力，不笼统阻塞纯核心 |
 | 开发运行时基线 | 确认 `venv`、`odoo.conf`、现有 DB `odoo18ce`、Odoo/Python/PostgreSQL 版本、addons 路径与当前进程配置 | Odoo 技术负责人 | P0 | 用户给出环境位置/使用约束；精确版本快照待执行阶段记录 |
 | 文件引擎依赖 | CC-001 内评估候选 Python 库/LibreOffice 的精确版本、许可和目标 venv 兼容性；在代码实现前安装并锁定。业务负责人已批准该 CC 范围内的依赖选择/安装/锁定 | Office 技术负责人 | P0（CC-001 实现前及各格式启用前） | 尚未选择或锁定；不阻塞 CC-001 起草/冻结，未锁定前不得开始依赖相关代码或开放格式 capability |
 | 代表性样本与期望结构 | 对每个要开放的格式提供授权样本、哈希、对象清单和可核验预期结果 | 业务样本负责人 | P0（按格式） | 有 `销售管理模板.xlsx`、`TARGET.docx` 的已有证据；不代表全部格式/结构 |
 | 同步资源预算 | 明确输入/展开/结构规模、时限、内存、临时盘、同步并发上限及测量方法 | 部署负责人 | P0（生产启用） | OPEN-OFFICE-05 未关闭；生产处理不得开放 |
-| 附件事务 Spike | 通过 Odoo shell / ORM 验证附件创建、回滚、清理、filestore 副作用、授权读取；形成报告 | Odoo Runtime 验证人 | P0（模型封装前） | 未执行；阻塞 Phase 4 |
-| 聊天路由 Spike | 证明独立扩展能在 Provider 前拦截并路由，且各 Provider payload 不含 Office 二进制 | Odoo-LLM 技术负责人 | P0（聊天适配前） | 未执行；只阻塞 Part II |
+| 附件事务 Spike | 通过 Odoo shell / ORM 验证附件创建、回滚、清理、filestore 副作用、授权读取；形成报告 | Odoo Runtime 验证人 | P0（模型封装前） | **PASS — CC-003 FR SATISFIED**；证据与限制见 §4 Phase 3 |
+| 聊天路由 Spike | Provider 前身份拒绝、各 Provider payload 隔离与授权 handoff 分开验证 | Odoo-LLM 技术负责人 | P0（Office handoff/依赖验收前） | CC-005 已执行：CC-TEST-006 FAIL；CC-TEST-005/008 handoff BLOCKED/INCONCLUSIVE；独立修复已完成；负责人批准 CC-006 的不开放 handoff 适配先行；只阻塞 handoff、成功交付和相关关闭 |
 | CI / 自动化执行方案 | 记录可重复的纯 Python 单元测试、Odoo 模块测试及命令；测试隔离于业务模型的核心契约明确 | 技术负责人 | P1 | 待 CC/实施阶段确认 |
 | 输出附件留存 | 确定临时文件/结果附件保留和清理策略 | 数据/隐私负责人 | P0（生产附件交付前） | OPEN-OFFICE-12 未关闭 |
 
@@ -117,7 +117,7 @@ TV 状态按原报告保留：P0-A DOCX `PARTIAL`；P0-B XLSX `PARTIAL`；P0-C �
 
 **Inputs and dependencies**
 
-- 冻结 SRS V1.0.0、TDD V0.3；首 CC Gate 已解除。
+- 冻结 SRS V1.0.0、TDD V0.4；首 CC Gate 已解除。
 - 已知项目运行时：Odoo 18 开发环境、项目 `venv` Python 3.11.9。当前依赖只读库存为 `openpyxl 3.0.9`、`xlrd 1.2.0`、`xlwt 1.3.0`、`lxml 4.9.3`；`python-docx` 未安装。这些是库存事实，不是采用批准或兼容性结论。
 - 业务负责人已批准在 CC-001 中评估、安装并锁定所需依赖。CC-001 必须先列出精确候选版本、许可、运行时兼容性和验证方法并冻结；获得 CC 后才能安装，代码实现前必须完成锁定。
 - 按格式列出的能力声明和 TV 适用性；P0-A/B Partial 项不得写成已通过。
@@ -186,43 +186,32 @@ TV 状态按原报告保留：P0-A DOCX `PARTIAL`；P0-B XLSX `PARTIAL`；P0-C �
 
 **CC mapping**
 
-- **实际 CC 草稿：** [CC-OFFICE-M1-002](../context/intent/CC-OFFICE-M1-002.md)（v0.1 Draft；未冻结、未授权实施）。范围为独立回读校验引擎、结构/公式/映射值校验及拒绝交付策略；不含 Odoo 持久化和聊天适配。
+- **已关闭 CC：** [CC-OFFICE-M1-002](../context/intent/CC-OFFICE-M1-002.md)（v1.0.0 Frozen；[FR SATISFIED](office-engine-m1/CC-OFFICE-M1-002/FR-OFFICE-ENGINE-M1-READBACK-VERIFICATION.md)）。范围为独立回读校验引擎；关闭仅限纯 Python 回读包，不表示真实复杂模板或附件交付已验证。
 
-### Phase 3: `ir.attachment` 事务与清理 Spike
+### Phase 3: `ir.attachment` 事务与清理 Spike — PASS
 
 **Objective**
 
-在编写持久化模型/附件关联代码前，用受控 Spike 验证 Odoo 18 `ir.attachment` API 的读取、创建、回滚、清理和 filestore 副作用。
+验证 Odoo 18 `ir.attachment` API 的读取、创建、回滚、清理和 filestore 副作用，为后续持久化模型提供边界证据。
 
-**Inputs and dependencies**
+**状态：PASS（仅限 CC-003 声明的开发环境 Spike 范围）。** CC-003 已于 2026-10-21 依据 FR `SATISFIED` 关闭；执行基线为 Odoo runtime `ab89f54727807a25b16f3ad7e699fd05c782f3d9`。证据见 [CC-003 FR](office-engine-m1/CC-OFFICE-M1-003/FR-OFFICE-ENGINE-M1-ATTACHMENT-SPIKE.md)、[Spike 报告](office-engine-m1/CC-OFFICE-M1-003/OFFICE-ENGINE-M1-ATTACHMENT-SPIKE-REPORT.md)、IHR、ATR 和环境快照。该结论不外推到生产容量、大文件或即时物理擦除。
 
-- Phase 2 核心和回读接口可在内存/临时文件中得到候选字节及验证报告。
-- Odoo `venv`、`odoo.conf`、现有 `odoo18ce` 开发环境版本快照；遵守不创建隔离数据库的约束。
-- Spike 使用唯一测试标记和合成附件；运行前后盘点并清理本 Spike 自己创建的记录/文件，不读取/修改真实业务附件。
+**已验证范围与剩余边界**
 
-**Deliverables**
+- 已观察合成附件 ORM 创建、读取、提交、回滚、ORM 删除、用户权限拒绝和 filestore/GC 标记；无产品代码或数据库 schema 变更。
+- 回滚/ORM 删除后物理对象不会同步删除；残留对象可按 Odoo GC 标记识别。全局 GC 未运行，未直接删除文件；这不是物理擦除能力的 PASS。
+- 负责人已确认本期产品语义：失败/回滚时数据库附件记录和下载授权立即失效，物理文件由 Odoo 原生 GC 延迟回收，不承诺即时物理擦除。请求失败路径不得调用全局 GC 或直接删除 filestore 文件。
+- 本 Spike 未证明大文件、长时间渲染、生产负载或附件创建的普遍事务预算；Phase 4 仍需运行针对产品模型的事务、竞态和失败清理测试。
 
-- Spike 报告：当前用户权限、`ir.attachment` 创建/读取/删除、事务提交/回滚、数据库记录与 filestore 的一致性、失败补偿和可重复清理结论。
-- 明确短事务 A/B 与文件 I/O 边界是否可落地；不使用手动 commit 后复用旧 env/recordset，不直接删除未知服务器路径。
-- 失败案例与能否安全补偿的步骤；如行为不能满足 T-TRX-002，提出证据和设计问题并暂停后续模型封装。
-- 若事务回滚或 ORM 删除后在 filestore 留下孤儿对象，报告必须给出基于 Odoo 官方支持 API 的补偿清理方案；若官方 API 不足，提出独立定时清理任务方案、识别条件、误删防护和审计要求。Spike 只形成方案，不实现清理定时任务；其实现须另有 TDD/CC 授权。
+**交付与 Gate 结果**
 
-**Acceptance gate**
-
-- 报告可证明源附件权限按当前用户执行；创建结果只对获准上下文可见。
-- 对成功提交、显式失败/回滚、清理重复执行分别观察 ORM 记录及 filestore 副作用，给出可复现结果。
-- 不存在可下载的失败输出；孤儿附件/存储清理有受 Odoo API 支持且经实测的处理方式。
-- 对观察到或无法排除的 filestore 孤儿，报告明确补偿路径及责任阶段；无法安全识别/清理时不得宣称清理通过，并阻塞 Phase 4。
-- **Spike 未通过或证据不完整时，Phase 4 不得开始；不得用引入 Queue Job 绕过。**
-
-**Verification evidence**
-
-- Spike 命令、Odoo/Python/PostgreSQL 版本、用户/权限、记录 ID（测试专用）、回滚/清理结果和日志脱敏摘要。
-- 产出经评审的 Spike 记录；不作为产品功能通过证据。
+- Spike 记录已形成并由负责人关闭；结果表明数据库记录/引用失效后，Odoo 原生 GC 延迟回收是本期获接受的补偿路径。
+- 物理对象没有被删除，且本次没有执行 GC；计划不要求 CC-004 实现即时物理清除或自定义清理任务。
+- Phase 3 Gate **PASS** 只解除“必须先完成附件事务 Spike”这一模型封装前置，不代表 Phase 4 产品实现已通过，也不免除其 ORM/权限/事务验证。
 
 **CC mapping**
 
-- **拟建 `CC-OFFICE-M1-003`（验证性 Spike，不含生产持久化代码）**：验证 `ir.attachment` 事务与清理边界，形成决策证据；失败则关闭为 Blocked 并阻断 CC-004。
+- **已关闭 `CC-OFFICE-M1-003`**：[FR SATISFIED](office-engine-m1/CC-OFFICE-M1-003/FR-OFFICE-ENGINE-M1-ATTACHMENT-SPIKE.md)。本计划记录 Phase 3 PASS；此状态仅是前置证据，不代替 Phase 4 产品验收。
 
 ### Phase 4: Odoo 请求模型与附件封装（Part I 最后）
 
@@ -230,15 +219,18 @@ TV 状态按原报告保留：P0-A DOCX `PARTIAL`；P0-B XLSX `PARTIAL`；P0-C �
 
 Spike 通过后再实现最小 Odoo 模型封装，将当前用户可访问的附件字节与 `office_core`/`office_verify` 组合，并以短事务持久化状态和已校验结果。
 
-**Inputs and dependencies**
+**Inputs and dependencies — Phase 4 Gate**
 
-- Phase 1、2 验收通过；Phase 3 Spike PASS 并获评审。
-- 首 CC/后续 CC 门禁、依赖版本、资源阈值和请求/附件留存策略已按范围确认。
+- Phase 1 CC-001、Phase 2 CC-002 均已关闭且 FR SATISFIED；Phase 3 CC-003 FR SATISFIED。Phase 1—3 的 CC 关闭只证明各自契约范围，不替代 Phase 4 产品模型验收。
+- Phase 3 的延迟 GC 产品语义已由负责人于 2026-10-21 确认：数据库记录/下载授权即时失效，物理文件依 Odoo 原生 GC 延迟回收，不承诺即时擦除；实现和测试不得调用请求内全局 GC 或直接删除文件。
+- `request_uuid` 按冻结 TDD V0.4 §5.1 由调用方生成并传入，数据库唯一约束负责并发兜底；唯一冲突时回滚当前事务并以新 cursor/env 在当前用户权限下读取现有请求。
+- Phase 4 模型封装 Addon 路径确定为 `mymodules/office_engine_odoo/`；此路径不预先决定后续聊天适配 Addon 的物理拆分。CC-004 冻结前仍须明确该 Addon 的依赖、升级步骤和本地运行阈值；生产容量不属于同步核心阻塞项。
 
 **Deliverables**
 
 - 最小请求模型/服务封装，仅保留 TDD 需要的 owner、thread/message（若适用）、source/output attachment、状态、错误阶段和文件指纹。
-- 按冻结 TDD 为 `request_uuid` 建立数据库层 `UNIQUE` 约束，使用 Odoo 18 支持的 SQL constraint 声明方式；不得仅依靠 Python 前置查询实现幂等。不得顺带增加其他无依据索引。
+- 按冻结 TDD V0.4 为调用方生成的 `request_uuid` 建立数据库层 `UNIQUE` 约束，使用 Odoo 18 支持的 SQL constraint 声明方式；不得仅依靠 Python 前置查询实现幂等。唯一冲突后回滚旧事务、以新 cursor/env 在当前用户权限下读取既有请求；不得顺带增加其他无依据索引。
+- Odoo 模型封装放入 `mymodules/office_engine_odoo/`；不据此开放聊天适配，不修改官方源码/Addon。
 - 当前用户 ACL/Record Rule、附件/线程归属校验；短事务创建 request、交付前重验和关联唯一输出；失败时清理候选资源并确保不可下载。
 - 同步状态查询与幂等行为；不添加 Queue Job 字段、retry/cancel/progress 或聊天 UI。
 
@@ -247,7 +239,8 @@ Spike 通过后再实现最小 Odoo 模型封装，将当前用户可访问的�
 - ORM 调用只将授权附件内容交给纯 Python 核心；核心不触碰数据库。
 - 验证处理阶段无长时间业务记录锁；交付前重新验证用户、线程、源附件与快照；权限或输入失效时不交付。
 - 附件创建/事务失败、回读失败和重复调用均没有伪成功、越权链接、重复结果或不可清理临时资源。
-- 数据库 schema 中存在 `request_uuid` 唯一约束；重复值及并发重复提交由数据库拒绝/归并为同一请求，不产生第二个有效输出附件；测试须覆盖约束存在和并发竞争结果。
+- 数据库 schema 中存在 `request_uuid` 唯一约束；调用方重试复用相同 UUID，并发同 UUID 仅一条请求插入成功，竞争方回滚后以新 cursor/env 在当前用户权限下读取同一请求；对已生成请求重放返回相同 `output_attachment_id`，不重复渲染，严格遵循 TDD V0.4 §5.1。
+- 附件事务耗时从调用 `ir.attachment.create` 前开始，以同一数据库事务的 `commit` 成功返回为结束点；ATR 记录起止时间戳和总耗时。若超过 1 秒，只标记 `Warning — TDD §6.1 长事务风险` 并记录风险审计，不导致测试失败。1 秒是审查阈值，不是 SRS 性能 SLA。
 - AC-10/17、T-TRX-002、`TEST-OFFICE-001/009/012/013/014` 的适用测试通过；跨用户下载拒绝有 ACL 证据。
 - Spike 结论或实现行为若与 TDD 不一致，暂停受影响 CC，先走 TDD 变更流程。
 
@@ -258,29 +251,30 @@ Spike 通过后再实现最小 Odoo 模型封装，将当前用户可访问的�
 
 **CC mapping**
 
-- **拟建 `CC-OFFICE-M1-004`**：Odoo 最小请求模型、权限边界、状态/错误与已验证结果附件持久化；严格依赖 CC-003 Spike PASS。
+- **待评审 `CC-OFFICE-M1-004`**：Odoo 最小请求模型、权限边界、状态/错误与已验证结果附件持久化；前置包括 CC-003 FR SATISFIED、Phase 1/2 适用验收，以及有效冻结 TDD/计划。当前 CC 仍为 Draft。
 
-### Phase 5: Provider 前聊天拦截 Spike（Part II 起点）
+### Phase 5: Provider 前聊天拦截 Spike（CC-OFFICE-M1-005；当前未通过）
 
 **Objective**
 
-独立验证现有 Odoo-LLM 扩展点能在任何 Provider 请求之前识别 Office 附件，阻止二进制进入 Provider payload，并把引用路由到经授权的 Odoo 服务。
+验证独立 Addon 是否能在 Provider 请求前安全识别 Office 附件、阻止内容外发，并验证授权 handoff 到内部服务。阶段结论必须区分安全拒绝、路由与 handoff，不得以任一单项通过替代整阶段通过。
 
 **Inputs and dependencies**
 
 - Part I 模型封装已通过阶段验收；静态源码调查作为导航材料，不替代运行时证据。
+- 已有 CC-005 ATR-RUN-001：CC-TEST-006 FAIL，Office 扩展名 + `text/plain` 伪装附件未被拒绝且本地 Provider mock dispatch=1；CC-TEST-005/008 handoff 为 BLOCKED/INCONCLUSIVE。
 - 已知 Provider/模型配置和可执行的脱敏/Mock 捕获方式；真实凭据不写入证据。
 
 **Deliverables**
 
-- Spike 报告记录挂钩时序、扩展模型/方法、工具/消息处理权限上下文、payload 内容、多个 Provider 路径和失败关闭行为。
-- 一个清晰结论：独立 Addon 是否足以实现安全路由；若不行，聊天适配停止并提交 TDD/上游变更问题，不碰官方源码。
+- CC-005 原始报告和 ATR 保留为 append-only；当前结果不覆盖：CC-TEST-006 FAIL；CC-TEST-005/008 BLOCKED/INCONCLUSIVE；CC-004 FR NOT SATISFIED。
+- 当前 Gate 未通过。负责人批准 CC-006 独立适配工作先行；该批准不开放 Office handoff。修复 CC 仅解决伪装附件 Provider 前拒绝和普通附件/跨轮次回归，不负责内部 handoff。
 
 **Acceptance gate**
 
-- Office 附件请求被受控路由或安全拒绝；任何 Provider payload 中不含 Office 二进制、Base64 或由其派生的内容。
-- 当前用户/线程/附件授权上下文能传到模型封装；改动线程工具、Provider 或附件引用不能扩大权限。
-- Spike 证据在目标 Odoo-LLM commit 和目标运行时下可复现。未通过时仅 Part II Blocked，不影响 Part I。
+- CC-005 的 Provider payload 安全和授权 handoff 必须各有可复现证据；Office 内容不得以二进制、Base64 或派生文本进入不应接收的 Provider 路径。
+- 当前状态：`CC-TEST-006 FAIL`；`CC-TEST-005/008 BLOCKED/INCONCLUSIVE`。在修复 CC 通过且 handoff/CC-004 门禁关闭前，Phase 5 不得判 PASS。
+- 未通过时仅 Part II Blocked，不影响 Part I。
 
 **Verification evidence**
 
@@ -288,17 +282,49 @@ Spike 通过后再实现最小 Odoo 模型封装，将当前用户可访问的�
 
 **CC mapping**
 
-- **拟建 `CC-OFFICE-M1-005`（验证性 Spike，不实现聊天功能）**：Provider 前安全路由及扩展点验证；通过后才允许建立 CC-006。
+- **CC-OFFICE-M1-005（已执行 Spike）**：原始结果为 FAIL/BLOCKED，证据位于 `docs/implementation/office-engine-m1/CC-OFFICE-M1-005/`；不得改写历史状态。
+
+### Phase 5R: Provider 前类型伪装漏洞修复（CC-OFFICE-M1-PRE-ROUTE-FIX）
+
+**Objective**
+
+按专项 TDD 补充 V1.0.0，在现有 `office_engine_odoo` 独立 Addon 中加入 MIME/扩展名/签名一致性拒绝闸门，修复 CC-005 `ISSUE-005-01`。
+
+**Inputs and dependencies**
+
+- SRS V1.0.0、TDD V0.4 与专项 TDD 补充 V1.0.0 均为 Frozen；Implementation Plan V0.4 Frozen。
+- 修复 CC 必须单独 Frozen 并获授权后才能实施。使用 `venv`、`odoo.conf`、现有 `odoo18ce`，不建立隔离数据库、不调用真实 Provider。
+
+**Deliverables**
+
+- 仅在独立 Addon 使用标准 `_inherit = "llm.thread"`；不修改 `mymodules/odoo-llm/`、官方 Odoo 代码或 Addon。
+- 重跑 CC-005 原始 CC-TEST-006；测试普通 `.txt`/`.png` 回归及同线程跨轮次上下文隔离。
+- 魔数仅读取 2048 字节；不得完整物化附件；如进行 OOXML 初步解析，单条解压不超过 1 MiB、总解压不超过 5 MiB。
+- 输出新 IHR/ATR/HVR/FR，不改写 CC-005 原始证据。
+
+**Acceptance gate**
+
+- 伪装/冲突/不确定 Office 候选在 Provider dispatch 前受控拒绝，mock dispatch=0；拒绝后的第二轮普通消息历史不含第一轮附件或错误提示。
+- 正常 `.txt`/`.png` 维持既有本地 mock 透传；真实外发 HTTP=0；临时 hook 清理。
+- 修复 CC 的通过只关闭 `ISSUE-005-01`，不将 CC-005 handoff 测试或 Phase 5 整体标为 PASS。
+
+**CC mapping**
+
+- **`CC-OFFICE-M1-PRE-ROUTE-FIX`（Draft，待负责人单独批准冻结和授权）**：Provider 前伪装附件拒绝修复。
+
+### Phase 5 Resume Gate: 恢复 Provider 路由验证
+
+修复 CC 通过后，仍须按原 CC-005 契约补齐被阻塞的 handoff 验证；CC-004 spawn/import 缺陷和 FR `NOT SATISFIED` 需另按 CC-004 证据闭环。CC-005 `CC-TEST-005/008` 只有在内部路由服务可用、授权边界和 Provider payload 检查均通过后才能更新。负责人已批准 CC-006 的独立实现先行；Phase 5 完整 Gate PASS 仍是 Office handoff 开放、依赖成功交付的验收及 CC 关闭条件。
 
 ### Phase 6: 聊天适配器实现与用户场景验证（Part II）
 
 **Objective**
 
-仅在 Phase 5 Spike 通过后，将聊天附件/命令适配到 Odoo 模型封装；适配层不得读取/渲染 Office 二进制本身，也不得把它交给 Provider。
+按负责人批准，CC-006 可先实施不开放 Office handoff 的独立适配部分。将聊天附件/命令接到 Odoo Office 服务、读取/渲染及成功结果交付，只能在 Phase 5 Gate 和 CC-004 成功路径通过后开放；适配层不得自行处理 Office 二进制，也不得把它交给 Provider。
 
 **Inputs and dependencies**
 
-- CC-005 Spike PASS；Addon 物理边界及方法扩展点经批准。
+- 独立 UI/错误适配实现可按 CC-006 和负责人批准先行。任何 Office handoff、读取、成功结果交付或相应验收前，必须有 Phase 5 完整 Gate PASS、修复 CC 关闭、CC-005 handoff 阻塞关闭、CC-004 spawn/import 与成功路径合格证据；Addon 物理边界及方法扩展点经批准。
 - Part I 核心、回读、模型封装已验收；AC-05 阶段追溯备忘录须在 Phase 6 退出前由业务负责人批准，作为 M1 关闭的强制门禁。
 
 **Deliverables**
@@ -323,20 +349,21 @@ Spike 通过后再实现最小 Odoo 模型封装，将当前用户可访问的�
 
 **CC mapping**
 
-- **拟建 `CC-OFFICE-M1-006`**：在 Spike 批准边界内实现聊天附件/状态适配与浏览器验证；不修改官方 Addon，不加入 AI Mapping UI。
+- **`CC-OFFICE-M1-006`（Frozen / 实施中）**：负责人批准独立聊天适配与 UI 验证先行；Provider handoff、Office 成功结果交付与整体关闭仍受 Phase 5/CC-004 门禁约束；不修改官方 Addon，不加入 AI Mapping UI。
 
 ### CC 阶段计划与当前状态
 
 | CC ID / 状态 | 阶段 | 边界 | 前置门禁 |
 |---|---|---|---|
 | [CC-OFFICE-M1-001](../context/intent/CC-OFFICE-M1-001.md) — Frozen / 已批准关闭 | Phase 1 | 纯 Python `office_core` 容器安全、结构读取、Mapping 校验、受限候选写入；无 ORM/附件/回读交付/聊天 | 首 CC Gate 和本 CC 均已通过；[FR](office-engine-m1/CC-OFFICE-M1-001/FR-OFFICE-ENGINE-M1-CORE-FOUNDATION.md) SATISFIED |
-| [CC-OFFICE-M1-002](../context/intent/CC-OFFICE-M1-002.md) — v0.1 Draft | Phase 2 | 独立 `office_verify` 模块；不依赖 `office_core` 私有 API；结构、目标值、公式与格式回读；失败关闭 | CC-001 已关闭；CC-002 尚待评审、冻结和单独实施批准 |
-| `CC-OFFICE-M1-003`（拟建） | Phase 3 | `ir.attachment` 事务与清理验证 Spike；只产出证据，不写产品持久化代码 | CC-002 阶段验收；Spike 本身必须使用受控测试数据 |
-| `CC-OFFICE-M1-004`（拟建） | Phase 4 | Odoo 最小请求模型、附件权限、状态、事务、数据库层 `request_uuid` 唯一约束、幂等和结果持久化 | CC-003 Spike PASS；CC-001/002 验收 |
-| `CC-OFFICE-M1-005`（拟建） | Phase 5 | Provider 前 Office 附件路由与 payload 隔离 Spike；只产出证据 | Part I 模型封装验收；Spike PASS 才能建立 CC-006 |
-| `CC-OFFICE-M1-006`（拟建） | Phase 6 | 独立聊天适配、状态/结果入口、Chrome/Safari 人工验证和 Playwright UI 回归；无 Mapping UI/官方源码修改 | CC-005 Spike PASS；AC-05 阶段追溯备忘录获批 |
+| [CC-OFFICE-M1-002](../context/intent/CC-OFFICE-M1-002.md) — Frozen / 已批准关闭 | Phase 2 | 独立 `office_verify` 模块；不依赖 `office_core` 私有 API；结构、目标值、公式与格式回读；失败关闭 | [FR SATISFIED](office-engine-m1/CC-OFFICE-M1-002/FR-OFFICE-ENGINE-M1-READBACK-VERIFICATION.md)，限纯 Python 回读契约 |
+| [CC-OFFICE-M1-003](../context/intent/CC-OFFICE-M1-003.md) — Frozen / 已批准关闭 | Phase 3 | `ir.attachment` 事务与清理验证 Spike；只产出证据，不写产品持久化代码 | [FR SATISFIED](office-engine-m1/CC-OFFICE-M1-003/FR-OFFICE-ENGINE-M1-ATTACHMENT-SPIKE.md)；Phase 4 产品验收仍独立 |
+| [CC-OFFICE-M1-004](../context/intent/CC-OFFICE-M1-004.md) — Draft | Phase 4 | Odoo 最小请求模型、附件权限、状态、事务、数据库层 `request_uuid` 唯一约束、幂等和结果持久化，Addon 路径 `mymodules/office_engine_odoo/` | CC-003 FR SATISFIED；CC-001/002 验收；本 CC 须独立冻结并获授权 |
+| `CC-OFFICE-M1-005` — 已执行，FAIL/BLOCKED | Phase 5 | Provider 前 Office 附件识别、payload 隔离与内部 handoff Spike | CC-TEST-006 FAIL；CC-TEST-005/008 BLOCKED/INCONCLUSIVE；不得建立 CC-006 |
+| [CC-OFFICE-M1-PRE-ROUTE-FIX](../context/intent/CC-OFFICE-M1-PRE-ROUTE-FIX.md) — Draft | Phase 5R | 修复 `ISSUE-005-01`，重跑伪装文件拒绝、普通附件及跨轮次上下文测试 | TDD 补充 V1.0.0 Frozen；本 CC 单独冻结授权；仅此 CC 通过不代表 handoff/Phase 5 PASS |
+| [CC-OFFICE-M1-006](../context/intent/CC-OFFICE-M1-006.md) — Frozen / 实施中 | Phase 6 | 独立聊天适配、状态/结果入口、Chrome/Safari 人工验证和 Playwright UI 回归；无 Mapping UI/官方源码修改 | 负责人批准独立实现先行；Office handoff、成功交付及 CC 关闭仍要求 Phase 5/CC-004 门禁通过；AC-05 备忘录仍为 M1 关闭条件 |
 
-CC-001 已关闭，CC-002 仅为 Draft；Phase 3—6 仍是拟建项。Draft 不构成编码授权；每个 CC 仍须单独冻结并追溯到本计划与 TDD。
+CC-001、CC-002、CC-003 均已关闭且 FR SATISFIED；CC-004 的 FR 为 NOT SATISFIED；CC-005 的 CC-TEST-006 为 FAIL、CC-TEST-005/008 为 BLOCKED/INCONCLUSIVE；专项修复 CC 为 Draft；CC-006 已由负责人批准冻结并开始独立适配实现；CC-004 FR NOT SATISFIED 和 CC-005 handoff BLOCKED/INCONCLUSIVE 仍保持原状并继续阻止依赖这些能力的验收与 M1 关闭。Implementation Plan V0.5 为当前 Frozen 基线。
 
 ## 5. Phase Order and Dependencies
 
@@ -344,14 +371,19 @@ CC-001 已关闭，CC-002 仅为 Draft；Phase 3—6 仍是拟建项。Draft 不
 flowchart TD
     G0[首 CC 门禁：计划基线、DDD N/A、TV 处置] --> P1[Phase 1: office_core / CC-001]
     P1 --> P2[Phase 2: office_verify / CC-002]
-    P2 --> P3[Phase 3: ir.attachment Spike / CC-003]
-    P3 -->|Spike PASS| P4[Phase 4: Odoo 模型封装 / CC-004]
-    P4 --> P5[Phase 5: Provider 前路由 Spike / CC-005]
-    P5 -->|Spike PASS| P6[Phase 6: 聊天适配 / CC-006]
-    P5 -->|Spike FAIL| B2[Part II Blocked；Part I 保持可交付]
+    P2 --> P3[Phase 3: ir.attachment Spike / CC-003 PASS]
+    P3 -->|Gate PASS；Phase 1/2、TDD 与计划基线仍需满足| P4[Phase 4: Odoo 模型封装 / CC-004]
+    P4 --> P5[Phase 5: CC-005 Spike — FAIL/BLOCKED]
+    P5 --> P5R[Phase 5R: 伪装附件修复 / 专项 CC]
+    P5R -->|修复 CC PASS| P5G[Phase 5 恢复：handoff 与 Provider 门禁]
+    P5G -->|完整 Gate PASS 才开放路由和完成依赖验收| P6C[Phase 6 验收关闭]
+    P4 --> P6I[Phase 6 独立适配实现 / CC-006]
+    P5R --> P6I
+    P6I --> P6C
+    P5 -->|当前未通过| B2[Part II Blocked；Part I 保持可交付]
 ```
 
-**Critical path:** 首 CC Gate → Phase 1 → Phase 2 → Phase 3 Spike → Phase 4 → Phase 5 Spike → Phase 6。Phase 3 和 Phase 5 是各自下游的硬门禁；Phase 5 失败不回退或阻塞已完成的 Part I。
+**Critical path:** Phase 1（PASS）→ Phase 2（PASS）→ Phase 3（PASS）→ Phase 4；Phase 5（当前 FAIL/BLOCKED）→ Phase 5R 修复 → Phase 5 handoff 恢复门禁。负责人已批准 Phase 6 的独立适配实现先行；Phase 5/CC-004 Gate 仍控制 Office handoff 开放、成功交付验收和 CC 关闭。Phase 1—3 状态不变；修复不回写 CC-004/005 历史结果。
 
 **Parallel work and constraints:**
 
@@ -367,9 +399,9 @@ Parallel work does not waive dependencies or approval gates.
 | Milestone | Included phases / deliverables | Exit criteria and evidence | Target / status |
 |---|---|---|---|
 | MS0 — 实施就绪 | DDD 判断、首 CC TV 处置、计划评审/基线、版本与样本确认 | First CC Gate checklist 全通过；有可核验批准记录 | 2026-10-20；READY，可起草 CC-001 |
-| MS1 — 纯 Python Office 引擎 | Phase 1 `office_core` + Phase 2 `office_verify` | 候选输出及回读规则通过；适用 ATR 通过；未验证格式保留明确拒绝 | 2026-10-20；进行中（Phase 1 CC-001 已关闭；Phase 2 CC-002 为 Draft） |
-| MS2 — Odoo 同步封装 | Phase 3 附件 Spike + Phase 4 最小请求/附件模型 | Spike PASS；ORM/权限/事务/幂等/失败清理证据齐全；无 Queue Job 前置 | 日期 TBD；未开始 |
-| MS3 — 聊天适配 | Phase 5 Provider 前路由 Spike + Phase 6 adapter/HVR | Spike PASS；无 Office payload 外发；UI/权限场景通过；AC-05 阶段追溯备忘录获批；M1 适用 AC 均有可审查证据 | 日期 TBD；未开始 |
+| MS1 — 纯 Python Office 引擎 | Phase 1 `office_core` + Phase 2 `office_verify` | 候选输出及回读规则通过；适用 ATR 通过；未验证格式保留明确拒绝 | Phase 1/2 CC-001/002 已关闭；具体能力仍按各自 FR/TV 限定 |
+| MS2 — Odoo 同步封装 | Phase 3 附件 Spike + Phase 4 最小请求/附件模型 | Phase 3 已 PASS；Phase 4 CC 仍须有效 TDD/计划基线及 CC-001/002 门禁；ORM/权限/事务/幂等/失败清理证据齐全；无 Queue Job 前置 | Phase 3 PASS；Phase 4 未开始 |
+| MS3 — Provider 前修复与聊天适配 | Phase 5、5R、恢复 handoff Gate + Phase 6 adapter/HVR | 独立 UI/错误适配按 CC-006 实施；Office handoff/成功交付验收前须修复 CC 通过、CC-004 与 handoff 阻塞独立闭环、Phase 5 完整 PASS；最终关闭还需 UI/权限场景及 AC-05 阶段追溯备忘录 | CC-006 已获批并开始实施；Phase 5 handoff/CC-004 验收仍 BLOCKED |
 | M1 阶段关闭 | MS1—MS3、四格式验收、资源与留存门禁 | 满足 SRS M1 AC-01—10、AC-17、AC-23、AC-29—31；AC-05 备忘录已批准且不冒充用户确认通过；OPEN 项按 SRS 阶段关闭；FR/PVR 证据完整 | 不能仅凭实现阶段结束判通过；未开始；AC-05 备忘录未批准时保持 Blocked |
 
 ## 7. Acceptance and Verification Matrix
@@ -381,13 +413,13 @@ Parallel work does not waive dependencies or approval gates.
 | FR-M1-002 / AC-02、AC-07 / TEST-OFFICE-002、011 | 1 | 伪装、损坏、加密、超限和不支持活动结构拒绝；不执行宏、不进入 Provider | 纯 Python 畸形/恶意容器 ATR；样本哈希、错误码、资源记录 | [CC-001 FR](office-engine-m1/CC-OFFICE-M1-001/FR-OFFICE-ENGINE-M1-CORE-FOUNDATION.md) SATISFIED（CC 范围） | Phase 1 有证据；整体 M1 和端到端 Provider 隔离仍未完成 |
 | FR-M1-003 / AC-03、AC-04 / TEST-OFFICE-003、004 | 1 | 结构元素稳定、关系/层级可辨；未识别元素显式标记 | XLSX/DOCX 样本单元测试与结构快照 | [CC-001 FR](office-engine-m1/CC-OFFICE-M1-001/FR-OFFICE-ENGINE-M1-CORE-FOUNDATION.md) SATISFIED（仅已启用结构） | Phase 1 有限结构已验证；未知真实结构保持拒绝 |
 | FR-M1-004/007 / AC-05、AC-09 / TEST-OFFICE-005 | 1、6 | Mapping 目标、类型、操作与 null/空字符串/缺失边界可验证；按白名单写候选 | schema 单元测试；AC-05 内部服务证据与用户确认 UI 追溯分别记录 | [CC-001 FR](office-engine-m1/CC-OFFICE-M1-001/FR-OFFICE-ENGINE-M1-CORE-FOUNDATION.md) SATISFIED（内部契约范围） | M1 关闭前须批准阶段追溯备忘录；原 AC-05 不得标记为用户确认已通过 |
-| FR-M1-005 / AC-06、AC-23 / TEST-OFFICE-006、010 | 1、2 | 公式格不可写；回读公式文本、目标值及声明结构一致；缓存状态独立说明 | 真实模板/结构化 XML before-after、重新打开验证、ATR | CC-001 已按公式规则 fail-closed；[CC-002](../context/intent/CC-OFFICE-M1-002.md) Draft，FR 未创建 | CC-002 回读证据缺失；P0-B 原生 PARTIAL |
-| FR-M1-005 / AC-29 | 1、2 | 声明支持范围内 `.xls` 的公式/样式/合并和回读通过；其余明确拒绝 | 真实 `.xls` 样本、稳定引擎和回读报告 | CC-001/002 / FR 待建 | Missing；目前无真实 XLS 写回证据 |
-| FR-M1-006 / AC-08、AC-30 / TEST-OFFICE-008 | 1、2 | 声明支持范围内 `.docx/.doc` 结构/版式验证通过；高级对象未验证则拒绝 | 目标 venv 版本、DOC/DOCX 样本、结构及视觉复核报告 | CC-001 已限制未验证结构；[CC-002](../context/intent/CC-OFFICE-M1-002.md) Draft，FR 未创建 | P0-A 原生 PARTIAL；高级对象与整体格式能力未关闭 |
-| FR-M1-008/009 / AC-10、AC-17、AC-23、AC-31 / TEST-OFFICE-009/010/013 | 2–4 | 只创建本请求新结果；默认原格式；升级须确认；失败无可下载附件 | 回读引擎测试、attachment Spike、ORM/ACL/跨用户验证 | CC-002/003/004 / FR 待建 | Missing |
+| FR-M1-005 / AC-06、AC-23 / TEST-OFFICE-006、010 | 1、2 | 公式格不可写；回读公式文本、目标值及声明结构一致；缓存状态独立说明 | 真实模板/结构化 XML before-after、重新打开验证、ATR | [CC-001/002 FR](office-engine-m1/CC-OFFICE-M1-002/FR-OFFICE-ENGINE-M1-READBACK-VERIFICATION.md) SATISFIED（限 CC 声明结构）；真实复杂样本仍有限 | P0-B 原生 PARTIAL；不外推为全面 XLSX 保真 |
+| FR-M1-005 / AC-29 | 1、2 | 声明支持范围内 `.xls` 的公式/样式/合并和回读通过；其余明确拒绝 | 真实 `.xls` 样本、稳定引擎和回读报告 | CC-001/002 已关闭；对应旧格式能力证据尚缺 | Missing；目前无真实 XLS 写回证据 |
+| FR-M1-006 / AC-08、AC-30 / TEST-OFFICE-008 | 1、2 | 声明支持范围内 `.docx/.doc` 结构/版式验证通过；高级对象未验证则拒绝 | 目标 venv 版本、DOC/DOCX 样本、结构及视觉复核报告 | CC-001/002 FR SATISFIED（仅各自声明范围） | P0-A 原生 PARTIAL；高级对象与整体格式能力未关闭 |
+| FR-M1-008/009 / AC-10、AC-17、AC-23、AC-31 / TEST-OFFICE-009/010/013 | 2–4 | 只创建本请求新结果；默认原格式；升级须确认；失败无可下载附件 | 回读引擎测试、CC-003 附件 Spike、ORM/ACL/跨用户验证 | CC-002 FR SATISFIED（纯 Python回读）；CC-003 FR SATISFIED（Spike）；CC-004 Draft | Phase 4 产品行为 Missing |
 | NFR-OFFICE-01/02/03/04/06/08 / TEST-OFFICE-001/002/011/014 | 1、4、6 | 权限、最小数据、完整性、资源限制、脱敏错误和失败清理成立 | 安全单元测试、ACL 测试、失败注入、错误输出审查 | CC-001/004/006 / FR 待建 | Missing |
-| NFR-OFFICE-11 / T-TRX-002 / TEST-OFFICE-012 | 3、4 | 无长业务锁；附件读取/创建/回滚/清理及交付前重验符合约束 | 先 Spike 报告，再 ORM/并发验证；记录 filestore 结果 | CC-003/004 / FR 待建 | Missing；Spike 未执行 |
-| 聊天 Provider 隔离 / TEST-OFFICE-015 | 5、6 | Provider payload 不含 Office 原文/Base64；路由使用当前用户授权 | Spike 捕获 + 聊天集成 ATR/HVR | CC-005/006 / FR 待建 | Missing；Spike 未执行 |
+| NFR-OFFICE-11 / T-TRX-002 / TEST-OFFICE-012 | 3、4 | 无长业务锁；附件读取/创建/回滚/清理及交付前重验符合约束 | CC-003 Spike 报告已验证其有限范围；Phase 4 继续执行 ORM/并发及结果交付验证，记录 filestore 结果 | [CC-003 FR](office-engine-m1/CC-OFFICE-M1-003/FR-OFFICE-ENGINE-M1-ATTACHMENT-SPIKE.md) SATISFIED（Spike范围）；CC-004 Draft | Phase 3 Spike PASS；Phase 4 产品行为 Missing |
+| 聊天 Provider 隔离 / TEST-OFFICE-015 | 5、5R、恢复 Gate、6 | Office 伪装候选 fail closed；正常文本/图像保留；handoff 和 Provider payload 另行通过 | 修复 CC 的 mock/跨轮次 ATR；handoff Spike ATR；聊天集成 HVR | CC-005 已执行；修复 CC Draft；CC-006 未授权 | CC-TEST-006 FAIL；005/008 BLOCKED/INCONCLUSIVE；不得宣称 Phase 5 PASS |
 | SRS AC-01—04、AC-07、AC-10、AC-17 / 聊天接入 | 6 | 用户上传/读取/状态/拒绝/链接在聊天可见且只属于当前请求 | Chrome/Safari 人工 HVR + Playwright UI 回归；同时检查 Provider 脱敏 payload | CC-006 / FR 待建 | Missing |
 | AC-05 与内部 Mapping 调用的分阶段对应 | 1、6、M1 Close | M1 内部服务行为由集成测试验证；最终用户 Mapping 确认安排到 M2；备忘录仅作阶段追溯，不改写 AC-05 通过状态 | 业务负责人在 Phase 6 退出前批准备忘录；若改变验收语义，先走 SRS 变更 | CC-001/006 / FR 待建 | Blocked for overall M1 closure until approved memo |
 | OPEN-OFFICE-03/04/06/14；P0-A/P0-B | 1、2（按格式） | 每种拟开放格式/结构通过对应能力测试；不能通过则拒绝并按要求评估 SRS 变更 | 保留原 TV 报告，另出目标运行时补验结果；结构和视觉证据分开 | CC-001/002 / FR 待建 | P0-A/P0-B 原生 PARTIAL；闭环证据 Missing |
@@ -415,8 +447,8 @@ Parallel work does not waive dependencies or approval gates.
 | P0-A/B Partial 导致目标格式能力承诺超出证据 | 高 / 高 | 按结构类型逐项启用；未知格式/对象 fail closed；目标 venv 和真实样本补验 | 保持该 capability 关闭；若 SRS 格式验收无法满足，业务负责人发起 SRS 变更 | Open |
 | `.xlsx` 保存破坏公式缓存或未知 OOXML 部件 | 高 / 高 | 在 Phase 2 逐 part/公式/目标值回读；不将公式计算或缓存刷新作为默认能力 | 换经验证引擎或拒绝该模板；Office 技术负责人决策 | Open |
 | `.docx/.doc` 高级对象、CJK 字体或布局被静默改变 | 中高 / 高 | 样本结构/关系和视觉比对；严格限定支持元素 | 对该结构拒绝；业务负责人提供替代模板或启动需求变更 | Open |
-| Spike 暴露 Odoo filestore 回滚孤儿或无法安全清理 | 中 / 高 | Phase 3 先行验证；只使用标准 ORM/附件接口并追踪副作用 | 停止 Phase 4；返回 TDD/TV 修订，不直接操作未知路径 | Open |
-| Provider 前无法安全截获 Office 附件 | 中 / 高 | Phase 5 独立 Spike，逐 Provider payload 证据 | Part II Blocked；保持 Office 附件被拒绝，不修改官方 Addon | Open |
+| Odoo filestore 延迟 GC；不提供即时物理擦除 | 中 / 高 | CC-003 已证实回滚/ORM unlink 的物理清理延迟；负责人接受本期语义：DB 记录/下载授权即时失效、物理文件由原生 GC 延迟回收 | 不直接删除文件、不在失败路径运行全局 GC；Phase 4 验证失败时停止交付；Odoo Runtime / 业务负责人 | 已处置产品语义；即时擦除仍不支持 |
+| Provider 前身份伪装已被实测：`.xlsx` + `text/plain` 进入 mock payload | 高 / 高 | 新冻结 TDD 补充及 Phase 5R 修复 CC；2048 字节签名读取；跨轮次测试和 dispatch=0 证据 | 修复未通过前 Office 聊天路径保持关闭；修复通过也不关闭 handoff/CC-004 门禁 | Open — 修复 CC 待单独冻结授权 |
 | 同步耗时/内存超预算占用 Worker | 中 / 高 | 预检上限、子进程硬超时、有限并发、超限拒绝 | 不生产启用该 capability；异步方案另阶段设计 | Open |
 | SRS AC-05 用户确认与 M1 内部 Mapping API 阶段安排需要明确追溯 | 中 / 高 | Phase 6 退出前批准阶段追溯备忘录；保持 SRS 不变并分别记录内部服务证据和用户验收状态 | 未取得备忘录则阻断 M1 关闭；如需改变 SRS 验收语义，按正式变更流程；业务负责人 | Open — closure gate |
 | 临时/结果附件留存政策未定 | 中 / 高 | 生产前确认 OPEN-OFFICE-12，验证清理和权限 | 不以真实业务数据生产启用；数据/隐私负责人 | Open |
@@ -432,7 +464,7 @@ Parallel work does not waive dependencies or approval gates.
 | 纯 Python 核心运行时 | 与 Odoo 业务模型分离的测试入口；版本固定后再决定库 | Office 技术负责人 | Python 3.11.9 是 TV 记录的项目 venv 版本，不代表实施期仍相同；待重核 |
 | Office 依赖 | 经批准并锁定的候选库版本；LibreOffice 仅按验证场景引入 | 技术负责人 | 尚未选型/安装；不得假定文档工作区版本等于 Odoo venv |
 | Office 样本 | `mymodules/odoo-llm/docs/tv_docs/销售管理模板.xlsx`、`TARGET.docx`，另需真实 `.xls/.doc` 样本及对象清单 | 业务样本负责人 | 两个样本已有证据；授权/版本/未来测试范围 CC 前核实；旧格式样本缺失 |
-| `ir.attachment` Spike 环境 | 开发 DB 中合成、唯一标记附件；执行前后清理审计；不触碰真实业务附件 | Odoo Runtime 验证人 | 待 Phase 3；不建隔离数据库 |
+| `ir.attachment` Spike 环境 | 开发 DB 中合成、唯一标记附件；执行前后清理审计；不触碰真实业务附件 | Odoo Runtime 验证人 | Phase 3 已完成；证据目录见 §4 |
 | UI E2E 环境 | Part II 用户模拟登录后的 Odoo 开发 UI；人工验收使用 Chrome/Safari，自动化 UI 回归使用 Playwright | E2E 验证人 | Phase 6 前确认环境及可重复测试数据 |
 | CI/测试资源 | 单元测试与可选 Odoo 测试执行环境；容器/样本资源受限 | 技术负责人 | 待 CC 规定；依赖仅按 CC-001 已批准范围安装/锁定 |
 | 队列/生产容量 | M1 不需要；若异步增强选用 Queue Job，另行验证 prefork、代理、Office 负载和全进程 RSS | 平台负责人 | P0-C 本机链路 PASS、生产预算 INCONCLUSIVE；只作为后续阶段资源 |
@@ -451,12 +483,13 @@ Parallel work does not waive dependencies or approval gates.
 
 | Deliverable | Planned phase | Acceptance evidence | Final location / status |
 |---|---|---|---|
-| M1 Implementation Plan | 计划评审 | 经批准的基线记录及 First CC Gate 结果 | `docs/implementation/IMPLEMENTATION_PLAN_office_engine_m1.md` — V0.2 Frozen |
+| M1 Implementation Plan | 计划评审 | 经批准的基线记录及 Phase 5/5R 状态映射 | `docs/implementation/IMPLEMENTATION_PLAN_office_engine_m1_v0.4.md` — V0.4 Frozen |
 | `office_core` 无状态服务 | 1 | 纯 Python ATR、安全容器与格式能力证据 | [CC-OFFICE-M1-001](../context/intent/CC-OFFICE-M1-001.md) Frozen；[IHR](office-engine-m1/CC-OFFICE-M1-001/IHR-OFFICE-ENGINE-M1-CORE-FOUNDATION.md)、[ATR](office-engine-m1/CC-OFFICE-M1-001/ATR-OFFICE-ENGINE-M1-CORE-FOUNDATION.md)、[HVR](office-engine-m1/CC-OFFICE-M1-001/HVR-OFFICE-ENGINE-M1-CORE-FOUNDATION.md)、[FR](office-engine-m1/CC-OFFICE-M1-001/FR-OFFICE-ENGINE-M1-CORE-FOUNDATION.md)；FR SATISFIED，限 CC 声明范围 |
-| `office_verify` 回读引擎 | 2 | 独立模块验证；结构/公式/Mapping 对比、各格式结果 | [CC-OFFICE-M1-002](../context/intent/CC-OFFICE-M1-002.md) v0.1 Draft；未冻结、未授权实施 |
-| `ir.attachment` 事务 Spike | 3 | Spike 报告、创建/回滚/清理/filestore 证据及孤儿补偿清理方案 | CC-003 实际路径待建 |
-| Odoo 最小请求/附件模型封装 | 4 | ORM/ACL/事务/数据库 UUID 唯一约束/幂等/失败清理 ATR | CC-004 实际路径待建 |
-| Provider 前聊天拦截 Spike | 5 | 适配扩展点和各 Provider payload 安全证据 | CC-005 实际路径待建 |
+| `office_verify` 回读引擎 | 2 | 独立模块验证；结构/公式/Mapping 对比、各格式结果 | [CC-OFFICE-M1-002](../context/intent/CC-OFFICE-M1-002.md) Frozen；[FR SATISFIED](office-engine-m1/CC-OFFICE-M1-002/FR-OFFICE-ENGINE-M1-READBACK-VERIFICATION.md)，限声明范围 |
+| `ir.attachment` 事务 Spike | 3 | Spike 报告、创建/回滚/清理/filestore 证据及延迟 GC 处置结论 | [CC-003 FR](office-engine-m1/CC-OFFICE-M1-003/FR-OFFICE-ENGINE-M1-ATTACHMENT-SPIKE.md) SATISFIED；物理 GC 未执行 |
+| Odoo 最小请求/附件模型封装 | 4 | ORM/ACL/事务/数据库 UUID 唯一约束/幂等/失败清理 ATR | [CC-OFFICE-M1-004](../context/intent/CC-OFFICE-M1-004.md) Draft；未冻结、未授权实施 |
+| Provider 前聊天拦截 Spike | 5 | Provider 安全与内部 handoff 证据 | CC-005 原始 FAIL/BLOCKED 报告，append-only |
+| Provider 前伪装附件修复 | 5R | MIME/扩展/签名拒绝、2048 字节头部限制、跨轮次排除和普通附件回归 | 修复 CC Draft；TDD 补充 V1.0.0 Frozen；实施后建立新 ATR/HVR/FR |
 | Odoo-LLM 聊天适配 | 6 | Chrome/Safari 人工 HVR、Playwright UI 回归、Provider payload ATR、错误/权限场景 | CC-006 实际路径待建 |
 | M1 关闭证据包 | M1 Close | 各 M1 AC、FR、PVR；TV 原态和剩余格式限制保留 | 计划冻结后按项目文档目录创建 |
 
@@ -471,8 +504,8 @@ Parallel work does not waive dependencies or approval gates.
 | OIP-03 | 冻结 SRS AC-05 用户确认渲染与 M1 内部 Mapping API、M2 前端交互之间的阶段追溯 | M1 总体关闭 | 业务负责人 | Phase 6 退出前批准阶段追溯备忘录；OPEN，不能将内部验证写成用户确认已通过；如改变验收语义走正式 SRS 变更 |
 | OIP-04 | Office Python 库、LibreOffice 版本、许可及 Odoo venv 兼容性 | Phase 1/2 对应格式 | 技术负责人 | 格式 capability 开启前；OPEN |
 | OIP-05 | `.xls`、`.doc` 真实样本和目标结构对象 | Phase 1/2 的旧格式写入 | 业务样本负责人 | 旧格式 capability 开启前；OPEN |
-| OIP-06 | Odoo `ir.attachment` 事务、filestore 孤儿识别及补偿/清理语义 | Phase 4 | Odoo Runtime 验证人 | Phase 4 CC 创建前；Spike 未运行；报告须给出官方 API 或受控定时清理方案 |
-| OIP-07 | llm_thread Provider 前路由钩子、各 Provider payload 隔离 | Phase 6 | Odoo-LLM 技术负责人 | Phase 6 CC 创建前；Spike 未运行 |
+| OIP-06 | Phase 4 产品模型内的附件状态、失败清理及授权交付验证（不含即时物理擦除） | Phase 4 | Odoo Runtime 验证人 | CC-003 Spike 已完成；延迟 GC 产品语义于 2026-10-21 获负责人确认；Phase 4 产品路径仍待 ATR |
+| OIP-07 | Provider 前拒绝修复、handoff 与各 Provider payload 隔离需分开关闭 | Phase 5R / Phase 5 Resume / Phase 6 handoff/close | Odoo-LLM 技术负责人 | 独立 CC-006 实施已获批并开始；Office handoff/成功交付验收前仍需关闭 CC-004 与 handoff BLOCKED/INCONCLUSIVE |
 | OIP-08 | 输入/展开规模、耗时、内存、磁盘、同步并发门槛 | 生产启用 | 部署负责人 | OPEN-OFFICE-05；OPEN |
 | OIP-09 | 临时文件和结果附件保留/删除政策 | 生产附件交付 | 数据/隐私负责人 | OPEN-OFFICE-12；OPEN |
 | OIP-10 | Queue Job 生产容量与 Office 负载是否需要评估 | M1 不阻塞；异步增强 | 平台负责人 | 若决定 Queue Job，在异步设计前；INCONCLUSIVE |
@@ -493,20 +526,21 @@ Parallel work does not waive dependencies or approval gates.
 | TV Plan V1.0.0 / 原始 TV V0.1 | 1—3 | 按样本、工具和环境重现；保留 Partial/局部结论 |
 | P0-A V0.4、P0-B V0.2/V0.3/V0.4 | 1、2 | DOCX/XLSX 目标运行时/高级对象/公式缓存等缺口逐项闭环 |
 | P0-C V0.3/V0.4 | 异步增强 | 本机链路 PASS、生产预算 INCONCLUSIVE；不作同步阻塞 |
-| TDD TD-001—TD-014 / TEST-OFFICE-001—016 | 1—6 | 层次、接口、Spike、同步限制和测试义务追溯到拟建 CC |
+| TDD V0.4 Frozen TD-001—TD-015 / TEST-OFFICE-001—016；Provider 前专项 TDD 补充 V1.0.0 Frozen | 1—6、5R | 原 M1 层次与接口保持；专项补充规定附件身份判定、固定头部读取及 ZIP 解压上限 |
 
 ### 14.2 Plan to Coding Closure
 
 | Plan phase / deliverable | CC | IHR / ATR / HVR | FR | PVR evidence |
 |---|---|---|---|---|
 | Phase 1 — `office_core` | [CC-OFFICE-M1-001](../context/intent/CC-OFFICE-M1-001.md)（Frozen） | [IHR](office-engine-m1/CC-OFFICE-M1-001/IHR-OFFICE-ENGINE-M1-CORE-FOUNDATION.md) / [ATR](office-engine-m1/CC-OFFICE-M1-001/ATR-OFFICE-ENGINE-M1-CORE-FOUNDATION.md) / [HVR](office-engine-m1/CC-OFFICE-M1-001/HVR-OFFICE-ENGINE-M1-CORE-FOUNDATION.md) | [FR](office-engine-m1/CC-OFFICE-M1-001/FR-OFFICE-ENGINE-M1-CORE-FOUNDATION.md) — SATISFIED | 17/17 tests pass; FR closure limited to CC scope; M1 as a whole remains open |
-| Phase 2 — `office_verify` | [CC-OFFICE-M1-002](../context/intent/CC-OFFICE-M1-002.md) (v0.1 Draft) | Not started; no IHR/ATR/HVR | Not created; FR follows implementation | Draft only; no implementation authority |
-| Phase 3 — 附件事务 Spike | CC-OFFICE-M1-003（拟建） | Spike/IHR/ATR 待创建 | 如为验证性 CC 按工作流登记；不预设 FR 满足 | 记为前置证据，不代替附件交付验收 |
-| Phase 4 — Odoo 模型封装 | CC-OFFICE-M1-004（拟建） | 待 CC 创建 | 待创建 | M1 PVR 覆盖 ACL/事务/数据库 UUID 唯一约束/失败清理 |
-| Phase 5 — Provider 路由 Spike | CC-OFFICE-M1-005（拟建） | Spike/IHR/ATR 待创建 | 验证性 CC 的 FR 适用性由 CC 明确 | 记为 Part II 入口门禁 |
-| Phase 6 — 聊天适配 | CC-OFFICE-M1-006（拟建） | 待 CC 创建；HVR 必需 | 待创建 | M1 PVR 覆盖聊天场景与 Provider payload 隔离 |
+| Phase 2 — `office_verify` | [CC-OFFICE-M1-002](../context/intent/CC-OFFICE-M1-002.md) Frozen / Closed | [IHR](office-engine-m1/CC-OFFICE-M1-002/IHR-OFFICE-ENGINE-M1-READBACK-VERIFICATION.md) / [ATR](office-engine-m1/CC-OFFICE-M1-002/ATR-OFFICE-ENGINE-M1-READBACK-VERIFICATION.md) / HVR | [FR SATISFIED](office-engine-m1/CC-OFFICE-M1-002/FR-OFFICE-ENGINE-M1-READBACK-VERIFICATION.md) | 仅证明独立纯 Python 回读模块范围；不表示完整 Office 格式或 Odoo 交付通过 |
+| Phase 3 — 附件事务 Spike | [CC-OFFICE-M1-003](../context/intent/CC-OFFICE-M1-003.md) Frozen / Closed | [IHR](office-engine-m1/CC-OFFICE-M1-003/IHR-OFFICE-ENGINE-M1-ATTACHMENT-SPIKE.md) / [ATR](office-engine-m1/CC-OFFICE-M1-003/ATR-OFFICE-ENGINE-M1-ATTACHMENT-SPIKE.md) / Spike Report | [FR SATISFIED](office-engine-m1/CC-OFFICE-M1-003/FR-OFFICE-ENGINE-M1-ATTACHMENT-SPIKE.md) | 只满足前置 Spike，不代替附件交付验收；GC 未运行且物理对象仍待原生延迟回收 |
+| Phase 4 — Odoo 模型封装 | [CC-OFFICE-M1-004](../context/intent/CC-OFFICE-M1-004.md) Draft | 待冻结/实施后建立 | 待实现后评估 | M1 PVR 覆盖 ACL/事务/数据库 UUID 唯一约束/并发恢复/失败清理 |
+| Phase 5 — Provider 路由 Spike | CC-OFFICE-M1-005（已执行） | 原始 ATR / FR 保留 | CC-TEST-006 FAIL；CC-TEST-005/008 BLOCKED/INCONCLUSIVE | Phase 5 不通过，Part II Blocked |
+| Phase 5R — Provider 前伪装拦截修复 | [CC-OFFICE-M1-PRE-ROUTE-FIX](../context/intent/CC-OFFICE-M1-PRE-ROUTE-FIX.md) Draft | 新 IHR/ATR/HVR/FR（实施后） | 仅关闭 ISSUE-005-01，不改写 CC-005 历史 | 等待 CC 单独冻结与授权 |
+| Phase 6 — 聊天适配 | [CC-OFFICE-M1-006](../context/intent/CC-OFFICE-M1-006.md) Frozen / 实施中 | IHR/ATR/HVR/FR 按当前 CC 建立 | 不依赖 handoff 的错误/UI工作可实施；Office handoff 与成功交付验收仍 BLOCKED，直到重跑证据通过 | M1 PVR 覆盖聊天场景与 Provider payload 隔离 |
 
-Phase 1 与 Phase 2 的实际 CC 路径已回填。其余阶段开始建立 CC 后，须继续以真实文件路径/ID 替换“拟建”，并在 CC/IHR/ATR/HVR/FR 中标明 SRS V1.0.0 与 TDD V0.3。不得仅根据计划将 FR/PVR 标记满足。
+Phase 1—3 状态和实际证据路径保持原样；Phase 4 CC-004 的 FR 仍为 NOT SATISFIED。Phase 5 的 CC-005 实际失败/阻塞状态已纳入计划；Phase 5R 修复已关闭；CC-006 已由负责人批准先行实施。任何 FR/PVR 状态变更必须由对应 CC 的新运行证据支持，禁止把计划更新或开工批准当成测试通过。
 
 ## 15. Change History
 
@@ -514,3 +548,6 @@ Phase 1 与 Phase 2 的实际 CC 路径已回填。其余阶段开始建立 CC �
 |---|---|---|---|---|
 | V0.1 | 2026-10-20 | Draft — not approved for implementation | 基于冻结 SRS V1.0.0、TDD V0.3 Frozen 和现有 TV 证据起草；按用户批准的分层与 Spike 决策安排里程碑、Gate 和拟建 CC | 全部阶段；不修改 SRS/TV/TDD |
 | V0.2 | 2026-10-20 | Frozen — approved by business owner | 采纳评审：DDD N/A；`office_verify` 独立模块；Spike 增加孤儿 filestore 补偿方案；`request_uuid` 数据库唯一约束；AC-05 追溯备忘录作为 M1 关闭强门禁；依赖选择/安装/锁定纳入 CC-001；UI 验收改为标准浏览器人工 + Playwright 自动化 | 全部阶段；SRS、TDD、TV 基线不变 |
+| V0.3 | 2026-10-21 | Frozen — approved by business/technical owner | 记录 CC-003 FR SATISFIED 与 Phase 3 PASS；将 Odoo 原生延迟 GC 记录为业务确认的失败/回滚物理清理语义；更新 Phase 4 基线为 TDD V0.4，确定 Odoo 模型封装 Addon 路径 `mymodules/office_engine_odoo/`、调用方 UUID 幂等契约及附件 create-to-commit 风险测量；本计划经负责人批准冻结 | Phase 3—4；原始 TV 状态保留，不将未验证能力改写为通过 |
+| V0.4 | 2026-10-21 | Frozen — approved by business/technical owner | 将 CC-005 的实际 CC-TEST-006 FAIL 与 CC-TEST-005/008 BLOCKED/INCONCLUSIVE 纳入有效计划；新增 Phase 5R 伪装附件修复映射，引用 TDD 补充 V1.0.0 Frozen；明确修复 CC 通过不等于 handoff/Phase 5 整体通过，CC-004 FR NOT SATISFIED 保持原态 | Phase 5、5R、恢复 handoff Gate、Phase 6；不改写历史报告与 FR 状态 |
+| V0.5 | 2026-10-22 | Frozen — owner approved phased implementation | 负责人批准 CC-006 独立实现先行，允许与 CC-004/005 缺口修复并行；Phase 5 handoff 与 CC-004 成功交付仍是 Office 路由开放、相关验收和 CC 关闭门禁；历史 FAIL/BLOCKED 不改写 | Phase 6 开工顺序；不豁免测试，不扩大 SRS/TDD 范围 |

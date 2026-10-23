@@ -1,0 +1,7 @@
+dataset=synthetic_sale_order
+row_count=50
+compact_json_utf8_bytes=6632
+compact_json_unicode_characters=6632
+sha256_compact_json=e484bc46c726cfaf7d43532ba676b482909aa80e824a201e9cbb5c570d24411b
+synthetic_only=true
+retriever_invoked=false

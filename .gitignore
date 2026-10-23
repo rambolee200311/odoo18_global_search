@@ -16,6 +16,8 @@ LICENSE
 MANIFEST.in
 odoo-bin
 README.md
+!docs/guide/README.md
+!docs/guide/user/README.md
 requirements.txt
 SECURITY.md
 setup.cfg

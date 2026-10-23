@@ -1,0 +1,5 @@
+run_id,thread,model,kind,observed,strict_parse,schema_gold
+TV-M2-001-01,llm.thread_198,gpt-5.6-luna,baseline,JSON-shaped mapping response visible,not available from UI-rendered text,not independently validated
+TV-M2-001-02,llm.thread_199,gpt-5.6-luna,baseline,JSON-shaped mapping response visible,not available from UI-rendered text,not independently validated
+TV-M2-001-03,llm.thread_200,gpt-5.6-luna,baseline,JSON-shaped mapping response visible,not available from UI-rendered text,not independently validated
+TV-M2-001-04,llm.thread_201,gpt-5.6-luna,prompt-level simulated repair,JSON-shaped repair response visible,not available from UI-rendered text,not independently validated

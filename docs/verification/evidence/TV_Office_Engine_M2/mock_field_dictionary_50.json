@@ -1,0 +1,252 @@
+[
+  {
+    "field_id": "field_01",
+    "label": "Synthetic field 1",
+    "type": "number"
+  },
+  {
+    "field_id": "field_02",
+    "label": "Synthetic field 2",
+    "type": "string"
+  },
+  {
+    "field_id": "field_03",
+    "label": "Synthetic field 3",
+    "type": "string"
+  },
+  {
+    "field_id": "field_04",
+    "label": "Synthetic field 4",
+    "type": "string"
+  },
+  {
+    "field_id": "field_05",
+    "label": "Synthetic field 5",
+    "type": "number"
+  },
+  {
+    "field_id": "field_06",
+    "label": "Synthetic field 6",
+    "type": "string"
+  },
+  {
+    "field_id": "field_07",
+    "label": "Synthetic field 7",
+    "type": "string"
+  },
+  {
+    "field_id": "field_08",
+    "label": "Synthetic field 8",
+    "type": "string"
+  },
+  {
+    "field_id": "field_09",
+    "label": "Synthetic field 9",
+    "type": "number"
+  },
+  {
+    "field_id": "field_10",
+    "label": "Synthetic field 10",
+    "type": "string"
+  },
+  {
+    "field_id": "field_11",
+    "label": "Synthetic field 11",
+    "type": "string"
+  },
+  {
+    "field_id": "field_12",
+    "label": "Synthetic field 12",
+    "type": "string"
+  },
+  {
+    "field_id": "field_13",
+    "label": "Synthetic field 13",
+    "type": "number"
+  },
+  {
+    "field_id": "field_14",
+    "label": "Synthetic field 14",
+    "type": "string"
+  },
+  {
+    "field_id": "field_15",
+    "label": "Synthetic field 15",
+    "type": "string"
+  },
+  {
+    "field_id": "field_16",
+    "label": "Synthetic field 16",
+    "type": "string"
+  },
+  {
+    "field_id": "field_17",
+    "label": "Synthetic field 17",
+    "type": "number"
+  },
+  {
+    "field_id": "field_18",
+    "label": "Synthetic field 18",
+    "type": "string"
+  },
+  {
+    "field_id": "field_19",
+    "label": "Synthetic field 19",
+    "type": "string"
+  },
+  {
+    "field_id": "field_20",
+    "label": "Synthetic field 20",
+    "type": "string"
+  },
+  {
+    "field_id": "field_21",
+    "label": "Synthetic field 21",
+    "type": "number"
+  },
+  {
+    "field_id": "field_22",
+    "label": "Synthetic field 22",
+    "type": "string"
+  },
+  {
+    "field_id": "field_23",
+    "label": "Synthetic field 23",
+    "type": "string"
+  },
+  {
+    "field_id": "field_24",
+    "label": "Synthetic field 24",
+    "type": "string"
+  },
+  {
+    "field_id": "field_25",
+    "label": "Synthetic field 25",
+    "type": "number"
+  },
+  {
+    "field_id": "field_26",
+    "label": "Synthetic field 26",
+    "type": "string"
+  },
+  {
+    "field_id": "field_27",
+    "label": "Synthetic field 27",
+    "type": "string"
+  },
+  {
+    "field_id": "field_28",
+    "label": "Synthetic field 28",
+    "type": "string"
+  },
+  {
+    "field_id": "field_29",
+    "label": "Synthetic field 29",
+    "type": "number"
+  },
+  {
+    "field_id": "field_30",
+    "label": "Synthetic field 30",
+    "type": "string"
+  },
+  {
+    "field_id": "field_31",
+    "label": "Synthetic field 31",
+    "type": "string"
+  },
+  {
+    "field_id": "field_32",
+    "label": "Synthetic field 32",
+    "type": "string"
+  },
+  {
+    "field_id": "field_33",
+    "label": "Synthetic field 33",
+    "type": "number"
+  },
+  {
+    "field_id": "field_34",
+    "label": "Synthetic field 34",
+    "type": "string"
+  },
+  {
+    "field_id": "field_35",
+    "label": "Synthetic field 35",
+    "type": "string"
+  },
+  {
+    "field_id": "field_36",
+    "label": "Synthetic field 36",
+    "type": "string"
+  },
+  {
+    "field_id": "field_37",
+    "label": "Synthetic field 37",
+    "type": "number"
+  },
+  {
+    "field_id": "field_38",
+    "label": "Synthetic field 38",
+    "type": "string"
+  },
+  {
+    "field_id": "field_39",
+    "label": "Synthetic field 39",
+    "type": "string"
+  },
+  {
+    "field_id": "field_40",
+    "label": "Synthetic field 40",
+    "type": "string"
+  },
+  {
+    "field_id": "field_41",
+    "label": "Synthetic field 41",
+    "type": "number"
+  },
+  {
+    "field_id": "field_42",
+    "label": "Synthetic field 42",
+    "type": "string"
+  },
+  {
+    "field_id": "field_43",
+    "label": "Synthetic field 43",
+    "type": "string"
+  },
+  {
+    "field_id": "field_44",
+    "label": "Synthetic field 44",
+    "type": "string"
+  },
+  {
+    "field_id": "field_45",
+    "label": "Synthetic field 45",
+    "type": "number"
+  },
+  {
+    "field_id": "field_46",
+    "label": "Synthetic field 46",
+    "type": "string"
+  },
+  {
+    "field_id": "field_47",
+    "label": "Synthetic field 47",
+    "type": "string"
+  },
+  {
+    "field_id": "field_48",
+    "label": "Synthetic field 48",
+    "type": "string"
+  },
+  {
+    "field_id": "field_49",
+    "label": "Synthetic field 49",
+    "type": "number"
+  },
+  {
+    "field_id": "field_50",
+    "label": "Synthetic field 50",
+    "type": "string"
+  }
+]

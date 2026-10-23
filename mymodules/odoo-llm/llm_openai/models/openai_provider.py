@@ -64,28 +64,52 @@ class LLMProvider(models.Model):
             Dictionary in OpenAI tool format
         """
         try:
+            if tool.input_schema:
+                try:
+                    schema = json.loads(tool.input_schema)
+                    return self._create_openai_tool_from_schema(schema, tool)
+                except json.JSONDecodeError:
+                    _logger.error(f"Invalid JSON schema for tool {tool.name}")
+
             schema = tool.get_input_schema()
-            return self._create_openai_tool_from_schema(schema, tool)
-        except UserError:
-            raise
-        except Exception:
-            _logger.error(
-                "Unable to format OpenAI tool schema for %s (schema_format_failed)",
-                tool.name,
+            if schema:
+                return self._create_openai_tool_from_schema(schema, tool)
+
+            _logger.warning(
+                f"Could not get schema for tool {tool.name}, using fallback",
             )
-            raise UserError(
-                "The schema for this tool could not be prepared."
-            ) from None
+            schema = {"type": "object", "properties": {}, "required": []}
+            return self._create_openai_tool_from_schema(schema, tool)
+
+        except Exception as e:
+            _logger.error(f"Error formatting tool {tool.name}: {e!s}", exc_info=True)
+            schema = {
+                "title": tool.name,
+                "description": tool.description,
+                "properties": {},
+                "required": [],
+            }
+            return self._create_openai_tool_from_schema(schema, tool)
 
     def _recursively_patch_schema_items(self, schema_node):
-        """Return an independent copy without changing any JSON Schema nodes.
+        """Recursively ensure 'items' dictionaries have a 'type' defined."""
+        if not isinstance(schema_node, dict):
+            return
 
-        The historical method name is retained for compatibility. In particular,
-        union nodes must not receive a guessed parent ``type``.
-        """
-        from copy import deepcopy
+        if "items" in schema_node and isinstance(schema_node["items"], dict):
+            items_dict = schema_node["items"]
+            if "type" not in items_dict:
+                items_dict["type"] = "string"
+            self._recursively_patch_schema_items(items_dict)
 
-        return deepcopy(schema_node)
+        if "properties" in schema_node and isinstance(schema_node["properties"], dict):
+            for prop_schema in schema_node["properties"].values():
+                self._recursively_patch_schema_items(prop_schema)
+
+        for combiner in ["anyOf", "allOf", "oneOf"]:
+            if combiner in schema_node and isinstance(schema_node[combiner], list):
+                for sub_schema in schema_node[combiner]:
+                    self._recursively_patch_schema_items(sub_schema)
 
     def _create_openai_tool_from_schema(self, schema, tool):
         """Convert a JSON schema dictionary to an OpenAI tool format,
@@ -97,14 +121,15 @@ class LLMProvider(models.Model):
         Returns:
             Dictionary in OpenAI tool format
         """
-        if not isinstance(schema, dict) or schema.get("type") != "object":
-            raise UserError("The schema for this tool could not be prepared.")
+        if not schema:
+            _logger.warning(
+                f"Could not generate schema for tool {tool.name}, skipping.",
+            )
+            return None
 
-        parameters_schema = self._recursively_patch_schema_items(schema)
-        properties = parameters_schema.get("properties", {})
-        required = parameters_schema.get("required", [])
-        if not isinstance(properties, dict) or not isinstance(required, list):
-            raise UserError("The schema for this tool could not be prepared.")
+        # Ensure all nested 'items' have a 'type' for broader compatibility
+        parameters_schema = schema  # Modify the schema directly before formatting
+        self._recursively_patch_schema_items(parameters_schema)
 
         # Format according to OpenAI requirements
         formatted_tool = {
@@ -112,7 +137,11 @@ class LLMProvider(models.Model):
             "function": {
                 "name": tool.name,
                 "description": tool.description,
-                "parameters": parameters_schema,
+                "parameters": {
+                    "type": "object",
+                    "properties": parameters_schema.get("properties", {}),
+                    "required": parameters_schema.get("required", []),
+                },
             },
         }
 
@@ -162,11 +191,6 @@ class LLMProvider(models.Model):
                 params["tools"] = formatted_tools
                 # OpenAI-specific: tool_choice param (Ollama doesn't support this)
                 params["tool_choice"] = kwargs.get("tool_choice", "auto")
-
-        # Model-level OpenAI options are validated by the llm.model extension.
-        # Only its allow-listed values are returned, so arbitrary configuration
-        # can never override provider-owned request fields.
-        params.update(model._get_openai_request_parameters())
 
         # Make the API call
         response = self.client.chat.completions.create(**params)

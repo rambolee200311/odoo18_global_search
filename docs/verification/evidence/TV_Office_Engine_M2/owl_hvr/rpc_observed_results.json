@@ -1,0 +1,18 @@
+{
+  "captured_at_local": "2026-10-22",
+  "browser_url": "http://127.0.0.1:8091/odoo/action-631?active_id=llm.thread_224&debug=assets",
+  "thread": "llm.thread_224",
+  "test_user_uid": 2,
+  "endpoint": "/tv_office_m2_owl/validate_selection",
+  "positive_case": {
+    "selected_field": "amount_total",
+    "ui_observed_result": "Server accepted amount_total",
+    "server_allowlist_decision": "accepted"
+  },
+  "negative_case": {
+    "selected_field": "not.allowed",
+    "ui_observed_result": "Server rejected the selection",
+    "server_allowlist_decision": "rejected"
+  },
+  "note": "Values are synthetic. The browser showed the UI status derived from the JSON-RPC result. This file records observed status, not a captured HTTP payload dump."
+}

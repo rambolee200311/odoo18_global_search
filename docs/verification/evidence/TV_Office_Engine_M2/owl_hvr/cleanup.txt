@@ -1,0 +1,5 @@
+Temporary verification cleanup — 2026-10-22
+- Temporary addon tv_office_m2_owl: uninstalled through Odoo Apps UI after evidence capture.
+- Temporary addon directory under mymodules/: removed after archiving source to owl_spike_source_rerun.tar.gz.
+- Synthetic ORM-seeded message 26874 in llm.thread 224: exact marker/model/thread checked, then unlinked via ORM as Mitchell Admin uid=2 and transaction committed; output CLEANUP_MESSAGE_26874=PASS.
+- Original pre-existing messages in llm.thread_224 were not deleted.

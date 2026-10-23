@@ -1,0 +1,27 @@
+captured_at_local=2026-10-22T17:29:48.532978+08:00
+python=3.11.9
+platform=macOS-27.0.1-arm64-arm-64bit
+workspace_commit=38718eb687812a421854e343132980a3cf9c2b32
+odoo_llm_commit=609ec6dda3645165f6a4a843d7af5d286081a29d
+openai_distribution_version=2.54.0
+odoo_distribution_version=not installed as Python distribution
+openpyxl_distribution_version=3.1.5
+python-docx_distribution_version=1.1.2
+odoo_database=odoo18ce (from odoo.conf; ORM shell attempted, blocked at shutdown by sandbox process enumeration)
+provider=OpenAI (visible in authenticated Odoo UI)
+model=gpt-5.6-luna (visible in authenticated Odoo UI)
+provider_api_key=not captured
+provider_usage_visibility=not exposed by llm_openai response processing path inspected
+odoo_source_version=18.0 (odoo/release.py version_info=(18, 0, 0, FINAL, 0, ''))
+provider_request_path=client.chat.completions.create (from current llm_openai source)
+owl_spike_module=installed_for_spike_then_uninstalled; source_archived_under_evidence
+actual_retriever_invocation=false; all model prompt data synthetic
+
+V1.1 supplementary observations — 2026-10-22
+odoo_shell_retry=successful using current odoo.conf, database odoo18ce, and the same temporary shutdown-only psutil shim
+retriever_direct_call=successful as Mitchell Admin uid=2, public res.currency only; no 50-line real sales order was sent to OpenAI
+model_direct_sdk_call=successful through configured llm.provider.client; request and response model gpt-5.6-luna; response.usage captured
+provider_usage_visibility=still not exposed through llm_openai chat response adapter; Usage obtained by the direct SDK client path only
+owl_card_rerun=PASS after replacing unavailable useService('rpc') with import from @web/core/network/rpc
+owl_spike_module=uninstalled after browser verification; source archived at owl_hvr/owl_spike_source_rerun.tar.gz
+screenshot=CUA inline screenshot captured in associated task execution; no filesystem export was exposed by the browser capture API

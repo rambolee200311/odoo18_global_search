@@ -128,7 +128,7 @@ The tested code baseline is commit `09f2629` plus the uncommitted working-tree c
 | `docs/context/history/ATR-GS-RELATION-FIELD-MULTI-LEVEL.md` | Added | Automated test evidence |
 | `docs/context/history/HVR-GS-RELATION-FIELD-MULTI-LEVEL.md` | Added | Human verification scenarios and user-confirmed run |
 | `docs/context/history/FR-GS-RELATION-FIELD-MULTI-LEVEL.md` | Added | Final closure assessment |
-| `docs/implementation/CC-014_card_template_admin_guide.md` | Added | Administrator template-design guide |
+| `docs/guide/admin/CC-014_card_template_admin_guide.md` | Added | Administrator template-design guide |
 
 No files under `odoo/` or official `addons/` were changed.
 

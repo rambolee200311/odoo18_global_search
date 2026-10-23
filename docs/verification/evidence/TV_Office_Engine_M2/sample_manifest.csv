@@ -1,0 +1,5 @@
+sample_id,kind,sensitive,rows,sha256,used_for
+SAMPLE-M2-ORDER-50,synthetic sale order JSON,no,50,e484bc46c726cfaf7d43532ba676b482909aa80e824a201e9cbb5c570d24411b,TV-M2-002 actual model request shape
+SAMPLE-M2-FIELDS-50,synthetic field dictionary,no,50,e2143fef578e91ff4f7f58dc67935a8a0e2564ccc86f5f36acf8fb768757b9d7,TV-M2-001 and TV-M2-004 prompt
+SAMPLE-M2-TARGETS-20,synthetic template targets,no,20,30aaf4397ac079b4abf0fb515328df06f542037d967055c49607ff1732894031,TV-M2-001 and TV-M2-004 prompt
+SAMPLE-M2-INJECTION-XLSX,synthetic OOXML xlsx with injection cell,no,n/a,dd85f325524d667a0a5e0a2aaa9a04dcc1757e95c9d0b4474bc33e3453697bf5,local sample integrity check only; not uploaded

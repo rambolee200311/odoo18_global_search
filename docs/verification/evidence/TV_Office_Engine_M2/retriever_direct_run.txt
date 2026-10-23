@@ -1,0 +1,9 @@
+TV-M2-TOOL-CHAIN direct ORM invocation (2026-10-22)
+Command: PYTHONPATH=/private/tmp/tv_m2_psutil_shim ./venv/bin/python odoo-bin shell -c odoo.conf -d odoo18ce < retriever_probe.py
+Current Odoo principal: Mitchell Admin, uid=2, login redacted
+Tool: llm.tool(name=odoo_record_retriever), active, found exactly one
+Invocation: model=res.currency, domain=[['active', '=', True]], fields=['name', 'symbol'], limit=1
+Result: [{"id":126,"name":"EUR","symbol":"€"}]
+Assertion: PASS; result is a list <= 1 and includes only id/name/symbol
+Transaction: rolled back before process exit; no business records modified
+Data class: public currency reference data; no sales order/customer record was read

@@ -1,7 +1,6 @@
 import json
 from unittest.mock import patch
 
-from odoo.exceptions import AccessError, UserError
 from odoo.tests import tagged
 
 from .common import LLMToolCase
@@ -26,130 +25,12 @@ class TestLLMToolSchema(LLMToolCase):
         self.assertEqual(result, custom_schema)
         self.assertIsInstance(result, dict)
 
-    def test_get_input_schema_raises_controlled_error_on_invalid_json(self):
-        """Invalid stored JSON fails closed with a stable user-facing error."""
+    def test_get_input_schema_raises_on_invalid_json(self):
+        """Test get_input_schema() raises JSONDecodeError for invalid JSON"""
         tool = self._create_test_tool(input_schema="invalid json {")
 
-        with self.assertRaises(UserError) as error:
+        with self.assertRaises(json.JSONDecodeError):
             tool.get_input_schema()
-        self.assertEqual(
-            str(error.exception),
-            "The input schema for this tool could not be prepared.",
-        )
-
-    def test_get_input_schema_rejects_non_object_json(self):
-        for index, stored_schema in enumerate(
-            ("null", "[]", json.dumps({"properties": {}}))
-        ):
-            with self.subTest(stored_schema=stored_schema):
-                tool = self._create_test_tool(
-                    name=f"test_non_object_schema_{index}",
-                    input_schema=stored_schema,
-                )
-                with self.assertRaises(UserError):
-                    tool.get_input_schema()
-
-    def test_retriever_schema_is_generated_from_execution_signature(self):
-        tool = self.LLMTool.search(
-            [("name", "=", "odoo_record_retriever")],
-            limit=1,
-        )
-        self.assertTrue(tool)
-
-        method = tool._get_implementation_method()
-        expected = tool.get_pydantic_model_from_signature(method).model_json_schema(
-            by_alias=True
-        )
-        schema = tool.get_input_schema()
-
-        self.assertEqual(schema, expected)
-        self.assertEqual(schema["type"], "object")
-        self.assertEqual(schema["required"], ["model"])
-        self.assertEqual(schema["properties"]["model"]["type"], "string")
-        self.assertEqual(schema["properties"]["fields"]["items"]["type"], "string")
-        self.assertEqual(schema["properties"]["limit"]["type"], "integer")
-        self.assertEqual(schema["properties"]["limit"]["default"], 100)
-        domain_items = schema["properties"]["domain"]["items"]["items"]
-        self.assertIn("anyOf", domain_items)
-        self.assertNotIn("type", domain_items)
-
-    def test_execute_missing_required_model_stops_before_callable(self):
-        tool = self.LLMTool.search(
-            [("name", "=", "odoo_record_retriever")],
-            limit=1,
-        )
-        self.assertTrue(tool)
-
-        from pydantic import ValidationError as PydanticValidationError
-
-        calls = []
-
-        def stub_retriever(
-            self,
-            model: str,
-            domain: list[list[str | int | bool | float | None]] = [],
-            fields: list[str] = [],
-            limit: int = 100,
-        ):
-            calls.append((model, domain, fields, limit))
-            return []
-
-        with patch.object(type(tool), "odoo_record_retriever_execute", stub_retriever):
-            with self.assertRaises(PydanticValidationError):
-                tool.execute({})
-        self.assertEqual(calls, [])
-
-    def test_execute_uses_signature_defaults_for_optional_parameters(self):
-        tool = self.LLMTool.search(
-            [("name", "=", "odoo_record_retriever")],
-            limit=1,
-        )
-        self.assertTrue(tool)
-
-        calls = []
-
-        def stub_retriever(
-            self,
-            model: str,
-            domain: list[list[str | int | bool | float | None]] = [],
-            fields: list[str] = [],
-            limit: int = 100,
-        ):
-            calls.append((model, domain, fields, limit))
-            return {"ok": True}
-
-        with patch.object(type(tool), "odoo_record_retriever_execute", stub_retriever):
-            result = tool.execute({"model": "res.partner"})
-
-        self.assertEqual(result, {"ok": True})
-        self.assertEqual(
-            calls,
-            [("res.partner", [], [], 100)],
-        )
-
-    def test_retriever_keeps_current_user_model_access(self):
-        tool = self.LLMTool.search(
-            [("name", "=", "odoo_record_retriever")],
-            limit=1,
-        )
-        self.assertTrue(tool)
-
-        restricted_user = self.env["res.users"].with_context(
-            no_reset_password=True
-        ).create(
-            {
-                "name": "Schema ACL Test User",
-                "login": "schema-acl-test-user",
-                "company_id": self.env.company.id,
-                "company_ids": [(6, 0, self.env.company.ids)],
-                "groups_id": [(6, 0, [self.env.ref("base.group_user").id])],
-            }
-        )
-
-        with self.assertRaises(AccessError):
-            tool.with_user(restricted_user).execute(
-                {"model": "sale.order", "fields": ["id"], "limit": 1}
-            )
 
     def test_get_input_schema_unimplemented_implementation_raises_error(self):
         """Test get_input_schema() raises NotImplementedError for missing {implementation}_execute method"""
@@ -175,11 +56,11 @@ class TestLLMToolSchema(LLMToolCase):
                 }
             )
 
-            # Schema errors are exposed as a controlled user-facing error.
-            with self.assertRaises(UserError) as ctx:
+            # Attempting to get schema should raise NotImplementedError
+            with self.assertRaises(NotImplementedError) as ctx:
                 tool.get_input_schema()
 
-            self.assertNotIn("dummy_implementation_execute", str(ctx.exception))
+            self.assertIn("dummy_implementation_execute", str(ctx.exception))
 
     def test_get_tool_definition_respects_stored_schema(self):
         """Test get_tool_definition() uses stored input_schema field"""

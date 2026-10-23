@@ -1,0 +1,418 @@
+{
+  "record_model": "sale.order",
+  "record_name": "SYNTHETIC-SO-50",
+  "company": "Synthetic Company",
+  "fields": {
+    "name": "SYNTHETIC-SO-50",
+    "partner_id": {
+      "name": "Synthetic Customer"
+    },
+    "state": "draft",
+    "currency_id": {
+      "name": "EUR"
+    },
+    "amount_total": 123456.78
+  },
+  "order_line": [
+    {
+      "line_no": 1,
+      "product_code": "SYN-001",
+      "description": "Synthetic product 001",
+      "quantity": 1,
+      "unit_price": 10.37,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 2,
+      "product_code": "SYN-002",
+      "description": "Synthetic product 002",
+      "quantity": 2,
+      "unit_price": 10.74,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 3,
+      "product_code": "SYN-003",
+      "description": "Synthetic product 003",
+      "quantity": 3,
+      "unit_price": 11.11,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 4,
+      "product_code": "SYN-004",
+      "description": "Synthetic product 004",
+      "quantity": 4,
+      "unit_price": 11.48,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 5,
+      "product_code": "SYN-005",
+      "description": "Synthetic product 005",
+      "quantity": 5,
+      "unit_price": 11.85,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 6,
+      "product_code": "SYN-006",
+      "description": "Synthetic product 006",
+      "quantity": 6,
+      "unit_price": 12.22,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 7,
+      "product_code": "SYN-007",
+      "description": "Synthetic product 007",
+      "quantity": 7,
+      "unit_price": 12.59,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 8,
+      "product_code": "SYN-008",
+      "description": "Synthetic product 008",
+      "quantity": 8,
+      "unit_price": 12.96,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 9,
+      "product_code": "SYN-009",
+      "description": "Synthetic product 009",
+      "quantity": 9,
+      "unit_price": 13.33,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 10,
+      "product_code": "SYN-010",
+      "description": "Synthetic product 010",
+      "quantity": 10,
+      "unit_price": 13.7,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 11,
+      "product_code": "SYN-011",
+      "description": "Synthetic product 011",
+      "quantity": 11,
+      "unit_price": 14.07,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 12,
+      "product_code": "SYN-012",
+      "description": "Synthetic product 012",
+      "quantity": 12,
+      "unit_price": 14.44,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 13,
+      "product_code": "SYN-013",
+      "description": "Synthetic product 013",
+      "quantity": 13,
+      "unit_price": 14.81,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 14,
+      "product_code": "SYN-014",
+      "description": "Synthetic product 014",
+      "quantity": 14,
+      "unit_price": 15.18,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 15,
+      "product_code": "SYN-015",
+      "description": "Synthetic product 015",
+      "quantity": 15,
+      "unit_price": 15.55,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 16,
+      "product_code": "SYN-016",
+      "description": "Synthetic product 016",
+      "quantity": 16,
+      "unit_price": 15.92,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 17,
+      "product_code": "SYN-017",
+      "description": "Synthetic product 017",
+      "quantity": 17,
+      "unit_price": 16.29,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 18,
+      "product_code": "SYN-018",
+      "description": "Synthetic product 018",
+      "quantity": 18,
+      "unit_price": 16.66,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 19,
+      "product_code": "SYN-019",
+      "description": "Synthetic product 019",
+      "quantity": 19,
+      "unit_price": 17.03,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 20,
+      "product_code": "SYN-020",
+      "description": "Synthetic product 020",
+      "quantity": 20,
+      "unit_price": 17.4,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 21,
+      "product_code": "SYN-021",
+      "description": "Synthetic product 021",
+      "quantity": 21,
+      "unit_price": 17.77,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 22,
+      "product_code": "SYN-022",
+      "description": "Synthetic product 022",
+      "quantity": 22,
+      "unit_price": 18.14,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 23,
+      "product_code": "SYN-023",
+      "description": "Synthetic product 023",
+      "quantity": 23,
+      "unit_price": 18.51,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 24,
+      "product_code": "SYN-024",
+      "description": "Synthetic product 024",
+      "quantity": 24,
+      "unit_price": 18.88,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 25,
+      "product_code": "SYN-025",
+      "description": "Synthetic product 025",
+      "quantity": 25,
+      "unit_price": 19.25,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 26,
+      "product_code": "SYN-026",
+      "description": "Synthetic product 026",
+      "quantity": 26,
+      "unit_price": 19.62,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 27,
+      "product_code": "SYN-027",
+      "description": "Synthetic product 027",
+      "quantity": 27,
+      "unit_price": 19.99,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 28,
+      "product_code": "SYN-028",
+      "description": "Synthetic product 028",
+      "quantity": 28,
+      "unit_price": 20.36,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 29,
+      "product_code": "SYN-029",
+      "description": "Synthetic product 029",
+      "quantity": 29,
+      "unit_price": 20.73,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 30,
+      "product_code": "SYN-030",
+      "description": "Synthetic product 030",
+      "quantity": 30,
+      "unit_price": 21.1,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 31,
+      "product_code": "SYN-031",
+      "description": "Synthetic product 031",
+      "quantity": 31,
+      "unit_price": 21.47,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 32,
+      "product_code": "SYN-032",
+      "description": "Synthetic product 032",
+      "quantity": 32,
+      "unit_price": 21.84,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 33,
+      "product_code": "SYN-033",
+      "description": "Synthetic product 033",
+      "quantity": 33,
+      "unit_price": 22.21,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 34,
+      "product_code": "SYN-034",
+      "description": "Synthetic product 034",
+      "quantity": 34,
+      "unit_price": 22.58,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 35,
+      "product_code": "SYN-035",
+      "description": "Synthetic product 035",
+      "quantity": 35,
+      "unit_price": 22.95,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 36,
+      "product_code": "SYN-036",
+      "description": "Synthetic product 036",
+      "quantity": 36,
+      "unit_price": 23.32,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 37,
+      "product_code": "SYN-037",
+      "description": "Synthetic product 037",
+      "quantity": 37,
+      "unit_price": 23.69,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 38,
+      "product_code": "SYN-038",
+      "description": "Synthetic product 038",
+      "quantity": 38,
+      "unit_price": 24.06,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 39,
+      "product_code": "SYN-039",
+      "description": "Synthetic product 039",
+      "quantity": 39,
+      "unit_price": 24.43,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 40,
+      "product_code": "SYN-040",
+      "description": "Synthetic product 040",
+      "quantity": 40,
+      "unit_price": 24.8,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 41,
+      "product_code": "SYN-041",
+      "description": "Synthetic product 041",
+      "quantity": 41,
+      "unit_price": 25.17,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 42,
+      "product_code": "SYN-042",
+      "description": "Synthetic product 042",
+      "quantity": 42,
+      "unit_price": 25.54,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 43,
+      "product_code": "SYN-043",
+      "description": "Synthetic product 043",
+      "quantity": 43,
+      "unit_price": 25.91,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 44,
+      "product_code": "SYN-044",
+      "description": "Synthetic product 044",
+      "quantity": 44,
+      "unit_price": 26.28,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 45,
+      "product_code": "SYN-045",
+      "description": "Synthetic product 045",
+      "quantity": 45,
+      "unit_price": 26.65,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 46,
+      "product_code": "SYN-046",
+      "description": "Synthetic product 046",
+      "quantity": 46,
+      "unit_price": 27.02,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 47,
+      "product_code": "SYN-047",
+      "description": "Synthetic product 047",
+      "quantity": 47,
+      "unit_price": 27.39,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 48,
+      "product_code": "SYN-048",
+      "description": "Synthetic product 048",
+      "quantity": 48,
+      "unit_price": 27.76,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 49,
+      "product_code": "SYN-049",
+      "description": "Synthetic product 049",
+      "quantity": 49,
+      "unit_price": 28.13,
+      "currency": "EUR"
+    },
+    {
+      "line_no": 50,
+      "product_code": "SYN-050",
+      "description": "Synthetic product 050",
+      "quantity": 50,
+      "unit_price": 28.5,
+      "currency": "EUR"
+    }
+  ]
+}
