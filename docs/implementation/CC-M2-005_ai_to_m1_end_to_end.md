@@ -18,7 +18,7 @@ Template synchronization check: PASS, 2026-10-23
 | 工作类型 | 新功能 / AI、Odoo Retriever 与 Office 引擎集成 |
 | 变更类型 | 编排服务、当前用户授权取数、受控 M1 渲染和聊天附件交付 |
 | 版本 | `V0.1` |
-| 状态 | **Draft — 仅供评审；不授权冻结、实施或改动代码** |
+| 状态 | **CONDITIONALLY CLOSED — 冻结基线 V1.0.0；负责人于 2026-10-23 批准条件关闭** |
 | 目标 | 将当前用户的自然语言导出请求、真实授权 Retriever 数据、受约束 Mapping Proposal、确认卡片、M1 同步渲染/回读及线程附件交付串成可测试闭环，并为每次 Provider 调用记录最小 Usage 元数据。 |
 | SRS 基线 | `SRS_office_engine_m2_ai_mapping.md V1.0.0 Frozen` |
 | DDD | N/A；依据冻结 M2 TDD |
@@ -33,7 +33,7 @@ Template synchronization check: PASS, 2026-10-23
 - 本 CC Draft 仅把冻结 SRS/TDD/Plan 的阶段 5工作范围细化为可评审契约；不得将本稿作为实现授权。
 - TDD 规定映射调用只使用已准入 OpenAI `gpt-5.6-luna`；M2-005 自动化测试使用 SDK/Provider Mock，不访问外网。人工集成如需真实 Provider，只能使用该模型与合成数据，并须满足 SRS 数据政策；不得发送真实客户数据或未批准的模板内容。
 - SRS `OPEN-M2-002/003` 未关闭前，Provider 输入限合成或已书面批准的数据；本 CC 默认所有自动化和 HVR 样本均为合成数据。
-- 阶段 5 的代码冻结/实施前，必须完成冻结 Implementation Plan 要求的阶段 3/4 Gate 处置，并在当前运行环境及当前用户权限下验证 M1 `_render_request_sync` 可调用。CC-M2-004 的 `FROZEN WITH OPEN ITEMS` 关闭不等同于 Plan 阶段 Gate PASS。此项是后续 CC 冻结/实施门禁，不阻止当前 Draft 评审。
+- Implementation Plan 阶段 3/4 Gate 当前仍为 `OPEN`。负责人于 2026-10-23 明确批准冻结并立即实施本 CC，因此本轮可在保留这些原始 Gate 状态的前提下推进；审批不把缺失 XML-RPC/HVR 证据改写为通过，也不关闭项目阶段 Gate。M1 `_render_request_sync` 的当前运行环境、当前用户授权和 spawn 调用仍须通过本 CC 测试后才能宣告交付闭环。
 - 若 M1 spawn 子进程不能在 Odoo 运行环境安全导入 `office_core` / `office_verify`，或当前用户无法通过 M1 持久化链路，必须停止并报告证据；不得绕过隔离在 Odoo Worker 内直接执行，也不得在本 CC 越权修改 M1。
 - 本 CC 不改变 Odoo-LLM 工具白名单、Provider 请求契约、SRS/TDD 数据政策、M1 安全/回读/附件边界或 M2 八状态机。
 
@@ -331,3 +331,11 @@ N/A；追溯链为 `SRS → TDD → Implementation Plan → CC → IHR/ATR/HVR �
 | 版本 | 日期 | 状态 | 说明 |
 |---|---|---|---|
 | V0.1 | 2026-10-23 | Draft | 基于 M2 SRS/TDD/Implementation Plan 阶段 5 起草 AI→Validator→确认→当前用户 Retriever→M1 回读/交付闭环；带入前序真实 Gate 状态，不授权实施。 |
+| V1.0.0 | 2026-10-23 | FROZEN | 负责人批准冻结并启动实施；CC-M2-004/Plan 阶段 Gate 的未通过证据继续按原状态保留。 |
+
+## 15. 执行状态与条件关闭处置
+
+- **CC 状态：`CONDITIONALLY CLOSED`**。本 CC 的动态列表补充实现及其定向验收已按 [ATR-M2-005-DYNAMIC-ROWS](ATR-M2-005_dynamic_rows.md) 记录；V1.0.0 仍是原冻结契约基线。
+- 全 Addon 回归中的 `TestOfficeMappingSession.test_cc_test_003_attachment_must_be_attached_to_the_same_thread_message` 仍为原生 **FAIL**：该用例断言共享开发库中 Session 全表计数必须为 0，而既有历史记录导致失败。负责人明确裁定此测试基建缺陷不阻塞本 CC 条件关闭。原始 FAIL 不改写为 PASS；授权处置记录为 `EXEMPTION-CC-M2-005-001`。
+- 条件关闭不宣告完整 M2 E2E 或 FR 满足。聊天 UI 上传后自动识别意图、创建可信 Session/TargetManifest 并启动 AI 的入口、独立并发事务竞态及未覆盖的失败矩阵仍保持未完成，须另行安排工作。
+- 本处置不授权实现私有 Skill；阶段 6 必须由独立 `CC-M2-006` 覆盖。

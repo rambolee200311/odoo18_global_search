@@ -2,45 +2,66 @@
 <templates xml:space="preserve">
     <t t-name="office_engine_m2.OfficeMappingCard">
         <section class="o_office_mapping_card border rounded p-3 mt-2" data-testid="office-mapping-card">
-            <h5>Review document mapping</h5>
+            <h5>确认文档映射</h5>
+            <div t-if="state.mappingGroups.length" class="mb-3" data-testid="mapping-loop-summaries">
+                <div t-foreach="state.mappingGroups" t-as="group" t-key="group.group_id"
+                    class="alert alert-info py-2 mb-2" data-testid="mapping-loop-summary">
+                    <t t-esc="group.summary" />
+                </div>
+            </div>
             <table class="table table-sm">
                 <thead>
-                    <tr><th>Template target</th><th>Odoo field</th></tr>
+                    <tr><th>模板目标</th><th>Odoo 字段</th></tr>
                 </thead>
                 <tbody>
-                    <tr t-foreach="state.targets" t-as="target" t-key="target.element_id">
+                    <tr t-foreach="state.mappingRows" t-as="row" t-key="row.row_id"
+                        t-att-class="row.required &amp;&amp; !row.source_field ? 'table-danger' : ''">
                         <td>
-                            <span t-esc="target.label" />
-                            <span t-if="target.required" class="text-danger" aria-label="required">*</span>
+                            <span t-esc="row.label" />
+                            <span t-if="row.required" class="text-danger" aria-label="required">*</span>
+                            <small t-if="row.required &amp;&amp; !row.source_field"
+                                class="text-danger d-block" data-testid="mapping-row-missing">缺少必填映射</small>
                         </td>
                         <td>
                             <select class="form-select form-select-sm"
-                                t-att-data-target-index="target_index"
-                                t-att-value="target.source_field"
-                                t-on-change="onFieldChange"
+                                t-att-data-row-id="row.row_id"
+                                t-att-data-testid="'mapping-select-' + row.row_id"
+                                t-model="row.source_field"
                                 t-att-disabled="state.busy">
-                                <option value="">Select a field</option>
+                                <option value="">请选择字段</option>
                                 <option t-foreach="state.fields" t-as="field" t-key="field.field_id"
-                                    t-att-value="field.field_id"
-                                    t-att-selected="target.source_field === field.field_id">
+                                    t-att-value="field.field_id">
                                     <t t-esc="field.label" />
+                                    <t t-if="field.sample !== null &amp;&amp; field.sample !== undefined">
+                                        — <t t-esc="field.sample" />
+                                    </t>
                                 </option>
                             </select>
+                            <small t-if="row.clarification" class="text-warning d-block">
+                                <t t-esc="row.clarification" />
+                            </small>
                         </td>
                     </tr>
                 </tbody>
             </table>
             <div class="d-flex gap-2">
                 <button class="btn btn-secondary btn-sm" data-testid="mapping-save"
-                    t-on-click="save" t-att-disabled="state.busy">Save</button>
+                    t-on-click="save" t-att-disabled="state.busy || ['completed', 'failed', 'cancelled'].includes(state.sessionState)">保存</button>
                 <button class="btn btn-primary btn-sm" data-testid="mapping-confirm"
-                    t-on-click="confirm" t-att-disabled="state.busy">Confirm</button>
+                    t-on-click="confirm" t-att-disabled="state.busy || hasMissingRequired || ['completed', 'failed', 'cancelled'].includes(state.sessionState)">确认</button>
                 <button class="btn btn-outline-secondary btn-sm" data-testid="mapping-cancel"
-                    t-on-click="cancel" t-att-disabled="state.busy">Cancel</button>
+                    t-on-click="cancel" t-att-disabled="state.busy || ['completed', 'failed', 'cancelled'].includes(state.sessionState)">取消</button>
             </div>
             <p class="mb-0 mt-2" role="status" aria-live="polite" data-testid="mapping-status">
                 <t t-esc="state.status" />
             </p>
+            <ul t-if="state.clarifications.length" class="mb-0 mt-2 text-warning" data-testid="mapping-clarifications">
+                <li t-foreach="state.clarifications" t-as="question" t-key="question_index">
+                    <t t-esc="question" />
+                </li>
+            </ul>
+            <a t-if="state.downloadUrl" class="btn btn-link px-0" t-att-href="state.downloadUrl"
+                data-testid="mapping-download" download="true">下载已生成的文档</a>
         </section>
     </t>
 

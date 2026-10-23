@@ -194,9 +194,14 @@ class OfficeMappingSession(models.Model):
             raise ValidationError(_("Invalid mapping context.")) from exc
         if (
             not isinstance(context, dict)
-            or set(context) != {"target_manifest", "allowed_fields"}
+            or not {"target_manifest", "allowed_fields"}.issubset(context)
+            or set(context) - {"target_manifest", "allowed_fields", "mapping_groups"}
             or not isinstance(context["target_manifest"], list)
             or not isinstance(context["allowed_fields"], dict)
+            or (
+                "mapping_groups" in context
+                and not isinstance(context["mapping_groups"], list)
+            )
         ):
             raise ValidationError(_("Invalid mapping context."))
         super(OfficeMappingSession, self).write(

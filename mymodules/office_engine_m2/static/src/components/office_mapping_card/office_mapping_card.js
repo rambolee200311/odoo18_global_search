@@ -14,10 +14,14 @@ export class OfficeMappingCard extends Component {
         this.state = useState({
             sessionId: payload.session_id,
             revision: payload.revision,
-            status: "Loading mapping options…",
+            sessionState: null,
+            status: "正在读取映射选项……",
             busy: false,
-            targets: [],
+            mappingRows: [],
+            mappingGroups: [],
             fields: [],
+            clarifications: [],
+            downloadUrl: "",
         });
         onWillStart(() => this.loadContext());
     }
@@ -29,23 +33,33 @@ export class OfficeMappingCard extends Component {
                 expected_revision: this.state.revision,
             });
             this.state.revision = result.revision;
-            this.state.targets = result.targets.map((target) => ({ ...target }));
+            this.state.sessionState = result.state;
+            const rows = result.mapping_rows || result.targets || [];
+            this.state.mappingRows = rows.map((row) => ({ ...row }));
+            this.state.mappingGroups = result.mapping_groups || [];
             this.state.fields = result.fields;
-            this.state.status = result.stale
-                ? "Mapping refreshed to the latest revision."
-                : "Ready to edit.";
+            this.state.clarifications = result.clarifications || [];
+            if (result.state === "completed" && result.download_url) {
+                this.state.downloadUrl = result.download_url;
+                this.state.status = "文档已生成并通过校验。";
+            } else if (result.state === "completed") {
+                this.state.status = "文档生成已完成，但当前无法获取输出文件。";
+            } else if (result.stale) {
+                this.state.status = "映射已刷新到最新版本。";
+            } else if (result.state === "failed") {
+                this.state.status = "文档生成失败，没有可下载的输出文件。";
+            } else if (result.state === "cancelled") {
+                this.state.status = "映射已取消。";
+            } else {
+                this.state.status = "可以编辑映射。";
+            }
         } catch {
-            this.state.status = "Mapping is unavailable. Refresh or contact an administrator.";
+            this.state.status = "映射暂不可用，请刷新或联系管理员。";
         }
     }
 
-    onFieldChange(ev) {
-        const index = Number(ev.currentTarget.dataset.targetIndex);
-        this.state.targets[index].source_field = ev.currentTarget.value;
-    }
-
     get edits() {
-        return this.state.targets
+        return this.state.mappingRows
             .filter((target) => target.source_field)
             .map((target) => {
                 const field = this.state.fields.find((item) => item.field_id === target.source_field);
@@ -57,16 +71,20 @@ export class OfficeMappingCard extends Component {
             });
     }
 
+    get hasMissingRequired() {
+        return this.state.mappingRows.some((row) => row.required && !row.source_field);
+    }
+
     async save() {
-        await this.perform("/office_engine_m2/mapping/update", { edits: this.edits }, "Mapping saved.");
+            await this.perform("/office_engine_m2/mapping/update", { edits: this.edits }, "映射已保存。");
     }
 
     async confirm() {
-        await this.perform("/office_engine_m2/mapping/confirm", {}, "Mapping confirmed.");
+        await this.perform("/office_engine_m2/mapping/confirm", {}, "映射已确认。");
     }
 
     async cancel() {
-        await this.perform("/office_engine_m2/mapping/cancel", {}, "Mapping cancelled.");
+        await this.perform("/office_engine_m2/mapping/cancel", {}, "映射已取消。");
     }
 
     async perform(route, extra, successText) {
@@ -81,11 +99,19 @@ export class OfficeMappingCard extends Component {
                 ...extra,
             });
             this.state.revision = result.revision;
-            this.state.status = result.state === "needs_clarification"
-                ? "Some required mappings need clarification."
-                : successText;
+            this.state.sessionState = result.state;
+            if (result.state === "completed" && result.download_url) {
+                this.state.downloadUrl = result.download_url;
+                this.state.status = "文档已生成并通过校验。";
+            } else if (result.state === "needs_clarification") {
+                this.state.status = "部分必填映射需要补充或澄清。";
+            } else if (result.state === "failed") {
+                this.state.status = "文档生成失败，没有可下载的输出文件。";
+            } else {
+                this.state.status = successText;
+            }
         } catch {
-            this.state.status = "The request was rejected or the session changed. Reload the card and retry.";
+            this.state.status = "请求被拒绝或会话版本已变化，请刷新卡片后重试。";
         } finally {
             this.state.busy = false;
         }

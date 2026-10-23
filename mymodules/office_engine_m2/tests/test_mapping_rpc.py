@@ -94,6 +94,105 @@ class TestOfficeMappingRpcTransactions(TransactionCase):
         with self.assertRaises(AccessError):
             session.write({"confirmed_revision": session.revision})
 
+    def test_card_context_returns_multiple_rows_and_server_loop_summary(self):
+        session, _thread = self._session()
+        manifest = [
+            {
+                "element_id": f"xlsx:Sheet1!{cell}",
+                "required": True,
+                "writable": True,
+                "allowed_value_types": ["string"],
+                "approved_to_skip": False,
+            }
+            for cell in ("A1", "B2", "C3", "D4", "E5", "F6")
+        ]
+        mapping_groups = [{
+            "group_id": "order_lines",
+            "collection_field": "order_line",
+            "row_count": 10,
+        }]
+        set_mapping_context(
+            self.env,
+            session.id,
+            manifest,
+            {"name": "string", "display_name": "string"},
+            mapping_groups=mapping_groups,
+        )
+
+        result = get_mapping_card_context(self.env, session.id, 1)
+
+        self.assertEqual(len(result["mapping_rows"]), 6)
+        self.assertEqual(
+            [row["element_id"] for row in result["mapping_rows"]],
+            [item["element_id"] for item in manifest],
+        )
+        self.assertEqual(result["targets"], result["mapping_rows"])
+        self.assertEqual(
+            result["mapping_groups"],
+            [{
+                "group_id": "order_lines",
+                "collection_field": "order_line",
+                "row_count": 10,
+                "summary": "将遍历 order_line 明细，循环填充 10 行",
+            }],
+        )
+        with self.assertRaises(ValidationError):
+            set_mapping_context(
+                self.env,
+                session.id,
+                manifest,
+                {"name": "string"},
+                mapping_groups=[{
+                    "group_id": "order_lines",
+                    "collection_field": "order_line",
+                    "row_count": 0,
+                }],
+            )
+
+    def test_collection_group_exposes_independent_target_rows_and_namespaced_fields(self):
+        session, _thread = self._session()
+        target = self.env[session.target_model].browse(session.target_record_id)
+        self.env["res.partner"].create(
+            {"name": "Collection sample", "parent_id": target.id, "company_id": self.env.company.id}
+        )
+        manifest = [
+            {
+                "element_id": f"xlsx:Sheet1!A{index + 8}",
+                "required": True,
+                "writable": True,
+                "allowed_value_types": ["string"],
+                "approved_to_skip": False,
+            }
+            for index in range(2)
+        ]
+        group = {
+            "group_id": "order_lines",
+            "collection_field": "child_ids",
+            "relation_model": "res.partner",
+            "row_count": 2,
+            "target_rows": [
+                {"row_index": index, "targets": [{"column_id": "name", "element_id": item["element_id"]}]}
+                for index, item in enumerate(manifest)
+            ],
+            "allowed_fields": {"name": "string"},
+        }
+        invalid_group = dict(group)
+        invalid_group["target_rows"] = [
+            {"row_index": 0, "targets": [{"column_id": "name", "element_id": "not-in-manifest"}]},
+            group["target_rows"][1],
+        ]
+        with self.assertRaises(ValidationError):
+            set_mapping_context(self.env, session.id, manifest, {"name": "string"}, [invalid_group])
+
+        group["row_count"] = 1
+        group["target_rows"] = group["target_rows"][:1]
+        set_mapping_context(self.env, session.id, manifest[:1], {"name": "string"}, [group])
+        result = get_mapping_card_context(self.env, session.id, session.revision)
+        self.assertEqual(result["mapping_rows"][0]["group_id"], "order_lines")
+        self.assertEqual(result["mapping_rows"][0]["row_index"], 0)
+        self.assertIn("第 1 行", result["mapping_rows"][0]["label"])
+        self.assertIn("order_lines::name", [field["field_id"] for field in result["fields"]])
+
     def test_legal_edit_is_validated_persisted_and_revision_increments(self):
         session, _thread = self._session()
         context = get_mapping_card_context(self.env, session.id, 1)

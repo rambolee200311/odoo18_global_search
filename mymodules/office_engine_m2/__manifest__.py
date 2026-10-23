@@ -1,6 +1,6 @@
 {
     "name": "Office Engine M2 Orchestration",
-    "version": "18.0.3.0.0",
+    "version": "18.0.6.0.0",
     "category": "Productivity/Office",
     "summary": "User-scoped Office mapping sessions and restricted usage metering",
     "license": "LGPL-3",

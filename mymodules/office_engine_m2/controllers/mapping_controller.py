@@ -8,12 +8,34 @@ from ..services.mapping_service import (
     save_mapping_edits,
     transition_session,
 )
+from ..services.ai_orchestrator import run_mapping
+from ..services.render_bridge import render_confirmed_mapping
 
 
 _UNAVAILABLE = "The mapping session is unavailable."
 
 
 class OfficeMappingController(http.Controller):
+    @http.route(
+        "/office_engine_m2/mapping/start",
+        type="json",
+        auth="user",
+        methods=["POST"],
+    )
+    def start_mapping(self, session_id=None, **extra):
+        env = request.env
+        session = env["office.mapping.session"].browse(session_id).exists()
+        if not session:
+            raise AccessError(_(_UNAVAILABLE))
+        session.check_access("read")
+        if session.owner_id.id != env.uid:
+            raise AccessError(_(_UNAVAILABLE))
+        if session.company_id.id not in env.companies.ids:
+            raise AccessError(_(_UNAVAILABLE))
+        if extra:
+            raise ValidationError(_("Invalid mapping start request."))
+        return run_mapping(env, session.id)
+
     @http.route(
         "/office_engine_m2/mapping/context",
         type="json",
@@ -72,7 +94,12 @@ class OfficeMappingController(http.Controller):
             raise AccessError(_(_UNAVAILABLE))
         if extra:
             raise ValidationError(_("Invalid mapping confirmation request."))
-        return confirm_mapping(env, session.id, expected_revision)
+        confirmation = confirm_mapping(env, session.id, expected_revision)
+        return render_confirmed_mapping(
+            env,
+            session.id,
+            confirmation["revision"],
+        )
 
     @http.route(
         "/office_engine_m2/mapping/cancel",
