@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.local/office/document-operation/1.0",
+  "title": "Office Document Operation List",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "operations"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 500,
+      "items": {"$ref": "#/$defs/operation"}
+    }
+  },
+  "$defs": {
+    "operationId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "sheet": {"type": "string", "minLength": 1, "maxLength": 31},
+    "cell": {"type": "string", "pattern": "^[A-Z]{1,3}[1-9][0-9]*$"},
+    "range": {"type": "string", "pattern": "^[A-Z]{1,3}[1-9][0-9]*:[A-Z]{1,3}[1-9][0-9]*$"},
+    "targetCell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sheet", "cell"],
+      "properties": {"sheet": {"$ref": "#/$defs/sheet"}, "cell": {"$ref": "#/$defs/cell"}}
+    },
+    "targetRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sheet", "range"],
+      "properties": {"sheet": {"$ref": "#/$defs/sheet"}, "range": {"$ref": "#/$defs/range"}}
+    },
+    "formatTarget": {
+      "oneOf": [
+        {"$ref": "#/$defs/targetCell"},
+        {"$ref": "#/$defs/targetRange"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sheet", "column_data"],
+          "properties": {
+            "sheet": {"$ref": "#/$defs/sheet"},
+            "column_data": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["column", "start_row", "end_row"],
+              "properties": {
+                "column": {"type": "string", "pattern": "^[A-Z]{1,3}$"},
+                "start_row": {"type": "integer", "minimum": 1, "maximum": 1048576},
+                "end_row": {"type": "integer", "minimum": 1, "maximum": 1048576}
+              }
+            }
+          }
+        }
+      ]
+    },
+    "typedValue": {
+      "oneOf": [
+        {"type": "object", "additionalProperties": false, "required": ["type", "data"], "properties": {"type": {"const": "string"}, "data": {"type": "string"}}},
+        {"type": "object", "additionalProperties": false, "required": ["type", "data"], "properties": {"type": {"const": "number"}, "data": {"type": "number"}}},
+        {"type": "object", "additionalProperties": false, "required": ["type", "data"], "properties": {"type": {"const": "boolean"}, "data": {"type": "boolean"}}},
+        {"type": "object", "additionalProperties": false, "required": ["type", "data"], "properties": {"type": {"const": "date"}, "data": {"type": "string", "format": "date"}}},
+        {"type": "object", "additionalProperties": false, "required": ["type", "data"], "properties": {"type": {"const": "datetime"}, "data": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})?$"}}},
+        {"type": "object", "additionalProperties": false, "required": ["type", "data"], "properties": {"type": {"const": "null"}, "data": {"type": "null"}}}
+      ]
+    },
+    "operation": {
+      "oneOf": [
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["operation_id", "type", "target", "parameters"],
+          "properties": {
+            "operation_id": {"$ref": "#/$defs/operationId"}, "type": {"const": "sort"},
+            "target": {"$ref": "#/$defs/targetRange"},
+            "parameters": {
+              "type": "object", "additionalProperties": false,
+              "required": ["key", "direction", "header"],
+              "properties": {
+                "key": {"type": "string", "pattern": "^[A-Z]{1,3}$"},
+                "direction": {"enum": ["ascending", "descending"]},
+                "header": {"type": "boolean"}
+              }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["operation_id", "type", "target", "parameters"],
+          "properties": {
+            "operation_id": {"$ref": "#/$defs/operationId"}, "type": {"const": "format"},
+            "target": {"$ref": "#/$defs/formatTarget"},
+            "parameters": {
+              "type": "object", "additionalProperties": false,
+              "required": ["number_format"],
+              "properties": {"number_format": {"type": "string", "minLength": 1, "maxLength": 128}}
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["operation_id", "type", "target", "parameters"],
+          "properties": {
+            "operation_id": {"$ref": "#/$defs/operationId"}, "type": {"const": "clear"},
+            "target": {"$ref": "#/$defs/targetRange"},
+            "parameters": {
+              "type": "object", "additionalProperties": false,
+              "required": ["mode"],
+              "properties": {
+                "mode": {"enum": ["values", "formats", "all"]},
+                "formula_policy": {"enum": ["preserve", "clear"], "default": "preserve"},
+                "include_header": {"type": "boolean", "default": false}
+              }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["operation_id", "type", "target", "parameters"],
+          "properties": {
+            "operation_id": {"$ref": "#/$defs/operationId"}, "type": {"const": "insert_rows"},
+            "target": {
+              "type": "object", "additionalProperties": false,
+              "required": ["sheet", "row"],
+              "properties": {
+                "sheet": {"$ref": "#/$defs/sheet"},
+                "row": {"type": "integer", "minimum": 1, "maximum": 1048576}
+              }
+            },
+            "parameters": {
+              "type": "object", "additionalProperties": false,
+              "required": ["count"],
+              "properties": {
+                "count": {"type": "integer", "minimum": 1, "maximum": 10000},
+                "style_from_row": {"type": ["integer", "null"], "minimum": 1, "maximum": 1048576}
+              }
+            }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["operation_id", "type", "target", "parameters"],
+          "properties": {
+            "operation_id": {"$ref": "#/$defs/operationId"}, "type": {"const": "set_value"},
+            "target": {
+              "oneOf": [
+                {"$ref": "#/$defs/targetCell"},
+                {"$ref": "#/$defs/targetRange"}
+              ]
+            },
+            "parameters": {
+              "oneOf": [
+                {
+                  "type": "object", "additionalProperties": false,
+                  "required": ["value"],
+                  "properties": {"value": {"$ref": "#/$defs/typedValue"}, "overwrite_formula": {"type": "boolean", "default": false}}
+                },
+                {
+                  "type": "object", "additionalProperties": false,
+                  "required": ["values"],
+                  "properties": {
+                    "values": {"type": "array", "minItems": 1, "items": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/typedValue"}}},
+                    "overwrite_formula": {"type": "boolean", "default": false}
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}
