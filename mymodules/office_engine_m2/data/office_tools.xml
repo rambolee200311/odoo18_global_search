@@ -1,0 +1,56 @@
+<odoo>
+    <data noupdate="1">
+        <record id="llm_tool_office_prepare_context" model="llm.tool">
+            <field name="name">office_prepare_context</field>
+            <field name="description">Prepare the current thread's authorized XLSX mapping context after the native Retriever identifies an authorized record. Returns the writable target manifest and approved scalar fields; never sends the workbook binary to the Provider.</field>
+            <field name="implementation">function</field>
+            <field name="decorator_model">office.mapping.tool</field>
+            <field name="decorator_method">office_prepare_context</field>
+            <field name="active">True</field>
+            <field name="auto_update">False</field>
+            <field name="read_only_hint">False</field>
+            <field name="idempotent_hint">False</field>
+            <field name="destructive_hint">True</field>
+            <field name="open_world_hint">False</field>
+        </record>
+        <record id="llm_tool_office_save_mapping_preview" model="llm.tool">
+            <field name="name">office_save_mapping_preview</field>
+            <field name="description">Validate a complete m2.mapping-proposal.v1 direct-field mapping against the current Session, approved fields, writable template cells, and expected revision. On a real change, save it and create an M1-verified XLSX preview. Incomplete or unsupported rules do not alter the Session.</field>
+            <field name="implementation">function</field>
+            <field name="decorator_model">office.mapping.tool</field>
+            <field name="decorator_method">office_save_mapping_preview</field>
+            <field name="active">True</field>
+            <field name="auto_update">False</field>
+            <field name="read_only_hint">False</field>
+            <field name="idempotent_hint">False</field>
+            <field name="destructive_hint">True</field>
+            <field name="open_world_hint">False</field>
+        </record>
+        <record id="llm_tool_office_restore_proposal_revision" model="llm.tool">
+            <field name="name">office_restore_proposal_revision</field>
+            <field name="description">Restore a previously saved, still-authorized Proposal revision under a new revision number and create a new verified preview.</field>
+            <field name="implementation">function</field>
+            <field name="decorator_model">office.mapping.tool</field>
+            <field name="decorator_method">office_restore_proposal_revision</field>
+            <field name="active">True</field>
+            <field name="auto_update">False</field>
+            <field name="read_only_hint">False</field>
+            <field name="idempotent_hint">False</field>
+            <field name="destructive_hint">True</field>
+            <field name="open_world_hint">False</field>
+        </record>
+        <record id="llm_tool_office_finalize" model="llm.tool">
+            <field name="name">office_finalize</field>
+            <field name="description">Create and attach the final archived Office file for the exact current user-confirmed Proposal revision. Requires a current exact confirmation message, matching Session revision, matching Proposal revision, permissions, and fresh source data.</field>
+            <field name="implementation">function</field>
+            <field name="decorator_model">office.mapping.tool</field>
+            <field name="decorator_method">office_finalize</field>
+            <field name="active">True</field>
+            <field name="auto_update">False</field>
+            <field name="read_only_hint">False</field>
+            <field name="idempotent_hint">False</field>
+            <field name="destructive_hint">True</field>
+            <field name="open_world_hint">False</field>
+        </record>
+    </data>
+</odoo>

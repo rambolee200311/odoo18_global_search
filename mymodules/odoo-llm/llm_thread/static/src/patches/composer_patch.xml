@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <templates xml:space="preserve">
+    <!-- Resolve the LLM thread draft attachment before the picker resets. -->
+    <t
+        t-name="mail.Composer.attachFiles.llmThread"
+        t-inherit="mail.Composer.attachFiles"
+        t-inherit-mode="extension"
+    >
+        <xpath expr="//FileUploader" position="attributes">
+            <attribute name="onUploaded.bind">(data) => this.onFileUploaded(data)</attribute>
+        </xpath>
+    </t>
+
     <!-- Patch Composer send button template to add stop button for LLM threads -->
     <t
     t-name="mail.Composer.sendButton"

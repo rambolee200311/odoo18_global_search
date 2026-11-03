@@ -8,7 +8,12 @@ from .contracts import (
     ValidationReport,
 )
 from .parser import parse_mapping_proposal
-from .validator import apply_manual_edits, validate_proposal, validate_user_revision
+from .validator import (
+    apply_manual_edits,
+    expand_table_column_operations,
+    validate_proposal,
+    validate_user_revision,
+)
 
 __all__ = [
     "MAPPING_SCHEMA_VERSION",
@@ -19,5 +24,6 @@ __all__ = [
     "parse_mapping_proposal",
     "validate_proposal",
     "validate_user_revision",
+    "expand_table_column_operations",
     "apply_manual_edits",
 ]

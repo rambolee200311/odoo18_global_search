@@ -11,6 +11,7 @@ from mymodules.office_mapping_verify import (
     validate_proposal,
     validate_user_revision,
 )
+from mymodules.office_mapping_verify.validator import expand_table_column_operations
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 FORBIDDEN_IMPORTS = {
@@ -79,6 +80,179 @@ def test_valid_complete_proposal_is_ready_and_report_serializes():
     assert report.ready_for_review is True
     assert report.status == "ready"
     assert json.loads(json.dumps(report.to_dict()))["status"] == "ready"
+
+
+def test_numeric_literal_is_valid_for_numeric_target_without_source_field():
+    value = proposal(
+        [{"element_id": "xlsx:Sheet1!B4", "literal_value": 3329.15, "value_type": "number"}]
+    )
+    report = validate(value, [target("xlsx:Sheet1!B4", allowed=("number",))], {})
+    assert report.ready_for_review is True
+
+
+def test_number_format_patch_is_independent_of_value_mapping():
+    value = proposal(
+        [mapping("xlsx:Sheet1!B2", "amount_total", "number")],
+        format_patches=[{"element_id": "xlsx:Sheet1!B2", "number_format": "0.0"}],
+    )
+    report = validate(
+        value,
+        [target("xlsx:Sheet1!B2", allowed=("number",))],
+        {"amount_total": "number"},
+    )
+    assert report.ready_for_review is True, report.to_dict()
+
+
+def test_nonwritable_table_header_cannot_receive_mapping():
+    header = target("xlsx:Sheet1!A1")
+    header["writable"] = False
+    header["table_role"] = "table_header"
+    header["table_role"] = "table_header"
+    report = validate(proposal([mapping("xlsx:Sheet1!A1")]), [header], {"name": "string"})
+    assert report.status == "invalid"
+    assert "target_not_writable:xlsx:Sheet1!A1" in report.type_errors
+
+
+def test_column_operations_expand_only_to_detected_writable_table_data():
+    manifest = [
+        {**target("xlsx:Orders!B1"), "writable": False, "table_role": "table_header", "table_header": "Amount"},
+        {**target("xlsx:Orders!B2", allowed=("number",)), "table_role": "table_data", "table_header": "Amount"},
+        {**target("xlsx:Orders!B3", allowed=("number",)), "table_role": "table_data", "table_header": "Amount"},
+        {**target("xlsx:Orders!A2"), "table_role": "table_data", "table_header": "Order"},
+        target("xlsx:Orders!B8", allowed=("number",)),
+    ]
+    proposal_value = proposal(
+        mappings=[],
+        clear_columns=[{"sheet": "Orders", "column": "B"}],
+        format_patches=[{"sheet": "Orders", "column": "B", "number_format": "0.0"}],
+    )
+    normalized, errors = expand_table_column_operations(proposal_value, manifest)
+    assert errors == []
+    assert normalized["clear_targets"] == ["xlsx:Orders!B2", "xlsx:Orders!B3"]
+    assert normalized["format_patches"] == [
+        {"element_id": "xlsx:Orders!B2", "number_format": "0.0"},
+        {"element_id": "xlsx:Orders!B3", "number_format": "0.0"},
+    ]
+    assert "clear_columns" not in normalized
+
+
+def test_template_required_flag_does_not_block_an_unmapped_target():
+    report = validate(proposal(), [target("xlsx:Sheet1!F17", required=True)], {"name": "string"})
+    assert report.ready_for_review is True
+    assert report.missing_required == ()
+
+
+def test_merged_target_metadata_is_preserved_without_changing_write_authority():
+    merged_target = {
+        **target("xlsx:Sheet1!E17"),
+        "merge_range": "E17:H17",
+        "write_target": "xlsx:Sheet1!E17",
+        "visual_labels": [{
+            "element_id": "xlsx:Sheet1!F16",
+            "text": "订单号",
+            "relation": "above_merged_region",
+        }],
+    }
+    report = validate_proposal(
+        proposal([mapping("xlsx:Sheet1!E17")]),
+        [merged_target],
+        {"name": "string"},
+    )
+    assert report.ready_for_review is True
+    # validate_user_revision normalizes the manifest before re-validating the
+    # updated proposal. The normalized visual_labels are a tuple, so this also
+    # protects the metadata round trip used by Odoo's mapping session service.
+    from office_mapping_verify import validate_user_revision
+
+    revision_report = validate_user_revision(
+        proposal(),
+        [],
+        [merged_target],
+        {"name": "string"},
+    )
+    assert revision_report.status == "ready"
+
+
+@pytest.mark.parametrize(
+    "metadata,expected",
+    [
+        ({"merge_range": "E17:not-a-cell"}, "invalid_target_metadata"),
+        ({"write_target": "xlsx:Sheet1!F17"}, "invalid_target_metadata"),
+        ({"visual_labels": [{"element_id": "x", "text": "label", "relation": "guess"}]}, "invalid_target_metadata"),
+        ({"visual_labels": [{"element_id": "x", "text": "label", "relation": []}]}, "invalid_target_metadata"),
+        ({"unknown_metadata": True}, "invalid_target_spec"),
+    ],
+)
+def test_invalid_or_unknown_target_metadata_fails_closed(metadata, expected):
+    report = validate_proposal(
+        proposal(),
+        [dict(target("xlsx:Sheet1!E17"), **metadata)],
+        {"name": "string"},
+    )
+    assert expected in report.structural_errors
+
+
+def test_fallback_requires_every_candidate_to_be_authorized_with_same_type():
+    report = validate(
+        proposal(
+            [
+                {
+                    "element_id": "xlsx:Sheet1!A1",
+                    "source_fields": ["default_code", "barcode"],
+                    "value_type": "string",
+                }
+            ]
+        ),
+        [target("xlsx:Sheet1!A1")],
+        {"default_code": "string", "barcode": "string"},
+    )
+    assert report.ready_for_review is True
+    report = validate(
+        proposal(
+            [
+                {
+                    "element_id": "xlsx:Sheet1!A1",
+                    "source_fields": ["default_code", "secret"],
+                    "value_type": "string",
+                }
+            ]
+        ),
+        [target("xlsx:Sheet1!A1")],
+        {"default_code": "string"},
+    )
+    assert "secret" in report.unknown_fields
+
+
+def test_arithmetic_formula_is_allowed_only_for_formula_enabled_target():
+    formula_target = target("xlsx:Sheet1!G23", allowed=("formula",))
+    report = validate(
+        proposal(
+            [
+                {
+                    "element_id": "xlsx:Sheet1!G23",
+                    "formula": "=D23*E23*3",
+                    "value_type": "formula",
+                }
+            ]
+        ),
+        [formula_target],
+        {},
+    )
+    assert report.ready_for_review is True
+    report = validate(
+        proposal(
+            [
+                {
+                    "element_id": "xlsx:Sheet1!G23",
+                    "formula": "=D23*E23*3",
+                    "value_type": "formula",
+                }
+            ]
+        ),
+        [target("xlsx:Sheet1!G23")],
+        {},
+    )
+    assert "type_mismatch:xlsx:Sheet1!G23" in report.type_errors
 
 
 def test_report_status_is_invalid_for_structural_and_allowlist_errors():
@@ -164,7 +338,7 @@ def test_malformed_mapping_and_all_membership_type_edges():
     )
     assert "invalid_mapping_shape" in report.structural_errors
     assert "invalid_mapping_target" in report.structural_errors
-    assert "target_not_writable:read-only" in report.structural_errors
+    assert "target_not_writable:read-only" not in report.structural_errors
     assert "missing" in report.unknown_targets
     assert "" in report.unknown_fields
     assert "secret" in report.unknown_fields
@@ -208,7 +382,7 @@ def test_invalid_clarifications_and_unknown_target_are_reported():
     assert report.ready_for_review is False
 
 
-def test_skips_required_optional_approved_duplicate_unknown_and_conflict():
+def test_skips_are_declarative_and_duplicate_or_unknown_skips_are_reported():
     manifest = [target("required"), target("optional", required=False), target("approved", required=False, approved=True)]
     report = validate(
         proposal(
@@ -220,11 +394,10 @@ def test_skips_required_optional_approved_duplicate_unknown_and_conflict():
     )
     assert "invalid_skipped_target" in report.structural_errors
     assert "unknown" in report.unknown_targets
-    assert "required" in report.skipped_unapproved
-    assert "optional" in report.skipped_unapproved
+    assert report.skipped_unapproved == ()
     assert "approved" in report.duplicates
     assert "target_mapped_and_skipped:approved" in report.structural_errors
-    assert "required" in report.missing_required
+    assert report.missing_required == ()
     assert report.ready_for_review is False
 
 
@@ -234,20 +407,86 @@ def test_approved_optional_skip_satisfies_only_that_target():
         [target("required"), target("optional", required=False, approved=True)],
         {"name": "string"},
     )
-    assert report.missing_required == ("required",)
+    assert report.missing_required == ()
     assert report.skipped_unapproved == ()
-    assert report.status == "incomplete"
+    assert report.status == "ready"
 
 
-def test_5_of_20_regression_reports_exactly_15_missing_and_not_ready():
+def test_skip_does_not_require_template_approval_metadata():
+    report = validate(
+        proposal(skipped=["optional"]),
+        [target("optional", required=True, writable=False, approved=False)],
+        {"name": "string"},
+    )
+    assert report.ready_for_review is True
+    assert report.skipped_unapproved == ()
+
+
+def test_required_flag_does_not_block_an_explicit_skip():
+    report = validate(
+        proposal(skipped=["required"]),
+        [target("required", required=True, approved=False)],
+        {"name": "string"},
+    )
+    assert report.ready_for_review is True
+    assert report.skipped_unapproved == ()
+    assert report.missing_required == ()
+
+
+def test_explicit_mapping_can_replace_a_formula_or_locked_template_target():
+    report = validate(
+        proposal([mapping("formula-cell")]),
+        [target("formula-cell", required=True, writable=False, allowed=("string",))],
+        {"name": "string"},
+    )
+    assert report.ready_for_review is True
+    assert report.structural_errors == ()
+
+
+def test_5_of_20_partial_mapping_is_ready_and_leaves_other_targets_untouched():
     manifest = [target(f"xlsx:Sheet1!A{index}") for index in range(1, 21)]
     fields = {f"field_{index}": "string" for index in range(1, 6)}
     mappings = [mapping(f"xlsx:Sheet1!A{index}", f"field_{index}") for index in range(1, 6)]
     report = validate(proposal(mappings), manifest, fields)
-    assert report.missing_required == tuple(f"xlsx:Sheet1!A{index}" for index in range(6, 21))
-    assert len(report.missing_required) == 15
-    assert report.status == "incomplete"
-    assert report.ready_for_review is False
+    assert report.missing_required == ()
+    assert report.status == "ready"
+    assert report.ready_for_review is True
+
+
+def test_explicit_clear_target_is_validated_without_mapping():
+    value = proposal(mappings=[], clear_targets=["xlsx:Sheet1!A1"])
+    report = validate(value)
+    assert report.ready_for_review is True
+
+
+def test_explicit_clear_accepts_formula_target_and_empty_string_even_if_not_writable():
+    report = validate(
+        proposal(mappings=[], clear_targets=["xlsx:Sheet1!A1"]),
+        [target("xlsx:Sheet1!A1", writable=False, allowed=("number",))],
+        {"name": "string"},
+    )
+    assert report.ready_for_review is True
+    assert report.structural_errors == ()
+    assert report.unknown_targets == ()
+
+
+def test_empty_value_mapping_clears_required_formula_target():
+    report = validate(
+        proposal([{"element_id": "xlsx:Sheet1!A1", "value": ""}]),
+        [target("xlsx:Sheet1!A1", required=True, writable=False, allowed=("formula",))],
+        {},
+    )
+    assert report.ready_for_review is True
+    assert report.structural_errors == ()
+    assert report.unknown_targets == ()
+    assert report.missing_required == ()
+
+
+def test_explicit_clear_rejects_duplicates_and_conflicts():
+    duplicate = validate(proposal(mappings=[], clear_targets=["xlsx:Sheet1!A1"] * 2))
+    assert "duplicate_clear_target:xlsx:Sheet1!A1" in duplicate.duplicates
+    overlap = validate(proposal([mapping("xlsx:Sheet1!A1")], clear_targets=["xlsx:Sheet1!A1"]))
+    assert "target_mapped_and_cleared:xlsx:Sheet1!A1" in overlap.structural_errors
 
 
 def test_validator_enforces_manifested_proposal_collection_limits_when_parser_is_bypassed():
@@ -284,6 +523,18 @@ def test_manual_revision_adds_and_replaces_then_revalidates_without_stale_pass()
     assert report.ready_for_review is True
     assert apply_manual_edits(original, edits, manifest, {"name": "string"}) == report
     assert original["mappings"][0]["source_field"] == "bad"
+
+
+def test_manual_mapping_edit_clears_prior_explicit_clear_for_same_target():
+    manifest = [target("xlsx:Sheet1!F17")]
+    original = proposal(mappings=[], clear_targets=["xlsx:Sheet1!F17"])
+    report = validate_user_revision(
+        original,
+        [mapping("xlsx:Sheet1!F17", "name")],
+        manifest,
+        {"name": "string"},
+    )
+    assert report.ready_for_review is True
 
 
 @pytest.mark.parametrize(

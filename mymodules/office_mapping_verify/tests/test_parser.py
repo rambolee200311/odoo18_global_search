@@ -45,6 +45,84 @@ def test_parse_valid_exact_proposal_and_utf8_bytes():
     assert parse_mapping_proposal(raw(value)) == value
 
 
+def test_parse_explicit_clear_targets():
+    value = proposal(mappings=[], clear_targets=["xlsx:Sheet1!F17"])
+    assert parse_mapping_proposal(raw(value)) == value
+
+
+def test_parse_empty_value_mapping_as_explicit_clear_target():
+    value = proposal(mappings=[{"element_id": "xlsx:Sheet1!F17", "value": ""}])
+    parsed = parse_mapping_proposal(raw(value))
+    assert parsed["mappings"] == []
+    assert parsed["clear_targets"] == ["xlsx:Sheet1!F17"]
+
+
+def test_parse_number_format_patch():
+    parsed = parse_mapping_proposal(raw(proposal(mappings=[], format_patches=[
+        {"element_id": "xlsx:Sheet1!B2", "number_format": "0.0"}
+    ])))
+    assert parsed["format_patches"] == [
+        {"element_id": "xlsx:Sheet1!B2", "number_format": "0.0"}
+    ]
+
+
+def test_parse_typed_empty_value_mapping_as_explicit_clear_target():
+    value = proposal(
+        mappings=[{"element_id": "xlsx:Sheet1!F17", "value": "", "value_type": "string"}]
+    )
+    parsed = parse_mapping_proposal(raw(value))
+    assert parsed["mappings"] == []
+    assert parsed["clear_targets"] == ["xlsx:Sheet1!F17"]
+
+
+def test_parse_supported_field_fallback_and_bounded_arithmetic_formula():
+    value = proposal(
+        mappings=[
+            {
+                "element_id": "xlsx:Sheet1!C1",
+                "source_fields": ["product_id.default_code", "product_id.barcode"],
+                "value_type": "string",
+            },
+            {"element_id": "xlsx:Sheet1!G23", "formula": "=D23*E23*3", "value_type": "formula"},
+        ]
+    )
+    assert parse_mapping_proposal(raw(value)) == value
+
+
+def test_parse_typed_numeric_literal_mapping():
+    value = proposal(
+        mappings=[
+            {"element_id": "xlsx:Sheet1!B4", "literal_value": 3329.15, "value_type": "number"}
+        ]
+    )
+    assert parse_mapping_proposal(raw(value)) == value
+
+
+def test_parse_canonicalizes_arithmetic_formula_without_leading_equals():
+    value = proposal(
+        mappings=[{"element_id": "xlsx:Sheet1!G23", "formula": "D23*E23*2", "value_type": "formula"}]
+    )
+    parsed = parse_mapping_proposal(raw(value))
+    assert parsed["mappings"][0]["formula"] == "=D23*E23*2"
+
+
+@pytest.mark.parametrize(
+    "formula",
+    [
+        "=HYPERLINK(\"https://example.invalid\",\"x\")",
+        "='Other Sheet'!A1",
+        "=A1:B3",
+        "=1+",
+        "=A1+[cmd]Sheet1!B2",
+    ],
+)
+def test_parse_rejects_unsafe_or_malformed_formula(formula):
+    value = proposal(
+        mappings=[{"element_id": "xlsx:Sheet1!C1", "formula": formula, "value_type": "formula"}]
+    )
+    assert_parse_error(raw(value), "invalid_formula")
+
+
 @pytest.mark.parametrize("value,code", [(None, "invalid_input_type"), (b"{}", "invalid_input_type")])
 def test_reject_non_text_input(value, code):
     assert_parse_error(value, code)
@@ -187,6 +265,15 @@ def test_reject_bad_clarification_shape_reason_and_text():
 
 def test_reject_invalid_skipped_target():
     assert_parse_error(raw(proposal(skipped_targets=[None])), "invalid_skipped_target")
+
+
+@pytest.mark.parametrize("clear_targets,code", [
+    (None, "clear_targets_must_be_array"),
+    ([None], "invalid_clear_target"),
+    ([""], "invalid_clear_target"),
+])
+def test_reject_invalid_clear_targets(clear_targets, code):
+    assert_parse_error(raw(proposal(mappings=[], clear_targets=clear_targets)), code)
 
 
 @pytest.mark.parametrize(

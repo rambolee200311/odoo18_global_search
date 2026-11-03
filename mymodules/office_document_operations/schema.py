@@ -13,11 +13,17 @@ from jsonschema import Draft202012Validator, FormatChecker
 
 from .errors import DocumentOperationError
 
-SCHEMA_PATH = Path(__file__).with_name("schemas") / "document_operation_v1.0.schema.json"
-with SCHEMA_PATH.open("r", encoding="utf-8") as schema_file:
-    OPERATION_SCHEMA: dict[str, Any] = json.load(schema_file)
-Draft202012Validator.check_schema(OPERATION_SCHEMA)
-_VALIDATOR = Draft202012Validator(OPERATION_SCHEMA, format_checker=FormatChecker())
+SCHEMA_DIRECTORY = Path(__file__).with_name("schemas")
+_SCHEMA_PATHS = {
+    "1.0": SCHEMA_DIRECTORY / "document_operation_v1.0.schema.json",
+    "1.1": SCHEMA_DIRECTORY / "document_operation_v1.1.schema.json",
+}
+_VALIDATORS: dict[str, Draft202012Validator] = {}
+for _version, _path in _SCHEMA_PATHS.items():
+    with _path.open("r", encoding="utf-8") as schema_file:
+        _schema: dict[str, Any] = json.load(schema_file)
+    Draft202012Validator.check_schema(_schema)
+    _VALIDATORS[_version] = Draft202012Validator(_schema, format_checker=FormatChecker())
 
 
 def validate_operation_list(document: object) -> dict[str, Any]:
@@ -28,7 +34,11 @@ def validate_operation_list(document: object) -> dict[str, Any]:
     """
     if not isinstance(document, dict):
         raise DocumentOperationError("invalid_operation_list", "schema", "Operation List must be a JSON object.")
-    errors = sorted(_VALIDATOR.iter_errors(document), key=lambda error: list(error.absolute_path))
+    version = document.get("schema_version")
+    validator = _VALIDATORS.get(version) if isinstance(version, str) else None
+    if validator is None:
+        raise DocumentOperationError("unsupported_operation_version", "schema", "Operation List version is not supported.")
+    errors = sorted(validator.iter_errors(document), key=lambda error: list(error.absolute_path))
     if errors:
         error = errors[0]
         location = ".".join(str(part) for part in error.absolute_path) or "document"
@@ -40,7 +50,7 @@ def validate_operation_list(document: object) -> dict[str, Any]:
 
     normalized = copy.deepcopy(document)
     operation_ids: set[str] = set()
-    for operation in normalized["operations"]:
+    for operation_index, operation in enumerate(normalized["operations"]):
         operation_id = operation["operation_id"]
         if operation_id in operation_ids:
             raise DocumentOperationError(
@@ -53,8 +63,83 @@ def validate_operation_list(document: object) -> dict[str, Any]:
             parameters.setdefault("include_header", False)
         if operation["type"] == "set_value":
             parameters.setdefault("overwrite_formula", False)
+        if operation["type"] == "repeat_rows" and operation_index != 0:
+            raise DocumentOperationError(
+                "repeat_rows_order_invalid", "schema", "repeat_rows must be the first operation.", operation_id
+            )
+        if operation["type"] == "set_formula" and not _valid_arithmetic_formula(parameters["formula"]):
+            raise DocumentOperationError(
+                "invalid_formula", "schema", "Formula must be a bounded arithmetic expression with local cell references.", operation_id
+            )
         _validate_typed_values(operation)
     return normalized
+
+
+def _valid_arithmetic_formula(formula: object) -> bool:
+    import re
+
+    token_pattern = re.compile(
+        r"\s*(?:(\$?[A-Za-z]{1,3}\$?[1-9][0-9]*)|((?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[Ee][+-]?[0-9]+)?)|([()+\-*/]))"
+    )
+    if not isinstance(formula, str) or not formula.startswith("=") or len(formula) > 512:
+        return False
+    expression = formula[1:].strip()
+    if not expression:
+        return False
+    tokens, position = [], 0
+    while position < len(expression):
+        match = token_pattern.match(expression, position)
+        if not match:
+            return False
+        reference, number, operator = match.groups()
+        tokens.append("reference" if reference else "number" if number else operator)
+        position = match.end()
+        if len(tokens) > 128:
+            return False
+    cursor = 0
+
+    def peek(value=None):
+        return cursor < len(tokens) and (value is None or tokens[cursor] == value)
+
+    def consume():
+        nonlocal cursor
+        if cursor >= len(tokens):
+            return None
+        token = tokens[cursor]
+        cursor += 1
+        return token
+
+    def expression_rule():
+        if not term_rule():
+            return False
+        while peek("+") or peek("-"):
+            consume()
+            if not term_rule():
+                return False
+        return True
+
+    def term_rule():
+        if not factor_rule():
+            return False
+        while peek("*") or peek("/"):
+            consume()
+            if not factor_rule():
+                return False
+        return True
+
+    def factor_rule():
+        if peek("+") or peek("-"):
+            consume()
+            return factor_rule()
+        if peek("("):
+            consume()
+            if not expression_rule() or not peek(")"):
+                return False
+            consume()
+            return True
+        return consume() in {"reference", "number"}
+
+    return expression_rule() and cursor == len(tokens)
 
 
 def _validate_typed_values(operation: dict[str, Any]) -> None:

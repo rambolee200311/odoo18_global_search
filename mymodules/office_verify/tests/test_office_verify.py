@@ -187,6 +187,75 @@ class OfficeVerifyTests(unittest.TestCase):
         self.assertEqual(report.checked_targets, 2)
         self.assertEqual(report.checked_formulas, 2)
 
+    def test_explicit_unstyled_blank_cell_is_a_valid_target(self):
+        source = xlsx(
+            f'<worksheet xmlns="{MAIN}"><sheetData>'
+            '<row r="1"><c r="A1" t="inlineStr"><is><t>Header</t></is></c></row>'
+            '<row r="2"><c r="D2"/></row>'
+            '</sheetData></worksheet>'
+        )
+        candidate = xlsx(
+            f'<worksheet xmlns="{MAIN}"><sheetData>'
+            '<row r="1"><c r="A1" t="inlineStr"><is><t>Header</t></is></c></row>'
+            '<row r="2"><c r="D2"><v>12</v></c></row>'
+            '</sheetData></worksheet>'
+        )
+
+        report = self.verify(
+            source,
+            candidate,
+            "explicit-blank.xlsx",
+            XLSX_MIME,
+            plan_for(source, "xlsx:Sheet1!D2", "number", 12),
+        )
+
+        self.assertEqual(report.status, "PASS")
+        self.assertEqual(report.checked_targets, 1)
+
+    def test_missing_xlsx_cell_is_allowed_only_for_authorized_explicit_clear(self):
+        source = xlsx(
+            f'<worksheet xmlns="{MAIN}"><sheetData>'
+            '<row r="1"><c r="A1" t="inlineStr"><is><t>Header</t></is></c></row>'
+            '</sheetData></worksheet>'
+        )
+        target = "xlsx:Sheet1!M2"
+        plan = {
+            "schema_version": "1",
+            "template_sha256": hashlib.sha256(source).hexdigest(),
+            "writes": [{
+                "element_id": target,
+                "operation": "set_value",
+                "value": {"type": "string", "data": ""},
+            }],
+        }
+
+        with self.assertRaises(OfficeVerifyError) as caught:
+            self.verify(source, source, "clear-missing-cell.xlsx", XLSX_MIME, plan)
+        self.assertEqual(caught.exception.code, "OFFICE_MAPPING_INVALID")
+
+        report = self.verify(
+            source,
+            source,
+            "clear-missing-cell.xlsx",
+            XLSX_MIME,
+            plan,
+            authorized_blank_targets=(target,),
+        )
+        self.assertEqual(report.status, "PASS")
+        self.assertEqual(report.checked_targets, 1)
+
+        plan["writes"][0]["value"]["data"] = "not blank"
+        with self.assertRaises(OfficeVerifyError) as caught:
+            self.verify(
+                source,
+                source,
+                "clear-missing-cell.xlsx",
+                XLSX_MIME,
+                plan,
+                authorized_blank_targets=(target,),
+            )
+        self.assertEqual(caught.exception.code, "OFFICE_MAPPING_INVALID")
+
     def test_hidden_sheet_visibility_change_fails(self):
         source = xlsx()
         with zipfile.ZipFile(io.BytesIO(source), "r") as archive:
@@ -264,19 +333,92 @@ class OfficeVerifyTests(unittest.TestCase):
             self.verify(source, candidate, "sample.xlsx", XLSX_MIME, plan,
                         policy=VerificationPolicy(required_parts=("xl/styles.xml",)))
 
-    def test_xlsx_unknown_mapping_formula_target_and_null_fail(self):
+    def test_xlsx_unknown_mapping_fails(self):
         source = xlsx()
         base = plan_for(source, "xlsx:Sheet1!A1", "string", "new")
         bad = dict(base, unexpected=True)
-        for plan, expected in (
-            (bad, "OFFICE_MAPPING_INVALID"),
-            (plan_for(source, "xlsx:Sheet1!B1", "string", "oops"), "OFFICE_MAPPING_INVALID"),
-            (plan_for(source, "xlsx:Sheet1!A1", "string", None), "NULL_NOT_SUPPORTED"),
-        ):
+        for plan, expected in ((bad, "OFFICE_MAPPING_INVALID"),):
             with self.subTest(expected=expected):
                 with self.assertRaises(OfficeVerifyError) as caught:
                     self.verify(source, changed_xlsx(), "sample.xlsx", XLSX_MIME, plan)
                 self.assertEqual(caught.exception.code, expected)
+
+    def test_xlsx_explicit_write_can_clear_or_replace_existing_formula(self):
+        source = xlsx()
+        blank_candidate = xlsx(
+            f'<worksheet xmlns="{MAIN}"><sheetData>'
+            '<row r="1"><c r="A1" t="inlineStr"><is><t>old</t></is></c>'
+            '<c r="B1" t="inlineStr"><is><t></t></is></c><c r="C1"><v>7</v></c></row>'
+            '<row r="2"/></sheetData><mergeCells count="1"><mergeCell ref="A2:B2"/></mergeCells></worksheet>'
+        )
+        blank_plan = plan_for(source, "xlsx:Sheet1!B1", "string", "")
+        self.assertEqual(
+            self.verify(source, blank_candidate, "sample.xlsx", XLSX_MIME, blank_plan).status,
+            "PASS",
+        )
+
+        formula_candidate = xlsx(
+            f'<worksheet xmlns="{MAIN}"><sheetData>'
+            '<row r="1"><c r="A1" t="inlineStr"><is><t>old</t></is></c>'
+            '<c r="B1"><f>2+3</f><v></v></c><c r="C1"><v>7</v></c></row>'
+            '<row r="2"/></sheetData><mergeCells count="1"><mergeCell ref="A2:B2"/></mergeCells></worksheet>'
+        )
+        formula_plan = {
+            "schema_version": "1",
+            "template_sha256": hashlib.sha256(source).hexdigest(),
+            "writes": [{
+                "element_id": "xlsx:Sheet1!B1",
+                "operation": "set_formula",
+                "value": {"type": "formula", "data": "=2+3"},
+            }],
+        }
+        self.assertEqual(
+            self.verify(source, formula_candidate, "sample.xlsx", XLSX_MIME, formula_plan).status,
+            "PASS",
+        )
+
+    def test_xlsx_null_string_mapping_is_read_back_as_blank(self):
+        source = xlsx()
+        plan = plan_for(source, "xlsx:Sheet1!A1", "string", None)
+        report = self.verify(
+            source,
+            changed_xlsx(value=""),
+            "sample.xlsx",
+            XLSX_MIME,
+            plan,
+        )
+        self.assertEqual(report.status, "PASS")
+
+    def test_xlsx_safe_formula_write_is_verified_and_unsafe_formula_rejected(self):
+        source = xlsx(
+            f'<worksheet xmlns="{MAIN}"><sheetData><row r="1">'
+            '<c r="A1" t="inlineStr"><is><t>formula placeholder</t></is></c>'
+            '<c r="D1"><v>2</v></c><c r="E1"><v>1.5</v></c>'
+            '</row></sheetData></worksheet>'
+        )
+        candidate = xlsx(
+            f'<worksheet xmlns="{MAIN}"><sheetData><row r="1">'
+            '<c r="A1"><f>D1*E1*3</f><v></v></c>'
+            '<c r="D1"><v>2</v></c><c r="E1"><v>1.5</v></c>'
+            '</row></sheetData></worksheet>'
+        )
+        plan = {
+            "schema_version": "1",
+            "template_sha256": hashlib.sha256(source).hexdigest(),
+            "writes": [
+                {
+                    "element_id": "xlsx:Sheet1!A1",
+                    "operation": "set_formula",
+                    "value": {"type": "formula", "data": "=D1*E1*3"},
+                }
+            ],
+        }
+        report = self.verify(source, candidate, "formula.xlsx", XLSX_MIME, plan)
+        self.assertEqual(report.status, "PASS")
+        plan["writes"][0]["value"]["data"] = '=HYPERLINK("https://example.invalid")'
+        with self.assertRaises(OfficeVerifyError) as caught:
+            self.verify(source, candidate, "formula.xlsx", XLSX_MIME, plan)
+        self.assertEqual(caught.exception.code, "OFFICE_MAPPING_INVALID")
 
     def test_docx_plain_text_is_compared_across_run_splits(self):
         source = docx()

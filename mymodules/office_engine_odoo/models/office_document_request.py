@@ -50,6 +50,7 @@ def _load_trusted_python_package(package_name):
 
 _office_core = _load_trusted_python_package("office_core")
 _office_verify = _load_trusted_python_package("office_verify")
+_document_operations = _load_trusted_python_package("office_document_operations")
 OfficeCoreError = _office_core.OfficeCoreError
 ResourceBudget = _office_core.ResourceBudget
 inspect_document = _office_core.inspect_document
@@ -137,6 +138,38 @@ def _now_utc():
     return fields.Datetime.to_string(datetime.now(timezone.utc).replace(tzinfo=None))
 
 
+def _ensure_output_chat_message(env, request):
+    """Attach a generated result to its validated thread exactly once."""
+    request.ensure_one()
+    output = request.output_attachment_id
+    thread = request.thread_id
+    if not output or not thread:
+        return False, False
+    if request.owner_id.id != env.uid or thread.user_id.id != env.uid:
+        raise AccessError(_("The Office output thread is unavailable."))
+    request.check_access("read")
+    thread.check_access("read")
+    output.check_access("read")
+    existing = env["mail.message"].search(
+        [
+            ("model", "=", thread._name),
+            ("res_id", "=", thread.id),
+            ("llm_role", "=", "assistant"),
+            ("attachment_ids", "in", output.ids),
+        ],
+        limit=1,
+    )
+    if existing:
+        return existing.id, False
+    message = thread.message_post(
+        body=_("已生成并归档正式 Office 文件。"),
+        llm_role="assistant",
+        author_id=False,
+        attachment_ids=[output.id],
+    )
+    return message.id, True
+
+
 class OfficeDocumentRequest(models.Model):
     _name = "office.document.request"
     _description = "Office Document Processing Request"
@@ -173,8 +206,8 @@ class OfficeDocumentRequest(models.Model):
     ]
 
     @api.model
-    def _inspect_chat_attachment(self, source, thread, input_message):
-        """Inspect a supported chat upload under the current user's access."""
+    def _inspect_chat_attachment_document(self, source, thread, input_message):
+        """Return one verified inspection for a chat attachment under caller ACLs."""
         source.ensure_one()
         thread.ensure_one()
         input_message.ensure_one()
@@ -196,6 +229,12 @@ class OfficeDocumentRequest(models.Model):
         inspection = inspect_document(content, filename, mimetype, _resource_budget())
         if inspection.format != fmt:
             raise UserError(_("The attachment contents do not match the declared Office format."))
+        return inspection
+
+    @api.model
+    def _inspect_chat_attachment(self, source, thread, input_message):
+        """Return bounded metadata for a verified chat upload."""
+        inspection = self._inspect_chat_attachment_document(source, thread, input_message)
         sheet_names = sorted(
             {
                 item.element_id.split(":", 1)[1].rsplit("!", 1)[0]
@@ -211,6 +250,20 @@ class OfficeDocumentRequest(models.Model):
             "sheet_names": sheet_names,
             "template_sha256": inspection.template_sha256,
         }
+
+    @api.model
+    def _ensure_output_delivery_message(self, request_id):
+        """Ensure an already committed private output has a thread download card."""
+        if isinstance(request_id, bool) or not isinstance(request_id, int) or request_id <= 0:
+            raise AccessError(_("The Office output is unavailable."))
+        request = self.browse(request_id).exists()
+        if not request:
+            raise AccessError(_("The Office output is unavailable."))
+        request.check_access("read")
+        if request.owner_id.id != self.env.uid or request.state != "generated":
+            raise AccessError(_("The Office output is unavailable."))
+        message_id, _created = _ensure_output_chat_message(self.env, request)
+        return message_id or False
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -301,6 +354,7 @@ class OfficeDocumentRequest(models.Model):
         mapping_plan,
         thread_id=None,
         input_message_id=None,
+        preprocessing=None,
     ):
         """Synchronously render a private result using only the current user context."""
         if not isinstance(mapping_plan, dict):
@@ -337,28 +391,53 @@ class OfficeDocumentRequest(models.Model):
                 )
 
             budget = _resource_budget()
-            verify_budget = _verification_budget()
+            if preprocessing is not None:
+                if fmt != "xlsx":
+                    raise _RequestFailure(
+                        "OFFICE_UNSUPPORTED_FEATURE",
+                        "preprocessing",
+                        "结构预处理目前仅支持 .xlsx。",
+                    )
+                if not isinstance(preprocessing, dict) or preprocessing.get("action") != "insert_repeat_rows":
+                    raise _RequestFailure(
+                        "OFFICE_UNSUPPORTED_FEATURE",
+                        "preprocessing",
+                        "只支持经验证的重复行扩展预处理。",
+                    )
             inspection = inspect_document(content, filename, mimetype, budget)
             if inspection.format != fmt or inspection.template_sha256 != input_sha256:
                 raise _RequestFailure(
                     "OFFICE_INVALID_OR_MISMATCHED", "inspection", "输入文件格式或内容身份检查失败。"
                 )
             self._set_request_state(dbname, uid, context, request_id, "processing")
-            candidate = render_candidate(content, filename, mimetype, mapping_plan, budget)
-            verification = verify_output(
+            candidate = render_candidate(
                 content,
-                candidate.content,
                 filename,
                 mimetype,
                 mapping_plan,
-                VerificationPolicy(enabled_formats=("xlsx", "docx"), require_styles=True),
-                verify_budget,
+                budget,
+                preprocessing=preprocessing,
+                authorized_blank_targets=tuple(
+                    write["element_id"]
+                    for write in mapping_plan.get("writes", [])
+                    if isinstance(write, dict)
+                    and write.get("operation") == "set_value"
+                    and isinstance(write.get("element_id"), str)
+                    and write.get("value") == {"type": "string", "data": ""}
+                ) if isinstance(mapping_plan, dict) and isinstance(mapping_plan.get("writes"), list) else (),
             )
-            if verification.status != "PASS":
+            verification_payload = candidate.verification
+            if not isinstance(verification_payload, dict):
+                raise _RequestFailure(
+                    "OFFICE_VERIFIER_UNAVAILABLE", "verify", "文档引擎未返回强制回读结果。"
+                )
+            verification_status = verification_payload.get("status")
+            verification_sha = verification_payload.get("output_sha256")
+            if verification_status != "PASS":
                 raise _RequestFailure(
                     "OFFICE_INTEGRITY_FAILED", "verify", "生成文件未通过完整性回读检查。"
                 )
-            if verification.output_sha256 != candidate.candidate_sha256:
+            if verification_sha != candidate.candidate_sha256:
                 raise _RequestFailure(
                     "OFFICE_INTEGRITY_FAILED", "verify", "生成文件摘要与回读结果不一致。"
                 )
@@ -376,7 +455,7 @@ class OfficeDocumentRequest(models.Model):
                     candidate.candidate_sha256,
                     filename,
                     fmt,
-                    verification.as_dict(),
+                    verification_payload,
                 )
             except Exception as exc:
                 raise _RequestFailure(
@@ -632,6 +711,7 @@ class OfficeDocumentRequest(models.Model):
             output.check("read")
             output_id = output.id
             output_hash = candidate_sha256
+            delivery_message_id, _message_created = _ensure_output_chat_message(env, request)
             cursor.commit()
             commit_completed_at = _now_utc()
             elapsed_ms = round((time.monotonic() - started) * 1000, 3)
@@ -657,6 +737,9 @@ class OfficeDocumentRequest(models.Model):
                 "failed_stage": False,
                 "output_attachment_id": output_id,
                 "output_sha256": output_hash,
+                "filename": clean_name,
+                "mimetype": _MIME_TYPES[fmt],
+                "delivery_message_id": delivery_message_id or False,
                 "readback": verification,
             }
         except Exception:
@@ -672,9 +755,36 @@ class OfficeDocumentRequest(models.Model):
             request = env["office.document.request"].browse(request_id).exists()
             if request and request.state == "generated" and request.output_attachment_id:
                 request.output_attachment_id.check("read")
-                result = self._record_to_result(request)
-                cursor.rollback()
-                return result
+                try:
+                    delivery_message_id, created = _ensure_output_chat_message(env, request)
+                    result = self._record_to_result(request)
+                    result["delivery_message_id"] = delivery_message_id or False
+                    if delivery_message_id:
+                        result["error_code"] = False
+                        result["failed_stage"] = False
+                    else:
+                        result["error_code"] = code
+                        result["failed_stage"] = "delivery"
+                    if created:
+                        cursor.commit()
+                    else:
+                        cursor.rollback()
+                    return result
+                except Exception:
+                    cursor.rollback()
+                    _logger.exception(
+                        "Generated Office output could not be attached to its chat; request_id=%s",
+                        request_id,
+                    )
+                    result = self._record_to_result(request)
+                    result.update(
+                        {
+                            "delivery_message_id": False,
+                            "error_code": code,
+                            "failed_stage": "delivery",
+                        }
+                    )
+                    return result
         except AccessError:
             pass
         finally:
@@ -738,18 +848,29 @@ class OfficeDocumentRequest(models.Model):
             request.check_access("read")
             if request.output_attachment_id:
                 request.output_attachment_id.check_access("read")
-            return self._record_to_result(request)
+            delivery_message_id = False
+            message_created = False
+            if request.state == "generated":
+                delivery_message_id, message_created = _ensure_output_chat_message(env, request)
+            result = self._record_to_result(request)
+            result["delivery_message_id"] = delivery_message_id or False
+            if message_created:
+                cursor.commit()
+            return result
         finally:
             cursor.rollback()
             cursor.close()
 
     @staticmethod
     def _record_to_result(request):
+        output = request.output_attachment_id
         return {
             "request_uuid": request.request_uuid,
             "state": request.state,
             "error_code": request.error_code or False,
             "failed_stage": request.failed_stage or False,
-            "output_attachment_id": request.output_attachment_id.id or False,
+            "output_attachment_id": output.id or False,
             "output_sha256": request.output_sha256 or False,
+            "filename": output.name or False,
+            "mimetype": output.mimetype or False,
         }

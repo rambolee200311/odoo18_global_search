@@ -139,7 +139,10 @@ class TestProviderUsageNormalization(TransactionCase):
             patch.object(type(provider), "format_messages", return_value=[{"role": "user", "content": "synthetic"}]),
             patch("socket.create_connection", side_effect=AssertionError("network access attempted")),
         ):
-            result = provider.openai_chat([], model=model, stream=False)
+            result = provider.openai_chat(
+                [], model=model, stream=False, reasoning_effort="none"
+            )
         self.assertEqual(create.call_count, 1)
+        self.assertEqual(create.call_args.kwargs["reasoning_effort"], "none")
         self.assertEqual(result["content"], "mocked")
         self.assertEqual(result["usage"]["prompt_tokens"], 8)

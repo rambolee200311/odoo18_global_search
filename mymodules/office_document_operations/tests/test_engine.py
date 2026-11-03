@@ -243,6 +243,114 @@ def test_set_empty_string_roundtrips_as_blank_cell(tmp_path):
         workbook.close()
 
 
+def test_styled_empty_string_roundtrips_as_blank_and_preserves_style(tmp_path):
+    source, output = tmp_path / "styled-empty-string.xlsx", tmp_path / "styled-empty-string-output.xlsx"
+    _fixture(source)
+    workbook = load_workbook(source)
+    workbook["Orders"]["A15"].fill = PatternFill(fill_type="solid", fgColor="D9EAF7")
+    workbook.save(source)
+    workbook.close()
+    operation = {"schema_version": "1.0", "operations": [{
+        "operation_id": "styled-empty-string", "type": "set_value",
+        "target": {"sheet": "Orders", "cell": "A15"},
+        "parameters": {"value": _typed("")},
+    }]}
+
+    report = DocumentOperationEngine().execute(source, output, operation).as_dict()
+
+    assert report["status"] == "PASS", report
+    result = load_workbook(output, data_only=False)
+    try:
+        cell = result["Orders"]["A15"]
+        assert cell.value is None
+        assert cell.fill.fgColor.rgb.endswith("D9EAF7")
+    finally:
+        result.close()
+
+
+@pytest.mark.parametrize("operation", [
+    {"operation_id": "merged-anchor-set", "type": "set_value",
+     "target": {"sheet": "Orders", "cell": "E17"},
+     "parameters": {"value": _typed("updated")}},
+    {"operation_id": "merged-anchor-clear", "type": "clear",
+     "target": {"sheet": "Orders", "range": "E17:E17"},
+     "parameters": {"mode": "values", "formula_policy": "clear"}},
+])
+def test_merged_anchor_cell_value_operations_are_supported(tmp_path, operation):
+    source, output = tmp_path / "merged.xlsx", tmp_path / "merged-output.xlsx"
+    _fixture(source)
+    workbook = load_workbook(source)
+    sheet = workbook["Orders"]
+    sheet.merge_cells("E17:H17")
+    sheet["E17"] = "old value"
+    workbook.save(source)
+    workbook.close()
+
+    report = DocumentOperationEngine().execute(
+        source, output, {"schema_version": "1.0", "operations": [operation]}
+    ).as_dict()
+
+    assert report["status"] == "PASS", report
+    result = load_workbook(output, data_only=False)
+    try:
+        expected = "updated" if operation["type"] == "set_value" else None
+        assert result["Orders"]["E17"].value == expected
+        assert "E17:H17" in {str(item) for item in result["Orders"].merged_cells.ranges}
+    finally:
+        result.close()
+
+
+@pytest.mark.parametrize("target", [
+    {"sheet": "Orders", "range": "F17:F17"},
+    {"sheet": "Orders", "range": "E17:H17"},
+    {"sheet": "Orders", "range": "D17:E17"},
+])
+def test_merged_non_anchor_or_multi_cell_targets_remain_rejected(tmp_path, target):
+    source, output = tmp_path / "merged-reject.xlsx", tmp_path / "merged-reject-output.xlsx"
+    _fixture(source)
+    workbook = load_workbook(source)
+    workbook["Orders"].merge_cells("E17:H17")
+    workbook.save(source)
+    workbook.close()
+    operation = {"operation_id": "merged-invalid", "type": "clear", "target": target,
+                 "parameters": {"mode": "values"}}
+
+    report = DocumentOperationEngine().execute(
+        source, output, {"schema_version": "1.0", "operations": [operation]}
+    ).as_dict()
+
+    assert report["status"] == "FAIL"
+    assert report["error"]["error_code"] == "merged_range_unsupported"
+    assert not output.exists()
+
+
+def test_clearing_styled_formula_roundtrips_as_blank_and_preserves_style(tmp_path):
+    source, output = tmp_path / "styled-formula.xlsx", tmp_path / "styled-formula-output.xlsx"
+    _fixture(source)
+    workbook = load_workbook(source)
+    cell = workbook["Orders"]["G2"]
+    cell.value = "=C2*E2"
+    cell.fill = PatternFill(fill_type="solid", fgColor="D9EAF7")
+    workbook.save(source)
+    workbook.close()
+    operation = {"schema_version": "1.0", "operations": [{
+        "operation_id": "clear-styled-formula", "type": "clear",
+        "target": {"sheet": "Orders", "range": "G2:G2"},
+        "parameters": {"mode": "values", "formula_policy": "clear"},
+    }]}
+
+    report = DocumentOperationEngine().execute(source, output, operation).as_dict()
+
+    assert report["status"] == "PASS", report
+    result = load_workbook(output, data_only=False)
+    try:
+        cleared = result["Orders"]["G2"]
+        assert cleared.value is None
+        assert cleared.fill.fgColor.rgb.endswith("D9EAF7")
+    finally:
+        result.close()
+
+
 def test_illegal_cell_text_returns_operation_scoped_error_and_no_output(tmp_path):
     source, output = tmp_path / "illegal.xlsx", tmp_path / "illegal-output.xlsx"
     _fixture(source)

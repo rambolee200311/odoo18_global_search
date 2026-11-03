@@ -1,16 +1,65 @@
 """Shared, dependency-free data contracts for mapping proposal validation."""
 
 from dataclasses import asdict, dataclass
-from typing import Any
+from typing import Any, Mapping
 
 MAPPING_SCHEMA_VERSION = "m2.mapping-proposal.v1"
 SUPPORTED_VALUE_TYPES = frozenset({"string", "number", "boolean"})
+TARGET_VALUE_TYPES = SUPPORTED_VALUE_TYPES | {"formula"}
 CLARIFICATION_REASON_CODES = frozenset(
     {"missing_source", "ambiguous_mapping", "unsupported_target", "conflicting_instruction"}
 )
 ROOT_KEYS = frozenset({"schema_version", "mappings", "clarifications", "skipped_targets"})
+OPTIONAL_ROOT_KEYS = frozenset({"clear_targets", "clear_columns", "format_patches"})
+EXTENDED_ROOT_KEYS = ROOT_KEYS | OPTIONAL_ROOT_KEYS
+
+
+def has_valid_root_keys(keys: Any) -> bool:
+    return ROOT_KEYS.issubset(keys) and keys.issubset(EXTENDED_ROOT_KEYS)
 MAPPING_KEYS = frozenset({"element_id", "source_field", "value_type"})
+FALLBACK_MAPPING_KEYS = frozenset({"element_id", "source_fields", "value_type"})
+FORMULA_MAPPING_KEYS = frozenset({"element_id", "formula", "value_type"})
+LITERAL_MAPPING_KEYS = frozenset({"element_id", "literal_value", "value_type"})
+MAPPING_KEY_SHAPES = (MAPPING_KEYS, FALLBACK_MAPPING_KEYS, FORMULA_MAPPING_KEYS, LITERAL_MAPPING_KEYS)
 CLARIFICATION_KEYS = frozenset({"element_id", "reason_code", "question"})
+
+
+def normalize_empty_value_mappings(proposal: Any) -> Any:
+    """Represent explicit empty literal mappings as clear targets.
+
+    The compact ``{"element_id": ..., "value": ""}`` form is accepted
+    only as an explicit blank operation. A model may also include a
+    ``value_type`` hint; it is syntax metadata and does not change the clear
+    operation. Non-empty values use the explicit typed ``literal_value`` shape.
+    """
+    if not isinstance(proposal, Mapping) or not isinstance(proposal.get("mappings"), list):
+        return proposal
+    remaining: list[Any] = []
+    empty_targets: list[Any] = []
+    for item in proposal["mappings"]:
+        if (
+            isinstance(item, Mapping)
+            and set(item) in (
+                {"element_id", "value"},
+                {"element_id", "value", "value_type"},
+            )
+            and item.get("value") in ("", None)
+            and (
+                "value_type" not in item
+                or item.get("value_type") in SUPPORTED_VALUE_TYPES
+            )
+        ):
+            empty_targets.append(item.get("element_id"))
+        else:
+            remaining.append(item)
+    if not empty_targets:
+        return proposal
+    normalized = dict(proposal)
+    normalized["mappings"] = remaining
+    clear_targets = normalized.get("clear_targets", [])
+    if isinstance(clear_targets, list):
+        normalized["clear_targets"] = [*clear_targets, *empty_targets]
+    return normalized
 
 
 class MappingParseError(ValueError):

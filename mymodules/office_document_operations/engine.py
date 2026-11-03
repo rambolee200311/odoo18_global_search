@@ -7,7 +7,7 @@ import os
 import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from .errors import DocumentOperationError
 from .schema import validate_operation_list
@@ -39,7 +39,16 @@ class DocumentOperationEngine:
     def __init__(self, adapter: XlsxAdapter | None = None):
         self.adapter = adapter or XlsxAdapter()
 
-    def execute(self, input_path: str | Path, output_path: str | Path, operation_list: object) -> ExecutionReport:
+    def execute(
+        self,
+        input_path: str | Path,
+        output_path: str | Path,
+        operation_list: object,
+        *,
+        repeat_rows_handler: Callable | None = None,
+        candidate_postprocessor: Callable | None = None,
+        max_output_bytes: int = 64 * 1024 * 1024,
+    ) -> ExecutionReport:
         """Execute in order, validate a saved candidate, then atomically publish it.
 
         Input files are never opened for writing. The destination is only
@@ -47,6 +56,8 @@ class DocumentOperationEngine:
         """
         input_path, output_path = Path(input_path), Path(output_path)
         normalized = None
+        temporary_input = None
+        candidate = None
         try:
             normalized = validate_operation_list(operation_list)
             if input_path.resolve() == output_path.resolve():
@@ -54,21 +65,71 @@ class DocumentOperationEngine:
             if output_path.suffix.lower() != ".xlsx":
                 raise DocumentOperationError("unsupported_file_type", "preflight", "Output path must end in .xlsx.")
             source_sha = _sha256(input_path)
+            if normalized["schema_version"] == "1.1" and source_sha != normalized["source_sha256"]:
+                raise DocumentOperationError(
+                    "source_fingerprint_mismatch", "preflight", "Operation List does not match the input file fingerprint."
+                )
+
+            operations = normalized["operations"]
+            execution_input = input_path
+            repeat_result = None
+            if operations and operations[0]["type"] == "repeat_rows":
+                if repeat_rows_handler is None:
+                    raise DocumentOperationError(
+                        "repeat_rows_handler_unavailable", "preflight", "No verified repeat-row adapter is configured.", operations[0]["operation_id"]
+                    )
+                try:
+                    expanded = repeat_rows_handler(input_path.read_bytes(), operations[0])
+                    if isinstance(expanded, tuple):
+                        expanded_bytes, repeat_result = expanded
+                    else:
+                        expanded_bytes, repeat_result = expanded, None
+                    if not isinstance(expanded_bytes, bytes) or not expanded_bytes:
+                        raise ValueError("repeat-row adapter returned no bytes")
+                    repeated = repeat_rows_handler(input_path.read_bytes(), operations[0])
+                    repeated_bytes = repeated[0] if isinstance(repeated, tuple) else repeated
+                    if not isinstance(repeated_bytes, bytes) or hashlib.sha256(repeated_bytes).digest() != hashlib.sha256(expanded_bytes).digest():
+                        raise DocumentOperationError(
+                            "repeat_rows_replay_mismatch", "validation", "repeat_rows could not be reproduced from the original input.", operations[0]["operation_id"]
+                        )
+                except DocumentOperationError:
+                    raise
+                except Exception as exc:
+                    raise DocumentOperationError(
+                        "repeat_rows_failed", "preflight", "The repeat-row operation failed.", operations[0]["operation_id"]
+                    ) from exc
+                if len(expanded_bytes) > max_output_bytes:
+                    raise DocumentOperationError(
+                        "repeat_rows_resource_limit", "preflight", "Expanded XLSX exceeds the operation engine limit.", operations[0]["operation_id"]
+                    )
+                temporary_input = tempfile.TemporaryDirectory(prefix="office-repeat-source-")
+                execution_input = Path(temporary_input.name) / "expanded.xlsx"
+                execution_input.write_bytes(expanded_bytes)
+                operations = operations[1:]
+                if not operations:
+                    raise DocumentOperationError(
+                        "repeat_rows_without_file_operation", "preflight", "repeat_rows must be followed by at least one file operation.", normalized["operations"][0]["operation_id"]
+                    )
+
+            validation_list = {
+                "schema_version": "1.1",
+                "source_sha256": _sha256(execution_input),
+                "operations": operations,
+            }
 
             # Preflight the entire ordered sequence against an independent
             # in-memory simulation before modifying the execution Workbook.
-            simulation = self.adapter.load(input_path)
-            simulation_results = []
+            simulation = self.adapter.load(execution_input)
             try:
-                for operation in normalized["operations"]:
-                    simulation_results.append(self.adapter.apply(simulation, operation))
+                for operation in operations:
+                    self.adapter.apply(simulation, operation)
             finally:
                 simulation.close()
 
-            workbook = self.adapter.load(input_path)
+            workbook = self.adapter.load(execution_input)
             operation_results = []
             try:
-                for operation in normalized["operations"]:
+                for operation in operations:
                     result = self.adapter.apply(workbook, operation)
                     operation_results.append(result)
                 if _sha256(input_path) != source_sha:
@@ -92,7 +153,22 @@ class DocumentOperationEngine:
                 workbook.close()
 
             try:
-                validation = validate_saved_output(input_path, candidate, normalized)
+                if candidate_postprocessor is not None:
+                    try:
+                        processed = candidate_postprocessor(execution_input.read_bytes(), candidate.read_bytes(), operations)
+                    except DocumentOperationError:
+                        raise
+                    except Exception as exc:
+                        raise DocumentOperationError(
+                            "candidate_postprocess_failed", "serialize", "The candidate compatibility transform failed."
+                        ) from exc
+                    if not isinstance(processed, bytes) or not processed:
+                        raise DocumentOperationError("candidate_postprocess_failed", "serialize", "The candidate compatibility transform returned no bytes.")
+                    if len(processed) > max_output_bytes:
+                        raise DocumentOperationError("candidate_resource_limit", "serialize", "Processed candidate exceeds the operation engine limit.")
+                    candidate.write_bytes(processed)
+
+                validation = validate_saved_output(execution_input, candidate, validation_list)
                 # Replace only after the candidate has been independently
                 # reopened and fully compared with the ordered operations.
                 if _sha256(candidate) != validation["output_sha256"]:
@@ -107,6 +183,14 @@ class DocumentOperationEngine:
                 candidate.unlink(missing_ok=True)
                 raise
 
+            if normalized["operations"] and normalized["operations"][0]["type"] == "repeat_rows":
+                operation_results.insert(0, {
+                    "operation_id": normalized["operations"][0]["operation_id"],
+                    "status": "verified",
+                    "target": normalized["operations"][0]["target"],
+                    "result": repeat_result if isinstance(repeat_result, dict) else {"applied": True},
+                })
+
             return ExecutionReport(
                 status="PASS",
                 stage="complete",
@@ -115,7 +199,7 @@ class DocumentOperationEngine:
                     "path": str(output_path),
                     "size": validation["output_size"],
                     "sha256": validation["output_sha256"],
-                    "validation": validation,
+                    "validation": {**validation, "operation_count": len(normalized["operations"])},
                 },
             )
         except DocumentOperationError as exc:
@@ -123,6 +207,11 @@ class DocumentOperationEngine:
         except Exception as exc:
             error = DocumentOperationError("unexpected_engine_error", "engine", "Unexpected document operation failure.")
             return self._failure_report(error, normalized)
+        finally:
+            if candidate is not None:
+                candidate.unlink(missing_ok=True)
+            if temporary_input is not None:
+                temporary_input.cleanup()
 
     @staticmethod
     def _failure_report(error: DocumentOperationError, normalized: dict[str, Any] | None) -> ExecutionReport:

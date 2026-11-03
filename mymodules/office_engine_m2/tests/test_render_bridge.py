@@ -1,15 +1,17 @@
 import base64
-import os
+from contextlib import nullcontext
 from io import BytesIO
+import re
 from unittest.mock import patch
 from uuid import uuid4
 
 from openpyxl import Workbook, load_workbook
+from openpyxl.styles import PatternFill
 from odoo.exceptions import UserError
 from odoo.tests import TransactionCase
 
 from odoo.addons.office_engine_odoo.models.office_document_request import _internal_mutation
-from office_core import ResourceBudget, inspect_document, render_candidate
+from office_core import ResourceBudget, expand_repeat_rows, inspect_document, render_candidate
 from office_verify import VerificationBudget, VerificationPolicy, verify_output
 
 from ..services.mapping_service import (
@@ -19,7 +21,7 @@ from ..services.mapping_service import (
     save_mapping_edits,
     set_mapping_context,
 )
-from ..services.render_bridge import _stable_request_uuid, render_confirmed_mapping
+from ..services.render_bridge import _stable_request_uuid, render_confirmed_mapping, render_preview
 
 
 class TestOfficeRenderBridge(TransactionCase):
@@ -49,7 +51,7 @@ class TestOfficeRenderBridge(TransactionCase):
         worksheet = workbook.active
         worksheet.title = "Sheet"
         worksheet["A1"] = "Customer"
-        worksheet["B1"] = None
+        worksheet["B1"].fill = PatternFill(fill_type="solid", fgColor="FFFFFF")
         buffer = BytesIO()
         workbook.save(buffer)
         attachment = self.env["ir.attachment"].create(
@@ -89,22 +91,26 @@ class TestOfficeRenderBridge(TransactionCase):
             [{"element_id": "xlsx:Sheet!B1", "source_field": "name", "value_type": "string"}],
         )
         session.invalidate_recordset()
-        confirmed = confirm_mapping(self.env, session.id, session.revision)
-        return session, thread, message, attachment, target, confirmed["revision"]
+        with self._synthetic_context():
+            preview = render_preview(self.env, session.id, session.revision)
+        session.invalidate_recordset()
+        confirm_mapping(self.env, session.id, preview["revision"])
+        return session, thread, message, attachment, target, preview["revision"]
 
-    def _approved_synthetic_environment(self):
-        return patch.dict(
-            os.environ,
-            {
-                "OFFICE_ENGINE_M2_DATA_POLICY_APPROVED": "1",
-                "OFFICE_ENGINE_M2_SAFE_FIELDS_JSON": '{"res.partner":["name"]}',
-            },
-        )
+    def _synthetic_context(self):
+        return nullcontext()
+
+    def test_preview_filename_uses_any_target_model_display_name(self):
+        session, _thread, _message, _source, target, _revision = self._session()
+        safe_name = re.sub(r"[^A-Za-z0-9_-]+", "_", target.display_name).strip("_")[:48]
+
+        self.assertIn(safe_name, session.preview_attachment_id.name)
+        self.assertTrue(session.preview_attachment_id.name.endswith(".xlsx"))
 
     def test_confirmed_revision_retrieves_fresh_data_and_calls_m1_idempotently(self):
         session, thread, message, source, target, revision = self._session()
         request_model = self.env["office.document.request"]
-        source_hash = "a" * 64
+        source_hash = session.template_fingerprint
         output_bytes = b"synthetic-m1-output"
         calls = []
 
@@ -144,11 +150,18 @@ class TestOfficeRenderBridge(TransactionCase):
                     )
             else:
                 output = request.output_attachment_id
-            return {"state": "generated", "output_attachment_id": output.id}
+            delivery_message_id = request_model._ensure_output_delivery_message(request.id)
+            return {
+                "state": "generated",
+                "output_attachment_id": output.id,
+                "filename": output.name,
+                "mimetype": output.mimetype,
+                "delivery_message_id": delivery_message_id,
+            }
 
-        with self._approved_synthetic_environment(), patch.object(
-            type(request_model), "_inspect_chat_attachment", return_value={"template_sha256": source_hash}
-        ), patch.object(type(request_model), "_render_request_sync", autospec=True, side_effect=fake_m1):
+        with self._synthetic_context(), patch.object(
+            type(request_model), "_render_request_sync", autospec=True, side_effect=fake_m1
+        ):
             result = render_confirmed_mapping(self.env, session.id, revision)
             session.invalidate_recordset()
             duplicate = render_confirmed_mapping(self.env, session.id, revision)
@@ -157,6 +170,9 @@ class TestOfficeRenderBridge(TransactionCase):
         self.assertEqual(session.state, "completed")
         self.assertTrue(result["download_url"].endswith("?download=true"))
         self.assertEqual(result["output_attachment_id"], duplicate["output_attachment_id"])
+        self.assertEqual(result["filename"], duplicate["filename"])
+        self.assertEqual(result["mimetype"], duplicate["mimetype"])
+        self.assertTrue(duplicate["delivery_message_id"])
         self.assertEqual(len(calls), 1)
         self.assertEqual(calls[0][1]["writes"][0]["value"]["data"], target.name)
         self.assertEqual(calls[0][1]["template_sha256"], source_hash)
@@ -169,7 +185,10 @@ class TestOfficeRenderBridge(TransactionCase):
         worksheet.title = "Sheet"
         worksheet["B1"] = "Customer placeholder"
         worksheet["A8"] = "First detail placeholder"
+        worksheet["A8"].fill = PatternFill(fill_type="solid", fgColor="FFFFFF")
         worksheet["A9"] = "Second detail placeholder"
+        worksheet["A9"].fill = PatternFill(fill_type="solid", fgColor="FFFFFF")
+        worksheet["D10"] = "=SUM(D8:D9)"
         worksheet["C1"] = "=1+1"
         source_buffer = BytesIO()
         workbook.save(source_buffer)
@@ -202,8 +221,8 @@ class TestOfficeRenderBridge(TransactionCase):
         )
         inspection = inspect_document(source_bytes, source.name, mime, resource_budget)
         children = self.env["res.partner"].create([
-            {"name": "First detail", "parent_id": target.id, "company_id": self.env.company.id},
-            {"name": "Second detail", "parent_id": target.id, "company_id": self.env.company.id},
+            {"name": f"Detail {index}", "parent_id": target.id, "company_id": self.env.company.id}
+            for index in range(1, 4)
         ])
         manifest = [
             {
@@ -221,20 +240,20 @@ class TestOfficeRenderBridge(TransactionCase):
                     "allowed_value_types": ["string"],
                     "approved_to_skip": False,
                 }
-                for index in range(2)
+                for index in range(3)
             ],
         ]
         group = {
             "group_id": "order_lines",
             "collection_field": "child_ids",
             "relation_model": "res.partner",
-            "row_count": 2,
+            "row_count": 3,
             "target_rows": [
                 {
                     "row_index": index,
                     "targets": [{"column_id": "name", "element_id": f"xlsx:Sheet!A{index + 8}"}],
                 }
-                for index in range(2)
+                for index in range(3)
             ],
             "allowed_fields": {"name": "string"},
         }
@@ -251,7 +270,7 @@ class TestOfficeRenderBridge(TransactionCase):
                     "source_field": "order_lines::name",
                     "value_type": "string",
                 }
-                for index in range(2)
+                for index in range(3)
             ],
         ]
         combined_fields = {**root_fields, "order_lines::name": "string"}
@@ -268,14 +287,30 @@ class TestOfficeRenderBridge(TransactionCase):
             edit_values,
         )
         session.invalidate_recordset()
-        confirmed = confirm_mapping(self.env, session.id, session.revision)
+        with self._synthetic_context():
+            preview = render_preview(self.env, session.id, session.revision)
+        session.invalidate_recordset()
+        confirmed = confirm_mapping(self.env, session.id, preview["revision"])
         request_model = self.env["office.document.request"]
         actual_reports = []
 
-        def fake_m1(_request_recordset, _request_uuid, _attachment_id, plan, _thread_id, _message_id):
-            candidate = render_candidate(source_bytes, source.name, mime, plan, resource_budget)
+        def fake_m1(
+            _request_recordset,
+            _request_uuid,
+            _attachment_id,
+            plan,
+            _thread_id,
+            _message_id,
+            preprocessing=None,
+        ):
+            render_source = (
+                expand_repeat_rows(source_bytes, preprocessing, resource_budget).content
+                if preprocessing
+                else source_bytes
+            )
+            candidate = render_candidate(render_source, source.name, mime, plan, resource_budget)
             report = verify_output(
-                source_bytes,
+                render_source,
                 candidate.content,
                 source.name,
                 mime,
@@ -283,10 +318,14 @@ class TestOfficeRenderBridge(TransactionCase):
                 VerificationPolicy(enabled_formats=("xlsx",), require_styles=True),
                 verify_budget,
             )
-            actual_reports.append((report, candidate.content, plan))
-            return {"state": "generated", "output_attachment_id": 2_000_000_021}
+            actual_reports.append((report, candidate.content, plan, preprocessing))
+            return {
+                "state": "generated",
+                "output_attachment_id": 2_000_000_021,
+                "delivery_message_id": 2_000_000_022,
+            }
 
-        with self._approved_synthetic_environment(), patch.object(
+        with self._synthetic_context(), patch.object(
             type(request_model),
             "_inspect_chat_attachment",
             return_value={"template_sha256": inspection.template_sha256},
@@ -296,32 +335,44 @@ class TestOfficeRenderBridge(TransactionCase):
             result = render_confirmed_mapping(self.env, session.id, confirmed["revision"])
 
         plan = actual_reports[0][2]
+        preprocessing = actual_reports[0][3]
         self.assertEqual(result["state"], "completed")
+        self.assertEqual(
+            preprocessing,
+            {
+                "action": "insert_repeat_rows",
+                "sheet": "Sheet",
+                "start_row": 8,
+                "record_count": 3,
+                "columns": {"A": "name"},
+            },
+        )
         self.assertEqual(
             [(write["element_id"], write["value"]["data"]) for write in plan["writes"]],
             [
                 ("xlsx:Sheet!B1", target.name),
                 ("xlsx:Sheet!A8", children[0].name),
                 ("xlsx:Sheet!A9", children[1].name),
+                ("xlsx:Sheet!A10", children[2].name),
             ],
         )
         self.assertEqual(actual_reports[0][0].status, "PASS")
-        self.assertEqual(actual_reports[0][0].checked_targets, 3)
+        self.assertEqual(actual_reports[0][0].checked_targets, 4)
         rendered = load_workbook(BytesIO(actual_reports[0][1]), data_only=False)
         try:
             self.assertEqual(rendered["Sheet"]["B1"].value, target.name)
             self.assertEqual(rendered["Sheet"]["A8"].value, children[0].name)
             self.assertEqual(rendered["Sheet"]["A9"].value, children[1].name)
+            self.assertEqual(rendered["Sheet"]["A10"].value, children[2].name)
             self.assertEqual(rendered["Sheet"]["C1"].value, "=1+1")
+            self.assertEqual(rendered["Sheet"]["D11"].value, "=SUM(D8:D10)")
         finally:
             rendered.close()
 
-    def test_m1_failure_sets_failed_and_returns_no_download(self):
+    def test_m1_failure_preserves_confirmation_state_and_returns_no_download(self):
         session, _thread, _message, _source, _target, revision = self._session()
         request_model = self.env["office.document.request"]
-        with self._approved_synthetic_environment(), patch.object(
-            type(request_model), "_inspect_chat_attachment", return_value={"template_sha256": "b" * 64}
-        ), patch.object(
+        with self._synthetic_context(), patch.object(
             type(request_model),
             "_render_request_sync",
             return_value={"state": "failed", "error_code": "OFFICE_INTEGRITY_FAILED", "output_attachment_id": False},
@@ -330,30 +381,30 @@ class TestOfficeRenderBridge(TransactionCase):
 
         session.invalidate_recordset()
         self.assertEqual(result["state"], "failed")
+        self.assertEqual(result["session_state"], "confirmation_required")
         self.assertFalse(result["output_attachment_id"])
         self.assertNotIn("download_url", result)
-        self.assertEqual(session.state, "failed")
+        self.assertEqual(session.state, "confirmation_required")
+        self.assertTrue(session.preview_attachment_id)
 
     def test_retriever_failure_stops_before_m1_and_does_not_complete_session(self):
         session, _thread, _message, _source, _target, revision = self._session()
         request_model = self.env["office.document.request"]
         retriever = self.env.ref("llm_tool.llm_tool_odoo_record_retriever")
         before_requests = self.env["office.document.request"].search_count([])
-        with self._approved_synthetic_environment(), patch.object(
+        with self._synthetic_context(), patch.object(
             type(retriever), "execute", autospec=True, side_effect=TimeoutError("synthetic timeout")
-        ), patch.object(
-            type(request_model), "_inspect_chat_attachment", return_value={"template_sha256": "e" * 64}
         ), patch.object(type(request_model), "_render_request_sync") as render_call:
             with self.assertRaises(UserError):
                 render_confirmed_mapping(self.env, session.id, revision)
 
         session.invalidate_recordset()
         self.assertEqual(render_call.call_count, 0)
-        self.assertEqual(session.state, "awaiting_confirmation")
-        self.assertEqual(session.confirmed_revision, revision)
+        self.assertEqual(session.state, "confirmation_required")
+        self.assertEqual(session.confirmed_revision, 0)
         self.assertEqual(self.env["office.document.request"].search_count([]), before_requests)
 
-    def test_m1_delivery_exception_marks_session_failed_without_download(self):
+    def test_m1_delivery_exception_returns_retryable_failure_and_preserves_preview(self):
         session, _thread, _message, _source, _target, revision = self._session()
         request_model = self.env["office.document.request"]
         observed_states = []
@@ -364,37 +415,184 @@ class TestOfficeRenderBridge(TransactionCase):
             raise RuntimeError("synthetic handoff failure")
 
         before_requests = self.env["office.document.request"].search_count([])
-        with self._approved_synthetic_environment(), patch.object(
-            type(request_model), "_inspect_chat_attachment", return_value={"template_sha256": "f" * 64}
-        ), patch.object(
+        with self._synthetic_context(), patch.object(
             type(request_model), "_render_request_sync", side_effect=fail_render
         ):
             result = render_confirmed_mapping(self.env, session.id, revision)
 
-        self.assertEqual(observed_states, [("rendering", revision + 1)])
+        self.assertEqual(observed_states, [("generating", revision + 2)])
         session.invalidate_recordset()
-        self.assertEqual(session.state, "failed")
         self.assertEqual(result["state"], "failed")
-        self.assertEqual(result["error_code"], "office_render_failed")
-        self.assertFalse(result["output_attachment_id"])
-        self.assertNotIn("download_url", result)
+        self.assertEqual(result["session_state"], "confirmation_required")
+        self.assertEqual(session.state, "confirmation_required")
+        self.assertTrue(session.preview_attachment_id)
         self.assertEqual(self.env["office.document.request"].search_count([]), before_requests)
+
+    def test_failed_finalize_can_retry_with_a_new_idempotency_key(self):
+        session, _thread, _message, _source, _target, revision = self._session()
+        request_model = self.env["office.document.request"]
+        summary = {
+            "template_sha256": session.template_fingerprint,
+            "format": "xlsx",
+            "preprocessing": None,
+        }
+        results = [
+            {"state": "failed", "error_code": "OFFICE_ENGINE_FAILED", "message": "temporary failure"},
+            {
+                "state": "generated",
+                "output_attachment_id": 2_000_000_003,
+                "filename": "office-output-retry.xlsx",
+                "mimetype": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "delivery_message_id": 2_000_000_004,
+            },
+        ]
+        with self._synthetic_context(), patch(
+            "odoo.addons.office_engine_m2.services.render_bridge._compile_plan",
+            return_value=({}, session.preview_data_fingerprint, summary),
+        ), patch.object(
+            type(request_model), "_render_request_sync", autospec=True, side_effect=results
+        ) as render_call:
+            first = render_confirmed_mapping(self.env, session.id, revision)
+            session.invalidate_recordset(["revision", "state"])
+            second = render_confirmed_mapping(self.env, session.id, session.revision)
+
+        self.assertEqual(first["state"], "failed")
+        self.assertEqual(first["session_state"], "confirmation_required")
+        self.assertEqual(second["state"], "completed")
+        self.assertEqual(session.state, "completed")
+        self.assertEqual(render_call.call_count, 2)
+        self.assertNotEqual(
+            render_call.call_args_list[0].args[1],
+            render_call.call_args_list[1].args[1],
+        )
+
+    def test_generated_output_without_chat_message_retries_same_request(self):
+        session, _thread, _message, _source, _target, revision = self._session()
+        request_model = self.env["office.document.request"]
+        summary = {
+            "template_sha256": session.template_fingerprint,
+            "format": "xlsx",
+            "preprocessing": None,
+        }
+        results = [
+            {
+                "state": "generated",
+                "output_attachment_id": 2_000_000_031,
+                "filename": "office-output-pending.xlsx",
+                "mimetype": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "delivery_message_id": False,
+            },
+            {
+                "state": "generated",
+                "output_attachment_id": 2_000_000_031,
+                "filename": "office-output-pending.xlsx",
+                "mimetype": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "delivery_message_id": 2_000_000_032,
+            },
+        ]
+        rendered_request_uuids = []
+
+        def fake_m1(_request_model, request_uuid, *_args, **_kwargs):
+            rendered_request_uuids.append(request_uuid)
+            return {**results[len(rendered_request_uuids) - 1], "request_uuid": request_uuid}
+
+        with self._synthetic_context(), patch(
+            "odoo.addons.office_engine_m2.services.render_bridge._compile_plan",
+            return_value=({}, session.preview_data_fingerprint, summary),
+        ), patch.object(
+            type(request_model), "_render_request_sync", autospec=True, side_effect=fake_m1
+        ) as render_call:
+            first = render_confirmed_mapping(self.env, session.id, revision)
+            session.invalidate_recordset(["state", "revision", "final_request_uuid"])
+            self.assertEqual(session.state, "confirmation_required")
+            self.assertEqual(session.final_request_uuid, rendered_request_uuids[0])
+            retry_revision = session.revision
+            confirm_mapping(self.env, session.id, retry_revision)
+            second = render_confirmed_mapping(
+                self.env, session.id, retry_revision
+            )
+
+        session.invalidate_recordset()
+        self.assertEqual(first["state"], "failed")
+        self.assertEqual(first["artifact_state"], "generated")
+        self.assertEqual(first["delivery_state"], "pending")
+        self.assertFalse(first["output_attachment_id"])
+        self.assertEqual(session.state, "completed")
+        self.assertEqual(session.final_request_uuid, rendered_request_uuids[0])
+        self.assertEqual(second["state"], "completed")
+        self.assertEqual(second["request_uuid"], rendered_request_uuids[0])
+        self.assertEqual(second["delivery_message_id"], 2_000_000_032)
+        self.assertEqual(render_call.call_count, 2)
+        self.assertEqual(
+            rendered_request_uuids[0],
+            rendered_request_uuids[1],
+        )
+
+    def test_completed_finalize_uses_persisted_request_identity(self):
+        session, _thread, message, source, _target, revision = self._session()
+        marked = session._mark_confirmed_from_service(revision)
+        session.invalidate_recordset(["revision", "state"])
+        request_uuid = str(uuid4())
+        digest = "e" * 64
+        request_model = self.env["office.document.request"]
+        with _internal_mutation():
+            request = request_model.create(
+                {
+                    "request_uuid": request_uuid,
+                    "owner_id": self.env.uid,
+                    "thread_id": session.thread_id.id,
+                    "input_message_id": message.id,
+                    "source_attachment_id": source.id,
+                    "input_sha256": digest,
+                }
+            )
+            output = self.env["ir.attachment"].create(
+                {
+                    "name": "office-output-persisted-identity.xlsx",
+                    "type": "binary",
+                    "mimetype": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    "raw": b"verified persisted request output",
+                    "public": False,
+                    "res_model": request._name,
+                    "res_id": request.id,
+                }
+            )
+            request.write({"state": "validating"})
+            request.write({"state": "processing"})
+            request.write(
+                {"state": "generated", "output_attachment_id": output.id, "output_sha256": digest}
+            )
+        session._transition_from_service("generating", marked["revision"])
+        session.invalidate_recordset(["revision", "state"])
+        session._transition_from_service(
+            "completed", session.revision, final_request_uuid=request_uuid
+        )
+
+        result = render_confirmed_mapping(self.env, session.id, revision)
+
+        self.assertEqual(result["state"], "completed")
+        self.assertEqual(result["request_uuid"], request_uuid)
+        self.assertEqual(result["output_attachment_id"], output.id)
+        self.assertTrue(result["delivery_message_id"])
+        delivered = self.env["mail.message"].browse(result["delivery_message_id"])
+        self.assertEqual(delivered.model, session.thread_id._name)
+        self.assertEqual(delivered.res_id, session.thread_id.id)
+        self.assertIn(output, delivered.attachment_ids)
 
     def test_m1_committed_output_is_not_requeried_from_parent_snapshot(self):
         """M1 commits on another cursor; this transaction may not see its output row."""
         session, _thread, _message, _source, _target, revision = self._session()
         request_model = self.env["office.document.request"]
         newly_committed_attachment_id = 2_000_000_001
-        with self._approved_synthetic_environment(), patch.object(
-            type(request_model),
-            "_inspect_chat_attachment",
-            return_value={"template_sha256": "c" * 64},
-        ), patch.object(
+        with self._synthetic_context(), patch.object(
             type(request_model),
             "_render_request_sync",
             return_value={
                 "state": "generated",
                 "output_attachment_id": newly_committed_attachment_id,
+                "filename": "office-output-test.xlsx",
+                "mimetype": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "delivery_message_id": 2_000_000_002,
             },
         ):
             result = render_confirmed_mapping(self.env, session.id, revision)
@@ -402,6 +600,12 @@ class TestOfficeRenderBridge(TransactionCase):
         session.invalidate_recordset()
         self.assertEqual(result["state"], "completed")
         self.assertEqual(result["output_attachment_id"], newly_committed_attachment_id)
+        self.assertEqual(result["filename"], "office-output-test.xlsx")
+        self.assertEqual(
+            result["mimetype"],
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        self.assertEqual(result["delivery_message_id"], 2_000_000_002)
         self.assertEqual(
             result["download_url"],
             f"/web/content/{newly_committed_attachment_id}?download=true",
@@ -410,6 +614,8 @@ class TestOfficeRenderBridge(TransactionCase):
 
     def test_completed_card_reload_restores_verified_download_link(self):
         session, _thread, message, source, _target, confirmed_revision = self._session()
+        confirmed = session._mark_confirmed_from_service(confirmed_revision)
+        session.invalidate_recordset(["revision", "state"])
         request_uuid = _stable_request_uuid(self.env, session)
         digest = "d" * 64
         with _internal_mutation():
@@ -439,7 +645,7 @@ class TestOfficeRenderBridge(TransactionCase):
             request.write(
                 {"state": "generated", "output_attachment_id": output.id, "output_sha256": digest}
             )
-        session._transition_from_service("rendering", confirmed_revision)
+        session._transition_from_service("generating", confirmed["revision"])
         session.invalidate_recordset(["revision"])
         session._transition_from_service("completed", session.revision)
 

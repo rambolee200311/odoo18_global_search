@@ -146,8 +146,12 @@ export const llmStoreService = {
         switch (data.type) {
           case "message_create": {
             // Handle all messages (user and AI) via EventSource
+            // M2 messages may carry fresh ir.attachment records with their
+            // filename and mimetype. Insert the complete Store payload before
+            // resolving message.attachment_ids, otherwise new files render as
+            // anonymous generic boxes until the page is reloaded.
             mailStore.insert(
-              { "mail.message": [data.message] },
+              data.store_data || { "mail.message": [data.message] },
               { html: true }
             );
 

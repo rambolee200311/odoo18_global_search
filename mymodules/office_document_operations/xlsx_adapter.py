@@ -72,10 +72,13 @@ class XlsxAdapter:
         min_col, min_row, max_col, max_row = bounds
         if min_row < 1 or min_col < 1 or max_row > _MAX_ROW or max_col > _MAX_COLUMN:
             raise self._error("target_out_of_bounds", "Target exceeds XLSX worksheet limits.", operation_id)
-        self._reject_merged_intersection(sheet, bounds, operation_id)
+        self._reject_merged_intersection(sheet, bounds, operation, operation_id)
 
         if kind == "set_value":
             self._preflight_set(sheet, operation, bounds)
+        elif kind == "set_formula":
+            if "cell" not in target:
+                raise self._error("formula_target_invalid", "Formula operations require one cell target.", operation["operation_id"])
         elif kind == "sort":
             self._preflight_sort(workbook, sheet, operation, bounds)
         elif kind == "clear":
@@ -110,6 +113,8 @@ class XlsxAdapter:
             bounds = self._bounds(target, operation_id)
             if kind == "set_value":
                 self._set_value(sheet, operation, bounds)
+            elif kind == "set_formula":
+                sheet[target["cell"]] = parameters["formula"]
             elif kind == "sort":
                 self._sort(sheet, operation, bounds)
             elif kind == "format":
@@ -167,14 +172,25 @@ class XlsxAdapter:
             return (index, start_row, index, end_row)
         raise self._error("invalid_target", "Operation target is invalid.", operation_id)
 
-    def _reject_merged_intersection(self, sheet, bounds, operation_id):
+    def _reject_merged_intersection(self, sheet, bounds, operation, operation_id):
         min_col, min_row, max_col, max_row = bounds
         for merged in sheet.merged_cells.ranges:
             m_min_col, m_min_row, m_max_col, m_max_row = range_boundaries(str(merged))
             if not (max_col < m_min_col or min_col > m_max_col or max_row < m_min_row or min_row > m_max_row):
+                single_anchor = (
+                    min_col == max_col == m_min_col
+                    and min_row == max_row == m_min_row
+                )
+                kind = operation["type"]
+                value_only_clear = (
+                    kind == "clear"
+                    and operation["parameters"].get("mode") == "values"
+                )
+                if single_anchor and (kind in {"set_value", "set_formula"} or value_only_clear):
+                    continue
                 raise self._error(
                     "merged_range_unsupported",
-                    f"Target intersects merged range {merged}; this operation does not alter merged cells.",
+                    f"Target intersects merged range {merged}; only single-cell value operations at its top-left anchor are supported.",
                     operation_id,
                 )
 

@@ -29,10 +29,15 @@ class LLMThreadController(http.Controller):
 
     @staticmethod
     def _safe_yield(data_to_yield):
-        """Helper generator to yield data safely, handling BrokenPipeError(Disconnected user)."""
+        """Yield an SSE event without making client connectivity control generation."""
         try:
             yield data_to_yield
             return True
+        except GeneratorExit:
+            # A WSGI server closes the response generator when the browser goes
+            # away.  Treat that as a disconnected listener, not as a request to
+            # cancel the native assistant/tool loop.
+            return False
         except BrokenPipeError:
             return False
         except Exception:
@@ -52,17 +57,39 @@ class LLMThreadController(http.Controller):
 
             client_connected = True
             try:
-                for response in llm_thread.generate(user_message_body, **kwargs):
+                responses = iter(llm_thread.generate(user_message_body, **kwargs))
+                for response in responses:
+                    if not client_connected:
+                        # Continue consuming the native generator so tool calls
+                        # and the follow-up Provider request can finish.  There
+                        # is simply no SSE client left to receive these events.
+                        continue
                     json_data = json.dumps(response, default=str)
-                    success = yield from cls._safe_yield(
-                        f"data: {json_data}\n\n".encode(),
-                    )
+                    try:
+                        success = yield from cls._safe_yield(
+                            f"data: {json_data}\n\n".encode(),
+                        )
+                    except GeneratorExit:
+                        # ``generator.close()`` is propagated by ``yield from``
+                        # even when the delegated SSE generator handles it.
+                        # Drain the native assistant generator before returning;
+                        # yielding again here would violate close() semantics.
+                        client_connected = False
+                        _logger.info(
+                            "SSE client disconnected during generation for thread %s; "
+                            "draining assistant/tool processing",
+                            thread_id,
+                        )
+                        for _response in responses:
+                            pass
+                        return
                     if not success:
                         client_connected = False
-                        break
-
-            except GeneratorExit:
-                client_connected = False
+                        _logger.info(
+                            "SSE client disconnected during generation for thread %s; "
+                            "continuing assistant/tool processing",
+                            thread_id,
+                        )
 
             except Exception as e:
                 _logger.exception(

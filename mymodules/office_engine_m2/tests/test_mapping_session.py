@@ -1,10 +1,13 @@
 import base64
+import json
+from unittest.mock import patch
 from uuid import uuid4
 
 from odoo.exceptions import AccessError, ValidationError
 from odoo.tests import TransactionCase
 
 from ..services import create_session, get_session_context, transition_session
+from ..services.mapping_service import restore_proposal_revision, set_mapping_context
 from ..models.office_mapping_session import SESSION_STATES
 
 
@@ -27,7 +30,7 @@ class TestOfficeMappingSession(TransactionCase):
             [("id", "!=", cls.env.company.id)], order="id", limit=1
         )
         if not cls.company_b:
-            raise AssertionError("CC-TEST-006 requires an existing second company fixture.")
+            raise AssertionError("The mapping-session access test requires a second existing company.")
         cls.user_a = cls._create_user("owner-a")
         cls.user_b = cls._create_user("owner-b")
         cls.target = cls.env["res.partner"].create(
@@ -116,9 +119,47 @@ class TestOfficeMappingSession(TransactionCase):
         self.assertEqual(session.source_attachment_id, attachment)
         self.assertEqual(session.target_model, "res.partner")
         self.assertEqual(session.target_record_id, self.target.id)
-        self.assertEqual(session.state, "collecting")
+        self.assertEqual(session.state, "analyzing")
         self.assertEqual(session.revision, 1)
-        self.assertEqual(context["state"], "collecting")
+        self.assertEqual(context["state"], "analyzing")
+
+    def test_mapping_proposal_history_can_restore_a_prior_valid_revision(self):
+        user_env, thread, message, attachment = self._input_context(self.user_a)
+        created = self._create(
+            env=user_env, thread=thread, message=message, attachment=attachment
+        )
+        session = user_env["office.mapping.session"].browse(created["session_id"])
+        target_manifest = [{
+            "element_id": "xlsx:Sheet1!B1",
+            "required": True,
+            "writable": True,
+            "allowed_value_types": ["string"],
+            "approved_to_skip": False,
+        }]
+        set_mapping_context(user_env, session.id, target_manifest, {"name": "string", "display_name": "string"})
+        first = {
+            "schema_version": "m2.mapping-proposal.v1",
+            "mappings": [{"element_id": "xlsx:Sheet1!B1", "source_field": "name", "value_type": "string"}],
+            "clarifications": [],
+            "skipped_targets": [],
+        }
+        session._save_mapping_from_service(json.dumps(first), session.revision, "revision_pending")
+        session.invalidate_recordset()
+        second = {
+            **first,
+            "mappings": [{"element_id": "xlsx:Sheet1!B1", "source_field": "display_name", "value_type": "string"}],
+        }
+        session._save_mapping_from_service(json.dumps(second), session.revision, "revision_pending")
+        session.invalidate_recordset()
+
+        self.assertIn({"proposal_revision": 1, "mapping_rules": first}, json.loads(session.proposal_history_json))
+        restored = restore_proposal_revision(user_env, session.id, session.revision, 1)
+        session.invalidate_recordset(["mapping_rules_json", "proposal_revision", "revision", "state"])
+        self.assertEqual(restored["restored_from_proposal_revision"], 1)
+        self.assertEqual(json.loads(session.mapping_rules_json), first)
+        self.assertEqual(session.proposal_revision, 3)
+        self.assertEqual(session.state, "revision_pending")
+
 
     def test_cc_test_002_denies_other_users_thread_and_unreadable_target(self):
         _user_a_env, thread_a, message_a, attachment_a = self._input_context(self.user_a)
@@ -137,23 +178,28 @@ class TestOfficeMappingSession(TransactionCase):
                 attachment=attachment_b.with_env(user_a_env),
             )
 
-        # Bind an attachment belonging to user B as the target record. User A
-        # has no read access to it under ir.attachment's record rules.
-        with self.assertRaises(AccessError):
-            create_session(
-                user_a_env,
-                thread_id=thread_a.id,
-                source_message_id=message_a.id,
-                source_attachment_id=attachment_a.id,
-                target_model="ir.attachment",
-                target_record_id=attachment_b.id,
-            )
+        # The record is readable under user A's current Odoo environment even
+        # though it was created in company B. Do not add a second Office-only
+        # company gate after native ACL/record-rule checks.
+        cross_company = create_session(
+            user_a_env,
+            thread_id=thread_a.id,
+            source_message_id=message_a.id,
+            source_attachment_id=attachment_a.id,
+            target_model="ir.attachment",
+            target_record_id=attachment_b.id,
+        )
         self.assertEqual(
-            self.env["office.mapping.session"].search_count([]), sessions_before
+            self.env["office.mapping.session"].search_count([]), sessions_before + 1
+        )
+        self.assertEqual(
+            user_a_env["office.mapping.session"].browse(cross_company["session_id"]).target_record_id,
+            attachment_b.id,
         )
 
     def test_cc_test_003_attachment_must_be_attached_to_the_same_thread_message(self):
         user_env, thread, message, _attachment = self._input_context(self.user_a)
+        sessions_before = self.env["office.mapping.session"].search_count([])
         unrelated = user_env["ir.attachment"].create(
             {
                 "name": "unrelated-" + uuid4().hex + ".xlsx",
@@ -171,7 +217,9 @@ class TestOfficeMappingSession(TransactionCase):
                 target_model=self.target._name,
                 target_record_id=self.target.id,
             )
-        self.assertEqual(self.env["office.mapping.session"].search_count([]), 0)
+        self.assertEqual(
+            self.env["office.mapping.session"].search_count([]), sessions_before
+        )
 
         other_user_env, other_thread, other_message, foreign_attachment = self._input_context(self.user_b)
         self.assertNotIn(foreign_attachment, thread.attachment_ids)
@@ -184,7 +232,9 @@ class TestOfficeMappingSession(TransactionCase):
                 target_model=self.target._name,
                 target_record_id=self.target.id,
             )
-        self.assertEqual(self.env["office.mapping.session"].search_count([]), 0)
+        self.assertEqual(
+            self.env["office.mapping.session"].search_count([]), sessions_before
+        )
 
     def test_cc_test_004_rejects_direct_jump_to_completed_without_mutation(self):
         context = self._create()
@@ -202,21 +252,21 @@ class TestOfficeMappingSession(TransactionCase):
                 expected_revision=1,
             )
         session.invalidate_recordset(["state", "revision"])
-        self.assertEqual(session.state, "collecting")
+        self.assertEqual(session.state, "analyzing")
         self.assertEqual(session.revision, 1)
 
     def test_cc_test_005_all_frozen_states_and_revision_control(self):
         self.assertEqual(
             set(SESSION_STATES),
             {
-                "collecting",
-                "needs_clarification",
-                "awaiting_confirmation",
-                "editing",
-                "rendering",
+                "analyzing",
+                "preview_ready",
+                "revision_pending",
+                "confirmation_required",
+                "confirmed",
+                "generating",
                 "completed",
                 "failed",
-                "cancelled",
             },
         )
         context = self._create()
@@ -227,58 +277,21 @@ class TestOfficeMappingSession(TransactionCase):
         session_id = context["session_id"]
 
         result = transition_session(
-            user_env, session_id, "needs_clarification", expected_revision=1
+            user_env, session_id, "revision_pending", expected_revision=1
         )
-        self.assertEqual((result["state"], result["revision"]), ("needs_clarification", 2))
+        self.assertEqual((result["state"], result["revision"]), ("revision_pending", 2))
         with self.assertRaises(ValidationError):
-            transition_session(user_env, session_id, "collecting", expected_revision=1)
+            transition_session(user_env, session_id, "analyzing", expected_revision=1)
         self.assertEqual(get_session_context(user_env, session_id)["revision"], 2)
-
-        result = transition_session(user_env, session_id, "editing", expected_revision=2)
-        self.assertEqual((result["state"], result["revision"]), ("editing", 3))
-        result = transition_session(
-            user_env, session_id, "awaiting_confirmation", expected_revision=3
-        )
-        self.assertEqual((result["state"], result["revision"]), ("awaiting_confirmation", 4))
-        result = transition_session(user_env, session_id, "rendering", expected_revision=4)
-        self.assertEqual((result["state"], result["revision"]), ("rendering", 5))
-        result = transition_session(user_env, session_id, "completed", expected_revision=5)
-        self.assertEqual((result["state"], result["revision"]), ("completed", 6))
-
         with self.assertRaises(ValidationError):
-            transition_session(user_env, session_id, "failed", expected_revision=6)
-
-        # Exercise the clarification return paths and the failed/cancelled
-        # terminal branches, including the stable error category write.
-        clarification = self._create()
-        clarification_id = clarification["session_id"]
-        transition_session(user_env, clarification_id, "needs_clarification", 1)
-        transition_session(user_env, clarification_id, "collecting", 2)
-        transition_session(user_env, clarification_id, "awaiting_confirmation", 3)
-        transition_session(user_env, clarification_id, "editing", 4)
-        transition_session(user_env, clarification_id, "needs_clarification", 5)
-        transition_session(user_env, clarification_id, "editing", 6)
+            transition_session(user_env, session_id, "confirmation_required", expected_revision=2)
         failed = transition_session(
-            user_env, clarification_id, "failed", 7, error_code="provider_error"
+            user_env, session_id, "failed", 2, error_code="provider_error"
         )
-        self.assertEqual((failed["state"], failed["revision"]), ("failed", 8))
-        self.assertEqual(
-            get_session_context(user_env, clarification_id)["error_code"],
-            "provider_error",
-        )
+        self.assertEqual((failed["state"], failed["revision"]), ("failed", 3))
+        self.assertEqual(get_session_context(user_env, session_id)["error_code"], "provider_error")
         with self.assertRaises(ValidationError):
-            transition_session(user_env, clarification_id, "collecting", 8)
-
-        cancelled = self._create()
-        cancelled_result = transition_session(
-            user_env, cancelled["session_id"], "cancelled", 1
-        )
-        self.assertEqual(
-            (cancelled_result["state"], cancelled_result["revision"]),
-            ("cancelled", 2),
-        )
-        with self.assertRaises(ValidationError):
-            transition_session(user_env, cancelled["session_id"], "collecting", 2)
+            transition_session(user_env, session_id, "analyzing", 3)
 
     def test_cc_test_006_user_b_cannot_read_or_mutate_user_a_session(self):
         context = self._create()

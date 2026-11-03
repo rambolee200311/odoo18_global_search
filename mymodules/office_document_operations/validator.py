@@ -27,8 +27,11 @@ def validate_saved_output(input_path: str | Path, output_path: str | Path, opera
     the original file, and compares the complete normalized workbook state.
     Formula text is compared; formulas are not recalculated by openpyxl.
     """
-    operations = validate_operation_list(operation_list)["operations"]
+    normalized = validate_operation_list(operation_list)
+    operations = normalized["operations"]
     source_path, output_path = Path(input_path), Path(output_path)
+    if normalized["schema_version"] == "1.1" and _sha256(source_path) != normalized["source_sha256"]:
+        raise DocumentOperationError("source_fingerprint_mismatch", "validation", "Operation List does not match the input file fingerprint.")
     if not output_path.is_file() or output_path.stat().st_size <= 0:
         raise DocumentOperationError("output_missing_or_empty", "validation", "Saved output is missing or empty.")
     if source_path.resolve() == output_path.resolve():
@@ -104,6 +107,8 @@ def _reference_apply(workbook, operation: dict[str, Any]) -> None:
                 cell.value = _reference_value(typed)
                 if typed["type"] == "string":
                     cell.data_type = "s"
+    elif kind == "set_formula":
+        sheet[target["cell"]] = params["formula"]
     elif kind == "format":
         for row in sheet.iter_rows(min_row=min_row, max_row=max_row, min_col=min_col, max_col=max_col):
             for cell in row:
@@ -191,7 +196,10 @@ def _workbook_state(workbook) -> tuple[Any, ...]:
                 blank_value = cell.value is None or cell.value == ""
                 if blank_value and style is None and cell.hyperlink is None and cell.comment is None:
                     continue
-                data_type = "n" if cell.value == "" else cell.data_type
+                # openpyxl reopens a saved empty string from a styled cell as
+                # ``value=None, data_type='inlineStr'``. Normalize every blank
+                # representation alike while retaining its style/format state.
+                data_type = "n" if blank_value else cell.data_type
                 cells.append((cell.coordinate, _stable_value(cell.value, cell.number_format), data_type, style,
                               cell.number_format, getattr(cell.hyperlink, "target", None),
                               getattr(cell.hyperlink, "location", None),

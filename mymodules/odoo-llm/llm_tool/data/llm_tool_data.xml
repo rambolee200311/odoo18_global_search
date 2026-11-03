@@ -5,7 +5,7 @@
         <field name="implementation">odoo_record_retriever</field>
         <field
       name="description"
-    >Retrieve records from any Odoo model with filtering capabilities. This tool allows you to fetch data from the database by specifying the model name, domain filters, fields to retrieve, and a limit on the number of records returned.</field>
+    >Retrieve records from any Odoo model with filtering capabilities. Specify model, domain, fields, limit, offset, and optional ORM order. Set include_pagination=true to receive records plus the current-user-visible count, offset, limit, and has_more; continue pages until has_more is false when the request asks for all matches. Search runs through the current user's Odoo ORM permissions.</field>
         <field name="default" eval="True" />
         <field name="active" eval="True" />
         <field name="requires_user_consent" eval="False" />

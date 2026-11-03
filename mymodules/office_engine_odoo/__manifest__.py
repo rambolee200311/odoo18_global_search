@@ -1,6 +1,6 @@
 {
     "name": "Office Engine Odoo Request Persistence",
-    "version": "18.0.1.4.0",
+    "version": "18.0.1.4.1",
     "category": "Productivity/Office",
     "summary": "Private Odoo request and attachment persistence for Office Engine",
     "license": "LGPL-3",

@@ -183,6 +183,8 @@ class LLMProvider(models.Model):
             "stream": stream,
             "messages": formatted_messages,
         }
+        if "reasoning_effort" in kwargs:
+            params["reasoning_effort"] = kwargs["reasoning_effort"]
 
         # Add tools if provided (OpenAI-specific formatting)
         if tools:

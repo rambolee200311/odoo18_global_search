@@ -84,12 +84,19 @@ def _stop_worker(process) -> None:
 def _child_worker(send_conn, operation: str, args: tuple[Any, ...], budget: ResourceBudget) -> None:
     try:
         _apply_child_limits(budget.timeout_seconds)
-        from .engine import inspect_inline, render_inline
+        from .engine import execute_operations_inline, inspect_inline, render_inline
 
         if operation == "inspect":
             result = inspect_inline(*args, budget)
         elif operation == "render":
-            result = render_inline(*args, budget)
+            result = render_inline(
+                *args[:4],
+                budget,
+                args[4] if len(args) > 4 else None,
+                args[5] if len(args) > 5 else (),
+            )
+        elif operation == "operations":
+            result = execute_operations_inline(*args, budget)
         else:
             raise RuntimeError("invalid internal operation")
         send_conn.send(("ok", result))
@@ -174,6 +181,30 @@ def render_candidate(
     mime_type: str,
     mapping: dict[str, object],
     budget: ResourceBudget,
+    *,
+    preprocessing: dict[str, object] | None = None,
+    authorized_blank_targets: tuple[str, ...] = (),
 ) -> RenderCandidate:
-    """Render an isolated candidate byte stream; this is never a delivery result."""
-    return _run_worker("render", (content, filename, mime_type, mapping), budget)
+    """Render and independently verify an isolated candidate byte stream.
+
+    ``mapping`` remains a compatibility input. XLSX Mapping Writes are
+    translated into the versioned Document Operation List inside the bounded
+    worker; preprocessing is represented as the first repeat_rows operation.
+    This candidate is still not a delivery result.
+    """
+    return _run_worker(
+        "render",
+        (content, filename, mime_type, mapping, preprocessing, authorized_blank_targets),
+        budget,
+    )
+
+
+def execute_document_operations(
+    content: bytes,
+    filename: str,
+    mime_type: str,
+    operation_list: dict[str, object],
+    budget: ResourceBudget,
+) -> RenderCandidate:
+    """Execute the versioned operation contract through the bounded byte API."""
+    return _run_worker("operations", (content, filename, mime_type, operation_list), budget)

@@ -154,6 +154,7 @@ class TestOfficeLlmUsage(TransactionCase):
         self.assertEqual(invalid_record.outcome, "processing_error")
 
     def test_service_rejects_prompts_business_data_raw_objects_and_unknown_keys(self):
+        existing_count = self.env["office.llm.usage"].search_count([])
         for forbidden in (
             {"prompt": "must never persist"},
             {"completion": "must never persist"},
@@ -179,7 +180,7 @@ class TestOfficeLlmUsage(TransactionCase):
                     "status": "invalid",
                 }
             )
-        self.assertFalse(self.env["office.llm.usage"].search([]))
+        self.assertEqual(self.env["office.llm.usage"].search_count([]), existing_count)
 
     def test_cc_test_006_acl_and_internal_create_are_restricted(self):
         user_env = self.env(user=self.user.id)

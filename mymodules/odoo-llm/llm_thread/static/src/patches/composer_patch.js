@@ -44,6 +44,24 @@ patch(Composer.prototype, {
     return this.llmStore.getStreamingStatus() || false;
   },
 
+  /**
+   * Keep the uploaded record attached to this draft before the file picker
+   * considers the upload complete. The native upload service normally inserts
+   * it as part of its event flow; the explicit result handling also covers a
+   * successful upload response whose store event did not update this Composer.
+   */
+  async onFileUploaded(data) {
+    const attachment = await this.attachmentUploader.uploadData(data);
+    if (
+      this.isLLMThread &&
+      attachment &&
+      !this.props.composer.attachments.some(({ id }) => id === attachment.id)
+    ) {
+      this.props.composer.attachments.push(attachment);
+    }
+    return attachment;
+  },
+
   get showStop() {
     if (this.isLLMThread) {
       return this.isStreaming;

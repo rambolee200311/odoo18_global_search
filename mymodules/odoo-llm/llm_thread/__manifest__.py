@@ -32,7 +32,7 @@ Use cases include customer support automation, data analysis, training assistanc
 Contact: support@apexive.com
     """,
     "category": "Productivity, Discuss",
-    "version": "18.0.1.4.5",
+    "version": "18.0.1.4.6",
     "depends": ["base", "mail", "web", "llm", "llm_tool"],
     "author": "Apexive Solutions LLC",
     "website": "https://github.com/apexive/odoo-llm",
@@ -55,12 +55,6 @@ Contact: support@apexive.com
             "llm_thread/static/src/components/llm_thread_header/llm_thread_header.js",
             "llm_thread/static/src/components/llm_thread_header/llm_thread_header.xml",
             "llm_thread/static/src/components/llm_thread_header/llm_thread_header.scss",
-            # Related Record component for linking threads to Odoo records
-            "llm_thread/static/src/components/llm_related_record/llm_related_record.js",
-            "llm_thread/static/src/components/llm_related_record/llm_related_record.xml",
-            "llm_thread/static/src/components/llm_related_record/llm_related_record.scss",
-            "llm_thread/static/src/components/llm_related_record/llm_record_picker_dialog.js",
-            "llm_thread/static/src/components/llm_related_record/llm_record_picker_dialog.xml",
             # Tool Message component for displaying tool results
             "llm_thread/static/src/components/llm_tool_message/llm_tool_message.js",
             "llm_thread/static/src/components/llm_tool_message/llm_tool_message.xml",

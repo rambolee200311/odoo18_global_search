@@ -1,4 +1,5 @@
 import base64
+import hashlib
 import io
 import zipfile
 from unittest.mock import patch
@@ -6,11 +7,273 @@ from uuid import uuid4
 
 from odoo.exceptions import AccessError, UserError
 from odoo.tests import TransactionCase
+from office_core import OfficeCoreError
 
 from ..services import inspect_attachment_identity
+from ..models.office_document_request import (
+    _ensure_output_chat_message,
+    _internal_mutation,
+    OfficeDocumentRequest,
+)
 
 
 class TestAttachmentIdentity(TransactionCase):
+    def test_final_output_message_is_linked_once_with_download_metadata(self):
+        thread = self._thread()
+        source = self._attachment(
+            "source.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            self._minimal_xlsx(),
+        )
+        input_message = thread.message_post(
+            body="Fill this template",
+            llm_role="user",
+            attachment_ids=[source.id],
+        )
+        request_uuid = str(uuid4())
+        with _internal_mutation():
+            request = self.env["office.document.request"].create(
+                {
+                    "request_uuid": request_uuid,
+                    "thread_id": thread.id,
+                    "input_message_id": input_message.id,
+                    "source_attachment_id": source.id,
+                    "input_sha256": "a" * 64,
+                }
+            )
+            request.write({"state": "validating"})
+            request.write({"state": "processing"})
+            output = self.env["ir.attachment"].create(
+                {
+                    "name": "office-output-" + request_uuid + ".xlsx",
+                    "type": "binary",
+                    "raw": b"verified output bytes",
+                    "mimetype": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    "public": False,
+                    "res_model": request._name,
+                    "res_id": request.id,
+                }
+            )
+            request.write(
+                {
+                    "output_attachment_id": output.id,
+                    "output_sha256": "b" * 64,
+                    "state": "generated",
+                }
+            )
+
+        message_id, created = _ensure_output_chat_message(self.env, request)
+        self.assertTrue(created)
+        message = self.env["mail.message"].browse(message_id)
+        self.assertEqual(message.model, thread._name)
+        self.assertEqual(message.res_id, thread.id)
+        self.assertEqual(message.llm_role, "assistant")
+        self.assertIn(output, message.attachment_ids)
+
+        duplicate_message_id, duplicate_created = _ensure_output_chat_message(self.env, request)
+        self.assertEqual(duplicate_message_id, message_id)
+        self.assertFalse(duplicate_created)
+        self.assertEqual(
+            self.env["mail.message"].search_count(
+                [
+                    ("model", "=", thread._name),
+                    ("res_id", "=", thread.id),
+                    ("attachment_ids", "in", output.ids),
+                ]
+            ),
+            1,
+        )
+
+        result = OfficeDocumentRequest._record_to_result(request)
+        self.assertEqual(result["output_attachment_id"], output.id)
+        self.assertEqual(result["filename"], output.name)
+        self.assertEqual(result["mimetype"], output.mimetype)
+
+    def test_publish_failure_rolls_back_output_and_retry_publishes_same_request(self):
+        thread = self._thread()
+        source_bytes = self._minimal_xlsx()
+        source = self._attachment(
+            "retry-source.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            source_bytes,
+        )
+        input_message = thread.message_post(
+            body="Retry file delivery",
+            llm_role="user",
+            attachment_ids=[source.id],
+        )
+        request_uuid = str(uuid4())
+        source_digest = hashlib.sha256(source_bytes).hexdigest()
+        Request = self.env["office.document.request"]
+        with _internal_mutation():
+            request = Request.create(
+                {
+                    "request_uuid": request_uuid,
+                    "owner_id": self.env.uid,
+                    "thread_id": thread.id,
+                    "input_message_id": input_message.id,
+                    "source_attachment_id": source.id,
+                    "input_sha256": source_digest,
+                }
+            )
+            request.write({"state": "validating"})
+            request.write({"state": "processing"})
+        # The real worker commits each state transition in its own cursor.
+        # Persist the fixture's processing state before the simulated delivery
+        # savepoint so rollback only undoes the output/publish attempt.
+        request.flush_recordset(["state"])
+
+        savepoint = "office_delivery_publish_failure"
+        self.env.cr.execute(f"SAVEPOINT {savepoint}")
+
+        class SavepointCursor:
+            def commit(_self):
+                self.env.cr.execute(f"RELEASE SAVEPOINT {savepoint}")
+
+            def rollback(_self):
+                self.env.cr.execute(f"ROLLBACK TO SAVEPOINT {savepoint}")
+
+            def close(_self):
+                return None
+
+        with patch(
+            "odoo.addons.office_engine_odoo.models.office_document_request._new_environment",
+            return_value=(SavepointCursor(), self.env),
+        ), patch(
+            "odoo.addons.office_engine_odoo.models.office_document_request._ensure_output_chat_message",
+            side_effect=UserError("synthetic attachment publication failure"),
+        ):
+            with self.assertRaisesRegex(UserError, "synthetic attachment publication failure"):
+                Request._deliver_result(
+                    self.env.cr.dbname,
+                    self.env.uid,
+                    dict(self.env.context),
+                    request.id,
+                    source.id,
+                    thread.id,
+                    input_message.id,
+                    source_digest,
+                    b"verified final workbook bytes",
+                    hashlib.sha256(b"verified final workbook bytes").hexdigest(),
+                    source.name,
+                    "xlsx",
+                    {"status": "PASS"},
+                )
+
+        request.invalidate_recordset(["state", "output_attachment_id"], flush=False)
+        self.assertEqual(request.state, "processing")
+        self.assertFalse(request.output_attachment_id)
+        self.assertFalse(
+            self.env["ir.attachment"].search_count(
+                [("res_model", "=", request._name), ("res_id", "=", request.id)]
+            )
+        )
+
+        with patch(
+            "odoo.addons.office_engine_odoo.models.office_document_request._new_environment",
+            return_value=(SavepointCursor(), self.env),
+        ):
+            retry = Request._deliver_result(
+                self.env.cr.dbname,
+                self.env.uid,
+                dict(self.env.context),
+                request.id,
+                source.id,
+                thread.id,
+                input_message.id,
+                source_digest,
+                b"verified final workbook bytes",
+                hashlib.sha256(b"verified final workbook bytes").hexdigest(),
+                source.name,
+                "xlsx",
+                {"status": "PASS"},
+            )
+        request.invalidate_recordset(["state", "output_attachment_id"])
+        self.assertEqual(retry["state"], "generated")
+        self.assertEqual(retry["request_uuid"], request_uuid)
+        self.assertTrue(retry["output_attachment_id"])
+        self.assertTrue(retry["delivery_message_id"])
+        self.assertEqual(request.state, "generated")
+        posted = self.env["mail.message"].browse(retry["delivery_message_id"])
+        self.assertEqual(posted.model, thread._name)
+        self.assertEqual(posted.res_id, thread.id)
+        self.assertIn(request.output_attachment_id, posted.attachment_ids)
+
+    def test_delivery_commit_recovery_returns_generated_state_without_false_publish(self):
+        thread = self._thread()
+        source_bytes = self._minimal_xlsx()
+        source = self._attachment(
+            "ambiguous-commit-source.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            source_bytes,
+        )
+        input_message = thread.message_post(
+            body="Recover an ambiguous output commit",
+            llm_role="user",
+            attachment_ids=[source.id],
+        )
+        digest = hashlib.sha256(source_bytes).hexdigest()
+        Request = self.env["office.document.request"]
+        with _internal_mutation():
+            request = Request.create(
+                {
+                    "request_uuid": str(uuid4()),
+                    "owner_id": self.env.uid,
+                    "thread_id": thread.id,
+                    "input_message_id": input_message.id,
+                    "source_attachment_id": source.id,
+                    "input_sha256": digest,
+                }
+            )
+            output = self._attachment(
+                "office-output-ambiguous.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                b"generated private output",
+            )
+            output.write({"res_model": request._name, "res_id": request.id, "public": False})
+            request.write({"state": "validating"})
+            request.write({"state": "processing"})
+            request.write(
+                {
+                    "state": "generated",
+                    "output_attachment_id": output.id,
+                    "output_sha256": hashlib.sha256(output.raw).hexdigest(),
+                }
+            )
+
+        class RollbackOnlyCursor:
+            def rollback(_self):
+                return None
+
+            def close(_self):
+                return None
+
+        with patch(
+            "odoo.addons.office_engine_odoo.models.office_document_request._new_environment",
+            return_value=(RollbackOnlyCursor(), self.env),
+        ), patch(
+            "odoo.addons.office_engine_odoo.models.office_document_request._ensure_output_chat_message",
+            side_effect=UserError("synthetic chat publish failure"),
+        ):
+            result = Request._fail_request(
+                self.env.cr.dbname,
+                self.env.uid,
+                dict(self.env.context),
+                request.id,
+                "OFFICE_DELIVERY_FAILED",
+                "delivery",
+                "publication failed",
+            )
+
+        request.invalidate_recordset(["state", "output_attachment_id"])
+        self.assertEqual(result["state"], "generated")
+        self.assertEqual(result["output_attachment_id"], output.id)
+        self.assertFalse(result["delivery_message_id"])
+        self.assertEqual(result["error_code"], "OFFICE_DELIVERY_FAILED")
+        self.assertEqual(result["failed_stage"], "delivery")
+        self.assertEqual(request.state, "generated")
+        self.assertEqual(request.output_attachment_id, output)
+
     def test_identity_matrix(self):
         cases = [
             (
@@ -89,7 +352,7 @@ class TestAttachmentIdentity(TransactionCase):
         workbook.close()
         return output.getvalue()
 
-    def test_valid_minimal_ooxml_and_damaged_central_directory_fail_closed(self):
+    def test_valid_upload_preserves_instruction_without_office_binary(self):
         thread = self._thread()
         mimetype = (
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -112,24 +375,19 @@ class TestAttachmentIdentity(TransactionCase):
         self.assertTrue(valid_identity.is_office_candidate)
         self.assertFalse(valid_identity.is_mismatch)
 
-        with patch.object(
-            type(thread.model_id), "chat", side_effect=AssertionError("Office files must not reach Provider")
-        ):
-            events = list(
-                thread.generate(
-                    user_message_body="请读取这个 Excel",
-                    attachment_ids=[valid_attachment.id],
-                )
-            )
-        self.assertEqual(len(events), 2)
-        self.assertEqual(events[0]["type"], "message_create")
-        self.assertEqual(events[1]["type"], "message_create")
-        office_user_message = self.env["mail.message"].browse(events[0]["message"]["id"])
+        office_user_message = thread.message_post(
+            body="请读取这个 Excel",
+            llm_role="user",
+            attachment_ids=[valid_attachment.id],
+        )
+        prepared = thread._prepare_chat_kwargs(office_user_message, False)
+        serialized = thread.provider_id._dispatch(
+            "format_messages", prepared["messages"], model=thread.model_id
+        )
+        self.assertEqual(serialized[0]["content"], "请读取这个 Excel")
+        self.assertNotIn("base64", str(serialized))
         self.assertFalse(office_user_message.is_error)
-        response_message = self.env["mail.message"].browse(events[1]["message"]["id"])
-        self.assertFalse(response_message.is_error)
-        self.assertIn("文件已接收并完成安全结构检查", response_message.body)
-        self.assertNotIn(valid_attachment.id, thread.get_llm_messages().mapped("attachment_ids").ids)
+        self.assertIn(valid_attachment.id, thread.get_llm_messages().mapped("attachment_ids").ids)
 
         damaged_package = bytearray(valid_package)
         central_directory = damaged_package.find(b"PK\x01\x02")
@@ -150,22 +408,21 @@ class TestAttachmentIdentity(TransactionCase):
             damaged_attachment.file_size,
         )
         self.assertTrue(damaged_identity.is_office_candidate)
-        # Valid OOXML enters the internal parser; a corrupt central directory
-        # is rejected before any Provider call and rendered as an error event.
-        with patch.object(
-            type(thread.model_id), "chat", side_effect=AssertionError("invalid Office must not reach Provider")
-        ):
-            events = list(
-                thread.generate(
-                    user_message_body="damaged package",
-                    attachment_ids=[damaged_attachment.id],
-                )
+        damaged_message = thread.message_post(
+            body="damaged package",
+            llm_role="user",
+            attachment_ids=[damaged_attachment.id],
+        )
+        prepared = thread._prepare_chat_kwargs(damaged_message, False)
+        serialized = thread.provider_id._dispatch(
+            "format_messages", prepared["messages"], model=thread.model_id
+        )
+        self.assertEqual(serialized[0]["content"], "damaged package")
+        self.assertNotIn("base64", str(serialized))
+        with self.assertRaises(OfficeCoreError):
+            self.env["office.document.request"]._inspect_chat_attachment_document(
+                damaged_attachment, thread, damaged_message
             )
-        self.assertEqual(len(events), 2)
-        rejected = self.env["mail.message"].browse(events[0]["message"]["id"])
-        self.assertTrue(rejected.is_error)
-        error = self.env["mail.message"].browse(events[1]["message"]["id"])
-        self.assertTrue(error.is_error)
 
     def test_ordinary_attachments_reach_real_openai_message_serializer(self):
         thread = self._thread()
@@ -290,10 +547,69 @@ class TestAttachmentIdentity(TransactionCase):
             attachment_ids=[attachment.id],
         )
         prepared = thread._prepare_chat_kwargs(message, False)
-        self.assertFalse(prepared["messages"])
+        self.assertEqual(prepared["messages"], message)
+        serialized = thread.provider_id._dispatch(
+            "format_messages", prepared["messages"], model=thread.model_id
+        )
+        self.assertEqual(serialized[0]["role"], "user")
+        self.assertIn("historical attachment", serialized[0]["content"])
+        self.assertNotIn("base64", str(serialized))
         self.assertFalse(message.is_error)
 
-    def test_malformed_office_candidates_fail_closed_without_archive_parsing(self):
+    def test_office_only_upload_remains_visible_to_provider_without_binary(self):
+        thread = self._thread()
+        workbook = self._minimal_xlsx()
+        attachment = self._attachment(
+            "template-only.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            workbook,
+        )
+        message = thread.message_post(
+            body="",
+            llm_role="user",
+            attachment_ids=[attachment.id],
+        )
+
+        serialized = thread.provider_id._dispatch(
+            "format_messages", message, model=thread.model_id
+        )
+
+        self.assertEqual(len(serialized), 1)
+        self.assertEqual(serialized[0]["role"], "user")
+        self.assertIn("template-only.xlsx", serialized[0]["content"])
+        self.assertIn("office_prepare_context", serialized[0]["content"])
+        self.assertNotIn("base64", str(serialized))
+        self.assertNotIn(base64.b64encode(workbook).decode("ascii"), str(serialized))
+
+        provider_payloads = []
+
+        def provider_stub(model, messages, **kwargs):
+            provider_payloads.append(
+                thread.provider_id._dispatch("format_messages", messages, model=model)
+            )
+            return iter([{"content": "I received the attached Office file."}])
+
+        with patch.object(type(thread.model_id), "chat", provider_stub):
+            events = list(thread.generate(attachment_ids=[attachment.id]))
+
+        self.assertEqual(len(provider_payloads), 1)
+        user_turns = [item for item in provider_payloads[0] if item.get("role") == "user"]
+        upload_turns = [item for item in user_turns if "template-only.xlsx" in item["content"]]
+        self.assertTrue(upload_turns)
+        self.assertNotIn("base64", str(provider_payloads[0]))
+        assistant_messages = self.env["mail.message"].search(
+            [
+                ("model", "=", thread._name),
+                ("res_id", "=", thread.id),
+                ("llm_role", "=", "assistant"),
+                ("is_error", "=", False),
+            ],
+            order="id desc",
+        )
+        self.assertIn("I received the attached Office file.", assistant_messages[0].body)
+        self.assertTrue(events)
+
+    def test_malformed_office_candidate_is_rejected_before_provider(self):
         thread = self._thread()
         samples = [
             (
@@ -380,7 +696,13 @@ class TestAttachmentIdentity(TransactionCase):
             side_effect=AssertionError("provider preparation must not parse Office packages"),
         ) as zip_open:
             prepared = thread._prepare_chat_kwargs(message, False)
-        self.assertFalse(prepared["messages"])
+        self.assertEqual(prepared["messages"], message)
+        self.assertIn("synthetic large Office attachment", str(prepared["messages"].mapped("body")))
+        serialized = thread.provider_id._dispatch(
+            "format_messages", prepared["messages"], model=thread.model_id
+        )
+        self.assertEqual(serialized[0]["content"], "synthetic large Office attachment")
+        self.assertNotIn("base64", str(serialized))
         zip_open.assert_not_called()
 
     def test_header_read_uses_current_user_attachment_access(self):

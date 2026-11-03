@@ -6,3 +6,8 @@ from . import test_mapping_rpc
 from . import test_ai_orchestrator
 from . import test_render_bridge
 from . import test_office_core_integration
+from . import test_private_skill
+from . import test_chat_entrypoint
+from . import test_xlsx_row_expansion
+from . import test_conversational_preview
+from . import test_native_chat_integration

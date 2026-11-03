@@ -49,6 +49,9 @@ class Element:
     value: object
     writable: bool
     order: int
+    merged_range: str | None = None
+    table_role: str | None = None
+    table_header: str | None = None
 
 
 @dataclass(frozen=True)
@@ -71,6 +74,9 @@ class DocumentInspection:
                     "value": item.value,
                     "writable": item.writable,
                     "order": item.order,
+                    "merged_range": item.merged_range,
+                    **({"table_role": item.table_role} if item.table_role else {}),
+                    **({"table_header": item.table_header} if item.table_header else {}),
                 }
                 for item in self.elements
             ],
@@ -88,7 +94,8 @@ class RenderCandidate:
     content: bytes
     applied_writes: int
     warnings: tuple[str, ...]
-    delivery_status: str = "candidate_only_not_verified_or_deliverable"
+    delivery_status: str = "candidate_not_delivered"
+    verification: dict[str, object] | None = None
 
     def as_summary(self) -> dict[str, object]:
         return {
@@ -98,4 +105,5 @@ class RenderCandidate:
             "applied_writes": self.applied_writes,
             "warnings": list(self.warnings),
             "delivery_status": self.delivery_status,
+            "verification": self.verification,
         }

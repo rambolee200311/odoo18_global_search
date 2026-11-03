@@ -51,11 +51,20 @@ def _process_rss_bytes(pid: int) -> int | None:
 
 def _worker(send_conn, args: tuple[Any, ...]) -> None:
     try:
-        source, candidate, filename, mime_type, mapping, policy, budget = args
+        source, candidate, filename, mime_type, mapping, policy, budget, authorized_blank_targets = args
         _validate_worker_budget(budget.max_memory_bytes, budget.timeout_seconds)
         from .verify import verify_inline
 
-        report = verify_inline(source, candidate, filename, mime_type, mapping, policy, budget)
+        report = verify_inline(
+            source,
+            candidate,
+            filename,
+            mime_type,
+            mapping,
+            policy,
+            budget,
+            authorized_blank_targets=authorized_blank_targets,
+        )
         send_conn.send(("ok", report))
     except OfficeVerifyError as exc:
         try:
@@ -90,6 +99,8 @@ def verify_output(
     mapping_plan: dict[str, object],
     policy: VerificationPolicy | None = None,
     budget: VerificationBudget | None = None,
+    *,
+    authorized_blank_targets: tuple[str, ...] = (),
 ) -> VerificationReport:
     """Verify a candidate without accepting paths, Odoo objects, or file I/O."""
     selected_policy = policy or VerificationPolicy()
@@ -107,7 +118,16 @@ def verify_output(
     recv_conn, send_conn = context.Pipe(duplex=False)
     process = context.Process(
         target=_worker,
-        args=(send_conn, (source_bytes, candidate_bytes, filename, mime_type, mapping_plan, selected_policy, selected_budget)),
+        args=(send_conn, (
+            source_bytes,
+            candidate_bytes,
+            filename,
+            mime_type,
+            mapping_plan,
+            selected_policy,
+            selected_budget,
+            authorized_blank_targets,
+        )),
         daemon=True,
     )
     started = time.monotonic()

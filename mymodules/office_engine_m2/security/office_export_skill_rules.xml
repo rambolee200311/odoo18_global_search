@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="office_export_skill_owner_company_rule" model="ir.rule">
+        <field name="name">Office export Skills: owner and allowed companies</field>
+        <field name="model_id" ref="model_office_export_skill" />
+        <field name="domain_force">[('owner_id', '=', user.id), ('company_id', 'in', company_ids)]</field>
+        <field name="global" eval="True" />
+    </record>
+</odoo>

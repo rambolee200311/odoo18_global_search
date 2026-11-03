@@ -210,7 +210,7 @@ class TestOfficeMappingRpcTransactions(TransactionCase):
         session.invalidate_recordset()
         self.assertEqual(result["revision"], 2)
         self.assertEqual(session.revision, 2)
-        self.assertEqual(session.state, "awaiting_confirmation")
+        self.assertEqual(session.state, "revision_pending")
         self.assertEqual(
             json.loads(session.mapping_rules_json)["mappings"],
             [{
@@ -253,7 +253,7 @@ class TestOfficeMappingRpcTransactions(TransactionCase):
         self.assertEqual(session.mapping_rules_json, saved_rules)
         self.assertEqual(session.revision, 2)
 
-    def test_confirmation_binds_current_revision_and_cancel_is_service_only(self):
+    def test_confirmation_requires_matching_preview_and_failure_is_service_only(self):
         session, _thread = self._session()
         save_mapping_edits(
             self.env,
@@ -263,13 +263,14 @@ class TestOfficeMappingRpcTransactions(TransactionCase):
         )
         from ..services.mapping_service import confirm_mapping, transition_session
 
-        result = confirm_mapping(self.env, session.id, 2)
+        with self.assertRaises(ValidationError):
+            confirm_mapping(self.env, session.id, 2)
         session.invalidate_recordset()
-        self.assertEqual(result["confirmed_revision"], 3)
-        self.assertEqual(session.confirmed_revision, session.revision)
-        transition_session(self.env, session.id, "cancelled", session.revision)
+        self.assertEqual(session.state, "revision_pending")
+        self.assertEqual(session.confirmed_revision, 0)
+        transition_session(self.env, session.id, "failed", session.revision, error_code="user_cancelled")
         session.invalidate_recordset()
-        self.assertEqual(session.state, "cancelled")
+        self.assertEqual(session.state, "failed")
 
     def test_incomplete_mapping_cannot_be_confirmed(self):
         session, _thread = self._session()
@@ -278,32 +279,37 @@ class TestOfficeMappingRpcTransactions(TransactionCase):
         with self.assertRaises(ValidationError):
             confirm_mapping(self.env, session.id, session.revision)
         session.invalidate_recordset()
-        self.assertEqual(session.state, "collecting")
+        self.assertEqual(session.state, "analyzing")
         self.assertEqual(session.revision, 1)
         self.assertEqual(session.confirmed_revision, 0)
 
-    def test_posted_card_contains_only_fixed_server_authored_body(self):
+    def test_legacy_post_mapping_card_helper_posts_plain_chat_message(self):
         session, _thread = self._session()
         message = post_mapping_card(self.env, session.id)
-        self.assertIn("Review the proposed document mapping.", message.body)
-        self.assertEqual(
-            message.body_json["office_mapping_card"]["type"], "office_mapping_card_v1"
-        )
+        self.assertIn("预览", message.body)
+        self.assertNotIn("office_mapping_card", message.body_json or {})
 
-    def test_session_and_card_persist_only_mapping_schema_metadata(self):
+    def test_session_and_conversation_persist_only_mapping_schema_metadata(self):
         session, _thread = self._session()
         context = json.loads(session.context_json)
         rules = json.loads(session.mapping_rules_json)
         message = post_mapping_card(self.env, session.id)
 
-        self.assertEqual(set(context), {"target_manifest", "allowed_fields"})
+        self.assertEqual(
+            set(context),
+            {
+                "target_manifest",
+                "allowed_fields",
+                "manifest_metadata_version",
+                "selected_record_ids",
+                "extra_authorized_fields",
+            },
+        )
+        self.assertEqual(context["manifest_metadata_version"], 2)
         self.assertEqual(
             set(rules), {"schema_version", "mappings", "clarifications", "skipped_targets"}
         )
-        self.assertEqual(
-            set(message.body_json["office_mapping_card"]),
-            {"type", "session_id", "revision"},
-        )
+        self.assertNotIn("office_mapping_card", message.body_json or {})
         self.assertNotIn("prompt", session._fields)
         self.assertNotIn("sample_values", session._fields)
         self.assertNotIn("AcmeSecretSampleValue", json.dumps([context, rules, message.body_json]))

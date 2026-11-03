@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ast
 import hashlib
+import copy
 import multiprocessing
 import sys
 import struct
@@ -16,6 +17,7 @@ from unittest.mock import patch
 
 from docx import Document
 from openpyxl import Workbook, load_workbook
+from openpyxl.styles import Border, PatternFill, Side
 from lxml import etree
 
 from office_core import OfficeCoreError, ResourceBudget, inspect_document, render_candidate
@@ -194,7 +196,7 @@ def corrupt_zip_member(content: bytes, member_name: str) -> bytes:
 
 
 class OfficeCoreTests(unittest.TestCase):
-    def test_xlsx_inspection_identifies_cells_and_formulas_as_read_only(self):
+    def test_xlsx_inspection_identifies_formula_cells_as_explicit_write_targets(self):
         result = inspect_document(
             make_xlsx(formula=True), "source.xlsx",
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", budget(),
@@ -202,8 +204,30 @@ class OfficeCoreTests(unittest.TestCase):
         items = {item.element_id: item for item in result.elements}
         self.assertIn("xlsx:Sheet1!A1", items)
         self.assertEqual(items["xlsx:Sheet1!A1"].value, "old")
-        self.assertFalse(items["xlsx:Sheet1!B1"].writable)
+        self.assertTrue(items["xlsx:Sheet1!B1"].writable)
         self.assertEqual(items["xlsx:Sheet1!B1"].kind, "formula")
+
+    def test_xlsx_inspection_exposes_merged_anchor_and_physical_range(self):
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = "Sheet1"
+        sheet["F16"] = "Order number"
+        sheet.merge_cells("E17:H17")
+        sheet["E17"] = "existing placeholder"
+        output = BytesIO()
+        workbook.save(output)
+        workbook.close()
+
+        inspected = inspect_document(
+            output.getvalue(),
+            "merged-target.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            budget(),
+        )
+        target = next(item for item in inspected.elements if item.element_id == "xlsx:Sheet1!E17")
+        self.assertEqual(target.merged_range, "E17:H17")
+        self.assertTrue(target.writable)
+        self.assertFalse(any(item.element_id == "xlsx:Sheet1!F17" for item in inspected.elements))
 
     def test_xlsx_blank_cells_between_used_cells_are_writable_mapping_targets(self):
         workbook = Workbook()
@@ -225,7 +249,7 @@ class OfficeCoreTests(unittest.TestCase):
         self.assertIsNone(elements["xlsx:Sheet1!B1"].value)
         self.assertTrue(elements["xlsx:Sheet1!B1"].writable)
         self.assertTrue(elements["xlsx:Sheet1!B2"].writable)
-        self.assertFalse(elements["xlsx:Sheet1!C1"].writable)
+        self.assertTrue(elements["xlsx:Sheet1!C1"].writable)
         plan = {
             "schema_version": "1",
             "template_sha256": inspected.template_sha256,
@@ -242,6 +266,300 @@ class OfficeCoreTests(unittest.TestCase):
         self.assertEqual(rendered["Sheet1"]["C2"].value, "=SUM(B2:B5)")
         rendered.close()
 
+    def test_xlsx_table_header_and_blank_first_data_row_are_distinguished(self):
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = "Orders"
+        sheet["A1"] = "Order"
+        sheet["B1"] = "Customer"
+        sheet["C1"] = "Amount"
+        # Real-world templates often style only some of the blank data row.
+        sheet["B2"].number_format = "0.00"
+        output = BytesIO()
+        workbook.save(output)
+        workbook.close()
+
+        inspected = inspect_document(
+            output.getvalue(),
+            "table.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            budget(),
+        )
+        elements = {item.element_id: item for item in inspected.elements}
+        self.assertEqual(elements["xlsx:Orders!A1"].table_role, "table_header")
+        self.assertFalse(elements["xlsx:Orders!A1"].writable)
+        for coordinate in ("A2", "B2", "C2"):
+            item = elements[f"xlsx:Orders!{coordinate}"]
+            self.assertEqual(item.table_role, "table_data")
+            self.assertTrue(item.writable)
+
+    def test_xlsx_number_format_patch_changes_display_format_without_changing_value(self):
+        workbook = Workbook()
+        workbook.active.title = "Orders"
+        workbook.active["C2"] = 4332
+        output = BytesIO()
+        workbook.save(output)
+        workbook.close()
+        source = output.getvalue()
+        mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        inspected = inspect_document(source, "format.xlsx", mime, budget())
+        plan = {
+            "schema_version": "1",
+            "template_sha256": inspected.template_sha256,
+            "writes": [{
+                "element_id": "xlsx:Orders!C2",
+                "operation": "set_number_format",
+                "value": {"type": "number_format", "data": "0.0"},
+            }],
+        }
+        candidate = render_candidate(source, "format.xlsx", mime, plan, budget())
+        rendered = load_workbook(BytesIO(candidate.content), data_only=False)
+        self.assertEqual(rendered["Orders"]["C2"].value, 4332)
+        self.assertEqual(rendered["Orders"]["C2"].number_format, "0.0")
+        rendered.close()
+        report = verify_output(
+            source,
+            candidate.content,
+            "format.xlsx",
+            mime,
+            plan,
+            VerificationPolicy(enabled_formats=("xlsx",), require_styles=True),
+            VerificationBudget(
+                max_file_size=2_000_000,
+                max_expanded_size=8_000_000,
+                max_zip_entries=128,
+                max_entry_size=2_000_000,
+                max_xml_elements=100_000,
+                max_cells=100_000,
+                max_paragraphs=10_000,
+                max_mapping_bytes=64_000,
+                max_memory_bytes=2_000_000_000_000,
+                timeout_seconds=15,
+            ),
+        )
+        self.assertEqual(report.status, "PASS")
+
+    def test_xlsx_value_and_number_format_patches_can_target_same_cell(self):
+        workbook = Workbook()
+        workbook.active.title = "Orders"
+        workbook.active["C2"] = 1
+        output = BytesIO()
+        workbook.save(output)
+        workbook.close()
+        source = output.getvalue()
+        mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        inspected = inspect_document(source, "format-and-value.xlsx", mime, budget())
+        plan = {
+            "schema_version": "1",
+            "template_sha256": inspected.template_sha256,
+            "writes": [
+                {
+                    "element_id": "xlsx:Orders!C2",
+                    "operation": "set_value",
+                    "value": {"type": "number", "data": 4332},
+                },
+                {
+                    "element_id": "xlsx:Orders!C2",
+                    "operation": "set_number_format",
+                    "value": {"type": "number_format", "data": "0.0"},
+                },
+            ],
+        }
+        candidate = render_candidate(source, "format-and-value.xlsx", mime, plan, budget())
+        result = load_workbook(BytesIO(candidate.content), data_only=False)
+        self.assertEqual(result["Orders"]["C2"].value, 4332)
+        self.assertEqual(result["Orders"]["C2"].number_format, "0.0")
+        result.close()
+        report = verify_output(
+            source,
+            candidate.content,
+            "format-and-value.xlsx",
+            mime,
+            plan,
+            VerificationPolicy(enabled_formats=("xlsx",), require_styles=True),
+            VerificationBudget(
+                max_file_size=2_000_000,
+                max_expanded_size=8_000_000,
+                max_zip_entries=128,
+                max_entry_size=2_000_000,
+                max_xml_elements=100_000,
+                max_cells=100_000,
+                max_paragraphs=10_000,
+                max_mapping_bytes=64_000,
+                max_memory_bytes=2_000_000_000_000,
+                timeout_seconds=15,
+            ),
+        )
+        self.assertEqual(report.status, "PASS")
+
+    def test_xlsx_can_write_restricted_arithmetic_formula_to_non_formula_cell(self):
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = "Sheet1"
+        sheet["D23"] = 2
+        sheet["E23"] = 1.5
+        sheet["G23"] = "总毛重*3"
+        output = BytesIO()
+        workbook.save(output)
+        workbook.close()
+        source = output.getvalue()
+        mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        inspected = inspect_document(source, "formula-target.xlsx", mime, budget())
+        target = next(item for item in inspected.elements if item.element_id == "xlsx:Sheet1!G23")
+        self.assertTrue(target.writable)
+        plan = {
+            "schema_version": "1",
+            "template_sha256": inspected.template_sha256,
+            "writes": [
+                {
+                    "element_id": "xlsx:Sheet1!G23",
+                    "operation": "set_formula",
+                    "value": {"type": "formula", "data": "=D23*E23*3"},
+                }
+            ],
+        }
+        candidate = render_candidate(source, "formula-target.xlsx", mime, plan, budget())
+        rendered = load_workbook(BytesIO(candidate.content), data_only=False)
+        self.assertEqual(rendered["Sheet1"]["G23"].value, "=D23*E23*3")
+        rendered.close()
+        report = verify_output(
+            source,
+            candidate.content,
+            "formula-target.xlsx",
+            mime,
+            plan,
+            VerificationPolicy(enabled_formats=("xlsx",), require_styles=True),
+            VerificationBudget(
+                max_file_size=2_000_000,
+                max_expanded_size=8_000_000,
+                max_zip_entries=128,
+                max_entry_size=2_000_000,
+                max_xml_elements=100_000,
+                max_cells=100_000,
+                max_paragraphs=10_000,
+                max_mapping_bytes=64_000,
+                max_memory_bytes=2_000_000_000_000,
+                timeout_seconds=15,
+            ),
+        )
+        self.assertEqual(report.status, "PASS")
+
+    def test_xlsx_string_null_clears_a_prepopulated_target(self):
+        source = make_xlsx()
+        inspected = inspect_document(
+            source,
+            "clear.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            budget(),
+        )
+        plan = {
+            "schema_version": "1",
+            "template_sha256": inspected.template_sha256,
+            "writes": [
+                {
+                    "element_id": "xlsx:Sheet1!A1",
+                    "operation": "set_value",
+                    "value": {"type": "string", "data": None},
+                }
+            ],
+        }
+        candidate = render_candidate(
+            source,
+            "clear.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            plan,
+            budget(),
+        )
+        rendered = load_workbook(BytesIO(candidate.content), data_only=False)
+        self.assertIsNone(rendered.active["A1"].value)
+        rendered.close()
+
+    def test_xlsx_render_preserves_style_catalog_and_blank_styled_cells(self):
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = "Sheet1"
+        sheet["A1"] = "Customer"
+        sheet["C1"] = "=1+1"
+        sheet["B1"].fill = PatternFill(fill_type="solid", fgColor="FFFF0000")
+        sheet["B1"].border = Border(bottom=Side(style="thin", color="FF000000"))
+        sheet["B2"].fill = PatternFill(fill_type="solid", fgColor="FF00FF00")
+        sheet.merge_cells("D1:E1")
+        sheet["D1"].font = copy.copy(sheet["A1"].font)
+        output = BytesIO()
+        workbook.save(output)
+        workbook.close()
+        source = output.getvalue()
+        mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        inspected = inspect_document(source, "styled-blanks.xlsx", mime, budget())
+        plan = mapping_for(inspected, "xlsx:Sheet1!A1", {"type": "string", "data": "Acme"})
+        candidate = render_candidate(source, "styled-blanks.xlsx", mime, plan, budget())
+
+        with ZipFile(BytesIO(source)) as original, ZipFile(BytesIO(candidate.content)) as rendered:
+            self.assertEqual(original.read("xl/styles.xml"), rendered.read("xl/styles.xml"))
+            source_root = etree.fromstring(original.read("xl/worksheets/sheet1.xml"))
+            output_root = etree.fromstring(rendered.read("xl/worksheets/sheet1.xml"))
+            ns = {"x": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
+            source_cells = {
+                cell.get("r"): cell
+                for cell in source_root.xpath(".//x:sheetData/x:row/x:c", namespaces=ns)
+            }
+            output_cells = {
+                cell.get("r"): cell
+                for cell in output_root.xpath(".//x:sheetData/x:row/x:c", namespaces=ns)
+            }
+            self.assertEqual(source_cells["B1"].get("s"), output_cells["B1"].get("s"))
+            self.assertEqual(source_cells["B2"].get("s"), output_cells["B2"].get("s"))
+            self.assertIn("B2", output_cells)
+
+        report = verify_output(
+            source,
+            candidate.content,
+            "styled-blanks.xlsx",
+            mime,
+            plan,
+            VerificationPolicy(enabled_formats=("xlsx", "docx"), require_styles=True),
+            VerificationBudget(),
+        )
+        self.assertEqual(report.status, "PASS")
+        self.assertEqual(report.checked_targets, 1)
+        rendered = load_workbook(BytesIO(candidate.content), data_only=False)
+        self.assertEqual(rendered["Sheet1"]["A1"].value, "Acme")
+        self.assertEqual(rendered["Sheet1"]["C1"].value, "=1+1")
+        self.assertIn("D1:E1", {str(item) for item in rendered["Sheet1"].merged_cells.ranges})
+        rendered.close()
+
+    def test_xlsx_float_write_uses_canonical_decimal_for_readback(self):
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = "Sheet1"
+        sheet["A1"] = "Weight"
+        sheet["B1"].fill = PatternFill(fill_type="solid", fgColor="FFFFFFFF")
+        output = BytesIO()
+        workbook.save(output)
+        workbook.close()
+        source = output.getvalue()
+        mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        inspected = inspect_document(source, "float.xlsx", mime, budget())
+        plan = mapping_for(inspected, "xlsx:Sheet1!B1", {"type": "number", "data": 8.3})
+        candidate = render_candidate(source, "float.xlsx", mime, plan, budget())
+        report = verify_output(
+            source,
+            candidate.content,
+            "float.xlsx",
+            mime,
+            plan,
+            VerificationPolicy(enabled_formats=("xlsx", "docx"), require_styles=True),
+            VerificationBudget(),
+        )
+        self.assertEqual(report.status, "PASS")
+        with ZipFile(BytesIO(candidate.content)) as archive:
+            root = etree.fromstring(archive.read("xl/worksheets/sheet1.xml"))
+            value = root.xpath(
+                ".//x:sheetData/x:row/x:c[@r='B1']/x:v/text()",
+                namespaces={"x": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"},
+            )
+        self.assertEqual(value, ["8.3"])
+
     def test_docx_inspection_and_candidate_render_for_plain_paragraph_and_table(self):
         source = make_docx()
         source_hash = hashlib.sha256(source).hexdigest()
@@ -257,7 +575,10 @@ class OfficeCoreTests(unittest.TestCase):
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document", plan, budget(),
         )
         self.assertEqual(candidate.content[:2], b"PK")
-        self.assertEqual(candidate.delivery_status, "candidate_only_not_verified_or_deliverable")
+        self.assertEqual(candidate.delivery_status, "candidate_not_delivered")
+        self.assertEqual(candidate.verification["status"], "PASS")
+        self.assertEqual(candidate.verification["office_verify"]["format"], "docx")
+        self.assertEqual(candidate.verification["output_sha256"], candidate.candidate_sha256)
         reopened = Document(BytesIO(candidate.content))
         self.assertEqual(reopened.paragraphs[0].text, "Changed")
         self.assertEqual(hashlib.sha256(source).hexdigest(), source_hash)
@@ -319,7 +640,45 @@ class OfficeCoreTests(unittest.TestCase):
         self.assertEqual(workbook["Sheet1"]["B1"].value, "=1+1")
         workbook.close()
 
-    def test_mapping_rejects_unknown_missing_null_duplicate_and_formula_targets(self):
+    def test_explicit_mapping_can_clear_a_formula_cell(self):
+        source = make_xlsx(formula=True)
+        inspected = inspect_document(
+            source, "source.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", budget(),
+        )
+        candidate = render_candidate(
+            source,
+            "source.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            mapping_for(inspected, "xlsx:Sheet1!B1", {"type": "string", "data": ""}),
+            budget(),
+        )
+        workbook = load_workbook(BytesIO(candidate.content), data_only=False)
+        try:
+            self.assertIsNone(workbook["Sheet1"]["B1"].value)
+        finally:
+            workbook.close()
+
+    def test_explicit_mapping_can_replace_a_formula_cell_value(self):
+        source = make_xlsx(formula=True)
+        inspected = inspect_document(
+            source, "source.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", budget(),
+        )
+        candidate = render_candidate(
+            source,
+            "source.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            mapping_for(inspected, "xlsx:Sheet1!B1", {"type": "string", "data": "user value"}),
+            budget(),
+        )
+        workbook = load_workbook(BytesIO(candidate.content), data_only=False)
+        try:
+            self.assertEqual(workbook["Sheet1"]["B1"].value, "user value")
+        finally:
+            workbook.close()
+
+    def test_mapping_rejects_unknown_missing_duplicate_and_bad_values(self):
         source = make_xlsx(formula=True)
         inspected = inspect_document(
             source, "source.xlsx",
@@ -328,12 +687,10 @@ class OfficeCoreTests(unittest.TestCase):
         cases = [
             {"schema_version": "1", "template_sha256": inspected.template_sha256, "writes": [], "extra": True},
             {"schema_version": "1", "template_sha256": inspected.template_sha256, "writes": [{"element_id": "missing", "operation": "set_value", "value": {"type": "string", "data": "x"}}]},
-            mapping_for(inspected, "xlsx:Sheet1!A1", {"type": "string", "data": None}),
             {"schema_version": "1", "template_sha256": inspected.template_sha256, "writes": [
                 {"element_id": "xlsx:Sheet1!A1", "operation": "set_value", "value": {"type": "string", "data": "x"}},
                 {"element_id": "xlsx:Sheet1!A1", "operation": "set_value", "value": {"type": "string", "data": "y"}},
             ]},
-            mapping_for(inspected, "xlsx:Sheet1!B1", {"type": "string", "data": "overwrite formula"}),
             mapping_for(inspected, "xlsx:Sheet1!A1", {"type": "number", "data": True}),
             {"schema_version": "2", "template_sha256": inspected.template_sha256, "writes": []},
             {"schema_version": "1", "template_sha256": "0" * 64, "writes": []},

@@ -2,8 +2,8 @@
 
 import logging
 import os
+from pathlib import Path
 
-from markupsafe import Markup
 from odoo import _, models
 from odoo.exceptions import AccessError, UserError
 
@@ -67,78 +67,8 @@ class LLMThread(models.Model):
     def _office_engine_messages_without_office(self, messages):
         return messages.filtered(lambda message: not self._office_engine_message_has_office(message))
 
-    def _office_engine_generate_inspection(self, user_message_body, attachment_ids):
-        """Accept, inspect, and summarize Office files without Provider dispatch."""
-        if isinstance(attachment_ids, int) and not isinstance(attachment_ids, bool):
-            attachment_ids = [attachment_ids]
-        else:
-            attachment_ids = list(attachment_ids)
-        with self._generation_lock():
-            attachments = self.env["ir.attachment"].browse(list(attachment_ids)).exists()
-            if len(attachments) != len(set(attachment_ids)):
-                error = UserError(_REJECT_MESSAGE)
-                _error_message, event = self._post_error_message(error, title=_("Attachment rejected"))
-                yield event
-                return _error_message
-            office = self._office_engine_classify_attachments(attachments)
-            if not office:
-                return None
-
-            message = self.message_post(
-                body=user_message_body or "",
-                llm_role="user",
-                author_id=self.env.user.partner_id.id,
-                attachment_ids=attachments.ids,
-            )
-            yield {"type": "message_create", "message": message.to_store_format()}
-
-            try:
-                if len(office) != 1 or len(attachments) != 1:
-                    raise UserError(_("Please upload one Office file per chat message."))
-                source = office.ensure_one()
-                filename = (source.name or "").lower()
-                if filename.endswith((".xlsm", ".xltm", ".docm", ".dotm", ".pptm", ".potm", ".ppsm")):
-                    raise UserError(_("Macro-enabled Office files are not supported."))
-                summary = self.env["office.document.request"]._inspect_chat_attachment(
-                    source, self, message
-                )
-            except (AccessError, UserError):
-                message.write({"is_error": True})
-                error = UserError(_REJECT_MESSAGE)
-                _error_message, event = self._post_error_message(error, title=_("Attachment rejected"))
-                yield event
-                return _error_message
-            except Exception as exc:
-                message.write({"is_error": True})
-                _logger.warning(
-                    "Office chat inspection rejected attachment; thread_id=%s attachment_id=%s error_type=%s",
-                    self.id,
-                    source.id if "source" in locals() else 0,
-                    type(exc).__name__,
-                )
-                error = UserError(_REJECT_MESSAGE)
-                _error_message, event = self._post_error_message(error, title=_("Attachment rejected"))
-                yield event
-                return _error_message
-
-            sheet_names = ", ".join(summary["sheet_names"]) or _("not applicable")
-            result = _(
-                "文件已接收并完成安全结构检查。格式：%(format)s；工作表：%(sheets)s；"
-                "识别到的内容项：%(elements)s；公式：%(formulas)s。"
-                "文件内容没有发送给 AI Provider；当前版本尚未执行字段映射或生成填充文件。",
-                format=summary["format"],
-                sheets=sheet_names,
-                elements=summary["element_count"],
-                formulas=summary["formula_count"],
-            )
-            assistant = self.message_post(
-                body=Markup.escape(result), llm_role="assistant", author_id=False
-            )
-            yield {"type": "message_create", "message": assistant.to_store_format()}
-            return assistant
-
     def generate(self, user_message_body=None, attachment_ids=None, **kwargs):
-        """Route verified Office uploads to internal inspection before Provider calls."""
+        """Reject unsafe Office uploads, then let the native Assistant process them."""
         self.ensure_one()
         if attachment_ids:
             if isinstance(attachment_ids, int) and not isinstance(attachment_ids, bool):
@@ -155,16 +85,26 @@ class LLMThread(models.Model):
                 yield event
                 return _error_message
             if office:
-                yield from self._office_engine_generate_inspection(
-                    user_message_body, attachment_ids
-                )
-                return
+                unsafe_suffixes = (".xlsm", ".xltm", ".docm", ".dotm", ".pptm", ".potm", ".ppsm")
+                if any(Path(item.name or "").suffix.lower() in unsafe_suffixes for item in office):
+                    error_message, event = self._post_error_message(
+                        UserError(_("Macro-enabled Office files are not supported.")),
+                        title=_("Attachment rejected"),
+                    )
+                    yield event
+                    return error_message
+                if any(item.file_size <= 0 or item.file_size > 32 * 1024 * 1024 for item in office):
+                    error_message, event = self._post_error_message(
+                        UserError(_("The Office attachment is empty or exceeds the file size limit.")),
+                        title=_("Attachment rejected"),
+                    )
+                    yield event
+                    return error_message
         yield from super().generate(user_message_body, attachment_ids=attachment_ids, **kwargs)
 
     def get_llm_messages(self, limit=25):
-        """Keep Office file messages out of every Provider context."""
-        messages = super().get_llm_messages(limit=limit)
-        return self._office_engine_messages_without_office(messages)
+        """Keep the native history intact; mail.message serialization strips file payloads."""
+        return super().get_llm_messages(limit=limit)
 
     def _check_unsupported_attachments(self, message=None):
         self.ensure_one()
@@ -179,8 +119,82 @@ class LLMThread(models.Model):
 
     def _prepare_chat_kwargs(self, message_history, use_streaming):
         self.ensure_one()
-        safe_history = self._office_engine_messages_without_office(message_history)
-        return super()._prepare_chat_kwargs(safe_history, use_streaming)
+        return super()._prepare_chat_kwargs(message_history, use_streaming)
+
+
+class MailMessage(models.Model):
+    _inherit = "mail.message"
+
+    def openai_format_message(self, is_multimodal=False, is_audio_model=False):
+        """Keep file-only Office uploads visible without serializing their bytes.
+
+        The normal OpenAI serializer correctly omits Office binaries, but that
+        also made an upload with an empty composer body serialize to ``None``.
+        In that case the model received no user turn at all. Preserve a small
+        filename-only cue so the native assistant can ask what to do or call
+        the Office context tool.
+        """
+        self.ensure_one()
+        formatted = super().openai_format_message(
+            is_multimodal=is_multimodal,
+            is_audio_model=is_audio_model,
+        )
+        if formatted is not None or self.llm_role != "user" or not self.attachment_ids:
+            return formatted
+
+        office_attachments = self.env["ir.attachment"]
+        for attachment in self.attachment_ids:
+            name = (attachment.name or "").lower()
+            mimetype = (attachment.mimetype or "").lower().split(";", 1)[0]
+            if name.endswith((".xlsx", ".xls", ".xlsm", ".docx", ".doc", ".docm", ".pptx", ".ppt")) or mimetype in {
+                "application/vnd.ms-excel",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            }:
+                office_attachments |= attachment
+
+        if not office_attachments:
+            return formatted
+
+        filenames = ", ".join(office_attachments.mapped("name"))
+        return {
+            "role": "user",
+            "content": (
+                f"Office file attached: {filenames}. The file bytes are intentionally "
+                "omitted from this message. Use office_prepare_context if available to "
+                "inspect the uploaded file, or ask the user what they want to do."
+            ),
+        }
+
+    def _get_attachments_by_mimetype(self, mimetypes):
+        """Retain Office message text while excluding every attached binary payload.
+
+        Provider serializers share this helper for image, PDF, audio, and text
+        attachments. An Office-like message is therefore serialized as its text
+        body only, independent of which supported serializer is active.
+        """
+        self.ensure_one()
+        office_mimetypes = {
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.ms-excel.sheet.macroenabled.12",
+            "application/vnd.ms-word",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.ms-word.document.macroenabled.12",
+            "application/vnd.ms-powerpoint",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "application/vnd.ms-powerpoint.presentation.macroenabled.12",
+        }
+        office_suffixes = {".xls", ".xlsx", ".xlsm", ".doc", ".docx", ".docm", ".ppt", ".pptx", ".pptm"}
+        if any(
+            (attachment.mimetype or "").lower().split(";", 1)[0] in office_mimetypes
+            or Path(attachment.name or "").suffix.lower() in office_suffixes
+            for attachment in self.attachment_ids
+        ):
+            return self.env["ir.attachment"]
+        return super()._get_attachments_by_mimetype(mimetypes)
 
 
 class MailMessage(models.Model):

@@ -1,13 +1,15 @@
 import contextlib
 import json
 import logging
+import re
+from html import unescape
 
 import emoji
 import markdown2
 from markupsafe import Markup
 from psycopg2 import OperationalError
 
-from odoo import _, api, fields, models
+from odoo import _, api, fields, models, tools
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
@@ -283,13 +285,34 @@ class LLMThread(models.Model):
         return None
 
     def _process_llm_body(self, body):
-        """Process body content for LLM messages (markdown to HTML conversion).
+        """Render Markdown or model-produced HTML as sanitized rich message content.
 
-        Skips processing if body is already Markup (pre-formatted HTML).
+        Some OpenAI-compatible providers return HTML fragments, and some return
+        the same fragments entity-escaped. Markdown alone leaves escaped tags
+        visible in the chat. Normalize those responses, remove fabricated
+        ``attachment://`` links (real attachments are rendered from
+        ``mail.message.attachment_ids``), then sanitize and mark the resulting
+        HTML so the native mail.Message template renders it as markup.
         """
-        if not body or isinstance(body, Markup):
+        if not body:
             return body
-        return markdown2.markdown(emoji.demojize(body))
+        content = str(body)
+        decoded = unescape(content)
+        if decoded != content and re.search(
+            r"</?(?:p|ul|ol|li|div|span|strong|b|em|i|code|pre|br|a|h[1-6])\b",
+            decoded,
+            re.IGNORECASE,
+        ):
+            content = decoded
+        content = re.sub(
+            r"\s+href\s*=\s*([\"'])attachment://[^\"']*\1",
+            "",
+            content,
+            flags=re.IGNORECASE,
+        )
+        content = re.sub(r"attachment://\d+", "", content, flags=re.IGNORECASE)
+        rendered = markdown2.markdown(emoji.demojize(content))
+        return tools.html_sanitize(rendered, sanitize_attributes=True, strip_classes=True)
 
     # ============================================================================
     # STREAMING MESSAGE CREATION

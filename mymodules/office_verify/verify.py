@@ -72,26 +72,45 @@ def _validate_plan(plan: object, source_sha: str, budget: VerificationBudget) ->
         raise _fail("OFFICE_MAPPING_INVALID", "mapping", "writes 必须是数组。")
     if len(writes) > max(budget.max_cells, budget.max_paragraphs):
         raise _fail("OFFICE_RESOURCE_LIMIT", "mapping", "映射目标数量超过限制。")
-    seen: set[str] = set()
+    seen: dict[str, set[str]] = {}
     clean: list[dict[str, object]] = []
     for item in writes:
         if not isinstance(item, dict) or set(item) != {"element_id", "operation", "value"}:
             raise _fail("OFFICE_MAPPING_INVALID", "mapping", "写入项包含缺失或未知字段。")
         element_id = item.get("element_id")
         value = item.get("value")
-        if not isinstance(element_id, str) or element_id in seen:
+        if not isinstance(element_id, str):
             raise _fail("OFFICE_MAPPING_INVALID", "mapping", "写入目标无效或重复。")
         if len(element_id) > 512:
             raise _fail("OFFICE_RESOURCE_LIMIT", "mapping", "映射目标标识超过大小限制。")
-        seen.add(element_id)
-        if item.get("operation") != "set_value":
-            raise _fail("OFFICE_MAPPING_INVALID", "mapping", "只允许 set_value 操作。")
+        operation = item.get("operation")
+        if operation not in {"set_value", "set_formula", "set_number_format"}:
+            raise _fail("OFFICE_MAPPING_INVALID", "mapping", "只允许 set_value、受限 set_formula 或 set_number_format 操作。")
+        prior_operations = seen.setdefault(element_id, set())
+        if operation in prior_operations or (
+            operation != "set_number_format"
+            and prior_operations.intersection({"set_value", "set_formula"})
+        ):
+            raise _fail("OFFICE_MAPPING_INVALID", "mapping", "同一目标的值操作冲突或重复。")
+        prior_operations.add(operation)
         if not isinstance(value, dict) or set(value) != {"type", "data"}:
             raise _fail("OFFICE_MAPPING_INVALID", "mapping", "value 必须包含且仅包含 type 与 data。")
         kind, data = value.get("type"), value.get("data")
-        if data is None:
-            raise _fail("NULL_NOT_SUPPORTED", "mapping", "显式 null 当前不支持。")
-        if kind == "string" and isinstance(data, str):
+        if operation == "set_number_format":
+            if kind != "number_format" or not isinstance(data, str) or not data or len(data) > 128 or any(ord(char) < 32 for char in data):
+                raise _fail("OFFICE_MAPPING_INVALID", "mapping", "数字格式字符串无效。")
+        elif operation == "set_formula":
+            if kind != "formula" or not _safe_arithmetic_formula(data):
+                raise _fail("OFFICE_MAPPING_INVALID", "mapping", "公式内容无效；仅支持本表算术公式。")
+        elif data is None:
+            if kind != "string":
+                raise _fail("NULL_NOT_SUPPORTED", "mapping", "只有字符串目标可以将 null 映射为空白。")
+            data = ""
+        if operation == "set_number_format":
+            pass
+        elif operation == "set_formula":
+            pass
+        elif kind == "string" and isinstance(data, str):
             try:
                 encoded_size = len(data.encode("utf-8"))
             except UnicodeEncodeError as exc:
@@ -106,7 +125,7 @@ def _validate_plan(plan: object, source_sha: str, budget: VerificationBudget) ->
             pass
         else:
             raise _fail("OFFICE_MAPPING_INVALID", "mapping", "映射值类型与数据不匹配。")
-        clean.append({"element_id": element_id, "type": kind, "data": data})
+        clean.append({"element_id": element_id, "operation": operation, "type": kind, "data": data})
     try:
         serialized_size = len(json.dumps(plan, ensure_ascii=False, separators=(",", ":"), allow_nan=False).encode("utf-8"))
     except (TypeError, ValueError, UnicodeEncodeError) as exc:
@@ -116,7 +135,80 @@ def _validate_plan(plan: object, source_sha: str, budget: VerificationBudget) ->
     return clean
 
 
-def _compare_packages(source: Package, output: Package, policy: VerificationPolicy) -> list[dict[str, str]]:
+def _safe_arithmetic_formula(formula: object) -> bool:
+    """Validate arithmetic-only local formulas independently of the writer."""
+    token_pattern = re.compile(
+        r"\s*(?:(\$?[A-Za-z]{1,3}\$?[1-9][0-9]*)|((?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[Ee][+-]?[0-9]+)?)|([()+\-*/]))"
+    )
+    if not isinstance(formula, str) or not formula.startswith("=") or len(formula) > 512:
+        return False
+    expression = formula[1:].strip()
+    if not expression:
+        return False
+    tokens = []
+    position = 0
+    while position < len(expression):
+        match = token_pattern.match(expression, position)
+        if not match:
+            return False
+        reference, number, operator = match.groups()
+        tokens.append("reference" if reference else "number" if number else operator)
+        position = match.end()
+        if len(tokens) > 128:
+            return False
+    cursor = 0
+
+    def peek(value=None):
+        return cursor < len(tokens) and (value is None or tokens[cursor] == value)
+
+    def consume():
+        nonlocal cursor
+        if cursor >= len(tokens):
+            return None
+        token = tokens[cursor]
+        cursor += 1
+        return token
+
+    def expression_rule():
+        if not term_rule():
+            return False
+        while peek("+") or peek("-"):
+            consume()
+            if not term_rule():
+                return False
+        return True
+
+    def term_rule():
+        if not factor_rule():
+            return False
+        while peek("*") or peek("/"):
+            consume()
+            if not factor_rule():
+                return False
+        return True
+
+    def factor_rule():
+        if peek("+") or peek("-"):
+            consume()
+            return factor_rule()
+        if peek("("):
+            consume()
+            if not expression_rule() or not peek(")"):
+                return False
+            consume()
+            return True
+        return consume() in {"reference", "number"}
+
+    return expression_rule() and cursor == len(tokens)
+
+
+def _compare_packages(
+    source: Package,
+    output: Package,
+    policy: VerificationPolicy,
+    *,
+    allow_number_format_changes: bool = False,
+) -> list[dict[str, str]]:
     if source.kind != output.kind:
         raise _fail("OFFICE_INVALID_OR_MISMATCHED", "format", "输出格式与输入格式不一致。")
     source_entries = set(source.entries)
@@ -124,7 +216,7 @@ def _compare_packages(source: Package, output: Package, policy: VerificationPoli
     # openpyxl rewrites shared strings as inline strings. This is an OOXML
     # representation change, not a loss of cell text; every other part remains
     # subject to the normal structure checks.
-    optional_representation_parts = {"xl/sharedStrings.xml"} if source.kind == "xlsx" else set()
+    optional_representation_parts = {"xl/sharedStrings.xml", "xl/styles.xml"} if source.kind == "xlsx" else set()
     if (source_entries - output_entries) - optional_representation_parts or (output_entries - source_entries) - optional_representation_parts:
         raise _fail("OFFICE_STRUCTURE_MISMATCH", "structure", "OOXML 部件集合发生变化。")
     for required in policy.required_parts:
@@ -174,6 +266,8 @@ def _compare_packages(source: Package, output: Package, policy: VerificationPoli
     warnings: list[dict[str, str]] = []
     for style_part in ("xl/styles.xml", "word/styles.xml"):
         if style_part in source.roots and _canonical(source.roots[style_part]) != _canonical(output.roots.get(style_part)):
+            if style_part == "xl/styles.xml" and allow_number_format_changes:
+                continue
             if policy.require_styles:
                 raise _fail("OFFICE_STRUCTURE_MISMATCH", "styles", "策略要求保留的样式部件发生变化。")
             warnings.append({"code": "NON_TARGET_STYLE_PART_CHANGED", "element_id": style_part})
@@ -298,7 +392,9 @@ def _cell_value(cell: etree._Element, shared: list[str]) -> tuple[str, object]:
     return "number", number
 
 
-def _xlsx_state(package: Package, budget: VerificationBudget) -> dict[str, object]:
+def _xlsx_state(
+    package: Package, budget: VerificationBudget, policy: VerificationPolicy
+) -> dict[str, object]:
     sheets = _workbook_sheets(package)
     workbook_root = package.roots["xl/workbook.xml"]
     sheet_states = tuple(
@@ -312,10 +408,42 @@ def _xlsx_state(package: Package, budget: VerificationBudget) -> dict[str, objec
         raise _fail("OFFICE_INVALID_OR_MISMATCHED", "xlsx", "工作表可见性状态无效。")
     shared = _shared_strings(package)
     cells: dict[str, tuple[str, object]] = {}
+    cell_ids: set[str] = set()
     blank_targets: set[str] = set()
     formulas: dict[str, tuple[str, tuple[tuple[str, str], ...]]] = {}
     caches: dict[str, str | None] = {}
     styles: dict[str, str] = {}
+    style_bases: dict[str, bytes] = {}
+    number_formats: dict[str, str] = {}
+    style_root = package.roots.get("xl/styles.xml")
+    if style_root is None and policy.require_styles:
+        raise _fail("OFFICE_STRUCTURE_MISMATCH", "styles", "Excel 样式部件缺失。")
+    cell_xfs = (
+        next((node for node in style_root if _name(node) == "cellXfs"), None)
+        if style_root is not None
+        else None
+    )
+    if cell_xfs is None and policy.require_styles:
+        raise _fail("OFFICE_STRUCTURE_MISMATCH", "styles", "Excel cellXfs 样式表缺失。")
+    # OOXML permits a workbook with no styles part. Such cells have the
+    # implicit default style (index 0); use that semantic default for the
+    # readback comparison instead of treating an omitted optional part as a
+    # damaged workbook.
+    default_xf = etree.Element(NS_X + "xf")
+    effective_xfs = list(cell_xfs) if cell_xfs is not None else [default_xf]
+    custom_formats = {
+        int(node.get("numFmtId", "-1")): node.get("formatCode", "")
+        for parent in (style_root if style_root is not None else ()) if _name(parent) == "numFmts"
+        for node in parent if _name(node) == "numFmt"
+    }
+    built_in_formats = {
+        0: "General", 1: "0", 2: "0.00", 3: "#,##0", 4: "#,##0.00",
+        9: "0%", 10: "0.00%", 11: "0.00E+00", 12: "# ?/?", 13: "# ??/??",
+        14: "mm-dd-yy", 15: "d-mmm-yy", 16: "d-mmm", 17: "mmm-yy",
+        18: "h:mm AM/PM", 19: "h:mm:ss AM/PM", 20: "h:mm", 21: "h:mm:ss",
+        22: "m/d/yy h:mm", 37: "#,##0 ;(#,##0)", 38: "#,##0 ;[Red](#,##0)",
+        39: "#,##0.00;(#,##0.00)", 40: "#,##0.00;[Red](#,##0.00)",
+    }
     merges: dict[str, tuple[str, ...]] = {}
     cell_count = 0
     sheet_names = tuple(title for title, _ in sheets)
@@ -334,6 +462,7 @@ def _xlsx_state(package: Package, budget: VerificationBudget) -> dict[str, objec
             if not re.fullmatch(r"[A-Z]{1,3}[1-9][0-9]*", address) or address in sheet_cells:
                 raise _fail("OFFICE_INVALID_OR_MISMATCHED", "xlsx", "工作表单元格坐标无效或重复。")
             sheet_cells[address] = cell
+            cell_ids.add(f"xlsx:{title}!{address}")
             cell_count += 1
             if cell_count > budget.max_cells:
                 raise _fail("OFFICE_RESOURCE_LIMIT", "xlsx", "工作表单元格数量超过限制。")
@@ -370,8 +499,18 @@ def _xlsx_state(package: Package, budget: VerificationBudget) -> dict[str, objec
                 formulas[key] = value  # type: ignore[assignment]
                 v = next((child.text for child in cell if _name(child) == "v"), None)
                 caches[key] = v
-            if "s" in cell.attrib:
-                styles[key] = cell.get("s", "")
+            style_index = int(cell.get("s", "0"))
+            if style_index >= len(effective_xfs):
+                raise _fail("OFFICE_STRUCTURE_MISMATCH", "styles", "单元格样式引用超出范围。")
+            if style_index:
+                styles[key] = str(style_index)
+            xf = deepcopy(effective_xfs[style_index])
+            num_fmt_id = int(xf.get("numFmtId", "0"))
+            xf.attrib.pop("numFmtId", None)
+            style_bases[key] = _canonical(xf)
+            number_formats[key] = custom_formats.get(
+                num_fmt_id, built_in_formats.get(num_fmt_id, f"builtin:{num_fmt_id}")
+            )
             if address in merged_nonanchors and kind != "blank":
                 raise _fail("OFFICE_STRUCTURE_MISMATCH", "xlsx", "合并单元格非锚点包含值。")
         for row_number, columns in populated_by_row.items():
@@ -392,10 +531,13 @@ def _xlsx_state(package: Package, budget: VerificationBudget) -> dict[str, objec
         "sheets": sheet_names,
         "sheet_states": sheet_states,
         "cells": cells,
+        "cell_ids": cell_ids,
         "blank_targets": blank_targets,
         "formulas": formulas,
         "caches": caches,
         "styles": styles,
+        "style_bases": style_bases,
+        "number_formats": number_formats,
         "merges": merges,
     }
 
@@ -433,9 +575,10 @@ def _check_xlsx(
     writes: list[dict[str, object]],
     budget: VerificationBudget,
     policy: VerificationPolicy,
+    authorized_blank_targets: frozenset[str] = frozenset(),
 ) -> tuple[int, int, tuple[dict[str, object], ...], list[dict[str, str]]]:
-    before = _xlsx_state(source, budget)
-    after = _xlsx_state(output, budget)
+    before = _xlsx_state(source, budget, policy)
+    after = _xlsx_state(output, budget, policy)
     warnings: list[dict[str, str]] = []
     if before["sheets"] != after["sheets"]:
         raise _fail("OFFICE_STRUCTURE_MISMATCH", "xlsx", "工作表名称或顺序发生变化。")
@@ -443,7 +586,27 @@ def _check_xlsx(
         raise _fail("OFFICE_STRUCTURE_MISMATCH", "xlsx", "工作表可见性状态发生变化。")
     if before["merges"] != after["merges"]:
         raise _fail("OFFICE_STRUCTURE_MISMATCH", "xlsx", "合并单元格结构发生变化。")
-    if before["formulas"] != after["formulas"]:
+    formula_writes = {
+        item["element_id"]: item
+        for item in writes
+        if item.get("operation") == "set_formula"
+    }
+    number_format_writes = {
+        item["element_id"]: item
+        for item in writes
+        if item.get("operation") == "set_number_format"
+    }
+    value_written_ids = {
+        item["element_id"] for item in writes
+        if item.get("operation") in {"set_value", "set_formula"}
+    }
+    expected_formulas = {
+        key: value for key, value in before["formulas"].items() if key not in value_written_ids
+    }
+    for element_id, write in formula_writes.items():
+        expression = write["data"][1:]
+        expected_formulas[element_id] = (expression, ())
+    if expected_formulas != after["formulas"]:
         raise _fail("OFFICE_FORMULA_MISMATCH", "xlsx", "工作簿公式表达式发生变化。")
     formula_caches = before["caches"]
     output_caches = after["caches"]
@@ -457,44 +620,125 @@ def _check_xlsx(
         for key in sorted(formula_caches)
     )
     targets: dict[str, dict[str, object]] = {}
+    seen_operations: dict[str, set[str]] = {}
     for write in writes:
         element_id = write["element_id"]
         if not isinstance(element_id, str) or not element_id.startswith("xlsx:"):
             raise _fail("OFFICE_MAPPING_INVALID", "mapping", "映射目标与文件格式不匹配。")
-        if element_id in targets:
-            raise _fail("OFFICE_MAPPING_INVALID", "mapping", "写入目标重复。")
-        if element_id not in before["cells"] and element_id not in before["blank_targets"]:
-            raise _fail("OFFICE_MAPPING_INVALID", "mapping", "映射目标不存在于模板结构目录中。")
-        if element_id in before["formulas"]:
-            raise _fail("OFFICE_MAPPING_INVALID", "mapping", "公式单元格不可写。")
+        operation = write.get("operation")
+        prior_operations = seen_operations.setdefault(element_id, set())
+        if operation in prior_operations or (
+            operation in {"set_value", "set_formula"}
+            and prior_operations.intersection({"set_value", "set_formula"})
+        ):
+            raise _fail("OFFICE_MAPPING_INVALID", "mapping", "同一目标的值操作冲突或重复。")
+        prior_operations.add(operation)
         sheet, coordinate = element_id[len("xlsx:"):].split("!", 1)
+        location = re.fullmatch(r"([A-Z]{1,3})([1-9][0-9]*)", coordinate)
+        if (
+            sheet not in before["sheets"]
+            or location is None
+            or _col_number(location.group(1)) > 16_384
+            or int(location.group(2)) > 1_048_576
+        ):
+            raise _fail("OFFICE_MAPPING_INVALID", "mapping", "映射目标不是当前工作表中的有效单元格。")
+        target_is_in_source = (
+            element_id in before["cells"]
+            or element_id in before["cell_ids"]
+            or element_id in before["blank_targets"]
+        )
+        is_explicit_clear = (
+            operation == "set_value"
+            and write.get("type") == "string"
+            and write.get("data") == ""
+        )
+        is_value_write = operation in {"set_value", "set_formula"} and not is_explicit_clear
+        if not target_is_in_source and not is_value_write and not (
+            element_id in authorized_blank_targets and is_explicit_clear
+        ):
+            raise _fail(
+                "OFFICE_MAPPING_INVALID",
+                "mapping",
+                f"映射目标不存在于模板结构目录中，且不是已授权的显式清空：{element_id}。",
+            )
+        if element_id in authorized_blank_targets:
+            if not is_explicit_clear:
+                raise _fail("OFFICE_MAPPING_INVALID", "mapping", "显式清空目标必须对应空字符串写入。")
         if any(
             coordinate != merge.split(":", 1)[0]
             and _coordinate_in_range(coordinate, *merge.split(":", 1))
             for merge in before["merges"].get(sheet, ())
         ):
             raise _fail("OFFICE_MAPPING_INVALID", "mapping", "合并单元格非锚点不可写。")
-        targets[element_id] = write
-    expected_cells = set(before["cells"]) | {
-        key for key in targets if key in before["blank_targets"]
+        if operation != "set_number_format":
+            targets[element_id] = write
+    explicit_clears = {
+        item["element_id"]
+        for item in writes
+        if item.get("operation") == "set_value"
+        and item.get("type") == "string"
+        and item.get("data") == ""
     }
-    if expected_cells != set(after["cells"]):
+    if not authorized_blank_targets.issubset(explicit_clears):
+        raise _fail("OFFICE_MAPPING_INVALID", "mapping", "缺失单元格授权只能用于显式清空操作。")
+    source_content = {
+        key
+        for key, (kind, value) in before["cells"].items()
+        if not (kind == "string" and value == "")
+    }
+    # A mapping write is an explicit authorization for the requested coordinate.
+    # The independent verifier checks that it is a valid cell on an existing
+    # sheet, then verifies its value and ensures unrelated source cells survive.
+    # Requiring the blank target to already be serialized in the source package
+    # would reject normal unformatted blank cells that the adapter can write.
+    expected_cells = (
+        source_content
+        | {
+            key for key, write in targets.items()
+            if write.get("operation") in {"set_value", "set_formula"}
+            and key not in explicit_clears
+        }
+    ) - explicit_clears
+    after_content = {
+        key
+        for key, (kind, value) in after["cells"].items()
+        if not (kind == "string" and value == "")
+    }
+    if expected_cells != after_content:
         raise _fail("OFFICE_STRUCTURE_MISMATCH", "xlsx", "非空单元格结构发生变化。")
+    if any(
+        after["cells"].get(key) not in (None, ("string", ""))
+        for key in explicit_clears
+    ):
+        raise _fail("OFFICE_TARGET_MISMATCH", "target", "清空目标仍包含内容。")
     for key in expected_cells:
-        if key in targets:
+        if key in formula_writes:
+            if after["cells"].get(key, (None, None))[0] != "formula":
+                raise _fail("OFFICE_TARGET_MISMATCH", "target", "公式目标未写入公式。")
+        elif key in targets:
             expected = targets[key]
             actual_kind, actual_value = after["cells"][key]
             if not _matches(expected["type"], expected["data"], actual_kind, actual_value):
                 raise _fail("OFFICE_TARGET_MISMATCH", "target", "映射目标的回读值与预期不一致。")
+        elif key in number_format_writes:
+            if before["cells"].get(key) != after["cells"].get(key):
+                raise _fail("OFFICE_TARGET_MISMATCH", "target", "仅修改数字格式时，单元格值必须保持不变。")
         elif before["cells"].get(key) != after["cells"].get(key):
             raise _fail("OFFICE_STRUCTURE_MISMATCH", "xlsx", "非目标单元格内容发生变化。")
+    for key, write in number_format_writes.items():
+        if before["style_bases"].get(key) != after["style_bases"].get(key):
+            raise _fail("OFFICE_STRUCTURE_MISMATCH", "styles", "数字格式修改意外改变了目标单元格的其他样式。")
+        if after["number_formats"].get(key) != write["data"]:
+            raise _fail("OFFICE_TARGET_MISMATCH", "target", "目标单元格数字格式与映射不一致。")
     before_styles, after_styles = before["styles"], after["styles"]
     for key in set(before_styles) | set(after_styles):
         if before_styles.get(key) != after_styles.get(key):
+            if key in number_format_writes:
+                continue
             if policy.require_styles:
                 raise _fail("OFFICE_STRUCTURE_MISMATCH", "styles", "策略要求保留的单元格样式发生变化。")
             warnings.append({"code": "NON_TARGET_STYLE_CHANGED", "element_id": key})
-    return len(targets), len(before["formulas"]), cache_status, warnings
+    return len(targets), len(after["formulas"]), cache_status, warnings
 
 
 def _matches(expected_kind: object, expected: object, actual_kind: str, actual: object) -> bool:
@@ -681,11 +925,20 @@ def verify_inline(
     mapping_plan: object,
     policy: VerificationPolicy,
     budget: VerificationBudget,
+    *,
+    authorized_blank_targets: tuple[str, ...] = (),
 ) -> VerificationReport:
     if not isinstance(policy, VerificationPolicy) or not isinstance(budget, VerificationBudget):
         raise _fail("OFFICE_INVALID_OR_MISMATCHED", "input", "验证策略或资源预算类型无效。")
     policy.validate()
     budget.validate()
+    if (
+        not isinstance(authorized_blank_targets, tuple)
+        or len(authorized_blank_targets) > budget.max_cells
+        or any(not isinstance(item, str) or len(item) > 512 for item in authorized_blank_targets)
+        or len(set(authorized_blank_targets)) != len(authorized_blank_targets)
+    ):
+        raise _fail("OFFICE_MAPPING_INVALID", "mapping", "显式清空目标列表无效。")
     if not isinstance(source_bytes, bytes) or not isinstance(candidate_bytes, bytes):
         raise _fail("OFFICE_INVALID_OR_MISMATCHED", "input", "源文件和候选文件必须以字节传入。")
     source_sha = hashlib.sha256(source_bytes).hexdigest()
@@ -695,11 +948,26 @@ def verify_inline(
     output = read_package(candidate_bytes, filename, mime_type, budget)
     if source.kind not in policy.enabled_formats:
         raise _fail("OFFICE_UNSUPPORTED_FEATURE", "format", "该文件格式当前未启用回读能力。")
+    if authorized_blank_targets and source.kind != "xlsx":
+        raise _fail("OFFICE_MAPPING_INVALID", "mapping", "缺失单元格授权仅适用于 Excel 清空操作。")
     reject_unsupported_nodes(source)
     reject_unsupported_nodes(output)
-    warnings = _compare_packages(source, output, policy)
+    has_number_format_write = any(item.get("operation") == "set_number_format" for item in plan_writes)
+    warnings = _compare_packages(
+        source,
+        output,
+        policy,
+        allow_number_format_changes=has_number_format_write,
+    )
     if source.kind == "xlsx":
-        count, formulas, formula_cache_status, semantic_warnings = _check_xlsx(source, output, plan_writes, budget, policy)
+        count, formulas, formula_cache_status, semantic_warnings = _check_xlsx(
+            source,
+            output,
+            plan_writes,
+            budget,
+            policy,
+            frozenset(authorized_blank_targets),
+        )
     else:
         count, formulas, formula_cache_status, semantic_warnings = _check_docx(source, output, plan_writes, budget, policy)
     warnings.extend(semantic_warnings)
