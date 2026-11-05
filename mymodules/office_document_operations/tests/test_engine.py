@@ -10,6 +10,7 @@ import pytest
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import PatternFill
 from openpyxl.worksheet.table import Table, TableStyleInfo
+from openpyxl.utils.datetime import from_excel
 
 from office_document_operations import DocumentOperationEngine, validate_operation_list, validate_saved_output
 
@@ -239,6 +240,35 @@ def test_set_empty_string_roundtrips_as_blank_cell(tmp_path):
     workbook = load_workbook(output, data_only=False)
     try:
         assert workbook["Orders"]["A15"].value is None
+    finally:
+        workbook.close()
+
+
+def test_datetime_write_is_verified_at_xlsx_millisecond_precision(tmp_path):
+    source, output = tmp_path / "datetime-precision.xlsx", tmp_path / "datetime-precision-output.xlsx"
+    _fixture(source)
+    requested = datetime(2026, 11, 3, 12, 30, 0, 123456)
+    operations = {
+        "schema_version": "1.0",
+        "operations": [{
+            "operation_id": "datetime-precision",
+            "type": "set_value",
+            "target": {"sheet": "Orders", "cell": "D15"},
+            "parameters": {"value": _typed(requested)},
+        }],
+    }
+
+    report = DocumentOperationEngine().execute(source, output, operations).as_dict()
+
+    assert report["status"] == "PASS", report
+    workbook = load_workbook(output, data_only=False)
+    try:
+        # The fixture's D column uses General formatting, so the stored date
+        # is a numeric serial. Recovering it with the workbook epoch shows the
+        # millisecond precision available through an XLSX readback.
+        value = workbook["Orders"]["D15"].value
+        assert isinstance(value, (int, float))
+        assert from_excel(value, epoch=workbook.epoch) == datetime(2026, 11, 3, 12, 30, 0, 123000)
     finally:
         workbook.close()
 

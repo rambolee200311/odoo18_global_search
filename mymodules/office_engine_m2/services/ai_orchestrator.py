@@ -13,50 +13,58 @@ from .mapping_service import _load_mapping_data
 _VALUE_TYPES = {
     "char": "string", "text": "string", "html": "string", "selection": "string",
     "integer": "number", "float": "number", "monetary": "number", "boolean": "boolean",
-    # Odoo serializes date and datetime values as ISO-like text through the
-    # native Retriever; they remain scalar values that Office can write.
-    "date": "string", "datetime": "string",
+    # Preserve native temporal types so the renderer can write typed Excel
+    # date values and apply only the bounded date_offset transform.
+    "date": "date", "datetime": "datetime",
 }
 
-def _authorized_scalar_field_type(target, field_name):
-    """Return the type of an ACL-readable scalar field via at most two M2O hops."""
+def _scalar_field_path_status(target, field_name):
+    """Return an authorized scalar field type or a non-sensitive rejection code."""
     if (
         not isinstance(field_name, str)
         or not field_name
         or field_name.count(".") > 2
     ):
-        return None
-    try:
-        segments = field_name.split(".")
-        if any(not segment or segment in {"id", "__last_update", "create_uid", "write_uid"} for segment in segments):
-            return None
-        current = target
-        for index, segment in enumerate(segments):
-            model = current.env[current._name]
+        return None, "invalid_field_path"
+    segments = field_name.split(".")
+    if any(not segment or segment in {"id", "__last_update", "create_uid", "write_uid"} for segment in segments):
+        return None, "invalid_field_path"
+    current = target
+    for index, segment in enumerate(segments):
+        model = current.env[current._name]
+        try:
             model.check_access("read")
             model.check_field_access_rights("read", [segment])
-            field = model._fields.get(segment)
-            if not field:
-                return None
-            if index == len(segments) - 1:
-                return _VALUE_TYPES.get(field.type)
-            if field.type != "many2one":
-                return None
-            related_model = current.env[field.comodel_name]
+        except (AccessError, UserError):
+            return None, "read_access_denied"
+        field = model._fields.get(segment)
+        if not field:
+            return None, "field_not_found"
+        if index == len(segments) - 1:
+            value_type = _VALUE_TYPES.get(field.type)
+            return (value_type, None) if value_type else (None, "unsupported_scalar_type")
+        if field.type != "many2one":
+            return None, "path_segment_is_not_many2one"
+        related_model = current.env[field.comodel_name]
+        try:
             related_model.check_access("read")
-            current = current[segment]
-            if current:
+        except (AccessError, UserError):
+            return None, "related_model_read_access_denied"
+        current = current[segment]
+        if current:
+            try:
                 current.check_access("read")
-            else:
-                current = related_model
-        return None
-    except (AccessError, UserError):
-        # Field discovery examines many relations, some of which expose
-        # permanently restricted fields (for example res.users.totp_secret),
-        # or whose model-specific access check is not configured. Skip that
-        # candidate; an unverifiable field must never abort the whole mapping
-        # request or be sent to the local Provider.
-        return None
+            except (AccessError, UserError):
+                return None, "related_record_read_access_denied"
+        else:
+            current = related_model
+    return None, "invalid_field_path"
+
+
+def _authorized_scalar_field_type(target, field_name):
+    """Return the type of an ACL-readable scalar field via at most two M2O hops."""
+    value_type, _reason = _scalar_field_path_status(target, field_name)
+    return value_type
 
 
 def _approved_field_types(env, session, allowed_fields):
@@ -232,7 +240,12 @@ def _approved_collection_field_types(env, session, group):
 
 
 def _retrieve_collection(env, session, group, fields):
-    """Retrieve exactly the relation recordset, preserving its authorized order."""
+    """Retrieve exactly the authorized collection and finalize its row order.
+
+    This is the ordering boundary for repeat-row processing: subsequent field
+    mappings use these rows by index, and record-relative edits resolve their
+    row against this same ordered snapshot.
+    """
     selected_records = group.get("collection_field") == "selected_records"
     if selected_records:
         try:
@@ -342,6 +355,183 @@ def _retrieve_collection(env, session, group, fields):
         # record order. Empty values remain last in both directions.
         rows = [row for _key, row in populated] + [row for _key, row in empty]
     return rows
+
+
+def _repeat_group_selector_index(groups):
+    """Index server-generated repeat groups by canonical ID and collection name."""
+    selectors = {}
+    for group in groups:
+        if not isinstance(group, dict):
+            continue
+        group_id = group.get("group_id")
+        if not isinstance(group_id, str) or not group_id:
+            continue
+        names = {group_id}
+        collection_field = group.get("collection_field")
+        if isinstance(collection_field, str) and collection_field:
+            names.add(collection_field)
+        for name in names:
+            selectors.setdefault(name, {})[group_id] = group
+    return selectors
+
+
+def _resolve_record_target_cell_edits(env, session, edits, groups, group_values_by_id=None):
+    """Resolve record-relative cell edits against the collection's final row order.
+
+    Row positions are derived from the same reauthorized, sorted collection
+    snapshot used by repeat-row mapping. The persisted ``record_target`` stays
+    stable across later sort changes; the returned ``element_id`` is only the
+    coordinate for this exact compilation/confirmation attempt.
+    """
+    if not edits:
+        return []
+    groups_by_selector = _repeat_group_selector_index(groups)
+    values_by_id = dict(group_values_by_id or {})
+    resolved = []
+    for edit in edits:
+        if not isinstance(edit, dict):
+            raise ValidationError(_("A cell edit is invalid."))
+        record_target = edit.get("record_target")
+        if record_target is None:
+            if set(edit) != {"element_id", "value", "value_type"}:
+                raise ValidationError(_("A coordinate cell edit is invalid."))
+            resolved.append(dict(edit))
+            continue
+        if (
+            set(edit) != {"record_target", "value", "value_type"}
+            or not isinstance(record_target, dict)
+            or set(record_target) != {"group_id", "record_id", "column"}
+            or not isinstance(record_target.get("group_id"), str)
+            or type(record_target.get("record_id")) is not int
+            or not isinstance(record_target.get("column"), str)
+        ):
+            raise ValidationError(_("A record-relative cell edit is invalid."))
+        requested_group_id = record_target["group_id"]
+        group_matches = groups_by_selector.get(requested_group_id, {})
+        if len(group_matches) != 1:
+            raise AccessError(_("The selected repeat-row collection is no longer available."))
+        group_id, group = next(iter(group_matches.items()))
+        if not group or "relation_model" not in group:
+            raise AccessError(_("The selected repeat-row collection is no longer available."))
+        records = values_by_id.get(group_id)
+        if records is None:
+            permitted = _approved_collection_field_types(env, session, group)
+            records = _retrieve_collection(env, session, group, permitted)
+            values_by_id[group_id] = records
+        record_id = record_target["record_id"]
+        matches = [index for index, record in enumerate(records) if record.get("id") == record_id]
+        target_rows = group.get("target_rows")
+        if len(matches) != 1 or not isinstance(target_rows, list) or len(target_rows) != len(records):
+            raise AccessError(_("The requested record is not in the authorized repeat-row collection."))
+        row_index = matches[0]
+        row_targets = [
+            target
+            for target in target_rows
+            if isinstance(target, dict) and target.get("row_index") == row_index
+        ]
+        if len(row_targets) != 1 or not isinstance(row_targets[0].get("targets"), list):
+            raise ValidationError(_("The repeated-row target layout is inconsistent with its collection."))
+        column = record_target["column"]
+        targets = [
+            target for target in row_targets[0]["targets"]
+            if isinstance(target, dict) and target.get("column_id") == column
+            and isinstance(target.get("element_id"), str)
+        ]
+        if len(targets) != 1:
+            raise AccessError(_("The requested column is not part of the authorized repeated-row mapping."))
+        resolved.append({
+            "element_id": targets[0]["element_id"],
+            "record_target": {
+                "group_id": group_id,
+                "record_id": record_id,
+                "column": column,
+            },
+            "value": edit["value"],
+            "value_type": edit["value_type"],
+        })
+    return resolved
+
+
+def _bind_repeat_row_coordinate_cell_edits(env, session, edits, groups):
+    """Persist repeat-band coordinates as stable record-relative edits.
+
+    A coordinate in a repeat-row region refers to the record occupying that
+    cell in the collection's current final order. Resolve that identity while
+    the current authorized/sorted collection is available, so a later sort
+    moves the edit with the same record instead of reusing a stale row number.
+    Coordinates outside repeat-row regions remain ordinary fixed-cell edits.
+    """
+    if not edits:
+        return []
+    groups_by_selector = _repeat_group_selector_index(groups)
+    group_matches = {}
+    for group in groups:
+        if not isinstance(group, dict) or not isinstance(group.get("target_rows"), list):
+            continue
+        for row in group["target_rows"]:
+            if not isinstance(row, dict) or type(row.get("row_index")) is not int:
+                continue
+            for target in row.get("targets", []):
+                if not isinstance(target, dict):
+                    continue
+                element_id = target.get("element_id")
+                column = target.get("column_id")
+                if isinstance(element_id, str) and isinstance(column, str):
+                    group_matches.setdefault(element_id, []).append((group, row["row_index"], column))
+
+    ordered_records_by_group = {}
+    bound = []
+    for edit in edits:
+        if not isinstance(edit, dict):
+            bound.append(edit)
+            continue
+        if "record_target" in edit:
+            normalized = dict(edit)
+            record_target = edit.get("record_target")
+            if isinstance(record_target, dict) and isinstance(record_target.get("group_id"), str):
+                candidates = groups_by_selector.get(record_target["group_id"], {})
+                if len(candidates) == 1:
+                    canonical_group_id = next(iter(candidates))
+                    normalized_target = dict(record_target)
+                    normalized_target["group_id"] = canonical_group_id
+                    normalized["record_target"] = normalized_target
+            bound.append(normalized)
+            continue
+        if "element_id" not in edit:
+            bound.append(dict(edit) if isinstance(edit, dict) else edit)
+            continue
+        candidates = group_matches.get(edit.get("element_id"), [])
+        if not candidates:
+            bound.append(dict(edit))
+            continue
+        if len(candidates) != 1:
+            raise ValidationError(_("The edited cell belongs to more than one repeat-row region."))
+        group, row_index, column = candidates[0]
+        group_id = group.get("group_id")
+        if not isinstance(group_id, str) or not group_id:
+            raise ValidationError(_("The repeat-row edit target is invalid."))
+        if group_id not in ordered_records_by_group:
+            permitted = _approved_collection_field_types(env, session, group)
+            ordered_records_by_group[group_id] = _retrieve_collection(env, session, group, permitted)
+        ordered_records = ordered_records_by_group[group_id]
+        target_rows = group["target_rows"]
+        if (
+            row_index < 0
+            or row_index >= len(ordered_records)
+            or len(target_rows) != len(ordered_records)
+            or type(ordered_records[row_index].get("id")) is not int
+        ):
+            raise AccessError(_("The edited cell no longer maps to the authorized repeat-row collection."))
+        bound.append({
+            "record_target": {
+                "group_id": group_id,
+                "record_id": ordered_records[row_index]["id"],
+                "column": column,
+            },
+            "value": edit["value"],
+            "value_type": edit["value_type"],
+        })
+    return bound
 
 
 def _mapping_field_types(root_fields, groups, group_fields):

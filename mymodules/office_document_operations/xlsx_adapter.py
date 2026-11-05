@@ -325,7 +325,14 @@ class XlsxAdapter:
                 if cell.data_type == "f" and not params.get("overwrite_formula", False):
                     raise self._error("formula_overwrite_requires_explicit_opt_in", "Target contains a formula.", operation["operation_id"])
                 data = self._python_value(typed_value)
+                number_format = cell.number_format
                 cell.value = data
+                if typed_value["type"] in {"date", "datetime"}:
+                    # openpyxl assigns a default date format when a Python
+                    # date is written into a General cell. set_value changes
+                    # content only; formatting remains an independent,
+                    # explicit operation.
+                    cell.number_format = number_format
                 if typed_value["type"] == "string":
                     # A leading '=' is data in set_value; formulas require a
                     # distinct future operation and are never inferred.

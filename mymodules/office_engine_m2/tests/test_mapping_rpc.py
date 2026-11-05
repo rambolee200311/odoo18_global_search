@@ -303,6 +303,7 @@ class TestOfficeMappingRpcTransactions(TransactionCase):
                 "manifest_metadata_version",
                 "selected_record_ids",
                 "extra_authorized_fields",
+                "extra_authorized_collection_fields",
             },
         )
         self.assertEqual(context["manifest_metadata_version"], 2)

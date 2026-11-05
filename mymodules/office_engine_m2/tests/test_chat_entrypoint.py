@@ -31,14 +31,14 @@ class TestOfficeToolContextHelpers(TransactionCase):
                     "element_id": "xlsx:Sheet1!A1",
                     "required": False,
                     "writable": True,
-                    "allowed_value_types": ["string", "number", "boolean", "formula"],
+                    "allowed_value_types": ["string", "number", "boolean", "date", "datetime", "formula"],
                     "approved_to_skip": True,
                 },
                 {
                     "element_id": "xlsx:Sheet1!B1",
                     "required": False,
                     "writable": True,
-                    "allowed_value_types": ["string", "number", "boolean", "formula"],
+                    "allowed_value_types": ["string", "number", "boolean", "date", "datetime", "formula"],
                     "approved_to_skip": True,
                     "visual_labels": [
                         {
@@ -52,7 +52,7 @@ class TestOfficeToolContextHelpers(TransactionCase):
                     "element_id": "xlsx:Sheet1!C1",
                     "required": False,
                     "writable": True,
-                    "allowed_value_types": ["string", "number", "boolean", "formula"],
+                    "allowed_value_types": ["string", "number", "boolean", "date", "datetime", "formula"],
                     "approved_to_skip": True,
                     "visual_labels": [
                         {

@@ -40,6 +40,35 @@ def _parser_warning_gate(caught: list[warnings.WarningMessage], stage: str) -> t
     return messages
 
 
+_XLSX_CELL_REFERENCE_ROW = re.compile(r"(?<![A-Z0-9_])\$?[A-Z]{1,3}\$?([1-9][0-9]*)", re.IGNORECASE)
+_XLSX_AGGREGATE_FUNCTION = re.compile(r"\b(?:SUM|SUBTOTAL|AGGREGATE)\s*\(", re.IGNORECASE)
+
+
+def _xlsx_row_is_summary_formula_row(formula_cells, row_number: int) -> bool:
+    """Distinguish aggregate rows from normal table rows with local formulas.
+
+    Row formulas that reference the current row (for example ``=G2-H2``) are
+    calculated data columns and must not terminate a detected table body.
+    Aggregate formulas, or formulas combining multiple prior rows, are treated
+    as summary-row signals. This is a structural heuristic, not formula
+    evaluation; unsupported or ambiguous formulas remain visible to inspection.
+    """
+    formulas = [cell.value for cell in formula_cells if isinstance(cell.value, str) and cell.value.startswith("=")]
+    if not formulas:
+        return False
+    for formula in formulas:
+        if _XLSX_AGGREGATE_FUNCTION.search(formula):
+            continue
+        referenced_rows = [int(item) for item in _XLSX_CELL_REFERENCE_ROW.findall(formula)]
+        if (
+            len(set(referenced_rows)) > 1
+            and all(referenced_row < row_number for referenced_row in referenced_rows)
+        ):
+            continue
+        return False
+    return True
+
+
 def _qname(node: etree._Element) -> str:
     if not isinstance(node.tag, str):
         return ""
@@ -105,10 +134,12 @@ def _xlsx_inspection(data: bytes, package: Package, budget: ResourceBudget) -> D
                     sheet.cell(data_row, column)
                     for column in range(first_column, last_column + 1)
                 ]
-                if any(
-                    isinstance(cell.value, str) and cell.value.startswith("=")
+                formula_cells = [
+                    cell
                     for cell in row_cells
-                ):
+                    if isinstance(cell.value, str) and cell.value.startswith("=")
+                ]
+                if _xlsx_row_is_summary_formula_row(formula_cells, data_row):
                     break
                 if not any(cell.value is not None or cell.has_style for cell in row_cells):
                     break
@@ -337,7 +368,11 @@ def _valid_arithmetic_formula(formula: object) -> bool:
     return expression_rule() and cursor == len(tokens)
 
 
-def _validate_mapping(mapping: object, inspection: DocumentInspection) -> list[tuple[Element, dict[str, object]]]:
+def _validate_mapping(
+    mapping: object,
+    inspection: DocumentInspection,
+    explicit_target_ids: frozenset[str] = frozenset(),
+) -> list[tuple[Element, dict[str, object]]]:
     if not isinstance(mapping, dict) or not _has_exact_keys(mapping, {"schema_version", "template_sha256", "writes"}):
         raise _mapping_error("映射结构包含缺失或未知字段。")
     if mapping.get("schema_version") != "1":
@@ -376,7 +411,7 @@ def _validate_mapping(mapping: object, inspection: DocumentInspection) -> list[t
         ):
             raise _mapping_error("同一目标的值操作冲突或重复。")
         prior_operations.add(operation)
-        if not element.writable:
+        if not element.writable and element_id not in explicit_target_ids:
             raise _mapping_error("写入目标为公式或当前不可写结构。")
         value = write.get("value")
         if not isinstance(value, dict) or not _has_exact_keys(value, {"type", "data"}):
@@ -414,12 +449,75 @@ def _validate_mapping(mapping: object, inspection: DocumentInspection) -> list[t
         elif kind == "boolean":
             if element.kind not in {"cell", "formula"} or not isinstance(data, bool):
                 raise _mapping_error("boolean 类型只适用于 Excel 单元格。")
+        elif kind in {"date", "datetime"}:
+            if element.kind not in {"cell", "formula"} or not isinstance(data, str):
+                raise _mapping_error("date/datetime 类型必须是 Excel 单元格的 ISO-8601 字符串。")
         elif kind == "formula" and operation == "set_formula":
             pass
         else:
             raise _mapping_error("值类型不受支持。")
         validated.append((element, {"type": kind, "data": data, "operation": operation}))
     return validated
+
+
+def _validate_explicit_cell_edits(edits: object, inspection: DocumentInspection) -> list[dict[str, object]]:
+    """Validate explicit typed cell writes against the inspected document.
+
+    These writes may replace an existing literal or formula in any inspected
+    cell explicitly selected by the user, including a detected table header.
+    Cells outside the inspection catalogue and non-cell structures remain
+    unavailable. Ordinary data mappings continue to obey ``Element.writable``.
+    """
+    if edits is None:
+        return []
+    if not isinstance(edits, list) or len(edits) > 200:
+        raise _mapping_error("显式单元格编辑必须是有界数组。")
+    known = {element.element_id: element for element in inspection.elements}
+    seen: set[str] = set()
+    writes: list[dict[str, object]] = []
+    for edit in edits:
+        if not isinstance(edit, dict) or not _has_exact_keys(edit, {"element_id", "value", "value_type"}):
+            raise _mapping_error("显式单元格编辑项必须仅包含 element_id、value 和 value_type。")
+        element_id, data, value_type = edit.get("element_id"), edit.get("value"), edit.get("value_type")
+        if not isinstance(element_id, str) or element_id in seen:
+            raise _mapping_error("显式单元格编辑目标无效或重复。")
+        element = known.get(element_id)
+        if (
+            element is None
+            or element.kind not in {"cell", "formula"}
+        ):
+            raise _mapping_error("显式单元格编辑目标不在当前文件的可编辑结构目录中。")
+        match = re.fullmatch(r"xlsx:([^!]{1,31})!([A-Z]{1,3}[1-9][0-9]*)", element_id)
+        if not match:
+            raise _mapping_error("显式单元格编辑目标格式无效。")
+        if value_type == "string":
+            if not isinstance(data, str) or len(data) > 300 or any(ord(char) < 32 for char in data):
+                raise _mapping_error("显式文本值必须是单行且不超过 300 个字符。")
+            if data.startswith("="):
+                raise _mapping_error("公式必须使用受限的 set_formula 操作。")
+        elif value_type == "number":
+            if isinstance(data, bool) or not isinstance(data, (int, float)) or (isinstance(data, float) and not math.isfinite(data)):
+                raise _mapping_error("显式数字值必须是有限数值。")
+        elif value_type == "boolean":
+            if type(data) is not bool:
+                raise _mapping_error("显式布尔值必须是 true 或 false。")
+        elif value_type == "date":
+            if not isinstance(data, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", data):
+                raise _mapping_error("显式日期值必须使用 ISO 日期格式。")
+        elif value_type == "datetime":
+            if not isinstance(data, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?", data):
+                raise _mapping_error("显式日期时间值必须使用本地 ISO 日期时间格式。")
+        else:
+            raise _mapping_error("显式单元格值类型不受支持。")
+        seen.add(element_id)
+        writes.append(
+            {
+                "element_id": element_id,
+                "operation": "set_value",
+                "value": {"type": value_type, "data": data},
+            }
+        )
+    return writes
 
 
 def _repeat_rows_handler(source: bytes, operation: dict[str, object], budget: ResourceBudget):
@@ -479,11 +577,18 @@ def _format_target_ids(operations: list[dict[str, object]], budget: ResourceBudg
 
 
 def _numeric_write_pairs(operations: list[dict[str, object]]):
-    pairs = []
+    # openpyxl's float serialization repair must reflect final ordered state.
+    # A numeric mapping followed by a string clear/value is not a numeric
+    # final write and must not be reinserted into the saved XLSX afterward.
+    final_values: dict[tuple[str, str], tuple[object, object] | None] = {}
     for operation in operations:
-        if operation["type"] != "set_value":
+        operation_type = operation["type"]
+        if operation_type not in {"set_value", "set_formula"}:
             continue
         target = operation["target"]
+        if operation_type == "set_formula":
+            final_values[(target["sheet"], target["cell"])] = None
+            continue
         params = operation["parameters"]
         if "cell" in target:
             values = [[params["value"]]]
@@ -493,11 +598,15 @@ def _numeric_write_pairs(operations: list[dict[str, object]]):
             min_col, min_row, _, _ = range_boundaries(target["range"])
         for row_offset, row_values in enumerate(values):
             for col_offset, value in enumerate(row_values):
+                coordinate = f"{get_column_letter(min_col + col_offset)}{min_row + row_offset}"
+                key = (target["sheet"], coordinate)
                 data = value["data"]
                 if value["type"] == "number" and isinstance(data, (int, float)) and not isinstance(data, bool):
-                    element_id = f"xlsx:{target['sheet']}!{get_column_letter(min_col + col_offset)}{min_row + row_offset}"
-                    pairs.append((SimpleNamespace(element_id=element_id), value))
-    return pairs
+                    element_id = f"xlsx:{target['sheet']}!{coordinate}"
+                    final_values[key] = (SimpleNamespace(element_id=element_id), value)
+                else:
+                    final_values[key] = None
+    return [item for item in final_values.values() if item is not None]
 
 
 def _execute_xlsx_operations_inline(
@@ -576,7 +685,7 @@ def _execute_xlsx_operations_inline(
     )
 
 
-def _mapping_operation_list(data: bytes, writes, preprocessing=None) -> dict[str, object]:
+def _mapping_operation_list(data: bytes, writes, preprocessing=None, explicit_cell_writes=()) -> dict[str, object]:
     operations: list[dict[str, object]] = []
     if preprocessing is not None:
         if not isinstance(preprocessing, dict) or set(preprocessing) != {"action", "sheet", "start_row", "record_count", "columns"}:
@@ -608,6 +717,24 @@ def _mapping_operation_list(data: bytes, writes, preprocessing=None) -> dict[str
                 },
             }
         operations.append(entry)
+    # The canonical operation array is an ordered execution contract. Mapping
+    # writes are emitted before explicit user edits, so an explicitly
+    # authorized cell edit is a later operation and may intentionally replace
+    # the mapped value at that same target. Duplicate mapping targets and
+    # duplicate explicit edits remain rejected by their respective validators.
+    for index, write in enumerate(explicit_cell_writes, 1):
+        sheet, coordinate = write["element_id"][5:].rsplit("!", 1)
+        operations.append(
+            {
+                "operation_id": f"mapping-cell-edit-{index:04d}",
+                "type": "set_value",
+                "target": {"sheet": sheet, "cell": coordinate},
+                # A cell_edits entry is an explicit, coordinate-directed
+                # user instruction, so it may replace a formula at that
+                # exact inspected target with the typed literal value.
+                "parameters": {"value": write["value"], "overwrite_formula": True},
+            }
+        )
     return {"schema_version": "1.1", "source_sha256": hashlib.sha256(data).hexdigest(), "operations": operations}
 
 
@@ -619,6 +746,8 @@ def _render_xlsx(
     budget: ResourceBudget,
     preprocessing=None,
     authorized_blank_targets: tuple[str, ...] = (),
+    explicit_cell_edits=(),
+    explicit_header_edits=(),
 ) -> RenderCandidate:
     source_inspection = inspect_inline(data, filename, mime_type, budget)
     expanded = data
@@ -633,15 +762,52 @@ def _render_xlsx(
         except Exception as exc:
             raise _mapping_error("重复行结构扩展失败。") from exc
     inspection = inspect_inline(expanded, filename, mime_type, budget) if expanded_for_inspection else source_inspection
-    writes = _validate_mapping(mapping, inspection)
-    operation_list = _mapping_operation_list(data, writes, repeat_instruction)
+    # Convert the historical, text-only header operation to the generic typed
+    # cell-edit shape before validation. New callers use explicit_cell_edits.
+    legacy_header_edits = [
+        {"element_id": item.get("element_id"), "value": item.get("value"), "value_type": "string"}
+        for item in (explicit_header_edits or [])
+        if isinstance(item, dict)
+    ]
+    if explicit_cell_edits and legacy_header_edits:
+        raise _mapping_error("不能同时提供新旧显式单元格编辑参数。")
+    cell_writes = _validate_explicit_cell_edits(
+        list(explicit_cell_edits or legacy_header_edits), inspection
+    )
+    explicit_target_ids = frozenset(item["element_id"] for item in cell_writes)
+    writes = _validate_mapping(mapping, inspection, explicit_target_ids)
+    operation_list = _mapping_operation_list(data, writes, repeat_instruction, cell_writes)
     candidate = _execute_xlsx_operations_inline(data, filename, mime_type, operation_list, budget)
+    verification_mapping = mapping
+    if cell_writes:
+        # office_verify receives an expected final-state mapping, not the
+        # execution log. Keep all non-value operations (for example number
+        # formats), but represent a value target only once: where an explicit
+        # edit follows a mapping write, the edit is the expected final value.
+        # The original mapping and edit sequence has already been separately
+        # validated and executed in order above, so this projection does not
+        # weaken detection of unordered/duplicate writes.
+        explicit_value_targets = {
+            item["element_id"] for item in cell_writes
+        }
+        verification_writes = [
+            item
+            for item in mapping["writes"]
+            if not (
+                item.get("element_id") in explicit_value_targets
+                and item.get("operation") in {"set_value", "set_formula"}
+            )
+        ]
+        verification_mapping = {
+            **mapping,
+            "writes": [*verification_writes, *cell_writes],
+        }
     return _attach_independent_verification(
         expanded,
         candidate,
         filename,
         mime_type,
-        mapping,
+        verification_mapping,
         budget,
         enabled_format="xlsx",
         authorized_blank_targets=authorized_blank_targets,
@@ -1156,10 +1322,24 @@ def render_inline(
     budget: ResourceBudget,
     preprocessing=None,
     authorized_blank_targets: tuple[str, ...] = (),
+    explicit_cell_edits=(),
+    explicit_header_edits=(),
 ) -> RenderCandidate:
     inspection = inspect_inline(data, filename, mime_type, budget)
     if inspection.format == "xlsx":
-        return _render_xlsx(data, filename, mime_type, mapping, budget, preprocessing, authorized_blank_targets)
+        return _render_xlsx(
+            data,
+            filename,
+            mime_type,
+            mapping,
+            budget,
+            preprocessing,
+            authorized_blank_targets,
+            explicit_cell_edits,
+            explicit_header_edits,
+        )
+    if explicit_cell_edits or explicit_header_edits:
+        raise OfficeCoreError("OFFICE_UNSUPPORTED_FEATURE", "cell_edit", "显式单元格编辑当前只支持 XLSX。")
     if inspection.format == "docx":
         return _render_docx(data, filename, mime_type, mapping, budget)
     raise OfficeCoreError("OFFICE_UNSUPPORTED_FEATURE", "format", "该 Office 格式当前未启用。")

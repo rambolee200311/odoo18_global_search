@@ -42,7 +42,8 @@ def test_parse_valid_exact_proposal_and_utf8_bytes():
         }],
         skipped_targets=["xlsx:Sheet1!C1"],
     )
-    assert parse_mapping_proposal(raw(value)) == value
+    parsed = parse_mapping_proposal(raw(value))
+    assert parsed == value
 
 
 def test_parse_explicit_clear_targets():
@@ -64,6 +65,119 @@ def test_parse_number_format_patch():
     assert parsed["format_patches"] == [
         {"element_id": "xlsx:Sheet1!B2", "number_format": "0.0"}
     ]
+
+
+def test_parse_explicit_header_text_edit():
+    value = proposal(
+        mappings=[],
+        header_edits=[{"element_id": "xlsx:Orders!F1", "value": "供应商商品描述"}],
+    )
+    parsed = parse_mapping_proposal(raw(value))
+    assert parsed["cell_edits"] == [
+        {"element_id": "xlsx:Orders!F1", "value": "供应商商品描述", "value_type": "string"}
+    ]
+    assert "header_edits" not in parsed
+
+
+def test_parse_generic_explicit_cell_edit():
+    value = proposal(
+        mappings=[],
+        cell_edits=[
+            {"element_id": "xlsx:Orders!F1", "value": "供应商商品描述", "value_type": "string"}
+        ],
+    )
+    assert parse_mapping_proposal(raw(value)) == value
+
+
+def test_parse_concatenated_string_mapping_with_explicit_separator():
+    value = proposal(mappings=[{
+        "element_id": "xlsx:Sheet1!A1",
+        "concat_fields": ["remark", "contact_name"],
+        "separator": " ",
+        "value_type": "string",
+    }])
+    assert parse_mapping_proposal(raw(value)) == value
+
+
+def test_parse_record_relative_cell_edit_with_explicit_empty_value():
+    value = proposal(
+        mappings=[],
+        cell_edits=[{
+            "record_target": {"group_id": "repeat_rows", "record_id": 42, "column": "I"},
+            "value": "",
+            "value_type": "string",
+        }],
+    )
+    assert parse_mapping_proposal(raw(value)) == value
+
+
+@pytest.mark.parametrize(
+    ("edit_value", "value_type"),
+    [(0, "number"), (False, "boolean")],
+)
+def test_record_relative_cell_edit_preserves_zero_and_false_types(edit_value, value_type):
+    value = proposal(mappings=[], cell_edits=[{
+        "record_target": {"group_id": "repeat_rows", "record_id": 42, "column": "I"},
+        "value": edit_value,
+        "value_type": value_type,
+    }])
+    assert parse_mapping_proposal(raw(value)) == value
+
+
+def test_record_relative_cell_edit_rejects_null_instead_of_treating_it_as_clear():
+    value = proposal(mappings=[], cell_edits=[{
+        "record_target": {"group_id": "repeat_rows", "record_id": 42, "column": "I"},
+        "value": None,
+        "value_type": "string",
+    }])
+    with pytest.raises(MappingParseError):
+        parse_mapping_proposal(raw(value))
+
+
+@pytest.mark.parametrize(
+    "record_target",
+    [
+        {"group_id": "repeat_rows", "record_id": True, "column": "I"},
+        {"group_id": "repeat_rows", "record_id": 0, "column": "I"},
+        {"group_id": "repeat_rows", "record_id": 42, "column": "i"},
+        {"group_id": "missing-group", "record_id": 42, "column": "I", "row": 2},
+    ],
+)
+def test_parse_rejects_invalid_record_relative_cell_edit_target(record_target):
+    value = proposal(mappings=[], cell_edits=[{
+        "record_target": record_target,
+        "value": "",
+        "value_type": "string",
+    }])
+    with pytest.raises(MappingParseError):
+        parse_mapping_proposal(raw(value))
+
+
+@pytest.mark.parametrize(
+    "header_edits",
+    [
+        [{"element_id": "xlsx:Orders!F1", "value": "two\nlines"}],
+        [
+            {"element_id": "xlsx:Orders!F1", "value": "first"},
+            {"element_id": "xlsx:Orders!F1", "value": "second"},
+        ],
+    ],
+)
+def test_parse_rejects_invalid_or_duplicate_header_text_edits(header_edits):
+    value = proposal(mappings=[], header_edits=header_edits)
+    with pytest.raises(MappingParseError):
+        parse_mapping_proposal(raw(value))
+
+
+def test_parse_rejects_ambiguous_legacy_and_generic_edit_arrays():
+    value = proposal(
+        mappings=[],
+        header_edits=[{"element_id": "xlsx:Orders!F1", "value": "Old"}],
+        cell_edits=[{"element_id": "xlsx:Orders!F1", "value": "New", "value_type": "string"}],
+    )
+    with pytest.raises(MappingParseError) as error:
+        parse_mapping_proposal(raw(value))
+    assert error.value.code == "duplicate_explicit_cell_edit_location"
 
 
 def test_parse_typed_empty_value_mapping_as_explicit_clear_target():
@@ -231,7 +345,7 @@ def test_reject_bad_mapping_schema_and_values():
         ({"element_id": "t", "source_field": None, "value_type": "string"}, "invalid_source_field"),
         ({"element_id": "t", "source_field": 0, "value_type": "string"}, "invalid_source_field"),
         ({"element_id": "t", "source_field": "f", "value_type": " "}, "invalid_value_type"),
-        ({"element_id": "t", "source_field": "f", "value_type": "date"}, "unsupported_value_type"),
+        ({"element_id": "t", "source_field": "f", "value_type": "binary"}, "unsupported_value_type"),
     ]
     for item, code in cases:
         assert_parse_error(raw(proposal(mappings=[item])), code)

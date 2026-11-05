@@ -148,10 +148,27 @@ def _load_mapping_data(session):
         or set(context) - {
             "target_manifest", "allowed_fields", "mapping_groups", "template_text",
             "manifest_metadata_version", "document_format", "selected_record_ids",
-            "extra_authorized_fields",
+            "extra_authorized_fields", "extra_authorized_collection_fields",
         }
     ):
         raise ValidationError(_("The mapping context is invalid."))
+    requested_collection_fields = context.get("extra_authorized_collection_fields", {})
+    if (
+        not isinstance(requested_collection_fields, dict)
+        or len(requested_collection_fields) > 40
+        or any(
+            not isinstance(collection, str)
+            or not collection.strip()
+            or len(collection) > 255
+            or not isinstance(paths, list)
+            or len(paths) > 64
+            or any(not isinstance(path, str) or not path.strip() or len(path) > 255 for path in paths)
+            or len(set(paths)) != len(paths)
+            for collection, paths in requested_collection_fields.items()
+        )
+        or sum(len(paths) for paths in requested_collection_fields.values()) > 64
+    ):
+        raise ValidationError(_("The explicitly authorized collection field context is invalid."))
     return (
         rules,
         context["target_manifest"],
@@ -267,7 +284,7 @@ def _validate_mapping_groups(mapping_groups, target_manifest=None):
                 or not re.fullmatch(
                     r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*){0,2}", name
                 )
-                or kind not in {"string", "number", "boolean"}
+                or kind not in {"string", "number", "boolean", "date", "datetime"}
                 for name, kind in allowed_fields.items()
             ):
                 raise ValidationError(_("Invalid mapping groups."))
@@ -306,6 +323,7 @@ def set_mapping_context(
     document_format=None,
     selected_record_ids=None,
     extra_authorized_fields=None,
+    extra_authorized_collection_fields=None,
 ):
     """Install server-owned TargetManifest/allowlist metadata for a session.
 
@@ -328,6 +346,24 @@ def set_mapping_context(
         or any(name not in allowed_fields for name in extra_authorized_fields)
     ):
         raise ValidationError(_("Invalid explicitly authorized field context."))
+    if extra_authorized_collection_fields is None:
+        extra_authorized_collection_fields = {}
+    if (
+        not isinstance(extra_authorized_collection_fields, dict)
+        or len(extra_authorized_collection_fields) > 40
+        or any(
+            not isinstance(collection, str)
+            or not collection.strip()
+            or len(collection) > 255
+            or not isinstance(paths, list)
+            or len(paths) > 64
+            or any(not isinstance(path, str) or not path.strip() or len(path) > 255 for path in paths)
+            or len(set(paths)) != len(paths)
+            for collection, paths in extra_authorized_collection_fields.items()
+        )
+        or sum(len(paths) for paths in extra_authorized_collection_fields.values()) > 64
+    ):
+        raise ValidationError(_("Invalid explicitly authorized collection field context."))
     groups = _validate_mapping_groups(mapping_groups, target_manifest)
     target_model = env[session.target_model]
     if selected_record_ids is None:
@@ -391,6 +427,7 @@ def set_mapping_context(
         "manifest_metadata_version": 2,
         "selected_record_ids": selected_record_ids,
         "extra_authorized_fields": extra_authorized_fields,
+        "extra_authorized_collection_fields": extra_authorized_collection_fields,
     }
     if document_format is not None:
         context["document_format"] = document_format
@@ -462,6 +499,7 @@ def restore_proposal_revision(env, session_id, expected_revision, proposal_revis
         _approved_collection_field_types,
         _approved_field_types,
         _mapping_field_types,
+        _resolve_record_target_cell_edits,
     )
 
     _target, root_fields = _approved_field_types(
@@ -478,10 +516,23 @@ def restore_proposal_revision(env, session_id, expected_revision, proposal_revis
         # M1 DOCX writes text paragraphs. Scalar values are safely serialized
         # to text; authorization still uses their actual Odoo field types.
         proposal_fields = {name: "string" for name in proposal_fields}
+    resolved_cell_edits = _resolve_record_target_cell_edits(
+        env, session, selected.get("cell_edits", []), groups
+    )
+    validation_rules = dict(selected)
+    validation_rules["cell_edits"] = [
+        {
+            "element_id": item["element_id"],
+            "value": item["value"],
+            "value_type": item["value_type"],
+        }
+        for item in resolved_cell_edits
+    ]
     report = validate_proposal(
-        selected,
+        validation_rules,
         context.get("target_manifest", []),
         proposal_fields,
+        ordered_cell_edit_overrides=True,
     )
     if not report.ready_for_review:
         raise ValidationError(_("The historical Proposal is no longer valid or authorized."))

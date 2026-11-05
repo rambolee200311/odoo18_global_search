@@ -212,6 +212,44 @@ class OfficeVerifyTests(unittest.TestCase):
         self.assertEqual(report.status, "PASS")
         self.assertEqual(report.checked_targets, 1)
 
+    def test_typed_date_and_datetime_targets_are_independently_verified(self):
+        source_sheet = (
+            f'<worksheet xmlns="{MAIN}"><sheetData>'
+            '<row r="1"><c r="A1" t="inlineStr"><is><t>Date</t></is></c>'
+            '<c r="C1" t="inlineStr"><is><t>Protected</t></is></c></row>'
+            '<row r="2"><c r="A2" t="inlineStr"><is><t>Datetime</t></is></c>'
+            '<c r="C2" t="inlineStr"><is><t>Protected too</t></is></c></row>'
+            '</sheetData></worksheet>'
+        )
+        candidate_sheet = (
+            f'<worksheet xmlns="{MAIN}"><sheetData>'
+            '<row r="1"><c r="A1" t="inlineStr"><is><t>Date</t></is></c>'
+            '<c r="B1"><v>46336</v></c>'
+            '<c r="C1" t="inlineStr"><is><t>Protected</t></is></c></row>'
+            '<row r="2"><c r="A2" t="inlineStr"><is><t>Datetime</t></is></c>'
+            '<c r="B2"><v>46336.375</v></c>'
+            '<c r="C2" t="inlineStr"><is><t>Protected too</t></is></c></row>'
+            '</sheetData></worksheet>'
+        )
+        source = xlsx(sheet_xml=source_sheet)
+        candidate = xlsx(sheet_xml=candidate_sheet)
+        plan = plan_for(source, "xlsx:Sheet1!B1", "date", "2026-11-10")
+        plan["writes"].append(
+            {
+                "element_id": "xlsx:Sheet1!B2",
+                "operation": "set_value",
+                "value": {"type": "datetime", "data": "2026-11-10T09:00:00"},
+            }
+        )
+
+        report = self.verify(source, candidate, "typed-dates.xlsx", XLSX_MIME, plan)
+        self.assertEqual(report.status, "PASS")
+        self.assertEqual(report.checked_targets, 2)
+
+        wrong_candidate = xlsx(sheet_xml=candidate_sheet.replace("46336.375", "46336.5"))
+        with self.assertRaises(OfficeVerifyError):
+            self.verify(source, wrong_candidate, "typed-dates.xlsx", XLSX_MIME, plan)
+
     def test_missing_xlsx_cell_is_allowed_only_for_authorized_explicit_clear(self):
         source = xlsx(
             f'<worksheet xmlns="{MAIN}"><sheetData>'

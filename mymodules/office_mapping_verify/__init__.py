@@ -8,6 +8,7 @@ from .contracts import (
     ValidationReport,
 )
 from .parser import parse_mapping_proposal
+from .transforms import apply_transform, validate_transform
 from .validator import (
     apply_manual_edits,
     expand_table_column_operations,
@@ -22,6 +23,8 @@ __all__ = [
     "ParseLimits",
     "ValidationReport",
     "parse_mapping_proposal",
+    "apply_transform",
+    "validate_transform",
     "validate_proposal",
     "validate_user_revision",
     "expand_table_column_operations",

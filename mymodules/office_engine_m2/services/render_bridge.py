@@ -7,10 +7,12 @@ import json
 import logging
 import re
 import uuid
+from datetime import date, datetime
 
 from odoo import _, fields
 from odoo.exceptions import AccessError, UserError, ValidationError
-from office_mapping_verify import validate_proposal
+from office_mapping_verify import ParseLimits, validate_proposal
+from office_mapping_verify import apply_transform
 
 from office_core import (
     OfficeCoreError,
@@ -28,6 +30,7 @@ from .ai_orchestrator import (
     _mapping_field_types,
     _retrieve_collection,
     _retrieve_record,
+    _resolve_record_target_cell_edits,
 )
 
 _logger = logging.getLogger(__name__)
@@ -63,6 +66,21 @@ def _m1_value(value, value_type):
         if type(value) is not bool:
             raise ValidationError(_("The current record value is not a boolean."))
         return value
+    if value_type == "date":
+        if isinstance(value, datetime):
+            raise ValidationError(_("The current record value is a datetime, not a date."))
+        try:
+            return (value if isinstance(value, date) else date.fromisoformat(value)).isoformat()
+        except (TypeError, ValueError) as error:
+            raise ValidationError(_("The current record value is not an ISO date.")) from error
+    if value_type == "datetime":
+        try:
+            parsed = value if isinstance(value, datetime) else datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except (TypeError, ValueError) as error:
+            raise ValidationError(_("The current record value is not an ISO datetime.")) from error
+        if parsed.utcoffset() is not None:
+            raise ValidationError(_("Timezone-aware datetimes cannot be written to XLSX without conversion."))
+        return parsed.isoformat()
     raise ValidationError(_("The mapping value type is not supported."))
 
 
@@ -72,6 +90,24 @@ def _first_nonempty_mapping_value(values):
         (value for value in values if value is not None and value is not False and value != ""),
         None,
     )
+
+
+def _concatenate_text_values(values, separator):
+    """Join authorized text values while treating Odoo's empty Char False as blank."""
+    if not isinstance(separator, str) or len(separator) > 32 or any(ord(char) < 32 for char in separator):
+        raise ValidationError(_("The mapping separator is invalid."))
+    parts = []
+    for value in values:
+        # Odoo commonly represents an unset Char/Text value as False. Keep this
+        # identity check precise: numeric 0 and boolean False are otherwise
+        # easy to conflate in Python, while only the ORM's False sentinel is
+        # meaningful as an empty string for this already-authorized text field.
+        if value is None or value is False or value == "":
+            continue
+        if not isinstance(value, str):
+            raise ValidationError(_("Concatenation sources must contain text values."))
+        parts.append(value)
+    return separator.join(parts)
 
 
 def _stable_request_uuid(env, session, attempt_revision=None):
@@ -95,7 +131,13 @@ def _render_result_url(attachment_id):
 
 
 def _compile_plan(env, session):
-    """Reauthorize and read a fresh, minimal value snapshot for one proposal."""
+    """Compile the deterministic template -> map/sort -> edit pipeline.
+
+    Template inspection and authorization happen first. Collection retrieval
+    establishes final sort order before repeat mappings are projected to row
+    coordinates. Explicit user edits are resolved/applied after those mapped
+    writes; only then does office_core validate and generate a candidate.
+    """
     session.thread_id.check_access("read")
     session.source_message_id.check_access("read")
     session.source_attachment_id.check_access("read")
@@ -129,7 +171,36 @@ def _compile_plan(env, session):
         # authorization in current_fields, but validate its rendered values as
         # strings because numeric and boolean scalars are serialized to text.
         mapping_fields = {name: "string" for name in mapping_fields}
-    report = validate_proposal(rules, manifest, mapping_fields)
+    compiled_repeat_mappings = sum(
+        len(row.get("targets", []))
+        for group in groups
+        if isinstance(group, dict) and isinstance(group.get("target_rows"), list)
+        for row in group["target_rows"]
+        if isinstance(row, dict) and isinstance(row.get("targets"), list)
+    )
+    compiled_mapping_limit = min(
+        ParseLimits().max_mappings + compiled_repeat_mappings,
+        _resource_budget().max_cells,
+    )
+    resolved_cell_edits = _resolve_record_target_cell_edits(
+        env, session, rules.get("cell_edits", []), groups, group_values_by_id=group_values
+    )
+    validation_rules = dict(rules)
+    validation_rules["cell_edits"] = [
+        {
+            "element_id": item["element_id"],
+            "value": item["value"],
+            "value_type": item["value_type"],
+        }
+        for item in resolved_cell_edits
+    ]
+    report = validate_proposal(
+        validation_rules,
+        manifest,
+        mapping_fields,
+        limits=ParseLimits(max_mappings=compiled_mapping_limit),
+        ordered_cell_edit_overrides=True,
+    )
     if not report.ready_for_review:
         raise ValidationError(_("The current mapping is incomplete or no longer authorized."))
     mapped_root_fields = sorted(
@@ -137,7 +208,11 @@ def _compile_plan(env, session):
             field_name
             for item in rules.get("mappings", [])
             if isinstance(item, dict)
-            for field_name in ([item["source_field"]] if isinstance(item.get("source_field"), str) else item.get("source_fields", []))
+            for field_name in (
+                [item["source_field"]]
+                if isinstance(item.get("source_field"), str)
+                else item.get("source_fields") or item.get("concat_fields", [])
+            )
             if isinstance(field_name, str) and "::" not in field_name
         }
     )
@@ -153,6 +228,7 @@ def _compile_plan(env, session):
     render_source = session.source_attachment_id.raw or b""
     repeat_rows_instruction = None
     authorized_blank_targets = []
+    explicit_clear_edits = []
     repeating_group = next(
         (group for group in groups if group.get("target_rows") and group.get("row_count")),
         None,
@@ -243,6 +319,7 @@ def _compile_plan(env, session):
 
     writes, snapshot = [], {}
     manifest_ids = {spec["element_id"] for spec in manifest}
+    manifest_by_id = {spec["element_id"]: spec for spec in manifest}
     for item in rules["mappings"]:
         if item["element_id"] not in manifest_ids:
             raise ValidationError(_("A mapping target is no longer available."))
@@ -269,7 +346,8 @@ def _compile_plan(env, session):
             )
             continue
 
-        field_names = item.get("source_fields") or [item.get("source_field")]
+        is_concatenation = isinstance(item.get("concat_fields"), list)
+        field_names = item.get("concat_fields") if is_concatenation else item.get("source_fields") or [item.get("source_field")]
         if not field_names or any(not isinstance(name, str) for name in field_names):
             raise ValidationError(_("The mapping source is invalid."))
         raw_values = []
@@ -294,7 +372,20 @@ def _compile_plan(env, session):
                 snapshot[f"{group_id}:{row_index}:{relation_field}"] = raw_value
             raw_values.append(raw_value)
 
-        raw_value = _first_nonempty_mapping_value(raw_values)
+        if is_concatenation:
+            if item.get("value_type") != "string":
+                raise ValidationError(_("Concatenation sources must contain text values."))
+            separator = item.get("separator", "")
+            raw_value = _concatenate_text_values(raw_values, separator)
+        else:
+            raw_value = _first_nonempty_mapping_value(raw_values)
+        if item.get("transform") is not None:
+            try:
+                raw_value = apply_transform(raw_value, item["transform"], item["value_type"])
+            except (TypeError, ValueError) as error:
+                raise ValidationError(
+                    _("The mapped date value cannot be transformed using the requested offset.")
+                ) from error
         if raw_value is None and item["value_type"] == "string":
             raw_value = ""
         writes.append(
@@ -309,6 +400,16 @@ def _compile_plan(env, session):
     for element_id in rules.get("clear_targets", []):
         if element_id not in manifest_ids:
             raise ValidationError(_("A clear target is no longer available."))
+        if manifest_by_id[element_id].get("writable") is not True:
+            # Explicit clears of protected-but-inspected cells (for example a
+            # table heading) travel through the same coordinate-write path as
+            # cell_edits. The caller has already obtained any required user
+            # confirmation; core still validates that the target is a real
+            # inspected cell in this document.
+            explicit_clear_edits.append(
+                {"element_id": element_id, "value": "", "value_type": "string"}
+            )
+            continue
         writes.append(
             {
                 "element_id": element_id,
@@ -337,6 +438,20 @@ def _compile_plan(env, session):
     )
     summary["render_source"] = render_source
     summary["authorized_blank_targets"] = tuple(authorized_blank_targets)
+    # Explicit coordinate writes remain separate from source-field mappings.
+    # office_core re-inspects the XLSX and compiles them into canonical
+    # Document Operation set_value operations.
+    summary["explicit_cell_edits"] = [
+        *[
+            {
+                "element_id": item["element_id"],
+                "value": item["value"],
+                "value_type": item["value_type"],
+            }
+            for item in resolved_cell_edits
+        ],
+        *explicit_clear_edits,
+    ]
     if repeat_rows_instruction is not None:
         # Preview and finalization must compile from the same authorized,
         # deterministic row-expansion instruction. The original upload stays
@@ -370,6 +485,7 @@ def render_preview(env, session_id, expected_revision):
         _resource_budget(),
         preprocessing=preprocessing,
         authorized_blank_targets=tuple(summary.get("authorized_blank_targets", ())),
+        explicit_cell_edits=summary.get("explicit_cell_edits", []),
     )
     verification = candidate.verification
     if not isinstance(verification, dict):
@@ -555,6 +671,11 @@ def render_confirmed_mapping(env, session_id, expected_revision):
             **(
                 {"preprocessing": summary["preprocessing"]}
                 if summary.get("preprocessing")
+                else {}
+            ),
+            **(
+                {"explicit_cell_edits": summary["explicit_cell_edits"]}
+                if summary.get("explicit_cell_edits")
                 else {}
             ),
         )

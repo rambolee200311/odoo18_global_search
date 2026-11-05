@@ -1,13 +1,16 @@
 """Native Odoo-LLM Office tool binding and safe message serialization tests."""
 
+import hashlib
 import json
 from io import BytesIO
+from datetime import datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import patch
 from uuid import uuid4
 from zipfile import ZIP_DEFLATED, ZipFile
 
 from openpyxl import Workbook, load_workbook
+from openpyxl.utils.datetime import from_excel, to_excel
 from openpyxl.styles import PatternFill
 from docx import Document
 from lxml import etree
@@ -43,6 +46,51 @@ def _xlsx():
     workbook = Workbook()
     workbook.active["A1"] = "Customer"
     workbook.active["B1"].fill = PatternFill(fill_type="solid", fgColor="FFFFFF")
+    output = BytesIO()
+    workbook.save(output)
+    workbook.close()
+    return output.getvalue()
+
+
+def _header_edit_xlsx():
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Orders"
+    sheet["E1"] = "Description"
+    sheet["F1"] = "Supplier Product Name"
+    sheet["E2"] = "Keep this label"
+    sheet["F2"] = "old value"
+    output = BytesIO()
+    workbook.save(output)
+    workbook.close()
+    return output.getvalue()
+
+
+def _date_xlsx():
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Dates"
+    sheet["A1"] = "Order date"
+    sheet["B1"] = datetime(2026, 11, 3, 9, 0)
+    sheet["B1"].number_format = "yyyy-mm-dd hh:mm"
+    output = BytesIO()
+    workbook.save(output)
+    workbook.close()
+    return output.getvalue()
+
+
+def _date_repeat_rows_xlsx():
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Orders"
+    sheet["A1"] = "Selection"
+    sheet["A3"] = "Order"
+    sheet["B3"] = "Order date"
+    sheet["A4"] = "example"
+    sheet["B4"] = datetime(2026, 11, 3, 9, 0)
+    sheet["B4"].number_format = "yyyy-mm-dd hh:mm"
+    sheet["A5"].fill = PatternFill(fill_type="solid", fgColor="FFFFFF")
+    sheet["B5"].number_format = "yyyy-mm-dd hh:mm"
     output = BytesIO()
     workbook.save(output)
     workbook.close()
@@ -180,7 +228,1782 @@ def _zero_numeric_repeat_rows_xlsx():
     return output.getvalue()
 
 
+def _inventory_repeat_rows_xlsx():
+    """Small inventory-shaped workbook for generic repeat/summary regressions."""
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Inventory"
+    for column, label in enumerate(
+        ["Product", "Name", "Warehouse", "Location", "Lot", "UoM", "On hand", "Reserved", "Native", "Calculated", "Delta"],
+        start=1,
+    ):
+        cell = sheet.cell(1, column, label)
+        cell.fill = PatternFill(fill_type="solid", fgColor="D9EAF7")
+    for row in (2, 3):
+        for column in range(7, 12):
+            cell = sheet.cell(row, column)
+            cell.fill = PatternFill(fill_type="solid", fgColor="FFFFFF")
+        sheet[f"G{row}"] = 0
+        sheet[f"H{row}"] = 0
+        sheet[f"I{row}"] = 0
+        sheet[f"J{row}"] = f"=G{row}-H{row}"
+        sheet[f"K{row}"] = f"=J{row}-I{row}"
+    sheet["A4"] = "Total"
+    for column in "GHIJK":
+        sheet[f"{column}4"] = f"=SUM({column}2:{column}3)"
+    output = BytesIO()
+    workbook.save(output)
+    workbook.close()
+    return output.getvalue()
+
+
+def _confirmation_repeat_rows_xlsx(detail_capacity=2):
+    """Neutral workbook for confirmation of generated repeat-row cell operations."""
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Rows"
+    for column, label in enumerate(["Record", "Value", "Difference"], start=1):
+        sheet.cell(1, column, label).fill = PatternFill(fill_type="solid", fgColor="D9EAF7")
+    last_detail_row = detail_capacity + 1
+    for row in range(2, last_detail_row + 1):
+        sheet[f"B{row}"] = 0
+        sheet[f"C{row}"] = f"=B{row}-B{row}"
+        sheet[f"B{row}"].fill = PatternFill(fill_type="solid", fgColor="FFFFFF")
+        sheet[f"C{row}"].fill = PatternFill(fill_type="solid", fgColor="FFFFFF")
+    summary_row = last_detail_row + 1
+    sheet[f"A{summary_row}"] = "Total"
+    sheet[f"B{summary_row}"] = f"=SUM(B2:B{last_detail_row})"
+    sheet[f"C{summary_row}"] = f"=SUM(C2:C{last_detail_row})"
+    output = BytesIO()
+    workbook.save(output)
+    workbook.close()
+    return output.getvalue()
+
+
 class TestNativeOfficeChatIntegration(TransactionCase):
+    def test_repeat_rows_single_object_is_normalized_before_tool_validation(self):
+        thread, _attachment, _upload = self._office_message(
+            "Fill these records into the inventory rows.", raw=_inventory_repeat_rows_xlsx()
+        )
+        records = self.env["res.partner"].create([
+            {
+                "name": "Repeat object row %s %s" % (index, uuid4().hex),
+                "color": index,
+                "company_id": self.env.company.id,
+            }
+            for index in range(3)
+        ])
+        retriever_result = thread.message_post(
+            body="Retrieved selected records",
+            llm_role="tool",
+            body_json={
+                "type": "tool_execution",
+                "tool_call_id": "repeat-object-" + uuid4().hex,
+                "tool_call": {"function": {"name": "odoo_record_retriever", "arguments": "{}"}},
+                "tool_name": "odoo_record_retriever",
+                "arguments": {
+                    "model": "res.partner",
+                    "domain": [["id", "in", records.ids]],
+                    "fields": ["id", "name", "color"],
+                    "limit": 100,
+                },
+                "status": "completed",
+                "result": [{"id": record.id, "name": record.name, "color": record.color} for record in records],
+            },
+        )
+        mapping_tool = self.env["office.mapping.tool"].with_context(message=retriever_result)
+        context = mapping_tool.office_prepare_context(
+            "res.partner",
+            records[0].id,
+            target_record_ids=records.ids,
+            requested_fields=["name", "color"],
+        )
+        session = self.env["office.mapping.session"].browse(context["session_id"])
+        original_revision = session.revision
+        original_rules = session.mapping_rules_json
+        repeat_rows_object = {
+            "collection_field": "selected_records",
+            "sheet": "Inventory",
+            "start_row": 2,
+            "columns": [{"column": "G", "source_field": "color"}],
+        }
+        tool = self.env["llm.tool"].search(
+            [("name", "=", "office_save_mapping_preview")], limit=1
+        ).with_context(message=retriever_result)
+
+        result = tool.execute({
+            "session_id": session.id,
+            "expected_revision": session.revision,
+            "proposal": {
+                "schema_version": "m2.mapping-proposal.v1",
+                "mappings": [],
+                "clarifications": [],
+                "skipped_targets": [],
+            },
+            "repeat_rows": repeat_rows_object,
+        })
+
+        self.assertEqual(result["status"], "needs_confirmation", result)
+        self.assertEqual(result["error_code"], "confirmation_required")
+        self.assertEqual(result["risks"][0]["risk_type"], "repeat_row_range_expansion")
+        self.assertFalse(result["operation_executed"])
+        self.assertFalse(session.preview_attachment_id)
+        self.assertEqual(session.revision, original_revision)
+        self.assertEqual(session.mapping_rules_json, original_rules)
+
+    def test_repeat_row_confirmation_authorizes_its_derived_cells_and_formulas(self):
+        """A confirmed repeat-row expansion must not demand a second cell-edit approval."""
+        thread, _attachment, _upload = self._office_message(
+            "Fill the selected records into the repeated rows.",
+            raw=_confirmation_repeat_rows_xlsx(),
+        )
+        records = self.env["res.partner"].create([
+            {
+                "name": f"Confirmed repeat row {index} {uuid4().hex}",
+                "color": index,
+                "company_id": self.env.company.id,
+            }
+            for index in range(3)
+        ])
+        retrieval = thread.message_post(
+            body="Retrieved selected records",
+            llm_role="tool",
+            body_json={
+                "type": "tool_execution",
+                "tool_call_id": "repeat-confirm-derived-" + uuid4().hex,
+                "tool_call": {"function": {"name": "odoo_record_retriever", "arguments": "{}"}},
+                "tool_name": "odoo_record_retriever",
+                "arguments": {
+                    "model": "res.partner",
+                    "domain": [["id", "in", records.ids]],
+                    "fields": ["id", "name", "color"],
+                    "limit": len(records),
+                },
+                "status": "completed",
+                "result": [
+                    {"id": record.id, "name": record.name, "color": record.color}
+                    for record in records
+                ],
+            },
+        )
+        tool = self.env["office.mapping.tool"].with_context(message=retrieval)
+        context = tool.office_prepare_context(
+            "res.partner",
+            records[0].id,
+            target_record_ids=records.ids,
+            requested_fields=["name", "color"],
+        )
+        session = self.env["office.mapping.session"].browse(context["session_id"])
+        proposal = {
+            "schema_version": "m2.mapping-proposal.v1",
+            "mappings": [],
+            "clarifications": [],
+            "skipped_targets": [],
+        }
+        repeat_rows = [{
+            "collection_field": "selected_records",
+            "sheet": "Rows",
+            "start_row": 2,
+            "columns": [
+                {"column": "A", "source_field": "name"},
+                {"column": "B", "source_field": "color"},
+                {"column": "C", "formula": "=B{row}-B{row}"},
+            ],
+        }]
+        revision = session.revision
+        prior_preview_id = session.preview_attachment_id.id or False
+
+        warning = tool.office_save_mapping_preview(
+            session.id, revision, proposal, repeat_rows=repeat_rows
+        )
+
+        self.assertEqual(warning["status"], "needs_confirmation", warning)
+        self.assertEqual(
+            [risk["risk_type"] for risk in warning["risks"]],
+            ["repeat_row_range_expansion"],
+        )
+        self.assertFalse(warning["operation_executed"])
+        self.assertEqual(session.revision, revision)
+        self.assertEqual(session.preview_attachment_id.id or False, prior_preview_id)
+
+        confirmation = thread.message_post(
+            body="确认", llm_role="user", author_id=self.env.user.partner_id.id
+        )
+        applied = self.env["office.mapping.tool"].with_context(message=confirmation).office_save_mapping_preview(
+            session.id, revision, proposal, repeat_rows=repeat_rows
+        )
+
+        self.assertEqual(applied["status"], "success", applied)
+        self.assertEqual(applied["operation_status"], "preview_ready")
+        self.assertTrue(applied["operation_executed"])
+        self.assertGreater(session.revision, revision)
+        self.assertEqual(session.preview_proposal_revision, session.proposal_revision)
+        self.assertFalse(session.pending_cell_override_json)
+        payload = session.preview_attachment_id.raw
+        self.assertTrue(payload)
+        with ZipFile(BytesIO(payload)) as archive:
+            self.assertIsNone(archive.testzip())
+        workbook = load_workbook(BytesIO(payload), data_only=False)
+        try:
+            sheet = workbook["Rows"]
+            self.assertEqual([sheet[f"A{row}"].value for row in range(2, 5)], records.mapped("name"))
+            self.assertEqual([sheet[f"B{row}"].value for row in range(2, 5)], records.mapped("color"))
+            self.assertEqual([sheet[f"C{row}"].value for row in range(2, 5)], [f"=B{row}-B{row}" for row in range(2, 5)])
+            self.assertEqual(sheet["B5"].value, "=SUM(B2:B4)")
+            self.assertEqual(sheet["C5"].value, "=SUM(C2:C4)")
+            self.assertEqual(sheet["A1"].value, "Record")
+            self.assertEqual(sheet["A1"].fill.fgColor.rgb, "00D9EAF7")
+            self.assertEqual(sheet["B4"].fill.fgColor.rgb, "00FFFFFF")
+        finally:
+            workbook.close()
+
+    def test_explicit_cell_edit_overrides_same_target_repeat_row_mapping(self):
+        """A user-directed cell edit may override one derived repeated-row value."""
+        thread, _attachment, upload = self._office_message(
+            "Fill the selected records into the repeated rows.",
+            raw=_confirmation_repeat_rows_xlsx(detail_capacity=3),
+        )
+        records = self.env["res.partner"].create([
+            {
+                "name": f"Cell override row {index} {uuid4().hex}",
+                "color": index + 1,
+                "company_id": self.env.company.id,
+            }
+            for index in range(3)
+        ])
+        retrieval = thread.message_post(
+            body="Retrieved selected records",
+            llm_role="tool",
+            body_json={
+                "type": "tool_execution",
+                "tool_call_id": "repeat-cell-override-" + uuid4().hex,
+                "tool_call": {"function": {"name": "odoo_record_retriever", "arguments": "{}"}},
+                "tool_name": "odoo_record_retriever",
+                "arguments": {
+                    "model": "res.partner",
+                    "domain": [["id", "in", records.ids]],
+                    "fields": ["id", "name", "color"],
+                    "limit": len(records),
+                },
+                "status": "completed",
+                "result": [
+                    {"id": record.id, "name": record.name, "color": record.color}
+                    for record in records
+                ],
+            },
+        )
+        context_tool = self.env["office.mapping.tool"].with_context(message=retrieval)
+        context = context_tool.office_prepare_context(
+            "res.partner",
+            records[0].id,
+            target_record_ids=records.ids,
+            requested_fields=["name", "color"],
+        )
+        session = self.env["office.mapping.session"].browse(context["session_id"])
+        repeat_rows = [{
+            "collection_field": "selected_records",
+            "sheet": "Rows",
+            "start_row": 2,
+            "columns": [
+                {"column": "A", "source_field": "name"},
+                {"column": "B", "source_field": "color"},
+            ],
+        }]
+        empty_proposal = {
+            "schema_version": "m2.mapping-proposal.v1",
+            "mappings": [],
+            "clarifications": [],
+            "skipped_targets": [],
+        }
+        initial = self._save_repeat_rows_with_user_confirmation(
+            context_tool, thread, session, empty_proposal, repeat_rows=repeat_rows
+        )
+        self.assertEqual(initial["status"], "success", initial)
+        before_revision = session.revision
+        before_preview = session.preview_attachment_id
+        before_payload = before_preview.raw
+        workbook = load_workbook(BytesIO(before_payload), data_only=False)
+        try:
+            self.assertEqual([workbook["Rows"][f"B{row}"].value for row in range(2, 5)], [1, 2, 3])
+            before_style_id = workbook["Rows"]["B2"].style_id
+        finally:
+            workbook.close()
+
+        edit = [{"element_id": "xlsx:Rows!B2", "value": "", "value_type": "string"}]
+        request = thread.message_post(
+            body="Clear the first selected record's value cell.",
+            llm_role="user",
+            author_id=self.env.user.partner_id.id,
+        )
+        tool = self.env["office.mapping.tool"].with_context(message=request)
+        warning = tool.office_save_mapping_preview(
+            session.id,
+            before_revision,
+            empty_proposal,
+            repeat_rows=repeat_rows,
+            cell_edits=edit,
+        )
+
+        self.assertEqual(warning["status"], "needs_confirmation", warning)
+        self.assertEqual(warning["risk_type"], "content_clear")
+        self.assertFalse(warning["operation_executed"])
+        self.assertEqual(session.revision, before_revision)
+        self.assertEqual(session.preview_attachment_id, before_preview)
+        self.assertEqual(session.preview_attachment_id.raw, before_payload)
+
+        confirmation = thread.message_post(
+            body="确认", llm_role="user", author_id=self.env.user.partner_id.id
+        )
+        applied = self.env["office.mapping.tool"].with_context(message=confirmation).office_save_mapping_preview(
+            session.id,
+            before_revision,
+            empty_proposal,
+            repeat_rows=repeat_rows,
+            cell_edits=edit,
+        )
+        self.assertEqual(applied["status"], "success", applied)
+        self.assertEqual(applied["operation_status"], "preview_ready")
+        self.assertTrue(applied["operation_executed"])
+        self.assertEqual(session.preview_proposal_revision, session.proposal_revision)
+
+        payload = session.preview_attachment_id.raw
+        with ZipFile(BytesIO(payload)) as archive:
+            self.assertIsNone(archive.testzip())
+        workbook = load_workbook(BytesIO(payload), data_only=False)
+        try:
+            sheet = workbook["Rows"]
+            self.assertIn(sheet["B2"].value, (None, ""))
+            self.assertEqual([sheet[f"B{row}"].value for row in (3, 4)], [2, 3])
+            self.assertEqual([sheet[f"C{row}"].value for row in range(2, 5)], [
+                "=B2-B2", "=B3-B3", "=B4-B4",
+            ])
+            self.assertEqual(sheet["B5"].value, "=SUM(B2:B4)")
+            self.assertEqual(sheet["A1"].value, "Record")
+            self.assertEqual(sheet["A1"].fill.fgColor.rgb, "00D9EAF7")
+            self.assertEqual(sheet["B2"].style_id, before_style_id)
+        finally:
+            workbook.close()
+
+    def test_record_targeted_cell_edit_follows_repeat_row_after_sort_and_confirmation(self):
+        """A stable record/cell edit follows its row after the final sort."""
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = "Rows"
+        for column, label in enumerate(["Contact", "Note", "Color", "Difference"], start=1):
+            sheet.cell(1, column, label).fill = PatternFill(fill_type="solid", fgColor="D9EAF7")
+        for row in range(2, 5):
+            sheet[f"B{row}"] = "template note"
+            sheet[f"C{row}"] = 0
+            sheet[f"D{row}"] = f"=C{row}-C{row}"
+            for column in "BCD":
+                sheet[f"{column}{row}"].fill = PatternFill(fill_type="solid", fgColor="FFFFFF")
+        sheet["A5"] = "Total"
+        sheet["C5"] = "=SUM(C2:C4)"
+        sheet["D5"] = "=SUM(D2:D4)"
+        source = BytesIO()
+        workbook.save(source)
+        workbook.close()
+        thread, _attachment, _upload = self._office_message(
+            "Fill the selected records into the repeated rows.",
+            raw=source.getvalue(),
+        )
+        records_by_label = {
+            label: self.env["res.partner"].create({
+                "name": f"{label} record target {uuid4().hex}",
+                "comment": f"{label} note {uuid4().hex}",
+                "color": value,
+                "company_id": self.env.company.id,
+            })
+            for label, value in (("Zulu", 10), ("Alpha", 20), ("Mike", 30))
+        }
+        records = self.env["res.partner"].browse([
+            records_by_label[label].id for label in ("Zulu", "Alpha", "Mike")
+        ])
+        retrieval = thread.message_post(
+            body="Retrieved selected records",
+            llm_role="tool",
+            body_json={
+                "type": "tool_execution",
+                "tool_call_id": "repeat-record-cell-edit-" + uuid4().hex,
+                "tool_call": {"function": {"name": "odoo_record_retriever", "arguments": "{}"}},
+                "tool_name": "odoo_record_retriever",
+                "arguments": {
+                    "model": "res.partner",
+                    "domain": [["id", "in", records.ids]],
+                    "fields": ["id", "name", "comment", "color"],
+                    "limit": len(records),
+                },
+                "status": "completed",
+                "result": [
+                    {"id": record.id, "name": record.name, "comment": record.comment, "color": record.color}
+                    for record in records
+                ],
+            },
+        )
+        context_tool = self.env["office.mapping.tool"].with_context(message=retrieval)
+        context = context_tool.office_prepare_context(
+            "res.partner",
+            records[0].id,
+            target_record_ids=records.ids,
+            requested_fields=["name", "comment", "color"],
+        )
+        session = self.env["office.mapping.session"].browse(context["session_id"])
+        columns = [
+            {"column": "A", "source_field": "name"},
+            {"column": "B", "source_field": "comment"},
+            {"column": "C", "source_field": "color"},
+        ]
+        initial_repeat_rows = [{
+            "collection_field": "selected_records",
+            "sheet": "Rows",
+            "start_row": 2,
+            "columns": columns,
+            "sort_by": "name",
+            "sort_direction": "asc",
+        }]
+        proposal = {
+            "schema_version": "m2.mapping-proposal.v1",
+            "mappings": [],
+            "clarifications": [],
+            "skipped_targets": [],
+        }
+        initial = self._save_repeat_rows_with_user_confirmation(
+            context_tool, thread, session, proposal, repeat_rows=initial_repeat_rows
+        )
+        self.assertEqual(initial["status"], "success", initial)
+        initial_revision = session.revision
+        initial_preview = session.preview_attachment_id
+        original_values = {
+            record.id: {"comment": record.comment, "color": record.color}
+            for record in records
+        }
+
+        # This mirrors the live model call: it names the currently displayed
+        # cell in the already sorted repeat band. The server must bind that
+        # coordinate to the record at this final row position before saving.
+        edit = [{
+            "element_id": "xlsx:Rows!B2",
+            "value": "",
+            "value_type": "string",
+        }]
+        sorted_ascending = [{
+            **initial_repeat_rows[0],
+            "sort_by": "name",
+            "sort_direction": "asc",
+        }]
+        sorted_descending = [{
+            **initial_repeat_rows[0],
+            "sort_by": "name",
+            "sort_direction": "desc",
+        }]
+        request = thread.message_post(
+            body="Clear Alpha's value after sorting the records by name descending.",
+            llm_role="user",
+            author_id=self.env.user.partner_id.id,
+        )
+        tool = self.env["office.mapping.tool"].with_context(message=request)
+        warning = tool.office_save_mapping_preview(
+            session.id,
+            initial_revision,
+            proposal,
+            repeat_rows=sorted_ascending,
+            cell_edits=edit,
+        )
+
+        self.assertEqual(warning["status"], "needs_confirmation", warning)
+        self.assertFalse(warning.get("operation_executed"))
+        self.assertEqual(session.revision, initial_revision)
+        self.assertEqual(session.preview_attachment_id, initial_preview)
+        self.assertEqual(session.preview_attachment_id.raw, initial_preview.raw)
+        self.assertEqual(
+            {record.id: {"comment": record.comment, "color": record.color} for record in records}, original_values,
+            "Preparing a preview must not modify Odoo business records.",
+        )
+
+        confirmation = thread.message_post(
+            body="确认", llm_role="user", author_id=self.env.user.partner_id.id
+        )
+        changed_scope = self.env["office.mapping.tool"].with_context(message=confirmation).office_save_mapping_preview(
+            session.id,
+            initial_revision,
+            proposal,
+            repeat_rows=sorted_descending,
+            cell_edits=edit,
+            force_override=True,
+        )
+        self.assertEqual(changed_scope["status"], "needs_confirmation", changed_scope)
+        self.assertFalse(changed_scope.get("operation_executed"))
+        self.assertEqual(session.revision, initial_revision)
+        self.assertEqual(session.preview_attachment_id, initial_preview)
+        self.assertEqual(
+            {record.id: {"comment": record.comment, "color": record.color} for record in records}, original_values,
+            "A stale confirmation must not mutate Odoo records or execute document writes.",
+        )
+
+        confirmation = thread.message_post(
+            body="确认", llm_role="user", author_id=self.env.user.partner_id.id
+        )
+        reverted_scope = self.env["office.mapping.tool"].with_context(message=confirmation).office_save_mapping_preview(
+            session.id,
+            initial_revision,
+            proposal,
+            repeat_rows=sorted_ascending,
+            cell_edits=edit,
+            force_override=True,
+        )
+        self.assertEqual(reverted_scope["status"], "needs_confirmation", reverted_scope)
+        self.assertFalse(reverted_scope.get("operation_executed"))
+        self.assertEqual(session.revision, initial_revision)
+
+        confirmation = thread.message_post(
+            body="确认", llm_role="user", author_id=self.env.user.partner_id.id
+        )
+        applied = self.env["office.mapping.tool"].with_context(message=confirmation).office_save_mapping_preview(
+            session.id,
+            initial_revision,
+            proposal,
+            repeat_rows=sorted_ascending,
+            # The model may carry the collection selector from its conversation
+            # context rather than the server's generated repeat-group ID. The
+            # server must resolve that alias only when it uniquely identifies
+            # the authorized collection, then persist the canonical group ID.
+            cell_edits=[{
+                "record_target": {
+                    "group_id": "selected_records",
+                    "record_id": records_by_label["Alpha"].id,
+                    "column": "B",
+                },
+                "value": "",
+                "value_type": "string",
+            }],
+            force_override=True,
+        )
+        self.assertEqual(applied["status"], "success", applied)
+        self.assertTrue(applied["operation_executed"])
+        saved_rules = json.loads(session.mapping_rules_json)
+        self.assertEqual(
+            saved_rules["cell_edits"][0]["record_target"],
+            {
+                "group_id": "repeat_rows",
+                "record_id": records_by_label["Alpha"].id,
+                "column": "B",
+            },
+            "A repeat-band coordinate must be persisted as a stable record target.",
+        )
+        self.assertEqual(
+            {record.id: {"comment": record.comment, "color": record.color} for record in records}, original_values,
+            "Applying a document edit must not modify Odoo business records.",
+        )
+
+        payload = session.preview_attachment_id.raw
+        with ZipFile(BytesIO(payload)) as archive:
+            self.assertIsNone(archive.testzip())
+        workbook = load_workbook(BytesIO(payload), data_only=False)
+        try:
+            sheet = workbook["Rows"]
+            self.assertEqual(
+                [sheet[f"A{row}"].value for row in range(2, 5)],
+                [records_by_label[label].name for label in ("Alpha", "Mike", "Zulu")],
+            )
+            self.assertIn(sheet["B2"].value, (None, ""), "Only Alpha's contact note is cleared.")
+            self.assertEqual(sheet["B3"].value, original_values[records_by_label["Mike"].id]["comment"])
+            self.assertEqual(sheet["B4"].value, original_values[records_by_label["Zulu"].id]["comment"])
+            self.assertEqual(
+                [sheet[f"C{row}"].value for row in range(2, 5)],
+                [original_values[records_by_label[label].id]["color"] for label in ("Alpha", "Mike", "Zulu")],
+            )
+            self.assertEqual(
+                [sheet[f"D{row}"].value for row in range(2, 5)],
+                [f"=C{row}-C{row}" for row in range(2, 5)],
+            )
+            self.assertEqual(sheet["C5"].value, "=SUM(C2:C4)")
+            self.assertEqual(sheet["D5"].value, "=SUM(D2:D4)")
+            self.assertEqual(sheet["A1"].value, "Contact")
+            self.assertEqual(sheet["A1"].fill.fgColor.rgb, "00D9EAF7")
+            self.assertEqual(sheet["B2"].fill.fgColor.rgb, "00FFFFFF")
+        finally:
+            workbook.close()
+
+        # A later re-sort recompiles the preview from the saved stable target;
+        # the clear follows Alpha from row 2 to row 4, while the other values
+        # remain attached to their records.
+        sort_request = thread.message_post(
+            body="Sort the records by name descending.",
+            llm_role="user",
+            author_id=self.env.user.partner_id.id,
+        )
+        resorted = self.env["office.mapping.tool"].with_context(message=sort_request).office_save_mapping_preview(
+            session.id,
+            session.revision,
+            proposal,
+            repeat_rows=sorted_descending,
+        )
+        self.assertEqual(resorted["status"], "success", resorted)
+        payload = session.preview_attachment_id.raw
+        with ZipFile(BytesIO(payload)) as archive:
+            self.assertIsNone(archive.testzip())
+        workbook = load_workbook(BytesIO(payload), data_only=False)
+        try:
+            sheet = workbook["Rows"]
+            self.assertEqual(
+                [sheet[f"A{row}"].value for row in range(2, 5)],
+                [records_by_label[label].name for label in ("Zulu", "Mike", "Alpha")],
+            )
+            self.assertEqual(sheet["B2"].value, original_values[records_by_label["Zulu"].id]["comment"])
+            self.assertEqual(sheet["B3"].value, original_values[records_by_label["Mike"].id]["comment"])
+            self.assertIn(sheet["B4"].value, (None, ""), "The clear follows Alpha after resorting.")
+            self.assertEqual(sheet["C2"].value, original_values[records_by_label["Zulu"].id]["color"])
+            self.assertEqual(sheet["C3"].value, original_values[records_by_label["Mike"].id]["color"])
+            self.assertEqual(sheet["C4"].value, original_values[records_by_label["Alpha"].id]["color"])
+            self.assertEqual(sheet["D2"].value, "=C2-C2")
+            self.assertEqual(sheet["C5"].value, "=SUM(C2:C4)")
+            self.assertEqual(sheet["D5"].value, "=SUM(D2:D4)")
+            self.assertEqual(sheet["A1"].value, "Contact")
+            self.assertEqual(sheet["A1"].fill.fgColor.rgb, "00D9EAF7")
+            self.assertEqual([sheet[f"B{row}"].fill.fgColor.rgb for row in range(2, 5)], ["00FFFFFF"] * 3)
+        finally:
+            workbook.close()
+
+    def test_repeated_coordinate_edit_replaces_saved_record_target_edit(self):
+        """The same repeat-row cell edit can be retried by coordinate once."""
+        thread, _attachment, _upload = self._office_message(
+            "Fill the selected records into the repeated rows.",
+            raw=_repeat_rows_xlsx(),
+        )
+        records = self.env["res.partner"].create([
+            {
+                "name": f"Batch summary contact {index} {uuid4().hex}",
+                **({"comment": f"Existing note {index}"} if index else {}),
+                "company_id": self.env.company.id,
+            }
+            for index in range(3)
+        ])
+        retrieval = thread.message_post(
+            body="Retrieved selected contacts",
+            llm_role="tool",
+            body_json={
+                "type": "tool_execution",
+                "tool_call_id": "batch-summary-" + uuid4().hex,
+                "tool_call": {"function": {"name": "odoo_record_retriever", "arguments": "{}"}},
+                "tool_name": "odoo_record_retriever",
+                "arguments": {
+                    "model": "res.partner",
+                    "domain": [["id", "in", records.ids]],
+                    "fields": ["id", "name", "comment"],
+                    "limit": len(records),
+                },
+                "status": "completed",
+                "result": [
+                    {"id": item.id, "name": item.name, "comment": item.comment}
+                    for item in records
+                ],
+            },
+        )
+        tool = self.env["office.mapping.tool"].with_context(message=retrieval)
+        context = tool.office_prepare_context(
+            "res.partner",
+            records[0].id,
+            target_record_ids=records.ids,
+            requested_fields=["name", "comment"],
+        )
+        session = self.env["office.mapping.session"].browse(context["session_id"])
+        proposal = {
+            "schema_version": "m2.mapping-proposal.v1",
+            "mappings": [],
+            "clarifications": [],
+            "skipped_targets": [],
+        }
+        initial_rows = [{
+            "collection_field": "selected_records",
+            "sheet": "Data",
+            "start_row": 4,
+            "sort_by": "name",
+            "sort_direction": "asc",
+            "columns": [
+                {"column": "A", "source_field": "name"},
+                {"column": "B", "source_field": "comment"},
+            ],
+        }]
+        initial = self._save_repeat_rows_with_user_confirmation(
+            tool, thread, session, proposal, repeat_rows=initial_rows
+        )
+        self.assertEqual(initial["status"], "success", initial)
+
+        first_record = sorted(records, key=lambda item: item.name)[0]
+        clear = [{
+            "record_target": {
+                "group_id": "selected_records",
+                "record_id": first_record.id,
+                "column": "B",
+            },
+            "value": "",
+            "value_type": "string",
+        }]
+        clear_request = thread.message_post(
+            body=f"Clear {first_record.name}'s summary.",
+            llm_role="user",
+            author_id=self.env.user.partner_id.id,
+        )
+        warned = self.env["office.mapping.tool"].with_context(message=clear_request).office_save_mapping_preview(
+            session.id,
+            session.revision,
+            proposal,
+            repeat_rows=initial_rows,
+            cell_edits=clear,
+        )
+        self.assertEqual(warned["status"], "needs_confirmation", warned)
+        self.assertFalse(warned["operation_executed"])
+        confirm = thread.message_post(
+            body="确认", llm_role="user", author_id=self.env.user.partner_id.id
+        )
+        cleared = self.env["office.mapping.tool"].with_context(message=confirm).office_save_mapping_preview(
+            session.id,
+            session.revision,
+            proposal,
+            repeat_rows=initial_rows,
+            cell_edits=clear,
+            force_override=True,
+        )
+        self.assertEqual(cleared["status"], "success", cleared)
+        self.assertIn("record_target", json.loads(session.mapping_rules_json)["cell_edits"][0])
+
+        # A follow-up may point at the displayed coordinate rather than repeat
+        # the stable record selector. After binding, it is the same logical
+        # edit and must replace the persisted version instead of duplicating it.
+        coordinate_clear = [{
+            "element_id": "xlsx:Data!B4",
+            "value": "",
+            "value_type": "string",
+        }]
+        repeated = self._save_repeat_rows_with_user_confirmation(
+            tool,
+            thread,
+            session,
+            proposal,
+            repeat_rows=initial_rows,
+            cell_edits=coordinate_clear,
+        )
+        self.assertEqual(repeated["status"], "success", repeated)
+        self.assertEqual(repeated["operation_status"], "unchanged")
+        self.assertFalse(repeated["operation_executed"])
+        persisted_edits = json.loads(session.mapping_rules_json).get("cell_edits", [])
+        self.assertEqual(len(persisted_edits), 1)
+        self.assertEqual(persisted_edits[0]["record_target"]["record_id"], first_record.id)
+        with ZipFile(BytesIO(session.preview_attachment_id.raw)) as archive:
+            self.assertIsNone(archive.testzip())
+        workbook = load_workbook(BytesIO(session.preview_attachment_id.raw), data_only=False)
+        try:
+            sheet = workbook["Data"]
+            expected = sorted(item.name for item in records)
+            self.assertEqual([sheet[f"A{row}"].value for row in range(4, 7)], expected)
+            self.assertIn(sheet["B4"].value, (None, ""))
+            self.assertEqual(
+                [sheet[f"B{row}"].value for row in range(5, 7)],
+                [item.comment or None for item in sorted(records, key=lambda item: item.name)[1:]],
+            )
+            self.assertEqual(sheet["E7"].value, "=SUM(E4:E6)")
+            self.assertEqual(sheet["A3"].value, "Record")
+        finally:
+            workbook.close()
+
+        combined_rows = [{
+            **initial_rows[0],
+            "columns": [
+                {"column": "A", "source_field": "name"},
+                {"column": "B", "concat_fields": ["comment", "name"], "separator": " "},
+            ],
+        }]
+        combined = self._save_repeat_rows_with_user_confirmation(
+            tool,
+            thread,
+            session,
+            proposal,
+            repeat_rows=combined_rows,
+        )
+        self.assertEqual(combined["status"], "success", combined)
+        self.assertFalse(json.loads(session.mapping_rules_json).get("cell_edits"))
+        refreshed = tool.office_prepare_context(
+            "res.partner",
+            records[0].id,
+            target_record_ids=records.ids,
+            requested_fields=["name", "comment"],
+        )
+        self.assertEqual(
+            refreshed["current_repeat_rows"][0]["columns"],
+            [
+                {"column": "A", "source_field": "name"},
+                {"column": "B", "concat_fields": ["comment", "name"], "separator": " "},
+            ],
+        )
+        workbook = load_workbook(BytesIO(session.preview_attachment_id.raw), data_only=False)
+        try:
+            sheet = workbook["Data"]
+            ordered_records = sorted(records, key=lambda item: item.name)
+            self.assertEqual(
+                [sheet[f"B{row}"].value for row in range(4, 7)],
+                [" ".join(part for part in (item.comment or "", item.name) if part) for item in ordered_records],
+            )
+            self.assertEqual([sheet[f"A{row}"].value for row in range(4, 7)], [item.name for item in ordered_records])
+            self.assertEqual(sheet["E7"].value, "=SUM(E4:E6)")
+            self.assertEqual(sheet["A3"].value, "Record")
+        finally:
+            workbook.close()
+
+    def test_prepare_context_reauthorizes_requested_selected_record_fields(self):
+        thread, _attachment, upload = self._office_message(
+            "Fill the selected records into the inventory table.", raw=_inventory_repeat_rows_xlsx()
+        )
+        related = self.env["res.partner"].create(
+            {"name": "Selected record related value " + uuid4().hex, "company_id": self.env.company.id}
+        )
+        records = self.env["res.partner"].create([
+            {
+                "name": "Selected record row " + uuid4().hex,
+                "email": "selected-row-1@example.test",
+                "parent_id": related.id,
+                "company_id": self.env.company.id,
+            },
+            {
+                "name": "Selected record row " + uuid4().hex,
+                "email": "selected-row-2@example.test",
+                "parent_id": related.id,
+                "company_id": self.env.company.id,
+            },
+        ])
+        retriever_result = thread.message_post(
+            body="Retrieved selected records",
+            llm_role="tool",
+            body_json={
+                "type": "tool_execution",
+                "tool_call_id": "selected-fields-" + uuid4().hex,
+                "tool_call": {"function": {"name": "odoo_record_retriever", "arguments": "{}"}},
+                "tool_name": "odoo_record_retriever",
+                "arguments": {
+                    "model": "res.partner",
+                    "domain": [["id", "in", records.ids]],
+                    "fields": ["id", "email", "parent_id"],
+                    "limit": 100,
+                },
+                "status": "completed",
+                "result": [
+                    {"id": record.id, "email": record.email, "parent_id": [related.id, related.name]}
+                    for record in records
+                ],
+            },
+        )
+
+        context = self.env["office.mapping.tool"].with_context(message=retriever_result).office_prepare_context(
+            "res.partner",
+            records[0].id,
+            target_record_ids=records.ids,
+            requested_fields_by_collection={
+                "selected_records": ["email", "parent_id.name", "definitely_missing_field"]
+            },
+        )
+
+        selected = next(
+            item for item in context["repeat_row_collections"]
+            if item["collection_field"] == "selected_records"
+        )
+        self.assertEqual(selected["allowed_fields"]["email"]["type"], "string")
+        self.assertEqual(selected["allowed_fields"]["parent_id.name"]["type"], "string")
+        self.assertEqual(
+            context["unavailable_requested_collection_fields"],
+            {"selected_records": ["definitely_missing_field"]},
+        )
+        self.assertEqual(
+            context["unavailable_requested_collection_field_reasons"]["selected_records"][
+                "definitely_missing_field"
+            ],
+            ["field_not_found"],
+        )
+        session = self.env["office.mapping.session"].browse(context["session_id"])
+        stored = json.loads(session.context_json)
+        self.assertIn("email", stored["extra_authorized_fields"])
+        self.assertIn("parent_id.name", stored["extra_authorized_fields"])
+        self.assertNotIn("definitely_missing_field", stored["extra_authorized_fields"])
+
+    def test_repeat_row_expansion_requires_exact_user_confirmation_before_write(self):
+        thread, _attachment, upload = self._office_message(
+            "Fill all selected records into the inventory table.", raw=_inventory_repeat_rows_xlsx()
+        )
+        records = self.env["res.partner"].create([
+            {"name": f"Inventory row {index} {uuid4().hex}", "color": index, "company_id": self.env.company.id}
+            for index in range(3)
+        ])
+        retriever_message = thread.message_post(
+            body="Retrieved selected records",
+            llm_role="tool",
+            body_json={
+                "type": "tool_execution",
+                "tool_call_id": "inventory-selected-records-" + uuid4().hex,
+                "tool_call": {"function": {"name": "odoo_record_retriever", "arguments": "{}"}},
+                "tool_name": "odoo_record_retriever",
+                "arguments": {
+                    "model": "res.partner", "domain": [["id", "in", records.ids]],
+                    "fields": ["id", "name", "color"], "limit": 100,
+                },
+                "status": "completed",
+                "result": [{"id": record.id, "name": record.name, "color": record.color} for record in records],
+            },
+        )
+        tool = self.env["office.mapping.tool"].with_context(message=retriever_message)
+        context = tool.office_prepare_context(
+            "res.partner", records[0].id, target_record_ids=records.ids,
+            requested_fields=["name", "color"],
+        )
+        session = self.env["office.mapping.session"].browse(context["session_id"])
+        proposal = {
+            "schema_version": "m2.mapping-proposal.v1",
+            "mappings": [], "clarifications": [], "skipped_targets": [],
+        }
+        omitted_repeat_rows = tool.office_save_mapping_preview(
+            session.id,
+            session.revision,
+            {
+                **proposal,
+                "clarifications": [{
+                    "element_id": "xlsx:Inventory!A2",
+                    "reason_code": "missing_source",
+                    "question": "Which field should be written here?",
+                }],
+            },
+        )
+        self.assertEqual(omitted_repeat_rows["status"], "error", omitted_repeat_rows)
+        self.assertEqual(omitted_repeat_rows["error_code"], "repeat_rows_required")
+        self.assertEqual(omitted_repeat_rows["unknown_targets"], [])
+        self.assertEqual(omitted_repeat_rows["unresolved_targets"], ["xlsx:Inventory!A2"])
+        self.assertFalse(omitted_repeat_rows["operation_executed"])
+        self.assertEqual(omitted_repeat_rows["selected_record_count"], 3)
+        self.assertEqual(omitted_repeat_rows["existing_row_capacity"], 2)
+        self.assertFalse(session.preview_attachment_id)
+        repeat_rows = [{
+            "collection_field": "selected_records", "sheet": "Inventory", "start_row": 2,
+            "columns": [
+                {"column": "G", "source_field": "color"},
+                {"column": "H", "source_field": "color"},
+                {"column": "I", "source_field": "color"},
+                {"column": "J", "formula": "=G{row}-H{row}"},
+                {"column": "K", "formula": "=J{row}-I{row}"},
+            ],
+        }]
+        original_revision = session.revision
+        original_rules = session.mapping_rules_json
+        warning = tool.office_save_mapping_preview(
+            session.id, session.revision, proposal, repeat_rows=repeat_rows
+        )
+
+        self.assertEqual(warning["status"], "needs_confirmation", warning)
+        self.assertEqual(warning["error_code"], "confirmation_required")
+        self.assertFalse(warning["operation_executed"])
+        self.assertEqual(warning["risks"][0]["risk_type"], "repeat_row_range_expansion")
+        self.assertEqual(warning["risks"][0]["old_value"]["detail_rows"], [2, 3])
+        self.assertEqual(warning["risks"][0]["new_value"]["detail_rows"], [2, 4])
+        self.assertEqual(warning["risks"][0]["new_value"]["summary_row"], 5)
+        self.assertTrue(warning["risks"][0]["formula_impacts"])
+        self.assertFalse(session.preview_attachment_id)
+        self.assertEqual(session.revision, original_revision)
+        self.assertEqual(session.mapping_rules_json, original_rules)
+
+        confirmation = thread.message_post(
+            body="确认", llm_role="user", author_id=self.env.user.partner_id.id
+        )
+        changed_scope = [{
+            **repeat_rows[0], "sort_by": "name", "sort_direction": "desc",
+        }]
+        stale = self.env["office.mapping.tool"].with_context(message=confirmation).office_save_mapping_preview(
+            session.id, session.revision, proposal, repeat_rows=changed_scope, force_override=True
+        )
+        self.assertEqual(stale["status"], "needs_confirmation", stale)
+        self.assertEqual(stale["error_code"], "confirmation_scope_changed")
+        self.assertFalse(stale["operation_executed"])
+        self.assertFalse(session.preview_attachment_id)
+        self.assertEqual(session.revision, original_revision)
+
+        confirmation = thread.message_post(
+            body="确认", llm_role="user", author_id=self.env.user.partner_id.id
+        )
+        applied = self.env["office.mapping.tool"].with_context(message=confirmation).office_save_mapping_preview(
+            session.id, session.revision, proposal, repeat_rows=changed_scope
+        )
+        self.assertEqual(applied["status"], "success", applied)
+        self.assertTrue(applied["operation_executed"])
+        self.assertFalse(session.pending_cell_override_json)
+        payload = session.preview_attachment_id.raw
+        self.assertTrue(payload)
+        with ZipFile(BytesIO(payload)) as archive:
+            self.assertIsNone(archive.testzip())
+        workbook = load_workbook(BytesIO(payload), data_only=False)
+        try:
+            sheet = workbook["Inventory"]
+            sorted_records = records.sorted("name", reverse=True)
+            self.assertEqual([sheet[f"G{row}"].value for row in range(2, 5)], sorted_records.mapped("color"))
+            self.assertEqual([sheet[f"J{row}"].value for row in range(2, 5)], [f"=G{row}-H{row}" for row in range(2, 5)])
+            self.assertEqual([sheet[f"K{row}"].value for row in range(2, 5)], [f"=J{row}-I{row}" for row in range(2, 5)])
+            self.assertEqual(sheet["G5"].value, "=SUM(G2:G4)")
+            self.assertEqual(sheet["H5"].value, "=SUM(H2:H4)")
+            self.assertEqual(sheet["I5"].value, "=SUM(I2:I4)")
+            self.assertEqual(sheet["J5"].value, "=SUM(J2:J4)")
+            self.assertEqual(sheet["K5"].value, "=SUM(K2:K4)")
+            self.assertEqual(sheet["A1"].value, "Product")
+        finally:
+            workbook.close()
+
+    def test_repeat_rows_can_compile_a_bounded_large_calculated_table_mapping(self):
+        thread, _attachment, upload = self._office_message(
+            "Fill nineteen selected records into repeated rows.", raw=_inventory_repeat_rows_xlsx()
+        )
+        records = self.env["res.partner"].create([
+            {"name": f"Large repeat row {index:02d} {uuid4().hex}", "color": index % 12,
+             "company_id": self.env.company.id}
+            for index in range(19)
+        ])
+        retriever_message = thread.message_post(
+            body="Retrieved nineteen readable records.",
+            llm_role="tool",
+            body_json={
+                "type": "tool_execution",
+                "tool_call_id": "large-repeat-record-set",
+                "tool_call": {"function": {"name": "odoo_record_retriever", "arguments": "{}"}},
+                "tool_name": "odoo_record_retriever",
+                "arguments": {
+                    "model": "res.partner", "domain": [["id", "in", records.ids]],
+                    "fields": ["id", "name", "color"], "limit": len(records), "offset": 0,
+                },
+                "status": "completed",
+                "result": {
+                    "records": [{"id": item.id, "name": item.name, "color": item.color} for item in records],
+                    "count": len(records), "offset": 0, "limit": len(records), "has_more": False,
+                },
+            },
+        )
+        tool = self.env["office.mapping.tool"].with_context(message=retriever_message)
+        context = tool.office_prepare_context(
+            "res.partner", records[0].id, target_record_ids=records.ids,
+            requested_fields=["name", "color"],
+        )
+        self.assertEqual(context["status"], "ready", context)
+        session = self.env["office.mapping.session"].browse(context["session_id"])
+        columns = [
+            *[{"column": column, "source_field": "name"} for column in "ABCDEF"],
+            *[{"column": column, "source_field": "color"} for column in "GHI"],
+            {"column": "J", "formula": "=G{row}-H{row}"},
+            {"column": "K", "formula": "=J{row}-I{row}"},
+        ]
+        repeat_rows = [{
+            "collection_field": "selected_records", "sheet": "Inventory", "start_row": 2,
+            "columns": columns,
+        }]
+        proposal = {
+            "schema_version": "m2.mapping-proposal.v1",
+            "mappings": [], "clarifications": [], "skipped_targets": [],
+        }
+        warning = tool.office_save_mapping_preview(
+            session.id, session.revision, proposal, repeat_rows=repeat_rows
+        )
+        self.assertEqual(warning["status"], "needs_confirmation", warning)
+        self.assertFalse(warning["operation_executed"])
+        confirmation = thread.message_post(
+            body="确认", llm_role="user", author_id=self.env.user.partner_id.id
+        )
+        result = self.env["office.mapping.tool"].with_context(message=confirmation).office_save_mapping_preview(
+            session.id, session.revision, proposal, repeat_rows=repeat_rows, force_override=True
+        )
+        self.assertEqual(result["status"], "success", result)
+        workbook = load_workbook(BytesIO(session.preview_attachment_id.raw), data_only=False)
+        try:
+            sheet = workbook["Inventory"]
+            self.assertEqual(
+                [sheet[f"A{row}"].value for row in range(2, 21)],
+                records.mapped("name"),
+            )
+            self.assertEqual(
+                [sheet[f"G{row}"].value for row in range(2, 21)],
+                records.mapped("color"),
+            )
+            self.assertEqual(sheet["J20"].value, "=G20-H20")
+            self.assertEqual(sheet["K20"].value, "=J20-I20")
+            self.assertEqual(sheet["G21"].value, "=SUM(G2:G20)")
+            self.assertEqual(sheet["K21"].value, "=SUM(K2:K20)")
+        finally:
+            workbook.close()
+
+    def test_root_header_edit_replaces_stale_unsupported_skip_and_keeps_mapping(self):
+        instruction = "Change one table header and preserve the saved mapping."
+        thread, _attachment, upload = self._office_message(instruction, raw=_header_edit_xlsx())
+        target = self.env["res.partner"].create(
+            {"name": "Root header mapping source " + uuid4().hex, "company_id": self.env.company.id}
+        )
+        tool = self.env["office.mapping.tool"].with_context(message=upload)
+        context = tool.office_prepare_context("res.partner", target.id)
+        first = tool.office_save_mapping_preview(
+            context["session_id"],
+            context["revision"],
+            {
+                "schema_version": "m2.mapping-proposal.v1",
+                "mappings": [
+                    {"element_id": "xlsx:Orders!F2", "source_field": "name", "value_type": "string"}
+                ],
+                "clarifications": [],
+                "skipped_targets": [],
+            },
+        )
+        self.assertEqual(first["status"], "success", first)
+        self.assertEqual(first["operation_status"], "preview_ready")
+        session = self.env["office.mapping.session"].browse(context["session_id"])
+
+        edit_request = thread.message_post(
+            body="Change the header to 供应商商品描述 without changing the source mapping.",
+            llm_role="user",
+            author_id=self.env.user.partner_id.id,
+        )
+        edit_tool = self.env["office.mapping.tool"].with_context(message=edit_request)
+        patch = {
+            "schema_version": "m2.mapping-proposal.v1",
+            "mappings": [],
+            "clarifications": [
+                {
+                    "element_id": "xlsx:Orders!F1",
+                    "reason_code": "unsupported_target",
+                    "question": "The old manifest treated the header as unwritable.",
+                }
+            ],
+            "skipped_targets": ["xlsx:Orders!F1"],
+        }
+        cell_edits = [
+            {"element_id": "xlsx:Orders!F1", "value": "供应商商品描述", "value_type": "string"}
+        ]
+        result = edit_tool.office_save_mapping_preview(
+            session.id,
+            session.revision,
+            patch,
+            cell_edits=cell_edits,
+        )
+
+        self.assertEqual(result["status"], "needs_confirmation", result)
+        confirmation = thread.message_post(
+            body="确认",
+            llm_role="user",
+            author_id=self.env.user.partner_id.id,
+        )
+        result = self.env["office.mapping.tool"].with_context(message=confirmation).office_save_mapping_preview(
+            session.id,
+            session.revision,
+            patch,
+            cell_edits=cell_edits,
+            force_override=True,
+        )
+        self.assertEqual(result["status"], "success", result)
+        self.assertEqual(result["operation_status"], "preview_ready")
+        self.assertTrue(result["attachment_posted_to_thread"])
+        saved = json.loads(session.mapping_rules_json)
+        self.assertEqual(
+            saved["mappings"],
+            [{"element_id": "xlsx:Orders!F2", "source_field": "name", "value_type": "string"}],
+        )
+        self.assertEqual(
+            saved["cell_edits"],
+            [{"element_id": "xlsx:Orders!F1", "value": "供应商商品描述", "value_type": "string"}],
+        )
+        workbook = load_workbook(BytesIO(session.preview_attachment_id.raw), data_only=False)
+        try:
+            self.assertEqual(workbook["Orders"]["F1"].value, "供应商商品描述")
+            self.assertEqual(workbook["Orders"]["F2"].value, target.name)
+            self.assertEqual(workbook["Orders"]["E1"].value, "Description")
+            self.assertEqual(workbook["Orders"]["E2"].value, "Keep this label")
+        finally:
+            workbook.close()
+
+    def test_explicit_header_edit_creates_preview_without_changing_source_mapping(self):
+        instruction = "Change the header text, keep the data mapping unchanged."
+        thread, _attachment, upload = self._office_message(instruction, raw=_header_edit_xlsx())
+        target = self.env["res.partner"].create(
+            {"name": "Header mapping source " + uuid4().hex, "company_id": self.env.company.id}
+        )
+        tool = self.env["office.mapping.tool"].with_context(message=upload)
+        context = tool.office_prepare_context("res.partner", target.id)
+        self.assertIn("explicit_coordinate_cell_edits", context["mapping_limits"]["supported"])
+        self.assertNotIn("explicit_table_header_text_edits", context["mapping_limits"]["supported"])
+        header = next(
+            item for item in context["target_manifest"]
+            if item["element_id"] == "xlsx:Orders!F1"
+        )
+        self.assertEqual(header["table_role"], "table_header")
+        self.assertFalse(header["writable"])
+
+        initial = tool.office_save_mapping_preview(
+            context["session_id"],
+            context["revision"],
+            {
+                "schema_version": "m2.mapping-proposal.v1",
+                "mappings": [
+                    {"element_id": "xlsx:Orders!F2", "source_field": "name", "value_type": "string"}
+                ],
+                "clarifications": [],
+                "skipped_targets": [],
+            },
+        )
+        self.assertEqual(initial["status"], "success", initial)
+        self.assertEqual(initial["operation_status"], "preview_ready")
+        session = self.env["office.mapping.session"].browse(context["session_id"])
+        initial_revision = session.revision
+        initial_proposal_revision = session.proposal_revision
+        initial_preview_id = session.preview_attachment_id.id
+        edit_request = thread.message_post(
+            body="修改表头‘供应商产品名称’为‘供应商商品描述’，不得改变来源字段。",
+            llm_role="user",
+            author_id=self.env.user.partner_id.id,
+        )
+        edit_tool = self.env["office.mapping.tool"].with_context(message=edit_request)
+        patch = {
+            "schema_version": "m2.mapping-proposal.v1",
+            "mappings": [],
+            "clarifications": [
+                {
+                    "element_id": "xlsx:Orders!F1",
+                    "reason_code": "unsupported_target",
+                    "question": "The old manifest treated the header as unwritable.",
+                }
+            ],
+            "skipped_targets": ["xlsx:Orders!F1"],
+        }
+        cell_edits = [
+            {"element_id": "xlsx:Orders!F1", "value": "供应商商品描述", "value_type": "string"}
+        ]
+        result = edit_tool.office_save_mapping_preview(
+            session.id, session.revision, patch, cell_edits=cell_edits
+        )
+
+        self.assertEqual(result["status"], "needs_confirmation", result)
+        self.assertEqual(result["target"], "xlsx:Orders!F1")
+        self.assertEqual(result["current_value"], "Supplier Product Name")
+        self.assertEqual(result["requested_value"], "供应商商品描述")
+        self.assertEqual(result["risk_type"], "table_header_change")
+        self.assertEqual(result["affected_scope"], ["xlsx:Orders!F1"])
+        self.assertEqual(result["operation_scope"]["action"], "office_mapping_update")
+        self.assertEqual(result["operation_scope"]["thread_id"], thread.id)
+        self.assertEqual(result["operation_scope"]["session_id"], session.id)
+        self.assertEqual(result["operation_scope"]["mapping_targets"], ["xlsx:Orders!F2"])
+        self.assertEqual(
+            result["operation_scope"]["operations"],
+            [{
+                "action": "set_value",
+                "target": "xlsx:Orders!F1",
+                "value": "供应商商品描述",
+                "value_type": "string",
+            }],
+        )
+        self.assertEqual(len(result["operation_scope"]["operation_fingerprint"]), 64)
+        self.assertEqual(result["risks"][0]["old_value"], "Supplier Product Name")
+        self.assertEqual(result["risks"][0]["new_value"], "供应商商品描述")
+        self.assertTrue(result["recommendation"])
+        self.assertEqual(
+            result["confirmation_question"],
+            "F1 单元格原本是‘Supplier Product Name’，您确定要将其覆盖为‘供应商商品描述’吗？",
+        )
+        self.assertFalse(result.get("preview_attachment_id"))
+        self.assertEqual(session.preview_attachment_id.id, initial_preview_id)
+        self.assertEqual(session.revision, initial_revision)
+        self.assertEqual(session.proposal_revision, initial_proposal_revision)
+        self.assertFalse(json.loads(session.mapping_rules_json).get("cell_edits", []))
+        pending = json.loads(session.pending_cell_override_json)
+        self.assertEqual(pending["request_message_id"], edit_request.id)
+
+        # A model-supplied force flag alone is not a user confirmation.
+        unconfirmed = edit_tool.office_save_mapping_preview(
+            session.id,
+            session.revision,
+            patch,
+            cell_edits=cell_edits,
+            force_override=True,
+        )
+        self.assertEqual(unconfirmed["status"], "needs_confirmation", unconfirmed)
+        self.assertFalse(unconfirmed.get("preview_attachment_id"))
+        self.assertEqual(session.preview_attachment_id.id, initial_preview_id)
+
+        confirmation = thread.message_post(
+            body="确认",
+            llm_role="user",
+            author_id=self.env.user.partner_id.id,
+        )
+        result = self.env["office.mapping.tool"].with_context(message=confirmation).office_save_mapping_preview(
+            session.id,
+            session.revision,
+            patch,
+            cell_edits=cell_edits,
+            force_override=True,
+        )
+
+        self.assertEqual(result["status"], "success", result)
+        self.assertEqual(result["operation_status"], "preview_ready")
+        self.assertTrue(result["attachment_posted_to_thread"])
+        self.assertEqual(result["message_id"] and result["attachment"]["id"], result["preview_attachment_id"])
+        session.invalidate_recordset()
+        saved = json.loads(session.mapping_rules_json)
+        self.assertEqual(
+            saved["mappings"],
+            [{"element_id": "xlsx:Orders!F2", "source_field": "name", "value_type": "string"}],
+        )
+        self.assertEqual(
+            saved["cell_edits"],
+            [{"element_id": "xlsx:Orders!F1", "value": "供应商商品描述", "value_type": "string"}],
+        )
+        preview_bytes = session.preview_attachment_id.raw
+        workbook = load_workbook(BytesIO(preview_bytes), data_only=False)
+        try:
+            self.assertEqual(workbook["Orders"]["F1"].value, "供应商商品描述")
+            self.assertEqual(workbook["Orders"]["F2"].value, target.name)
+            self.assertEqual(workbook["Orders"]["E1"].value, "Description")
+            self.assertEqual(workbook["Orders"]["E2"].value, "Keep this label")
+        finally:
+            workbook.close()
+
+    def test_legacy_required_target_omission_preserves_original_value(self):
+        thread, _attachment, upload = self._office_message(
+            "Prepare the workbook and leave unmentioned cells unchanged.", raw=_header_edit_xlsx()
+        )
+        target = self.env["res.partner"].create(
+            {"name": "Legacy required omission source " + uuid4().hex, "company_id": self.env.company.id}
+        )
+        tool = self.env["office.mapping.tool"].with_context(message=upload)
+        context = tool.office_prepare_context("res.partner", target.id)
+        session = self.env["office.mapping.session"].browse(context["session_id"])
+        stored_context = json.loads(session.context_json)
+        legacy_target = next(
+            item for item in stored_context["target_manifest"]
+            if item["element_id"] == "xlsx:Orders!F2"
+        )
+        self.assertTrue(legacy_target["writable"])
+        legacy_target["required"] = True
+        legacy_target["approved_to_skip"] = False
+        session._set_context_from_service(json.dumps(stored_context, ensure_ascii=False))
+
+        proposal = {
+            "schema_version": "m2.mapping-proposal.v1",
+            "mappings": [],
+            "clarifications": [],
+            "skipped_targets": [],
+        }
+        edits = [{
+            "element_id": "xlsx:Orders!F1",
+            "value": "Updated header",
+            "value_type": "string",
+        }]
+        warning = tool.office_save_mapping_preview(
+            session.id,
+            session.revision,
+            proposal,
+            cell_edits=edits,
+        )
+
+        self.assertEqual(warning["status"], "needs_confirmation", warning)
+        self.assertEqual(warning["affected_scope"], ["xlsx:Orders!F1"])
+        self.assertEqual(warning["risks"][0]["old_value"], "Supplier Product Name")
+        self.assertEqual(warning["risks"][0]["new_value"], "Updated header")
+        self.assertFalse(warning["operation_executed"])
+        confirmation = thread.message_post(
+            body="确认", llm_role="user", author_id=self.env.user.partner_id.id
+        )
+        result = self.env["office.mapping.tool"].with_context(message=confirmation).office_save_mapping_preview(
+            session.id,
+            session.revision,
+            proposal,
+            cell_edits=edits,
+            force_override=True,
+        )
+        self.assertEqual(result["status"], "success", result)
+        saved = json.loads(session.mapping_rules_json)
+        self.assertNotIn("xlsx:Orders!F2", saved.get("clear_targets", []))
+        workbook = load_workbook(BytesIO(session.preview_attachment_id.raw), data_only=False)
+        try:
+            self.assertEqual(workbook["Orders"]["F2"].value, "old value")
+            self.assertEqual(workbook["Orders"]["F1"].value, "Updated header")
+        finally:
+            workbook.close()
+        self.assertTrue(
+            self.env["mail.message"].search_count(
+                [("id", "=", result["message_id"]), ("model", "=", "llm.thread"), ("res_id", "=", thread.id)]
+            )
+        )
+
+    def test_explicit_formula_overwrite_requires_confirmation_and_does_not_render_first(self):
+        thread, _attachment, upload = self._office_message(
+            "Fill the workbook and let me review it.", raw=_formula_repeat_rows_xlsx()
+        )
+        target = self.env["res.partner"].create(
+            {"name": "Formula confirmation source " + uuid4().hex, "company_id": self.env.company.id}
+        )
+        tool = self.env["office.mapping.tool"].with_context(message=upload)
+        context = tool.office_prepare_context("res.partner", target.id)
+        initial = tool.office_save_mapping_preview(
+            context["session_id"],
+            context["revision"],
+            {
+                "schema_version": "m2.mapping-proposal.v1",
+                "mappings": [
+                    {"element_id": "xlsx:Data!B4", "source_field": "name", "value_type": "string"}
+                ],
+                "clarifications": [],
+                "skipped_targets": [],
+            },
+        )
+        self.assertEqual(initial["status"], "success", initial)
+        self.assertEqual(initial["operation_status"], "preview_ready")
+        session = self.env["office.mapping.session"].browse(context["session_id"])
+        revision_before = session.revision
+        preview_before = session.preview_attachment_id.id
+        edit_request = thread.message_post(
+            body="Replace C4's formula with 12.",
+            llm_role="user",
+            author_id=self.env.user.partner_id.id,
+        )
+        proposal = {
+            "schema_version": "m2.mapping-proposal.v1",
+            "mappings": [],
+            "clarifications": [],
+            "skipped_targets": [],
+        }
+        cell_edits = [
+            {"element_id": "xlsx:Data!C4", "value": 12, "value_type": "number"}
+        ]
+        result = self.env["office.mapping.tool"].with_context(message=edit_request).office_save_mapping_preview(
+            session.id,
+            session.revision,
+            proposal,
+            cell_edits=cell_edits,
+        )
+
+        self.assertEqual(result["status"], "needs_confirmation", result)
+        self.assertEqual(result["current_value"], {"formula": "=B4*2"})
+        self.assertEqual(
+            result["confirmation_question"],
+            "C4 单元格原本是‘公式 =B4*2’，您确定要将其覆盖为‘12’吗？",
+        )
+        self.assertEqual(session.revision, revision_before)
+        self.assertEqual(session.preview_attachment_id.id, preview_before)
+
+        confirmation = thread.message_post(
+            body="确认", llm_role="user", author_id=self.env.user.partner_id.id
+        )
+        applied = self.env["office.mapping.tool"].with_context(message=confirmation).office_save_mapping_preview(
+            session.id,
+            session.revision,
+            proposal,
+            cell_edits=cell_edits,
+            force_override=True,
+        )
+        self.assertEqual(applied["status"], "success", applied)
+        self.assertEqual(applied["operation_status"], "preview_ready")
+        workbook = load_workbook(BytesIO(session.preview_attachment_id.raw), data_only=False)
+        try:
+            self.assertEqual(workbook["Data"]["C4"].value, 12)
+            self.assertIsNone(workbook["Data"]["C5"].value)
+            self.assertEqual(workbook["Data"]["C6"].value, "=SUM(C4:C5)")
+        finally:
+            workbook.close()
+
+    def test_cell_override_rejection_clears_pending_without_writing(self):
+        thread, _attachment, upload = self._office_message(
+            "Fill the workbook and let me review it.", raw=_header_edit_xlsx()
+        )
+        target = self.env["res.partner"].create(
+            {"name": "Rejected overwrite source " + uuid4().hex, "company_id": self.env.company.id}
+        )
+        tool = self.env["office.mapping.tool"].with_context(message=upload)
+        context = tool.office_prepare_context("res.partner", target.id)
+        initial = tool.office_save_mapping_preview(
+            context["session_id"], context["revision"],
+            {"schema_version": "m2.mapping-proposal.v1", "mappings": [
+                {"element_id": "xlsx:Orders!F2", "source_field": "name", "value_type": "string"}
+            ], "clarifications": [], "skipped_targets": []},
+        )
+        self.assertEqual(initial["status"], "success", initial)
+        session = self.env["office.mapping.session"].browse(context["session_id"])
+        original_preview = session.preview_attachment_id
+        original_bytes = original_preview.raw
+        original_revision = session.revision
+        original_proposal_revision = session.proposal_revision
+        edits = [{"element_id": "xlsx:Orders!F1", "value": "Do not apply", "value_type": "string"}]
+        request = thread.message_post(
+            body="Replace the header with Do not apply.", llm_role="user", author_id=self.env.user.partner_id.id
+        )
+        first = self.env["office.mapping.tool"].with_context(message=request).office_save_mapping_preview(
+            session.id, session.revision,
+            {"schema_version": "m2.mapping-proposal.v1", "mappings": [], "clarifications": [], "skipped_targets": []},
+            cell_edits=edits,
+        )
+        self.assertEqual(first["status"], "needs_confirmation", first)
+        refusal = thread.message_post(body="拒绝", llm_role="user", author_id=self.env.user.partner_id.id)
+        rejected = self.env["office.mapping.tool"].with_context(message=refusal).office_save_mapping_preview(
+            session.id, session.revision,
+            {"schema_version": "m2.mapping-proposal.v1", "mappings": [], "clarifications": [], "skipped_targets": []},
+            cell_edits=edits, force_override=True,
+        )
+        self.assertEqual(rejected["status"], "blocked", rejected)
+        self.assertEqual(rejected["error_code"], "user_rejected_confirmation")
+        self.assertFalse(rejected["operation_executed"])
+        self.assertFalse(session.pending_cell_override_json)
+        self.assertEqual(session.revision, original_revision)
+        self.assertEqual(session.proposal_revision, original_proposal_revision)
+        self.assertEqual(session.preview_attachment_id.id, original_preview.id)
+        self.assertEqual(session.preview_attachment_id.raw, original_bytes)
+        workbook = load_workbook(BytesIO(session.preview_attachment_id.raw), data_only=False)
+        try:
+            self.assertEqual(workbook["Orders"]["F1"].value, "Supplier Product Name")
+        finally:
+            workbook.close()
+
+    def test_confirmation_is_invalidated_when_preview_file_changes(self):
+        thread, _attachment, upload = self._office_message(
+            "Fill the workbook and let me review it.", raw=_header_edit_xlsx()
+        )
+        target = self.env["res.partner"].create(
+            {"name": "Stale confirmation source " + uuid4().hex, "company_id": self.env.company.id}
+        )
+        tool = self.env["office.mapping.tool"].with_context(message=upload)
+        context = tool.office_prepare_context("res.partner", target.id)
+        initial = tool.office_save_mapping_preview(
+            context["session_id"], context["revision"],
+            {"schema_version": "m2.mapping-proposal.v1", "mappings": [
+                {"element_id": "xlsx:Orders!F2", "source_field": "name", "value_type": "string"}
+            ], "clarifications": [], "skipped_targets": []},
+        )
+        self.assertEqual(initial["status"], "success", initial)
+        session = self.env["office.mapping.session"].browse(context["session_id"])
+        edits = [{"element_id": "xlsx:Orders!F1", "value": "New label", "value_type": "string"}]
+        request = thread.message_post(
+            body="Set the header to New label.", llm_role="user", author_id=self.env.user.partner_id.id
+        )
+        patch = {"schema_version": "m2.mapping-proposal.v1", "mappings": [], "clarifications": [], "skipped_targets": []}
+        first = self.env["office.mapping.tool"].with_context(message=request).office_save_mapping_preview(
+            session.id, session.revision, patch, cell_edits=edits
+        )
+        self.assertEqual(first["status"], "needs_confirmation", first)
+
+        # Simulate a valid, independently changed preview document under the same
+        # attachment identity. A prior approval must not authorize its new bytes.
+        workbook = load_workbook(BytesIO(session.preview_attachment_id.raw), data_only=False)
+        workbook["Orders"]["E2"] = "changed after warning"
+        changed = BytesIO()
+        workbook.save(changed)
+        workbook.close()
+        session.preview_attachment_id.write({"raw": changed.getvalue()})
+        confirmation = thread.message_post(body="确认", llm_role="user", author_id=self.env.user.partner_id.id)
+        stale = self.env["office.mapping.tool"].with_context(message=confirmation).office_save_mapping_preview(
+            session.id, session.revision, patch, cell_edits=edits, force_override=True
+        )
+        self.assertEqual(stale["status"], "needs_confirmation", stale)
+        self.assertEqual(stale["error_code"], "confirmation_scope_changed")
+        self.assertFalse(stale["operation_executed"])
+        self.assertEqual(session.revision, first["revision"])
+        workbook = load_workbook(BytesIO(session.preview_attachment_id.raw), data_only=False)
+        try:
+            self.assertEqual(workbook["Orders"]["F1"].value, "Supplier Product Name")
+            self.assertEqual(workbook["Orders"]["E2"].value, "changed after warning")
+        finally:
+            workbook.close()
+
+    def test_force_override_cannot_expand_to_target_outside_manifest(self):
+        thread, _attachment, upload = self._office_message(
+            "Fill the workbook.", raw=_header_edit_xlsx()
+        )
+        target = self.env["res.partner"].create(
+            {"name": "Out of manifest source " + uuid4().hex, "company_id": self.env.company.id}
+        )
+        tool = self.env["office.mapping.tool"].with_context(message=upload)
+        context = tool.office_prepare_context("res.partner", target.id)
+        result = tool.office_save_mapping_preview(
+            context["session_id"], context["revision"],
+            {"schema_version": "m2.mapping-proposal.v1", "mappings": [], "clarifications": [], "skipped_targets": []},
+            cell_edits=[{"element_id": "xlsx:Orders!ZZ999", "value": "outside", "value_type": "string"}],
+            force_override=True,
+        )
+        self.assertEqual(result["status"], "blocked", result)
+        self.assertEqual(result["error_code"], "target_outside_authorized_manifest")
+        self.assertFalse(result["operation_executed"])
+        session = self.env["office.mapping.session"].browse(context["session_id"])
+        self.assertFalse(session.preview_attachment_id)
+        self.assertEqual(session.revision, context["revision"])
+
+    def test_confirmation_cannot_be_reused_after_mapping_scope_expands(self):
+        thread, _attachment, upload = self._office_message(
+            "Fill this workbook.", raw=_header_edit_xlsx()
+        )
+        target = self.env["res.partner"].create(
+            {
+                "name": "Confirmation scope source " + uuid4().hex,
+                "email": "scope@example.test",
+                "phone": "555-0101",
+                "company_id": self.env.company.id,
+            }
+        )
+        tool = self.env["office.mapping.tool"].with_context(message=upload)
+        context = tool.office_prepare_context("res.partner", target.id)
+        initial_proposal = {
+            "schema_version": "m2.mapping-proposal.v1",
+            "mappings": [
+                {"element_id": "xlsx:Orders!F2", "source_field": "name", "value_type": "string"}
+            ],
+            "clarifications": [],
+            "skipped_targets": [],
+        }
+        initial = tool.office_save_mapping_preview(
+            context["session_id"], context["revision"], initial_proposal
+        )
+        self.assertEqual(initial["status"], "success", initial)
+        session = self.env["office.mapping.session"].browse(context["session_id"])
+        old_preview = session.preview_attachment_id
+        old_revision = session.revision
+        cell_edits = [
+            {"element_id": "xlsx:Orders!F1", "value": "Approved header", "value_type": "string"}
+        ]
+        request = thread.message_post(
+            body="Change F1 to Approved header.",
+            llm_role="user",
+            author_id=self.env.user.partner_id.id,
+        )
+        pending_tool = self.env["office.mapping.tool"].with_context(message=request)
+        warning = pending_tool.office_save_mapping_preview(
+            session.id,
+            session.revision,
+            {"schema_version": "m2.mapping-proposal.v1", "mappings": [], "clarifications": [], "skipped_targets": []},
+            cell_edits=cell_edits,
+        )
+        self.assertEqual(warning["status"], "needs_confirmation", warning)
+        confirmation = thread.message_post(
+            body="确认", llm_role="user", author_id=self.env.user.partner_id.id
+        )
+        expanded_proposal = {
+            "schema_version": "m2.mapping-proposal.v1",
+            "mappings": [
+                {"element_id": "xlsx:Orders!F2", "source_field": "email", "value_type": "string"}
+            ],
+            "clarifications": [],
+            "skipped_targets": [],
+        }
+        expanded = self.env["office.mapping.tool"].with_context(message=confirmation).office_save_mapping_preview(
+            session.id,
+            session.revision,
+            expanded_proposal,
+            cell_edits=cell_edits,
+            force_override=True,
+        )
+        self.assertEqual(expanded["status"], "needs_confirmation", expanded)
+        self.assertEqual(expanded["error_code"], "confirmation_scope_changed")
+        self.assertFalse(expanded["operation_executed"])
+        self.assertEqual(session.revision, old_revision)
+        self.assertEqual(session.preview_attachment_id, old_preview)
+        self.assertEqual(json.loads(session.mapping_rules_json), initial_proposal)
+
+    def test_explicit_clear_of_header_requires_confirmation_then_clears_only_that_cell(self):
+        thread, _attachment, upload = self._office_message(
+            "Fill the workbook and let me review it.", raw=_header_edit_xlsx()
+        )
+        target = self.env["res.partner"].create(
+            {"name": "Header clear source " + uuid4().hex, "company_id": self.env.company.id}
+        )
+        tool = self.env["office.mapping.tool"].with_context(message=upload)
+        context = tool.office_prepare_context("res.partner", target.id)
+        proposal = {
+            "schema_version": "m2.mapping-proposal.v1",
+            "mappings": [
+                {"element_id": "xlsx:Orders!F2", "source_field": "name", "value_type": "string"}
+            ],
+            "clarifications": [],
+            "skipped_targets": [],
+        }
+        initial = tool.office_save_mapping_preview(context["session_id"], context["revision"], proposal)
+        self.assertEqual(initial["status"], "success", initial)
+        session = self.env["office.mapping.session"].browse(context["session_id"])
+        old_preview_id = session.preview_attachment_id.id
+        before_revision = session.revision
+        request = thread.message_post(
+            body="Clear the heading in F1.", llm_role="user", author_id=self.env.user.partner_id.id
+        )
+        clear_proposal = {
+            "schema_version": "m2.mapping-proposal.v1",
+            "mappings": [],
+            "clarifications": [],
+            "skipped_targets": [],
+            "clear_targets": ["xlsx:Orders!F1"],
+        }
+        first = self.env["office.mapping.tool"].with_context(message=request).office_save_mapping_preview(
+            session.id, session.revision, clear_proposal
+        )
+        self.assertEqual(first["status"], "needs_confirmation", first)
+        self.assertEqual(first["risk_type"], "table_header_change")
+        self.assertEqual(first["risks"][0]["operation"], "clear")
+        self.assertFalse(first["operation_executed"])
+        self.assertEqual(session.preview_attachment_id.id, old_preview_id)
+        self.assertEqual(session.revision, before_revision)
+
+        confirmation = thread.message_post(body="确认", llm_role="user", author_id=self.env.user.partner_id.id)
+        final = self.env["office.mapping.tool"].with_context(message=confirmation).office_save_mapping_preview(
+            session.id, session.revision, clear_proposal, force_override=True
+        )
+        self.assertEqual(final["status"], "success", final)
+        self.assertEqual(final["operation_status"], "preview_ready")
+        workbook = load_workbook(BytesIO(session.preview_attachment_id.raw), data_only=False)
+        try:
+            self.assertIsNone(workbook["Orders"]["F1"].value)
+            self.assertEqual(workbook["Orders"]["F2"].value, target.name)
+            self.assertEqual(workbook["Orders"]["E1"].value, "Description")
+            self.assertEqual(workbook["Orders"]["E2"].value, "Keep this label")
+        finally:
+            workbook.close()
+
+    def test_cell_edit_patch_preserves_other_mappings_and_migrates_legacy_header_edit(self):
+        current = {
+            "schema_version": "m2.mapping-proposal.v1",
+            "mappings": [
+                {
+                    "element_id": "xlsx:Orders!F2",
+                    "source_field": "product_description_variants",
+                    "value_type": "string",
+                }
+            ],
+            "clarifications": [],
+            "skipped_targets": [],
+            "header_edits": [
+                {"element_id": "xlsx:Orders!F1", "value": "供应商产品名称"}
+            ],
+        }
+        patch_data = {
+            "schema_version": "m2.mapping-proposal.v1",
+            "mappings": [],
+            "clarifications": [],
+            "skipped_targets": [],
+            "cell_edits": [
+                {"element_id": "xlsx:Orders!F1", "value": "供应商商品描述", "value_type": "string"}
+            ],
+        }
+
+        merged = _merge_mapping_patch(current, patch_data)
+
+        self.assertEqual(merged["mappings"], current["mappings"])
+        self.assertEqual(
+            merged["cell_edits"],
+            [{"element_id": "xlsx:Orders!F1", "value": "供应商商品描述", "value_type": "string"}],
+        )
+
+    def test_explicit_cell_edit_supersedes_same_target_data_mapping(self):
+        patch_data = {
+            "schema_version": "m2.mapping-proposal.v1",
+            "mappings": [
+                {"element_id": "xlsx:Orders!F1", "source_field": "name", "value_type": "string"}
+            ],
+            "clarifications": [],
+            "skipped_targets": [],
+            "cell_edits": [{"element_id": "xlsx:Orders!F1", "value": "New label", "value_type": "string"}],
+        }
+
+        merged = _merge_mapping_patch(
+            {"mappings": [], "clarifications": [], "skipped_targets": []},
+            patch_data,
+        )
+        self.assertEqual(merged["mappings"], [])
+        self.assertEqual(merged["cell_edits"][0]["value"], "New label")
+
     def test_mapping_patch_rejects_same_target_mapping_and_clarification(self):
         patch_data = {
             "schema_version": "m2.mapping-proposal.v1",
@@ -319,13 +2142,201 @@ class TestNativeOfficeChatIntegration(TransactionCase):
                 "skipped_targets": [],
             },
         )
-        self.assertEqual(result["status"], "preview_ready", result)
+        self.assertEqual(result["status"], "success", result)
+        self.assertTrue(result["operation_executed"])
         rendered = load_workbook(BytesIO(session.preview_attachment_id.raw), data_only=False)
         try:
             self.assertEqual(rendered["Purchase Reconciliation"]["B1"].value, 3329.15)
             self.assertEqual(rendered["Purchase Reconciliation"]["A1"].value, "Adjusted amount (EUR)")
         finally:
             rendered.close()
+
+    def test_date_offset_mapping_writes_a_typed_excel_datetime_plus_seven_days(self):
+        thread, _attachment, user_message = self._office_message(
+            "Delay every selected order date by seven days", raw=_date_xlsx()
+        )
+        target = self.env.user.partner_id
+        retriever_result = thread.message_post(
+            body="Authorized date field lookup",
+            llm_role="tool",
+            body_json={
+                "type": "tool_execution",
+                "tool_call_id": "date-offset-retriever-" + uuid4().hex,
+                "tool_call": {"function": {"name": "odoo_record_retriever", "arguments": "{}"}},
+                "tool_name": "odoo_record_retriever",
+                "arguments": {
+                    "model": "res.partner",
+                    "domain": [["id", "=", target.id]],
+                    "fields": ["create_date"],
+                    "limit": 1,
+                },
+                "status": "completed",
+                "result": [{"id": target.id, "create_date": "2026-11-03T09:00:00"}],
+            },
+        )
+        tool = self.env["office.mapping.tool"].with_context(message=retriever_result)
+        context = tool.office_prepare_context(
+            "res.partner", target.id, requested_fields=["create_date"]
+        )
+        session = self.env["office.mapping.session"].browse(context["session_id"])
+        self.assertEqual(context["allowed_fields"]["create_date"]["type"], "datetime")
+        target_spec = next(
+            item for item in context["target_manifest"] if item["element_id"] == "xlsx:Dates!B1"
+        )
+        self.assertIn("datetime", target_spec["allowed_value_types"])
+
+        proposal = {
+            "schema_version": "m2.mapping-proposal.v1",
+            "mappings": [
+                {
+                    "element_id": "xlsx:Dates!B1",
+                    "source_field": "create_date",
+                    "value_type": "datetime",
+                    "transform": {"type": "date_offset", "days": 7},
+                }
+            ],
+            "clarifications": [],
+            "skipped_targets": [],
+        }
+        with patch(
+            "odoo.addons.office_engine_m2.services.render_bridge._retrieve_record",
+            return_value={"create_date": "2026-11-03T09:00:00"},
+        ):
+            result = tool.office_save_mapping_preview(session.id, session.revision, proposal)
+        self.assertEqual(result["status"], "success", result)
+        workbook = load_workbook(BytesIO(session.preview_attachment_id.raw), data_only=False)
+        try:
+            value = workbook["Dates"]["B1"].value
+            self.assertEqual(value, datetime(2026, 11, 10, 9, 0))
+            self.assertEqual(workbook["Dates"]["B1"].number_format, "yyyy-mm-dd hh:mm")
+            self.assertEqual(workbook["Dates"]["A1"].value, "Order date")
+        finally:
+            workbook.close()
+
+    def test_repeat_row_date_offset_is_applied_to_each_authorized_record(self):
+        thread, _attachment, user_message = self._office_message(
+            "Delay all selected dates by one week", raw=_date_repeat_rows_xlsx()
+        )
+        records = self.env["res.partner"].create(
+            [
+                {
+                    "name": "Date offset row %s %s" % (index, uuid4().hex),
+                    "company_id": self.env.company.id,
+                }
+                for index in range(3)
+            ]
+        )
+        expected = {
+            record.name: record.create_date.replace(tzinfo=None) + timedelta(days=7)
+            for record in records
+        }
+        retriever_message = thread.message_post(
+            body="Retrieved the selected records and their dates",
+            llm_role="tool",
+            body_json={
+                "type": "tool_execution",
+                "tool_call_id": "date-offset-selected-records-" + uuid4().hex,
+                "tool_call": {"function": {"name": "odoo_record_retriever", "arguments": "{}"}},
+                "tool_name": "odoo_record_retriever",
+                "arguments": {
+                    "model": "res.partner",
+                    "domain": [["id", "in", records.ids]],
+                    "fields": ["id", "name", "create_date"],
+                    "limit": len(records),
+                    "include_pagination": True,
+                },
+                "status": "completed",
+                "result": {
+                    "records": [
+                        {
+                            "id": record.id,
+                            "name": record.name,
+                            "create_date": record.create_date.isoformat(sep=" "),
+                        }
+                        for record in records
+                    ],
+                    "count": len(records),
+                    "offset": 0,
+                    "limit": len(records),
+                    "has_more": False,
+                },
+            },
+        )
+        tool = self.env["office.mapping.tool"].with_context(message=retriever_message)
+        context = tool.office_prepare_context(
+            "res.partner",
+            records[0].id,
+            target_record_ids=records.ids,
+            requested_fields=["name", "create_date"],
+        )
+        session = self.env["office.mapping.session"].browse(context["session_id"])
+        repeat_rows = [
+            {
+                "collection_field": "selected_records",
+                "sheet": "Orders",
+                "start_row": 4,
+                "sort_by": "name",
+                "sort_direction": "asc",
+                "columns": [
+                    {
+                        "column": "B",
+                        "source_field": "create_date",
+                        "transform": {"type": "date_offset", "days": 7},
+                    }
+                ],
+            }
+        ]
+        result = self._save_repeat_rows_with_user_confirmation(
+            tool, thread, session,
+            {
+                "schema_version": "m2.mapping-proposal.v1",
+                "mappings": [],
+                "clarifications": [],
+                "skipped_targets": [],
+            },
+            repeat_rows=repeat_rows,
+        )
+        self.assertEqual(result["status"], "success", result)
+        workbook = load_workbook(BytesIO(session.preview_attachment_id.raw), data_only=False)
+        try:
+            actual = [workbook["Orders"][f"B{row}"].value for row in range(4, 7)]
+            self.assertEqual(
+                actual,
+                [
+                    from_excel(to_excel(expected[record.name]))
+                    for record in sorted(records, key=lambda item: item.name)
+                ],
+            )
+            self.assertEqual(workbook["Orders"]["B4"].number_format, "yyyy-mm-dd hh:mm")
+            self.assertEqual(workbook["Orders"]["B3"].value, "Order date")
+        finally:
+            workbook.close()
+        # Re-submitting the same repeat definition must reconstruct the saved
+        # transform rather than losing it during unexpansion/revision.
+        second_result = self._save_repeat_rows_with_user_confirmation(
+            tool, thread, session,
+            {
+                "schema_version": "m2.mapping-proposal.v1",
+                "mappings": [],
+                "clarifications": [],
+                "skipped_targets": [],
+            },
+            repeat_rows=repeat_rows,
+        )
+        self.assertEqual(second_result["status"], "success", second_result)
+        self.assertIn(second_result["operation_status"], {"preview_ready", "unchanged"})
+        workbook = load_workbook(BytesIO(session.preview_attachment_id.raw), data_only=False)
+        try:
+            actual = [workbook["Orders"][f"B{row}"].value for row in range(4, 7)]
+            self.assertEqual(
+                actual,
+                [
+                    from_excel(to_excel(expected[record.name]))
+                    for record in sorted(records, key=lambda item: item.name)
+                ],
+            )
+        finally:
+            workbook.close()
 
     def test_sse_client_disconnect_does_not_cancel_native_tool_loop(self):
         """The server must finish tool/model work even if the SSE reader closes."""
@@ -445,7 +2456,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
             },
         )
 
-        self.assertEqual(result["status"], "preview_ready")
+        self.assertEqual(result["status"], "success")
         preview = self.env["office.mapping.session"].browse(context["session_id"]).preview_attachment_id
         self.assertTrue(preview.name.endswith(".docx"))
         rendered = Document(BytesIO(preview.raw))
@@ -768,6 +2779,37 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         )
         return thread, attachment, message
 
+    def _save_repeat_rows_with_user_confirmation(
+        self, tool, thread, session, proposal, **operation
+    ):
+        """Exercise the real two-call structural confirmation flow in tests."""
+        revision = session.revision
+        prior_preview_id = session.preview_attachment_id.id or False
+        result = tool.office_save_mapping_preview(
+            session.id, revision, proposal, **operation
+        )
+        if result.get("status") != "needs_confirmation":
+            return result
+
+        self.assertFalse(result.get("operation_executed"), result)
+        self.assertIn(
+            result.get("risk_type"),
+            {"repeat_row_range_expansion", "multiple_business_risks"},
+            result,
+        )
+        self.assertEqual(session.revision, revision)
+        self.assertEqual(session.preview_attachment_id.id or False, prior_preview_id)
+        confirmation = thread.message_post(
+            body="确认", llm_role="user", author_id=self.env.user.partner_id.id
+        )
+        return tool.with_context(message=confirmation).office_save_mapping_preview(
+            session.id,
+            revision,
+            proposal,
+            **operation,
+            force_override=True,
+        )
+
     def test_prepare_context_returns_chat_recoverable_result_when_template_is_missing(self):
         thread = self.env["llm.thread"].create(
             {
@@ -870,7 +2912,8 @@ class TestNativeOfficeChatIntegration(TransactionCase):
                 "arguments": {},
                 "status": "completed",
                 "result": {
-                    "status": "preview_ready",
+                    "status": "success",
+                    "operation_status": "preview_ready",
                     "preview_attachment_id": preview.id,
                     "filename": preview.name,
                     "attachment_posted_to_thread": True,
@@ -998,25 +3041,39 @@ class TestNativeOfficeChatIntegration(TransactionCase):
                 "skipped_targets": [],
             },
         )
-        self.assertEqual(first["status"], "preview_ready", first)
+        self.assertEqual(first["status"], "success", first)
 
         # This is a true patch: only F16 and F17 are mentioned in this turn.
+        patch = {
+            "schema_version": "m2.mapping-proposal.v1",
+            "mappings": [
+                {"element_id": "xlsx:Data!F16", "source_field": "phone", "value_type": "string"},
+                {"element_id": "F17", "value": ""},
+            ],
+            "clarifications": [],
+            "skipped_targets": [],
+            "clear_targets": ["F17"],
+        }
         second = tool.office_save_mapping_preview(
             session.id,
             session.revision,
-            {
-                "schema_version": "m2.mapping-proposal.v1",
-                "mappings": [
-                    {"element_id": "xlsx:Data!F16", "source_field": "phone", "value_type": "string"},
-                    {"element_id": "F17", "value": ""},
-                ],
-                "clarifications": [],
-                "skipped_targets": [],
-                "clear_targets": ["F17"],
-            },
+            patch,
         )
 
-        self.assertEqual(second["status"], "preview_ready", second)
+        self.assertEqual(second["status"], "needs_confirmation", second)
+        self.assertFalse(second["operation_executed"])
+        self.assertEqual(second["affected_scope"], ["xlsx:Data!E17"])
+        confirmation = thread.message_post(
+            body="确认", llm_role="user", author_id=self.env.user.partner_id.id
+        )
+        second = self.env["office.mapping.tool"].with_context(message=confirmation).office_save_mapping_preview(
+            session.id,
+            session.revision,
+            patch,
+            force_override=True,
+        )
+        self.assertEqual(second["status"], "success", second)
+        self.assertEqual(second["operation_status"], "preview_ready")
         saved = json.loads(session.mapping_rules_json)
         self.assertEqual(
             {item["element_id"]: item.get("source_field") for item in saved["mappings"]},
@@ -1126,7 +3183,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
                 "skipped_targets": [],
             },
         )
-        self.assertEqual(generated["status"], "preview_ready", generated)
+        self.assertEqual(generated["status"], "success", generated)
         proposal_revision = session.proposal_revision
         revision = session.revision
         preview_id = session.preview_attachment_id.id
@@ -1179,7 +3236,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
             "skipped_targets": [],
         }
         first = tool.office_save_mapping_preview(session.id, session.revision, first_proposal)
-        self.assertEqual(first["status"], "preview_ready", first)
+        self.assertEqual(first["status"], "success", first)
         self.assertEqual(session.proposal_revision, 1)
 
         second = tool.office_save_mapping_preview(
@@ -1192,7 +3249,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
                 ],
             },
         )
-        self.assertEqual(second["status"], "preview_ready", second)
+        self.assertEqual(second["status"], "success", second)
         self.assertEqual(session.proposal_revision, 2)
 
         restored = tool.office_restore_proposal_revision(
@@ -1254,7 +3311,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
             "skipped_targets": [],
         }
         generated = tool.office_save_mapping_preview(session.id, session.revision, original)
-        self.assertEqual(generated["status"], "preview_ready", generated)
+        self.assertEqual(generated["status"], "success", generated)
         session.invalidate_recordset()
         original_rules = session.mapping_rules_json
         original_revision = session.revision
@@ -1266,17 +3323,20 @@ class TestNativeOfficeChatIntegration(TransactionCase):
             "odoo.addons.office_engine_m2.models.office_mapping_tools.render_preview",
             side_effect=UserError("synthetic preview rendering failure"),
         ):
-            with self.assertRaisesRegex(UserError, "synthetic preview rendering failure"):
-                tool.office_save_mapping_preview(
-                    session.id,
-                    session.revision,
-                    {
-                        **original,
-                        "mappings": [
-                            {"element_id": "xlsx:Sheet!B1", "source_field": "email", "value_type": "string"}
-                        ],
-                    },
-                )
+            failed = tool.office_save_mapping_preview(
+                session.id,
+                session.revision,
+                {
+                    **original,
+                    "mappings": [
+                        {"element_id": "xlsx:Sheet!B1", "source_field": "email", "value_type": "string"}
+                    ],
+                },
+            )
+
+        self.assertEqual(failed["status"], "error", failed)
+        self.assertFalse(failed["operation_executed"])
+        self.assertIn("synthetic preview rendering failure", failed["message"])
 
         session.invalidate_recordset()
         self.assertEqual(session.mapping_rules_json, original_rules)
@@ -1680,9 +3740,8 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         self.assertIn("name", selected_collection["allowed_fields"])
 
         session = self.env["office.mapping.session"].browse(context["session_id"])
-        result = tool.office_save_mapping_preview(
-            session.id,
-            session.revision,
+        result = self._save_repeat_rows_with_user_confirmation(
+            tool, thread, session,
             {
                 "schema_version": "m2.mapping-proposal.v1",
                 "mappings": [],
@@ -1700,7 +3759,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
                 }
             ],
         )
-        self.assertEqual(result["status"], "preview_ready", result)
+        self.assertEqual(result["status"], "success", result)
         session.invalidate_recordset(["context_json", "preview_attachment_id"])
         stored_context = json.loads(session.context_json)
         group = stored_context["mapping_groups"][0]
@@ -1747,9 +3806,8 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         self.assertIn("email", collection["allowed_fields"])
         self.assertIn("create_date", collection["allowed_fields"])
 
-        result = tool.office_save_mapping_preview(
-            session.id,
-            session.revision,
+        result = self._save_repeat_rows_with_user_confirmation(
+            tool, thread, session,
             {
                 "schema_version": "m2.mapping-proposal.v1",
                 "mappings": [],
@@ -1769,7 +3827,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
                 }
             ],
         )
-        self.assertEqual(result["status"], "preview_ready", result)
+        self.assertEqual(result["status"], "success", result)
         workbook = load_workbook(BytesIO(session.preview_attachment_id.raw), data_only=False)
         try:
             self.assertEqual(
@@ -1820,9 +3878,8 @@ class TestNativeOfficeChatIntegration(TransactionCase):
             "res.partner", records[0].id, target_record_ids=records.ids
         )
         session = self.env["office.mapping.session"].browse(context["session_id"])
-        result = tool.office_save_mapping_preview(
-            session.id,
-            session.revision,
+        result = self._save_repeat_rows_with_user_confirmation(
+            tool, thread, session,
             {"schema_version": "m2.mapping-proposal.v1", "mappings": [], "clarifications": [], "skipped_targets": []},
             repeat_rows=[
                 {
@@ -1839,7 +3896,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
                 }
             ],
         )
-        self.assertEqual(result["status"], "preview_ready", result)
+        self.assertEqual(result["status"], "success", result)
         self.assertTrue(session.preview_attachment_id.raw)
         self.assertTrue(session.preview_attachment_id.name.endswith(".xlsx"))
         self.assertEqual(session.preview_attachment_id.mimetype, XLSX_MIME)
@@ -1932,9 +3989,8 @@ class TestNativeOfficeChatIntegration(TransactionCase):
                 ],
             }
         ]
-        initial = tool.office_save_mapping_preview(
-            session.id,
-            session.revision,
+        initial = self._save_repeat_rows_with_user_confirmation(
+            tool, thread, session,
             {
                 "schema_version": "m2.mapping-proposal.v1",
                 "mappings": [],
@@ -1943,7 +3999,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
             },
             repeat_rows=repeat_rows,
         )
-        self.assertEqual(initial["status"], "preview_ready", initial)
+        self.assertEqual(initial["status"], "success", initial)
         before_revision = session.revision
         result = tool.office_save_mapping_preview(
             session.id,
@@ -1962,7 +4018,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
             },
         )
 
-        self.assertEqual(result["status"], "preview_ready", result)
+        self.assertEqual(result["status"], "success", result)
         self.assertGreater(session.revision, before_revision)
         self.assertEqual(result["revision"], session.revision)
         self.assertEqual(session.preview_attachment_id.file_size, len(session.preview_attachment_id.raw))
@@ -1983,9 +4039,8 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         # A model may include the current repeat_rows again when applying a
         # conversational clear. The existing mapped rows and explicit blank
         # writes must remain valid in that full-plan submission.
-        retry = tool.office_save_mapping_preview(
-            session.id,
-            session.revision,
+        retry = self._save_repeat_rows_with_user_confirmation(
+            tool, thread, session,
             {
                 "schema_version": "m2.mapping-proposal.v1",
                 "mappings": [
@@ -1997,7 +4052,8 @@ class TestNativeOfficeChatIntegration(TransactionCase):
             },
             repeat_rows=repeat_rows,
         )
-        self.assertIn(retry["status"], {"preview_ready", "unchanged"}, retry)
+        self.assertEqual(retry["status"], "success", retry)
+        self.assertIn(retry["operation_status"], {"preview_ready", "unchanged"})
 
     def test_explicit_field_discovery_does_not_bypass_current_user_field_acl(self):
         limited_user = self.env["res.users"].with_context(no_reset_password=True).create(
@@ -2162,6 +4218,96 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         self.assertIn("location_id.complete_name", candidate["allowed_fields"])
         self.assertIn("product_id.default_code", candidate["allowed_fields"])
 
+    def test_repeat_row_candidates_reauthorize_explicit_related_paths_missing_from_discovery(self):
+        parent = self.env["res.partner"].create(
+            {
+                "name": "Requested-path parent " + uuid4().hex,
+                "email": "parent@example.test",
+                "company_id": self.env.company.id,
+            }
+        )
+        children = self.env["res.partner"].create([
+            {"name": "Requested-path child 1 " + uuid4().hex, "parent_id": parent.id},
+            {"name": "Requested-path child 2 " + uuid4().hex, "parent_id": parent.id},
+        ])
+        # Simulate a bounded discovery list in which a valid but lower-ranked
+        # related field is omitted. An explicit hint must be authorized against
+        # the live rows rather than trusted from this discovery list.
+        discovered_fields = {
+            **{f"parent_id.unranked_{index:03d}": "string" for index in range(200)},
+        }
+        with patch(
+            "odoo.addons.office_engine_m2.services.chat_entrypoint._field_candidates",
+            return_value=discovered_fields,
+        ):
+            candidate = _repeat_row_collection_candidates(
+                self.env,
+                parent,
+                requested_fields_by_collection={
+                    "child_ids": [
+                        "parent_id.email",
+                        "parent_id.no_such_field",
+                        "parent_id.email.extra",
+                    ]
+                },
+            )[0]
+
+        self.assertEqual(candidate["row_count"], len(children))
+        self.assertEqual(candidate["allowed_fields"]["parent_id.email"], "string")
+        self.assertIn("parent_id.email", candidate["allowed_fields"])
+        self.assertEqual(
+            candidate["unavailable_requested_fields"],
+            ["parent_id.no_such_field", "parent_id.email.extra"],
+        )
+        self.assertEqual(
+            candidate["unavailable_requested_field_reasons"],
+            {
+                "parent_id.no_such_field": ["field_not_found"],
+                "parent_id.email.extra": ["path_segment_is_not_many2one"],
+            },
+        )
+
+    def test_repeat_row_candidates_reauthorize_related_paths_clipped_by_schema_budget(self):
+        parent = self.env["res.partner"].create(
+            {
+                "name": "Requested-path parent " + uuid4().hex,
+                "email": "parent@example.test",
+                "company_id": self.env.company.id,
+            }
+        )
+        children = self.env["res.partner"].create([
+            {"name": "Requested-path child 1 " + uuid4().hex, "parent_id": parent.id},
+            {"name": "Requested-path child 2 " + uuid4().hex, "parent_id": parent.id},
+        ])
+        # Fill the related-field budget with names that sort before email. The
+        # field exists in discovery, but the bounded public schema omits it.
+        # An explicit request should still reauthorize just that path.
+        discovered_fields = {
+            **{f"parent_id.a_unranked_{index:03d}": "string" for index in range(200)},
+            "parent_id.email": "string",
+        }
+        with patch(
+            "odoo.addons.office_engine_m2.services.chat_entrypoint._field_candidates",
+            return_value=discovered_fields,
+        ):
+            without_hint = _repeat_row_collection_candidates(self.env, parent)[0]
+            candidate = _repeat_row_collection_candidates(
+                self.env,
+                parent,
+                requested_fields_by_collection={
+                    "child_ids": ["parent_id.email", "parent_id.no_such_field"]
+                },
+            )[0]
+
+        self.assertEqual(candidate["row_count"], len(children))
+        self.assertEqual(candidate["collection_field"], "child_ids")
+        self.assertNotIn("parent_id.email", without_hint["allowed_fields"])
+        self.assertEqual(candidate["allowed_fields"]["parent_id.email"], "string")
+        self.assertIn("parent_id.email", candidate["allowed_fields"])
+        self.assertLessEqual(len(candidate["allowed_fields"]), 160)
+        self.assertEqual(len(candidate["allowed_fields"]), 160)
+        self.assertEqual(candidate["unavailable_requested_fields"], ["parent_id.no_such_field"])
+
     def test_office_retriever_uses_requested_domain_inside_active_session(self):
         thread, _attachment, message = self._office_message("读取关联明细")
         parent = self.env["res.partner"].create(
@@ -2259,7 +4405,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
             },
         )
 
-        self.assertEqual(result["status"], "preview_ready", result)
+        self.assertEqual(result["status"], "success", result)
         self.assertEqual(json.loads(session.context_json)["allowed_fields"]["email"], "string")
         rendered = load_workbook(BytesIO(session.preview_attachment_id.raw), data_only=False)
         try:
@@ -2337,7 +4483,11 @@ class TestNativeOfficeChatIntegration(TransactionCase):
             attachment_ids=[attachment.id],
         )
         parent = self.env["res.partner"].create(
-            {"name": "Repeat parent value", "company_id": self.env.company.id}
+            {
+                "name": "Repeat parent value",
+                "email": "repeat-parent@example.test",
+                "company_id": self.env.company.id,
+            }
         )
         children = self.env["res.partner"].create([
             {"name": "Repeat value C", "parent_id": parent.id, "company_id": self.env.company.id},
@@ -2366,11 +4516,26 @@ class TestNativeOfficeChatIntegration(TransactionCase):
             },
         )
         tool_model = self.env["office.mapping.tool"].with_context(message=retriever_result)
-        context = tool_model.office_prepare_context("res.partner", parent.id)
+        context = tool_model.office_prepare_context(
+            "res.partner",
+            parent.id,
+            requested_fields_by_collection={"child_ids": ["parent_id.email"]},
+        )
+        self.assertIn(
+            "parent_id.email",
+            next(
+                item["allowed_fields"]
+                for item in context["repeat_row_collections"]
+                if item["collection_field"] == "child_ids"
+            ),
+        )
         session = self.env["office.mapping.session"].browse(context["session_id"])
-        result = tool_model.office_save_mapping_preview(
-            session.id,
-            session.revision,
+        self.assertEqual(
+            json.loads(session.context_json)["extra_authorized_collection_fields"],
+            {"child_ids": ["parent_id.email"]},
+        )
+        result = self._save_repeat_rows_with_user_confirmation(
+            tool_model, thread, session,
             {
                 "schema_version": "m2.mapping-proposal.v1",
                 "mappings": [
@@ -2399,7 +4564,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
                     "sort_direction": "asc",
                     "columns": [
                         {"column": "B", "source_field": "name"},
-                        {"column": "C", "fallback_fields": ["name", "contact_address"]},
+                        {"column": "C", "source_field": "parent_id.email"},
                         # Provider tool calls sometimes omit Excel's leading
                         # equals sign. The service should canonicalize the
                         # safe arithmetic before validation and rendering.
@@ -2410,7 +4575,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         )
         refreshed_context = tool_model.office_prepare_context("res.partner", parent.id)
 
-        self.assertEqual(result["status"], "preview_ready", result)
+        self.assertEqual(result["status"], "success", result)
         saved_rules = json.loads(session.mapping_rules_json)
         self.assertNotIn("xlsx:Data!F7", [item["element_id"] for item in saved_rules["clarifications"]])
         self.assertIn("xlsx:Data!F7", saved_rules["skipped_targets"])
@@ -2428,7 +4593,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
             )
             self.assertEqual(
                 [sheet[f"C{row}"].value for row in range(4, 7)],
-                sorted(child.name for child in children),
+                [parent.email] * len(children),
             )
             self.assertEqual(
                 [sheet[f"D{row}"].value for row in range(4, 7)],
@@ -2440,9 +4605,8 @@ class TestNativeOfficeChatIntegration(TransactionCase):
 
         # A later repeat-row patch that omits ordering preserves the already
         # saved sort rule; omission is not an implicit unsort operation.
-        second_result = tool_model.office_save_mapping_preview(
-            session.id,
-            session.revision,
+        second_result = self._save_repeat_rows_with_user_confirmation(
+            tool_model, thread, session,
             {
                 "schema_version": "m2.mapping-proposal.v1",
                 "mappings": [
@@ -2464,7 +4628,8 @@ class TestNativeOfficeChatIntegration(TransactionCase):
                 }
             ],
         )
-        self.assertIn(second_result["status"], {"preview_ready", "unchanged"}, second_result)
+        self.assertEqual(second_result["status"], "success", second_result)
+        self.assertIn(second_result["operation_status"], {"preview_ready", "unchanged"})
         refreshed_context = tool_model.office_prepare_context("res.partner", parent.id)
         self.assertEqual(
             refreshed_context["current_repeat_rows"][0]["columns"],
@@ -2539,9 +4704,8 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         tool_model = self.env["office.mapping.tool"].with_context(message=retriever_result)
         context = tool_model.office_prepare_context("res.partner", parent.id)
         session = self.env["office.mapping.session"].browse(context["session_id"])
-        result = tool_model.office_save_mapping_preview(
-            session.id,
-            session.revision,
+        result = self._save_repeat_rows_with_user_confirmation(
+            tool_model, thread, session,
             {
                 "schema_version": "m2.mapping-proposal.v1",
                 "mappings": [
@@ -2563,7 +4727,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
             ],
         )
 
-        self.assertEqual(result["status"], "preview_ready", result)
+        self.assertEqual(result["status"], "success", result)
         rendered = load_workbook(BytesIO(session.preview_attachment_id.raw), data_only=False)
         try:
             sheet = rendered["Data"]
@@ -2622,9 +4786,8 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         tool_model = self.env["office.mapping.tool"].with_context(message=retriever_result)
         context = tool_model.office_prepare_context("res.partner", parent.id)
         session = self.env["office.mapping.session"].browse(context["session_id"])
-        result = tool_model.office_save_mapping_preview(
-            session.id,
-            session.revision,
+        result = self._save_repeat_rows_with_user_confirmation(
+            tool_model, thread, session,
             {
                 "schema_version": "m2.mapping-proposal.v1",
                 "mappings": [
@@ -2652,7 +4815,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
             {item["element_id"] for item in context["mapping_limits"]["template_formula_cells"]},
         )
         self.assertIn("template_formula_cells", context["mapping_limits"])
-        self.assertEqual(result["status"], "preview_ready", result)
+        self.assertEqual(result["status"], "success", result)
         rendered = load_workbook(BytesIO(session.preview_attachment_id.raw), data_only=False)
         try:
             self.assertEqual(
@@ -2684,7 +4847,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
                 "skipped_targets": [],
             },
         )
-        self.assertEqual(literal_patch["status"], "preview_ready", literal_patch)
+        self.assertEqual(literal_patch["status"], "success", literal_patch)
         rendered = load_workbook(BytesIO(session.preview_attachment_id.raw), data_only=False)
         try:
             self.assertEqual(
@@ -2726,7 +4889,45 @@ class TestNativeOfficeChatIntegration(TransactionCase):
                 }
             ],
         )
-        self.assertEqual(clear_result["status"], "preview_ready", clear_result)
+        self.assertEqual(clear_result["status"], "needs_confirmation", clear_result)
+        affected_scope = set(clear_result["affected_scope"])
+        self.assertEqual(clear_result["risk_type"], "multiple_business_risks")
+        self.assertTrue(
+            {"xlsx:Data!C4", "xlsx:Data!C5", "xlsx:Data!C6"}.issubset(affected_scope),
+            clear_result,
+        )
+        self.assertIn("xlsx:Data!B6:B6", affected_scope)
+        self.assertIn("xlsx:Data!C6:C6", affected_scope)
+        self.assertIn("xlsx:Data!C7", affected_scope)
+        confirmation = thread.message_post(
+            body="确认", llm_role="user", author_id=self.env.user.partner_id.id
+        )
+        clear_result = self.env["office.mapping.tool"].with_context(message=confirmation).office_save_mapping_preview(
+            session.id,
+            session.revision,
+            {
+                "schema_version": "m2.mapping-proposal.v1",
+                "mappings": [
+                    {"element_id": "xlsx:Data!B1", "source_field": "name", "value_type": "string"}
+                ],
+                "clarifications": [],
+                "skipped_targets": [],
+                "clear_targets": ["xlsx:Data!C4", "xlsx:Data!C5", "xlsx:Data!C6"],
+            },
+            repeat_rows=[
+                {
+                    "collection_field": "child_ids",
+                    "sheet": "Data",
+                    "start_row": 4,
+                    "columns": [
+                        {"column": "B", "source_field": "name"},
+                        {"column": "C", "formula": "=B{row}*2"},
+                    ],
+                }
+            ],
+            force_override=True,
+        )
+        self.assertEqual(clear_result["status"], "success", clear_result)
         cleared_preview_id = session.preview_attachment_id.id
         rendered = load_workbook(BytesIO(session.preview_attachment_id.raw), data_only=False)
         try:
@@ -2765,8 +4966,10 @@ class TestNativeOfficeChatIntegration(TransactionCase):
                 }
             ],
         )
-        self.assertEqual(invalid_formula["status"], "invalid")
-        self.assertIn("repeat_rows_not_authorized_or_not_renderable", invalid_formula["errors"])
+        self.assertEqual(invalid_formula["status"], "error")
+        self.assertEqual(invalid_formula["operation_status"], "invalid")
+        self.assertEqual(invalid_formula["error_code"], "repeat_rows_not_renderable")
+        self.assertIn("Use {row} inside a cell reference", invalid_formula["message"])
         self.assertEqual(session.revision, existing_revision)
         self.assertEqual(session.preview_attachment_id.id, existing_preview_id)
         self.assertEqual(existing_preview_id, cleared_preview_id)
@@ -2788,7 +4991,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
                 {"element_id": "xlsx:Data!B4", "number_format": "0.00"}
             ],
         )
-        self.assertEqual(column_operations["status"], "preview_ready", column_operations)
+        self.assertEqual(column_operations["status"], "success", column_operations)
         rendered = load_workbook(BytesIO(session.preview_attachment_id.raw), data_only=False)
         try:
             self.assertEqual(rendered["Data"]["B1"].value, parent.name)
@@ -2841,7 +5044,28 @@ class TestNativeOfficeChatIntegration(TransactionCase):
                 {"element_id": "xlsx:Orders!C4", "number_format": "0.00"}
             ],
         )
-        self.assertEqual(result["status"], "preview_ready", result)
+        self.assertEqual(result["status"], "needs_confirmation", result)
+        self.assertEqual(result["affected_scope"], ["xlsx:Orders!C4", "xlsx:Orders!C5"])
+        self.assertFalse(result["operation_executed"])
+        confirmation = thread.message_post(
+            body="确认", llm_role="user", author_id=self.env.user.partner_id.id
+        )
+        result = self.env["office.mapping.tool"].with_context(message=confirmation).office_save_mapping_preview(
+            session.id,
+            session.revision,
+            {
+                "schema_version": "m2.mapping-proposal.v1",
+                "mappings": [
+                    {"element_id": "xlsx:Orders!B4", "source_field": "name", "value_type": "string"}
+                ],
+                "clarifications": [],
+                "skipped_targets": [],
+            },
+            clear_columns=[{"sheet": "Orders", "column": "C"}],
+            format_patches=[{"element_id": "xlsx:Orders!C4", "number_format": "0.00"}],
+            force_override=True,
+        )
+        self.assertEqual(result["status"], "success", result)
         self.assertTrue(result["attachment_posted_to_thread"])
         rendered = load_workbook(BytesIO(session.preview_attachment_id.raw), data_only=False)
         try:
@@ -2857,7 +5081,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         finally:
             rendered.close()
 
-    def test_explicit_clear_renders_blank_and_ignored_formula_skip_preserves_formula(self):
+    def test_explicit_clear_preserves_omitted_legacy_required_target_and_formula(self):
         workbook = Workbook()
         sheet = workbook.active
         sheet.title = "Data"
@@ -2922,9 +5146,9 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         )
         session = self.env["office.mapping.session"].browse(created["session_id"])
         set_mapping_context(self.env, session.id, manifest, {"name": "string"}, template_text=visible_text)
-        # Simulate a persisted pre-fix Session whose real, writable F18 target
-        # was marked required. The service must now treat the user's omission
-        # as an explicit blank rather than preserving that stale requirement.
+        # Simulate a persisted legacy Session whose writable F18 target was
+        # marked required. The user only requested F17 be blank, so F18 must
+        # remain unchanged and must not be added to the clear scope.
         context = json.loads(session.context_json)
         legacy_required = next(
             item for item in context["target_manifest"]
@@ -2955,20 +5179,46 @@ class TestNativeOfficeChatIntegration(TransactionCase):
             },
         )
 
-        self.assertEqual(result["status"], "preview_ready", result)
+        self.assertEqual(result["status"], "needs_confirmation", result)
+        self.assertEqual(result["affected_scope"], ["xlsx:Data!E17", "xlsx:Data!F24"])
+        self.assertFalse(result["operation_executed"])
+        self.assertFalse(session.preview_attachment_id)
+        confirmation = thread.message_post(
+            body="确认", llm_role="user", author_id=self.env.user.partner_id.id
+        )
+        result = self.env["office.mapping.tool"].with_context(message=confirmation).office_save_mapping_preview(
+            session.id,
+            session.revision,
+            {
+                "schema_version": "m2.mapping-proposal.v1",
+                "mappings": [{
+                    "element_id": "xlsx:Data!F16",
+                    "source_field": "name",
+                    "value_type": "string",
+                }, {
+                    "element_id": "xlsx:Data!F17",
+                    "value": "",
+                }],
+                "clarifications": [],
+                "skipped_targets": ["xlsx:Data!F24", "xlsx:Data!F25", "xlsx:Data!Z999"],
+                "clear_targets": ["xlsx:Data!F24"],
+            },
+            force_override=True,
+        )
+        self.assertEqual(result["status"], "success", result)
         rules = json.loads(session.mapping_rules_json)
-        self.assertEqual(rules["clear_targets"], ["xlsx:Data!E17", "xlsx:Data!F18", "xlsx:Data!F24"])
+        self.assertEqual(rules["clear_targets"], ["xlsx:Data!E17", "xlsx:Data!F24"])
         self.assertEqual([item["element_id"] for item in rules["mappings"]], ["xlsx:Data!F16"])
         self.assertEqual(rules["skipped_targets"], [])
         self.assertNotIn("xlsx:Data!F24", rules["skipped_targets"])
         self.assertNotIn("xlsx:Data!F25", rules["skipped_targets"])
-        self.assertIn("xlsx:Data!F18", rules["clear_targets"])
+        self.assertNotIn("xlsx:Data!F18", rules["clear_targets"])
         rendered = load_workbook(BytesIO(session.preview_attachment_id.raw), data_only=False)
         try:
             self.assertEqual(rendered["Data"]["F16"].value, "S05457")
             self.assertIsNone(rendered["Data"]["E17"].value)
             self.assertIsNone(rendered["Data"]["F17"].value)
-            self.assertIsNone(rendered["Data"]["F18"].value)
+            self.assertEqual(rendered["Data"]["F18"].value, "old legacy-required placeholder")
             self.assertIsNone(rendered["Data"]["F24"].value)
             self.assertEqual(rendered["Data"]["F25"].value, "=SUM(F20:F24)")
         finally:
@@ -3071,6 +5321,10 @@ class TestNativeOfficeChatIntegration(TransactionCase):
             tool.name: tool.get_input_schema()
             for tool in thread.tool_ids.filtered(lambda item: item.name in tool_names)
         }
+        self.assertTrue(
+            thread._office_is_active(),
+            "an Office upload must activate Office-specific tools and instructions",
+        )
         self.assertIn("model", schemas["odoo_record_retriever"]["properties"])
         self.assertIn("model", schemas["odoo_record_retriever"]["required"])
         self.assertIn("target_model", schemas["office_prepare_context"]["properties"])
@@ -3087,6 +5341,11 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         self.assertEqual(mapping_schema["required"], ["element_id"])
         self.assertEqual(mapping_schema["properties"]["value"]["enum"], [""])
         self.assertIn("literal_value", mapping_schema["properties"])
+        self.assertIn("transform", mapping_schema["properties"])
+        self.assertIn("date", mapping_schema["properties"]["value_type"]["enum"])
+        self.assertIn("datetime", mapping_schema["properties"]["value_type"]["enum"])
+        repeat_column_schema = schemas["office_save_mapping_preview"]["properties"]["repeat_rows"]["items"]["properties"]["columns"]["items"]
+        self.assertIn("transform", repeat_column_schema["properties"])
         self.assertFalse(mapping_schema["additionalProperties"])
         kwargs = thread._prepare_chat_kwargs(thread.get_llm_messages(), use_streaming=True)
         # This method preserves the value supplied by llm_assistant; the
@@ -3099,10 +5358,16 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         office_system_message = next(
             message
             for message in kwargs["prepend_messages"]
-            if message.get("role") == "system" and "For an initial Office mapping request" in message.get("content", "")
+            if message.get("role") == "system"
+            and "For an initial Office mapping request" in message.get("content", "")
+            and "Do not issue an overwrite confirmation request from your own guess or a visual/text description"
+            in message.get("content", "")
         )
         self.assertIn("that request authorizes a draft preview", office_system_message["content"])
         self.assertIn("Do not ask the user to separately approve or confirm a preview", office_system_message["content"])
+        self.assertIn("Do not issue an overwrite confirmation request from your own guess or a visual/text description", office_system_message["content"])
+        self.assertIn("Whenever the user explicitly asks to change or clear an existing coordinate, first call office_save_mapping_preview with the exact cell_edits", office_system_message["content"])
+        self.assertIn("only a tool result with status needs_confirmation authorizes you to ask the user to confirm", office_system_message["content"])
         self.assertIn("ask one concise natural-language question in this chat", office_system_message["content"])
         self.assertIn("Never direct the user to a record-picker dialog", office_system_message["content"])
         self.assertIn("request at least two results", office_system_message["content"])
@@ -3111,6 +5376,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         self.assertIn("Odoo's current-user ACLs", office_system_message["content"])
         self.assertIn("continue that Session and its saved Proposal", office_system_message["content"])
         self.assertIn("literal_value", office_system_message["content"])
+        self.assertIn("date_offset", office_system_message["content"])
         self.assertNotIn("Retriever constrains the result to the current Session", office_system_message["content"])
         self.assertIn("Call office_finalize only after the user explicitly confirms", office_system_message["content"])
         self.assertIn("returns status=finalized", office_system_message["content"])
@@ -3313,14 +5579,26 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         self.assertNotIn("target_record_id", schemas["office_prepare_context"].get("required", []))
         self.assertIn("target_record_ids", schemas["office_prepare_context"]["properties"])
         self.assertIn("requested_fields", schemas["office_prepare_context"]["properties"])
+        self.assertIn("requested_fields_by_collection", schemas["office_prepare_context"]["properties"])
         self.assertIn("proposal", schemas["office_save_mapping_preview"]["properties"])
         self.assertIn("repeat_rows", schemas["office_save_mapping_preview"]["properties"])
         self.assertIn("clear_columns", schemas["office_save_mapping_preview"]["properties"])
         self.assertIn("format_patches", schemas["office_save_mapping_preview"]["properties"])
+        self.assertIn("cell_edits", schemas["office_save_mapping_preview"]["properties"])
+        self.assertIn("force_override", schemas["office_save_mapping_preview"]["properties"])
+        self.assertNotIn("force_override", schemas["office_save_mapping_preview"].get("required", []))
+        self.assertNotIn("header_edits", schemas["office_save_mapping_preview"]["properties"])
+        self.assertNotIn(
+            "cell_edits",
+            schemas["office_save_mapping_preview"]["properties"]["proposal"]["properties"],
+        )
         repeat_schema = schemas["office_save_mapping_preview"]["properties"]["repeat_rows"]
+        self.assertEqual(repeat_schema["type"], "array")
         self.assertEqual(repeat_schema["maxItems"], 1)
         self.assertIn("collection_field", repeat_schema["items"]["properties"])
         self.assertIn("fallback_fields", repeat_schema["items"]["properties"]["columns"]["items"]["properties"])
+        self.assertIn("concat_fields", repeat_schema["items"]["properties"]["columns"]["items"]["properties"])
+        self.assertIn("separator", repeat_schema["items"]["properties"]["columns"]["items"]["properties"])
         self.assertIn("formula", repeat_schema["items"]["properties"]["columns"]["items"]["properties"])
         self.assertIn("source_fields", schemas["office_save_mapping_preview"]["properties"]["proposal"]["properties"]["mappings"]["items"]["properties"])
         self.assertIn("session_id", schemas["office_finalize"]["properties"])

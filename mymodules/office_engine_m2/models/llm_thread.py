@@ -166,6 +166,10 @@ class LLMThread(models.Model):
                     "For an initial Office mapping request, use odoo_record_retriever to identify the exact "
                     "business record from the user's request, then call office_prepare_context. Use only the "
                     "returned target_manifest and allowed_fields. "
+                    "For repeat-row mappings, if an exact scalar Many2one path needed from a readable related "
+                    "collection is missing from that collection's allowed_fields, pass the exact path under "
+                    "requested_fields_by_collection when calling office_prepare_context; the server will check "
+                    "each requested path with the current user's ORM access before adding it. "
                     "For a follow-up in a Thread that already has an active Office Session, continue that "
                     "Session and its saved Proposal; do not start a new mapping task or discard prior rules. "
                     "Reuse the bound target_model and target_record_id from the prior Office context. If those "
@@ -196,6 +200,9 @@ class LLMThread(models.Model):
                     "odoo_record_retriever using the exact inverse_field = target_record_id filter. "
                     "If collection_field is selected_records, use the already retrieved records and pass all their "
                     "IDs as target_record_ids; the server reauthorizes that ordered set in the current Session. "
+                    "If fields returned by the Retriever for those selected records are missing from Office Context's "
+                    "allowed_fields, call office_prepare_context with their exact paths in requested_fields before mapping; "
+                    "do not replace them with a guessed field or an out-of-manifest cell. "
                     "The native Retriever uses search_read, whose fields argument accepts only direct "
                     "fields on the requested model, not dotted paths. If Office Context lists a related "
                     "path such as relation.field, first retrieve the relation field itself from the parent "
@@ -213,7 +220,28 @@ class LLMThread(models.Model):
                     "user permits to remain blank. For a valid natural-language correction, update the "
                     "Proposal and create the replacement preview in the same turn. "
                     "Its proposal object must have exactly these root keys: schema_version, mappings, "
-                    "clarifications, skipped_targets, with optional clear_targets. Each mapping must use exactly one shape: direct "
+                    "clarifications, skipped_targets, with optional clear_targets and cell_edits. Pass explicit coordinate value changes "
+                    "as the separate top-level cell_edits tool argument. For a fixed coordinate use "
+                    "{element_id, value, value_type}. For an edit that must follow one row record after sorting, "
+                    "use {record_target: {group_id, record_id, column}, value, value_type}; take record_id "
+                    "from the current authorized Retriever result and group_id from the current repeat-row "
+                    "mapping context. The server resolves its final row only after the current sort is applied. "
+                    "Repeat-row mapping runs before explicit cell edits, so an explicitly requested edit may "
+                    "replace that record's mapped value. Empty string means clear; do not substitute null, zero, "
+                    "or false. "
+                    "Use it only for a coordinate listed in the current TargetManifest and explicitly requested by the user. "
+                    "Whenever the user explicitly asks to change or clear an existing coordinate, first call "
+                    "office_save_mapping_preview with the exact cell_edits so the server can inspect the current file. "
+                    "Do not issue an overwrite confirmation request from your own guess or a visual/text description; "
+                    "only a tool result with status needs_confirmation authorizes you to ask the user to confirm. "
+                    "Do not omit the requested cell_edits and return an unchanged result after the user confirms. "
+                    "If office_save_mapping_preview returns status needs_confirmation, explain its risks, old/new values and exact operation_scope, ask the returned confirmation_question, and stop without writing. "
+                    "Only after a new user message that is exactly 确认, repeat the identical operation and set force_override=true. If the user explicitly declines with 拒绝, 取消, or 不同意, repeat the identical pending operation so the server records status blocked; do not retry the write. "
+                    "The server binds confirmation to this Thread, user, Session, Proposal revision, preview, current document bytes, targets and values; force_override by itself never authorizes a write. A stale confirmation returns needs_confirmation again and requires a fresh user reply. "
+                    "After confirmation, the edit can replace the existing literal or formula at that exact coordinate, including a detected table header, without changing the cell's style or any other source mapping. "
+                    "Normal field mappings remain restricted to writable data targets. If the same target also has a "
+                    "stale model-generated unsupported-target clarification or skip, omit that stale no-op for the target. "
+                    "Each mapping must use exactly one shape: direct "
                     "element_id/source_field/value_type; ordered fallback element_id/source_fields/value_type; "
                     "safe arithmetic formula element_id/formula/value_type, or a typed scalar value "
                     "element_id/literal_value/value_type when the user specifies a value or asks for a "
@@ -223,12 +251,21 @@ class LLMThread(models.Model):
                     "returned by Office Context. For repeated detail rows, pass the collection, worksheet, "
                     "first row and column-to-field choices in the separate repeat_rows argument; do not "
                     "enumerate repeated cells in proposal.mappings. The server derives row count and target "
-                    "cells. When the user explicitly requests an ordering, pass sort_by and sort_direction "
+                    "cells. For a selected record set, use repeat_rows for its row mapping and never put a "
+                    "cell outside the current TargetManifest into mappings, clarifications, or skips. If the "
+                    "server returns repeat_rows_required, refresh the exact missing source fields and resubmit "
+                    "a complete repeat_rows mapping. If the row count requires structural insertion beyond the "
+                    "template's existing row capacity, the server returns needs_confirmation without writing; "
+                    "explain the exact added rows and formula impacts, wait for the user's exact 确认, then retry "
+                    "the identical repeat_rows and Proposal with force_override=true. That confirmation is bound "
+                    "to this user, Thread, Session, file bytes, revision, selected rows, columns and operation; it "
+                    "cannot authorize a changed range. When the user explicitly requests an ordering, pass sort_by and sort_direction "
                     "together in repeat_rows; sort_by must be one of the selected collection's allowed_fields, "
                     "and direction is asc or desc. Empty values remain last. If no order is requested, retain "
                     "the relation's current order. Do not substitute keys such as field or type. Do not claim "
-                    "a preview exists unless that tool returns "
-                    "preview_ready. Answer questions from the current Session/tool history without changing "
+                    "an operation succeeded unless a tool returns status success. For a generated preview, require "
+                    "operation_status=preview_ready and attachment_posted_to_thread=true; for a reused current preview, "
+                    "require operation_status=unchanged. Answer questions from the current Session/tool history without changing "
                     "the Proposal. Never put a target absent from target_manifest into mappings, clarifications, "
                     "or skipped_targets. Use clear_targets or the compact empty-value mapping only when "
                     "the user explicitly asks to blank a cell; "
@@ -240,11 +277,18 @@ class LLMThread(models.Model):
                     "an omitted target is left unchanged. Template labels are not mandatory business requirements. "
                     "Explain unsupported user requests in normal text; submit valid supported "
                     "mappings independently when possible. Direct mappings, same-type ordered source fallbacks, "
-                    "and restricted same-sheet arithmetic formulas are supported. Formula syntax allows only "
+                    "typed date/datetime values, bounded date offsets, and restricted same-sheet arithmetic formulas are supported. "
+                    "When the user requests a date shift, do not refuse because the source is a date: use a typed "
+                    "date/datetime literal if you have calculated the result from retrieved ISO values, or attach "
+                    "transform={type:'date_offset',days:7} to a date/datetime source mapping. This is a bounded "
+                    "server-side date operation, not Python or arbitrary expression execution. For repeat_rows, "
+                    "the same transform may be attached to a date/datetime source column. Preserve date values as "
+                    "typed Excel dates; do not convert them to display-only text. "
+                    "Formula syntax allows only "
                     "cell references, numbers, parentheses and + - * /. Every repeat-row column object must "
                     "include its destination Excel column letter in `column` (for example "
                     "{'column':'C','source_field':'product_id.default_code'}); never omit `column`. "
-                    "Then choose exactly one of source_field, fallback_fields, or formula. In a formula template, {row} is the row number "
+                    "Then choose exactly one of source_field, fallback_fields, concat_fields, or formula. Use fallback_fields only for first-nonempty selection; use concat_fields to join multiple authorized string fields in order, with an optional separator (empty by default). In a formula template, {row} is the row number "
                     "and must appear inside cell references, for example =E{row}*D{row}*2 (not {row}*{row}*2). "
                     "Inspect "
                     "mapping_limits.template_formula_cells to understand which targets currently contain formulas. "
@@ -392,8 +436,16 @@ class LLMThread(models.Model):
         }:
             result = (tool_message.get_tool_data() or {}).get("result") or {}
             attachment_id = result.get("preview_attachment_id")
+            is_preview_delivery = (
+                tool_name == "office_save_mapping_preview"
+                and result.get("status") == "success"
+                and result.get("operation_status") in {"preview_ready", "unchanged"}
+            ) or (
+                tool_name == "office_restore_proposal_revision"
+                and result.get("status") in {"preview_ready", "unchanged"}
+            )
             if (
-                result.get("status") in {"preview_ready", "unchanged"}
+                is_preview_delivery
                 and result.get("attachment_posted_to_thread") is True
                 and type(attachment_id) is int
             ):
@@ -485,6 +537,56 @@ class LLMTool(models.Model):
         method = self._get_implementation_method()
         schema = self.get_pydantic_model_from_signature(method).model_json_schema()
         if self.name == "office_save_mapping_preview":
+            schema["properties"].pop("header_edits", None)
+            schema["properties"]["cell_edits"] = {
+                "type": "array",
+                "maxItems": 200,
+                "description": "Optional explicit set_value operations. Use element_id for a fixed coordinate, or record_target to follow one authorized repeat-row record through the current final sort. The record_target must name a record in the bound collection and a column in its server-authorized repeat-row layout. Mapping runs first and this explicit edit runs afterward. Replacing an existing value/formula returns needs_confirmation with exact scope; no write occurs until the user replies exactly 确认 and the identical operation is retried with force_override=true. The flag alone grants no authority.",
+                "items": {
+                    "anyOf": [
+                        {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "required": ["element_id", "value", "value_type"],
+                            "properties": {
+                                "element_id": {"type": "string", "maxLength": 255},
+                                "value": {"anyOf": [
+                                    {"type": "string", "maxLength": 300},
+                                    {"type": "number"}, {"type": "boolean"},
+                                ]},
+                                "value_type": {"type": "string", "enum": ["string", "number", "boolean", "date", "datetime"]},
+                            },
+                        },
+                        {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "required": ["record_target", "value", "value_type"],
+                            "properties": {
+                                "record_target": {
+                                    "type": "object",
+                                    "additionalProperties": False,
+                                    "required": ["group_id", "record_id", "column"],
+                                    "properties": {
+                                        "group_id": {"type": "string", "maxLength": 64},
+                                        "record_id": {"type": "integer", "minimum": 1},
+                                        "column": {"type": "string", "pattern": "^[A-Z]{1,3}$"},
+                                    },
+                                },
+                                "value": {"anyOf": [
+                                    {"type": "string", "maxLength": 300},
+                                    {"type": "number"}, {"type": "boolean"},
+                                ]},
+                                "value_type": {"type": "string", "enum": ["string", "number", "boolean", "date", "datetime"]},
+                            },
+                        },
+                    ],
+                },
+            }
+            schema["properties"]["force_override"] = {
+                "type": "boolean",
+                "default": False,
+                "description": "Set true only when retrying the identical pending cell_edits or repeat_rows operation after the user has replied exactly 确认 in this Thread. This flag alone is not authorization and cannot expand its pending scope.",
+            }
             schema["properties"]["repeat_rows"] = {
                 "type": "array",
                 "maxItems": 1,
@@ -509,7 +611,7 @@ class LLMTool(models.Model):
                             "type": "array",
                             "minItems": 1,
                             "maxItems": 64,
-                            "description": "Every item requires the destination Excel column letter plus exactly one source_field, fallback_fields, or formula. Example: {\"column\":\"C\",\"source_field\":\"product_id.default_code\"}.",
+                            "description": "Every item requires a destination Excel column and exactly one of source_field, fallback_fields, concat_fields, or formula. concat_fields joins authorized string fields in order using separator (empty by default). A date_offset transform may accompany a date/datetime source field.",
                             "items": {
                                 "type": "object",
                                 "additionalProperties": False,
@@ -523,7 +625,28 @@ class LLMTool(models.Model):
                                         "maxItems": 8,
                                         "items": {"type": "string"},
                                     },
+                                    "concat_fields": {
+                                        "type": "array",
+                                        "minItems": 2,
+                                        "maxItems": 8,
+                                        "items": {"type": "string"},
+                                        "description": "Two to eight distinct fields, each authorized and typed string; all nonempty values are joined in this order.",
+                                    },
+                                    "separator": {
+                                        "type": "string",
+                                        "maxLength": 32,
+                                        "description": "Text placed between nonempty concat_fields values; defaults to an empty string.",
+                                    },
                                     "formula": {"type": "string", "maxLength": 512},
+                                    "transform": {
+                                        "type": "object",
+                                        "additionalProperties": False,
+                                        "required": ["type", "days"],
+                                        "properties": {
+                                            "type": {"const": "date_offset"},
+                                            "days": {"type": "integer", "minimum": -365000, "maximum": 365000},
+                                        },
+                                    },
                                 },
                             },
                         },
@@ -565,17 +688,29 @@ class LLMTool(models.Model):
                                     "items": {"type": "string"},
                                 },
                                 "formula": {"type": "string", "maxLength": 512},
+                                "transform": {
+                                    "type": "object",
+                                    "additionalProperties": False,
+                                    "required": ["type", "days"],
+                                    "properties": {
+                                        "type": {"const": "date_offset"},
+                                        "days": {"type": "integer", "minimum": -365000, "maximum": 365000},
+                                    },
+                                    "description": "Optional; allowed only with a date/datetime source mapping.",
+                                },
                                 "literal_value": {
                                     "anyOf": [
                                         {"type": "string"},
                                         {"type": "number"},
                                         {"type": "boolean"},
+                                        {"type": "string", "format": "date"},
+                                        {"type": "string", "format": "date-time"},
                                     ],
-                                    "description": "A user-specified or deterministically calculated scalar value; pair with value_type. Not an Excel formula.",
+                                    "description": "A user-specified or deterministically calculated scalar, including ISO date/date-time values; pair with value_type. Not an Excel formula.",
                                 },
                                 "value_type": {
                                     "type": "string",
-                                    "enum": ["string", "number", "boolean", "formula"],
+                                    "enum": ["string", "number", "boolean", "date", "datetime", "formula"],
                                 },
                             },
                         },

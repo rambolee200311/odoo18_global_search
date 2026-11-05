@@ -7,6 +7,7 @@ import json
 import math
 import re
 from copy import deepcopy
+from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 
 from lxml import etree
@@ -123,6 +124,22 @@ def _validate_plan(plan: object, source_sha: str, budget: VerificationBudget) ->
                 raise _fail("OFFICE_MAPPING_INVALID", "mapping", "数字值必须为有限数。")
         elif kind == "boolean" and isinstance(data, bool):
             pass
+        elif kind == "date" and isinstance(data, str):
+            if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", data):
+                raise _fail("OFFICE_MAPPING_INVALID", "mapping", "日期必须使用有效的 ISO-8601 日期。")
+            try:
+                date.fromisoformat(data)
+            except ValueError as exc:
+                raise _fail("OFFICE_MAPPING_INVALID", "mapping", "日期必须使用有效的 ISO-8601 日期。") from exc
+        elif kind == "datetime" and isinstance(data, str):
+            if not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?", data):
+                raise _fail("OFFICE_MAPPING_INVALID", "mapping", "日期时间必须使用本地 ISO-8601 时间戳。")
+            try:
+                parsed = datetime.fromisoformat(data)
+            except ValueError as exc:
+                raise _fail("OFFICE_MAPPING_INVALID", "mapping", "日期时间必须使用本地 ISO-8601 时间戳。") from exc
+            if parsed.utcoffset() is not None:
+                raise _fail("OFFICE_MAPPING_INVALID", "mapping", "XLSX 日期时间不支持时区偏移。")
         else:
             raise _fail("OFFICE_MAPPING_INVALID", "mapping", "映射值类型与数据不匹配。")
         clean.append({"element_id": element_id, "operation": operation, "type": kind, "data": data})
@@ -397,6 +414,13 @@ def _xlsx_state(
 ) -> dict[str, object]:
     sheets = _workbook_sheets(package)
     workbook_root = package.roots["xl/workbook.xml"]
+    workbook_properties = next(
+        (node for node in workbook_root if _name(node) == "workbookPr"), None
+    )
+    date_1904_value = workbook_properties.get("date1904", "0") if workbook_properties is not None else "0"
+    if date_1904_value not in {"0", "1", "false", "true"}:
+        raise _fail("OFFICE_INVALID_OR_MISMATCHED", "xlsx", "Excel 日期系统声明无效。")
+    date_1904 = date_1904_value in {"1", "true"}
     sheet_states = tuple(
         (node.get("name", ""), node.get("state", "visible"))
         for parent in workbook_root
@@ -529,6 +553,7 @@ def _xlsx_state(
                         blank_targets.discard(key)
     return {
         "sheets": sheet_names,
+        "date_1904": date_1904,
         "sheet_states": sheet_states,
         "cells": cells,
         "cell_ids": cell_ids,
@@ -582,6 +607,8 @@ def _check_xlsx(
     warnings: list[dict[str, str]] = []
     if before["sheets"] != after["sheets"]:
         raise _fail("OFFICE_STRUCTURE_MISMATCH", "xlsx", "工作表名称或顺序发生变化。")
+    if before["date_1904"] != after["date_1904"]:
+        raise _fail("OFFICE_STRUCTURE_MISMATCH", "xlsx", "Excel 日期系统发生变化。")
     if before["sheet_states"] != after["sheet_states"]:
         raise _fail("OFFICE_STRUCTURE_MISMATCH", "xlsx", "工作表可见性状态发生变化。")
     if before["merges"] != after["merges"]:
@@ -718,7 +745,13 @@ def _check_xlsx(
         elif key in targets:
             expected = targets[key]
             actual_kind, actual_value = after["cells"][key]
-            if not _matches(expected["type"], expected["data"], actual_kind, actual_value):
+            if not _matches(
+                expected["type"],
+                expected["data"],
+                actual_kind,
+                actual_value,
+                after["date_1904"],
+            ):
                 raise _fail("OFFICE_TARGET_MISMATCH", "target", "映射目标的回读值与预期不一致。")
         elif key in number_format_writes:
             if before["cells"].get(key) != after["cells"].get(key):
@@ -741,7 +774,13 @@ def _check_xlsx(
     return len(targets), len(after["formulas"]), cache_status, warnings
 
 
-def _matches(expected_kind: object, expected: object, actual_kind: str, actual: object) -> bool:
+def _matches(
+    expected_kind: object,
+    expected: object,
+    actual_kind: str,
+    actual: object,
+    date_1904: bool = False,
+) -> bool:
     if expected_kind == "string":
         return actual_kind == "string" and actual == expected
     if expected_kind == "boolean":
@@ -751,7 +790,35 @@ def _matches(expected_kind: object, expected: object, actual_kind: str, actual: 
             return Decimal(str(expected)) == actual
         except InvalidOperation:
             return False
+    if expected_kind in {"date", "datetime"} and actual_kind == "number":
+        try:
+            expected_serial = _excel_date_serial(expected_kind, expected, date_1904)
+            return abs(Decimal(actual) - expected_serial) <= Decimal("0.0000000001")
+        except (InvalidOperation, TypeError, ValueError):
+            return False
     return False
+
+
+def _excel_date_serial(kind: str, value: str, date_1904: bool) -> Decimal:
+    """Convert a validated local ISO date to its stored Excel serial value."""
+    if kind == "date":
+        parsed_date = date.fromisoformat(value)
+        parsed = datetime.combine(parsed_date, datetime.min.time())
+    elif kind == "datetime":
+        parsed = datetime.fromisoformat(value)
+        if parsed.utcoffset() is not None:
+            raise ValueError("timezone_unsupported")
+    else:
+        raise ValueError("unsupported_date_type")
+    epoch = datetime(1904, 1, 1) if date_1904 else datetime(1899, 12, 30)
+    delta = parsed - epoch
+    serial = Decimal(delta.days) + Decimal(
+        delta.seconds * 1_000_000 + delta.microseconds
+    ) / Decimal(86_400_000_000)
+    # Excel's 1900 date system includes the fictitious 1900-02-29.
+    if not date_1904 and 0 < delta.days <= 60:
+        serial -= Decimal(1)
+    return serial
 
 
 def _paragraph_plain_text(paragraph: etree._Element) -> str:

@@ -4,13 +4,13 @@ from dataclasses import asdict, dataclass
 from typing import Any, Mapping
 
 MAPPING_SCHEMA_VERSION = "m2.mapping-proposal.v1"
-SUPPORTED_VALUE_TYPES = frozenset({"string", "number", "boolean"})
+SUPPORTED_VALUE_TYPES = frozenset({"string", "number", "boolean", "date", "datetime"})
 TARGET_VALUE_TYPES = SUPPORTED_VALUE_TYPES | {"formula"}
 CLARIFICATION_REASON_CODES = frozenset(
     {"missing_source", "ambiguous_mapping", "unsupported_target", "conflicting_instruction"}
 )
 ROOT_KEYS = frozenset({"schema_version", "mappings", "clarifications", "skipped_targets"})
-OPTIONAL_ROOT_KEYS = frozenset({"clear_targets", "clear_columns", "format_patches"})
+OPTIONAL_ROOT_KEYS = frozenset({"clear_targets", "clear_columns", "format_patches", "cell_edits", "header_edits"})
 EXTENDED_ROOT_KEYS = ROOT_KEYS | OPTIONAL_ROOT_KEYS
 
 
@@ -18,9 +18,22 @@ def has_valid_root_keys(keys: Any) -> bool:
     return ROOT_KEYS.issubset(keys) and keys.issubset(EXTENDED_ROOT_KEYS)
 MAPPING_KEYS = frozenset({"element_id", "source_field", "value_type"})
 FALLBACK_MAPPING_KEYS = frozenset({"element_id", "source_fields", "value_type"})
+CONCAT_MAPPING_KEYS = frozenset({"element_id", "concat_fields", "value_type"})
+CONCAT_SEPARATOR_MAPPING_KEYS = CONCAT_MAPPING_KEYS | {"separator"}
 FORMULA_MAPPING_KEYS = frozenset({"element_id", "formula", "value_type"})
 LITERAL_MAPPING_KEYS = frozenset({"element_id", "literal_value", "value_type"})
-MAPPING_KEY_SHAPES = (MAPPING_KEYS, FALLBACK_MAPPING_KEYS, FORMULA_MAPPING_KEYS, LITERAL_MAPPING_KEYS)
+MAPPING_TRANSFORM_KEYS = MAPPING_KEYS | {"transform"}
+FALLBACK_TRANSFORM_MAPPING_KEYS = FALLBACK_MAPPING_KEYS | {"transform"}
+MAPPING_KEY_SHAPES = (
+    MAPPING_KEYS,
+    FALLBACK_MAPPING_KEYS,
+    CONCAT_MAPPING_KEYS,
+    CONCAT_SEPARATOR_MAPPING_KEYS,
+    FORMULA_MAPPING_KEYS,
+    LITERAL_MAPPING_KEYS,
+    MAPPING_TRANSFORM_KEYS,
+    FALLBACK_TRANSFORM_MAPPING_KEYS,
+)
 CLARIFICATION_KEYS = frozenset({"element_id", "reason_code", "question"})
 
 
@@ -59,6 +72,34 @@ def normalize_empty_value_mappings(proposal: Any) -> Any:
     clear_targets = normalized.get("clear_targets", [])
     if isinstance(clear_targets, list):
         normalized["clear_targets"] = [*clear_targets, *empty_targets]
+    return normalized
+
+
+def normalize_legacy_header_edits(proposal: Any) -> Any:
+    """Read historical header edits as the generic explicit cell operation.
+
+    ``header_edits`` is retained as an input compatibility shape for Sessions
+    created before explicit writes were generalized. New Proposals use
+    ``cell_edits`` and carry a typed scalar value.
+    """
+    if not isinstance(proposal, Mapping) or "header_edits" not in proposal:
+        return proposal
+    normalized = dict(proposal)
+    legacy = normalized.pop("header_edits")
+    if "cell_edits" in normalized:
+        # Leave both keys in place so the strict parser/validator rejects the
+        # ambiguous duplicate instead of guessing which operation wins.
+        normalized["header_edits"] = legacy
+        return normalized
+    if isinstance(legacy, list):
+        normalized["cell_edits"] = [
+            {**item, "value_type": "string"}
+            if isinstance(item, Mapping) and set(item) == {"element_id", "value"}
+            else item
+            for item in legacy
+        ]
+    else:
+        normalized["cell_edits"] = legacy
     return normalized
 
 

@@ -9,6 +9,7 @@ import struct
 import warnings
 import zipfile
 import zlib
+from datetime import date, datetime
 from zipfile import ZipFile
 from io import BytesIO
 from pathlib import Path
@@ -55,6 +56,20 @@ def make_xlsx(*, formula=False):
         sheet["B1"] = "=1+1"
     output = BytesIO()
     workbook.save(output)
+    return output.getvalue()
+
+
+def make_xlsx_with_header_table():
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Orders"
+    sheet["E1"] = "Description"
+    sheet["F1"] = "Supplier Product Name"
+    sheet["E2"] = "Keep this label"
+    sheet["F2"] = "old value"
+    output = BytesIO()
+    workbook.save(output)
+    workbook.close()
     return output.getvalue()
 
 
@@ -196,6 +211,215 @@ def corrupt_zip_member(content: bytes, member_name: str) -> bytes:
 
 
 class OfficeCoreTests(unittest.TestCase):
+    def test_explicit_header_text_operation_uses_canonical_value_write_and_preserves_other_cells(self):
+        source = make_xlsx_with_header_table()
+        inspection = inspect_document(source, "table.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", budget())
+        header = next(item for item in inspection.elements if item.element_id == "xlsx:Orders!F1")
+        self.assertEqual(header.table_role, "table_header")
+        self.assertFalse(header.writable)
+        plan = {"schema_version": "1", "template_sha256": inspection.template_sha256, "writes": []}
+
+        with self.assertRaises(OfficeCoreError):
+            render_candidate(
+                source,
+                "table.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                mapping_for(inspection, "xlsx:Orders!F1", {"type": "string", "data": "Supplier Description"}),
+                budget(),
+            )
+
+        candidate = render_candidate(
+            source,
+            "table.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            plan,
+            budget(),
+            explicit_header_edits=[{"element_id": "xlsx:Orders!F1", "value": "Supplier Description"}],
+        )
+        rendered = load_workbook(BytesIO(candidate.content), data_only=False)
+        try:
+            self.assertEqual(rendered["Orders"]["F1"].value, "Supplier Description")
+            self.assertEqual(rendered["Orders"]["F2"].value, "old value")
+            self.assertEqual(rendered["Orders"]["E1"].value, "Description")
+            self.assertEqual(rendered["Orders"]["E2"].value, "Keep this label")
+        finally:
+            rendered.close()
+
+    def test_legacy_header_edit_alias_uses_generic_cell_write_for_existing_data(self):
+        source = make_xlsx_with_header_table()
+        inspection = inspect_document(source, "table.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", budget())
+        plan = {"schema_version": "1", "template_sha256": inspection.template_sha256, "writes": []}
+        candidate = render_candidate(
+            source,
+            "table.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            plan,
+            budget(),
+            explicit_header_edits=[{"element_id": "xlsx:Orders!F2", "value": "Not a header"}],
+        )
+        rendered = load_workbook(BytesIO(candidate.content), data_only=False)
+        try:
+            self.assertEqual(rendered["Orders"]["F2"].value, "Not a header")
+        finally:
+            rendered.close()
+
+    def test_explicit_cell_edits_overwrite_authorized_existing_header_and_data_cells(self):
+        source = make_xlsx_with_header_table()
+        workbook = load_workbook(BytesIO(source), data_only=False)
+        workbook["Orders"]["F1"].number_format = "@"
+        workbook["Orders"]["F2"].number_format = "0.00"
+        source_with_styles = BytesIO()
+        workbook.save(source_with_styles)
+        workbook.close()
+        source = source_with_styles.getvalue()
+        inspection = inspect_document(source, "table.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", budget())
+        plan = {"schema_version": "1", "template_sha256": inspection.template_sha256, "writes": []}
+
+        candidate = render_candidate(
+            source,
+            "table.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            plan,
+            budget(),
+            explicit_cell_edits=[
+                {"element_id": "xlsx:Orders!F1", "value": "供应商商品描述", "value_type": "string"},
+                {"element_id": "xlsx:Orders!F2", "value": "new value", "value_type": "string"},
+            ],
+        )
+        rendered = load_workbook(BytesIO(candidate.content), data_only=False)
+        try:
+            self.assertEqual(rendered["Orders"]["F1"].value, "供应商商品描述")
+            self.assertEqual(rendered["Orders"]["F2"].value, "new value")
+            self.assertEqual(rendered["Orders"]["F1"].number_format, "@")
+            self.assertEqual(rendered["Orders"]["F2"].number_format, "0.00")
+            self.assertEqual(rendered["Orders"]["E1"].value, "Description")
+            self.assertEqual(rendered["Orders"]["E2"].value, "Keep this label")
+        finally:
+            rendered.close()
+
+    def test_explicit_cell_edit_is_ordered_after_mapping_write_but_duplicate_mappings_still_conflict(self):
+        source = make_xlsx()
+        inspection = inspect_document(
+            source,
+            "ordered-edit.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            budget(),
+        )
+        mapping = {
+            "schema_version": "1",
+            "template_sha256": inspection.template_sha256,
+            "writes": [
+                {
+                    "element_id": "xlsx:Sheet1!A1",
+                    "operation": "set_value",
+                    "value": {"type": "string", "data": "mapped value"},
+                }
+            ],
+        }
+        candidate = render_candidate(
+            source,
+            "ordered-edit.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            mapping,
+            budget(),
+            explicit_cell_edits=[
+                {"element_id": "xlsx:Sheet1!A1", "value": "user edit", "value_type": "string"}
+            ],
+        )
+        rendered = load_workbook(BytesIO(candidate.content), data_only=False)
+        try:
+            self.assertEqual(rendered["Sheet1"]["A1"].value, "user edit")
+        finally:
+            rendered.close()
+
+        duplicate_mapping = {
+            **mapping,
+            "writes": [mapping["writes"][0], mapping["writes"][0]],
+        }
+        with self.assertRaises(OfficeCoreError):
+            render_candidate(
+                source,
+                "ordered-edit.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                duplicate_mapping,
+                budget(),
+            )
+
+    def test_explicit_clear_is_final_after_numeric_mapping_to_same_cell(self):
+        source = make_xlsx()
+        inspection = inspect_document(
+            source,
+            "ordered-clear.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            budget(),
+        )
+        mapping = {
+            "schema_version": "1",
+            "template_sha256": inspection.template_sha256,
+            "writes": [{
+                "element_id": "xlsx:Sheet1!A1",
+                "operation": "set_value",
+                "value": {"type": "number", "data": 0},
+            }],
+        }
+        candidate = render_candidate(
+            source,
+            "ordered-clear.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            mapping,
+            budget(),
+            explicit_cell_edits=[
+                {"element_id": "xlsx:Sheet1!A1", "value": "", "value_type": "string"}
+            ],
+        )
+        rendered = load_workbook(BytesIO(candidate.content), data_only=False)
+        try:
+            self.assertIn(rendered["Sheet1"]["A1"].value, (None, ""))
+        finally:
+            rendered.close()
+
+    def test_explicit_cell_edit_rejects_target_outside_inspected_document(self):
+        source = make_xlsx_with_header_table()
+        inspection = inspect_document(source, "table.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", budget())
+        plan = {"schema_version": "1", "template_sha256": inspection.template_sha256, "writes": []}
+        with self.assertRaises(OfficeCoreError):
+            render_candidate(
+                source,
+                "table.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                plan,
+                budget(),
+                explicit_cell_edits=[
+                    {"element_id": "xlsx:Orders!Z999", "value": "outside", "value_type": "string"}
+                ],
+            )
+
+    def test_explicit_cell_edit_replaces_formula_at_the_named_target(self):
+        source = make_xlsx(formula=True)
+        inspection = inspect_document(
+            source,
+            "formula.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            budget(),
+        )
+        plan = {"schema_version": "1", "template_sha256": inspection.template_sha256, "writes": []}
+        candidate = render_candidate(
+            source,
+            "formula.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            plan,
+            budget(),
+            explicit_cell_edits=[
+                {"element_id": "xlsx:Sheet1!B1", "value": 9.5, "value_type": "number"}
+            ],
+        )
+        rendered = load_workbook(BytesIO(candidate.content), data_only=False)
+        try:
+            self.assertEqual(rendered["Sheet1"]["B1"].value, 9.5)
+            self.assertEqual(rendered["Sheet1"]["A1"].value, "old")
+        finally:
+            rendered.close()
+
     def test_xlsx_inspection_identifies_formula_cells_as_explicit_write_targets(self):
         result = inspect_document(
             make_xlsx(formula=True), "source.xlsx",
@@ -292,6 +516,45 @@ class OfficeCoreTests(unittest.TestCase):
             item = elements[f"xlsx:Orders!{coordinate}"]
             self.assertEqual(item.table_role, "table_data")
             self.assertTrue(item.writable)
+
+    def test_xlsx_row_formulas_do_not_hide_unstyled_blank_table_columns(self):
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = "Inventory"
+        headings = [
+            "Code", "Product", "Warehouse", "Location", "Lot", "UoM",
+            "On hand", "Reserved", "Native available", "Calculated available", "Delta",
+        ]
+        for column, heading in enumerate(headings, start=1):
+            sheet.cell(1, column, heading)
+        # A:I are intentionally blank and unstyled, as in a structure-only
+        # template. J:K contain per-row formulas, while row 4 is the aggregate.
+        for row in (2, 3):
+            sheet[f"J{row}"] = f"=G{row}-H{row}"
+            sheet[f"K{row}"] = f"=J{row}-I{row}"
+        sheet["A4"] = "Total"
+        for column in "GHIJK":
+            sheet[f"{column}4"] = f"=SUM({column}2:{column}3)"
+        output = BytesIO()
+        workbook.save(output)
+        workbook.close()
+
+        inspected = inspect_document(
+            output.getvalue(),
+            "inventory.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            budget(),
+        )
+        elements = {item.element_id: item for item in inspected.elements}
+        for row in (2, 3):
+            for column in "ABCDEFGHI":
+                item = elements[f"xlsx:Inventory!{column}{row}"]
+                self.assertEqual(item.table_role, "table_data")
+                self.assertTrue(item.writable)
+            self.assertEqual(elements[f"xlsx:Inventory!J{row}"].table_role, "table_data")
+            self.assertEqual(elements[f"xlsx:Inventory!K{row}"].table_role, "table_data")
+        self.assertEqual(elements["xlsx:Inventory!G4"].kind, "formula")
+        self.assertIsNone(elements["xlsx:Inventory!G4"].table_role)
 
     def test_xlsx_number_format_patch_changes_display_format_without_changing_value(self):
         workbook = Workbook()
@@ -559,6 +822,52 @@ class OfficeCoreTests(unittest.TestCase):
                 namespaces={"x": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"},
             )
         self.assertEqual(value, ["8.3"])
+
+    def test_xlsx_mapping_writes_typed_date_and_datetime_values(self):
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = "Sheet1"
+        sheet["A1"] = "Date"
+        sheet["B1"].number_format = "yyyy-mm-dd"
+        sheet["A2"] = "Datetime"
+        sheet["B2"].number_format = "yyyy-mm-dd hh:mm"
+        output = BytesIO()
+        workbook.save(output)
+        workbook.close()
+        source = output.getvalue()
+        mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        inspected = inspect_document(source, "typed-dates.xlsx", mime, budget())
+
+        date_candidate = render_candidate(
+            source,
+            "typed-dates.xlsx",
+            mime,
+            mapping_for(inspected, "xlsx:Sheet1!B1", {"type": "date", "data": "2026-11-10"}),
+            budget(),
+        )
+        datetime_candidate = render_candidate(
+            source,
+            "typed-dates.xlsx",
+            mime,
+            mapping_for(
+                inspected,
+                "xlsx:Sheet1!B2",
+                {"type": "datetime", "data": "2026-11-10T09:00:00"},
+            ),
+            budget(),
+        )
+        date_book = load_workbook(BytesIO(date_candidate.content), data_only=False)
+        datetime_book = load_workbook(BytesIO(datetime_candidate.content), data_only=False)
+        try:
+            actual_date = date_book["Sheet1"]["B1"].value
+            self.assertEqual(actual_date.date(), date(2026, 11, 10))
+            self.assertEqual(actual_date.time(), datetime.min.time())
+            self.assertEqual(date_book["Sheet1"]["B1"].number_format, "yyyy-mm-dd")
+            self.assertEqual(datetime_book["Sheet1"]["B2"].value, datetime(2026, 11, 10, 9, 0))
+            self.assertEqual(datetime_book["Sheet1"]["B2"].number_format, "yyyy-mm-dd hh:mm")
+        finally:
+            date_book.close()
+            datetime_book.close()
 
     def test_docx_inspection_and_candidate_render_for_plain_paragraph_and_table(self):
         source = make_docx()

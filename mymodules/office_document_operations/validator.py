@@ -13,6 +13,8 @@ from pathlib import Path
 from typing import Any
 
 from openpyxl import load_workbook
+from openpyxl.styles.numbers import is_date_format
+from openpyxl.utils.datetime import from_excel, to_excel
 from openpyxl.utils.cell import column_index_from_string, range_boundaries
 
 from .errors import DocumentOperationError
@@ -54,11 +56,13 @@ def validate_saved_output(input_path: str | Path, output_path: str | Path, opera
             _reference_apply(expected, operation)
         expected_state = _workbook_state(expected)
         actual_state = _workbook_state(actual)
-        if expected_state != actual_state:
+        difference = _first_state_difference(expected_state, actual_state)
+        if difference:
             raise DocumentOperationError(
                 "output_state_mismatch",
                 "validation",
-                "Independently reopened output differs from the state required by the ordered operations.",
+                "Independently reopened output differs from the ordered operations at "
+                f"{difference}.",
             )
         return {
             "status": "PASS",
@@ -104,7 +108,12 @@ def _reference_apply(workbook, operation: dict[str, Any]) -> None:
         for row_offset, row_values in enumerate(values):
             for col_offset, typed in enumerate(row_values):
                 cell = sheet.cell(min_row + row_offset, min_col + col_offset)
+                number_format = cell.number_format
                 cell.value = _reference_value(typed)
+                if typed["type"] in {"date", "datetime"}:
+                    # Match the operation contract: assigning a typed date
+                    # changes the value, not the target cell's formatting.
+                    cell.number_format = number_format
                 if typed["type"] == "string":
                     cell.data_type = "s"
     elif kind == "set_formula":
@@ -200,7 +209,18 @@ def _workbook_state(workbook) -> tuple[Any, ...]:
                 # ``value=None, data_type='inlineStr'``. Normalize every blank
                 # representation alike while retaining its style/format state.
                 data_type = "n" if blank_value else cell.data_type
-                cells.append((cell.coordinate, _stable_value(cell.value, cell.number_format), data_type, style,
+                value = cell.value
+                stable_value = None
+                # Excel stores dates as numeric serials. When the target has
+                # no date number format, openpyxl correctly reopens the saved
+                # value as a number; compare the reference workbook using that
+                # same on-disk representation while leaving formatting intact.
+                if isinstance(value, (date, datetime)) and not is_date_format(cell.number_format):
+                    stable_value = ("xlsx-date-serial", to_excel(value, epoch=workbook.epoch))
+                    data_type = "n"
+                if stable_value is None:
+                    stable_value = _stable_value(value, cell.number_format, workbook.epoch)
+                cells.append((cell.coordinate, stable_value, data_type, style,
                               cell.number_format, getattr(cell.hyperlink, "target", None),
                               getattr(cell.hyperlink, "location", None),
                               getattr(cell.comment, "text", None), getattr(cell.comment, "author", None)))
@@ -222,8 +242,14 @@ def _workbook_state(workbook) -> tuple[Any, ...]:
     return tuple(state), names
 
 
-def _stable_value(value, number_format="General"):
+def _stable_value(value, number_format="General", epoch=None):
     if isinstance(value, datetime):
+        # XLSX stores datetimes as floating-point day serials. openpyxl
+        # round-trips those serials to millisecond precision, so compare the
+        # reference value at the same representable precision as an
+        # independently reopened workbook (using the workbook's date system).
+        if epoch is not None:
+            value = from_excel(to_excel(value, epoch=epoch), epoch=epoch)
         if value.time().isoformat() == "00:00:00" and not any(token in number_format.lower() for token in ("h", "s")):
             return ("date", value.date().isoformat())
         return ("datetime", value.isoformat())
@@ -238,6 +264,62 @@ def _stable_value(value, number_format="General"):
     if isinstance(value, (str, int, bool)) or value is None:
         return (type(value).__name__, value)
     return (type(value).__name__, str(value))
+
+
+def _first_state_difference(expected_state, actual_state) -> str | None:
+    """Describe the first differing cell/structure without exposing cell data."""
+    expected_sheets, expected_names = expected_state
+    actual_sheets, actual_names = actual_state
+    if expected_names != actual_names:
+        return "workbook defined names (structure)"
+    if len(expected_sheets) != len(actual_sheets):
+        return "workbook worksheet count (structure)"
+    for expected, actual in zip(expected_sheets, actual_sheets):
+        title = expected[0]
+        if expected[:2] != actual[:2]:
+            return f"worksheet {title!r} (state)"
+        expected_cells = {cell[0]: cell[1:] for cell in expected[2]}
+        actual_cells = {cell[0]: cell[1:] for cell in actual[2]}
+        for coordinate in sorted(set(expected_cells) | set(actual_cells)):
+            left, right = expected_cells.get(coordinate), actual_cells.get(coordinate)
+            if left is None and right is None:
+                continue
+            if left is None or right is None:
+                category = "cell presence"
+            elif left[1:] == right[1:] and (
+                left[0] == right[0] or _same_excel_date_serial(left[0], right[0])
+            ):
+                continue
+            elif left[1:3] != right[1:3]:
+                category = "cell value/type"
+            elif left[3:5] != right[3:5]:
+                category = "cell style/number format"
+            else:
+                category = "cell annotation"
+            return f"{title}!{coordinate} ({category})"
+        if expected[3:] != actual[3:]:
+            return f"worksheet {title!r} (dimensions or structure)"
+    return None
+
+
+def _same_excel_date_serial(left, right) -> bool:
+    """Compare a date written to a General cell with its numeric XLSX serial."""
+    def number(value):
+        if not isinstance(value, tuple) or len(value) != 2:
+            return None
+        kind, raw = value
+        if kind == "xlsx-date-serial":
+            return float(raw)
+        if kind == "float":
+            return float.fromhex(raw)
+        if kind == "int" and type(raw) is int:
+            return float(raw)
+        return None
+
+    expected, actual = number(left), number(right)
+    if expected is None or actual is None:
+        expected, actual = number(right), number(left)
+    return expected is not None and actual is not None and abs(expected - actual) <= 1e-10
 
 
 def _sha256(path: Path) -> str:

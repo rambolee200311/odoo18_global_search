@@ -37,6 +37,42 @@ ALLOWED_TRANSITIONS = {
     "failed": set(),
 }
 
+
+def _valid_saved_cell_edit(item):
+    """Validate coordinate or stable repeat-row selectors in stored rules."""
+    if not isinstance(item, dict) or item.get("value_type") not in {
+        "string", "number", "boolean", "date", "datetime"
+    }:
+        return False
+    if set(item) == {"element_id", "value", "value_type"}:
+        return (
+            isinstance(item.get("element_id"), str)
+            and bool(item["element_id"].strip())
+            and len(item["element_id"]) <= 255
+        )
+    if set(item) == {"record_target", "value", "value_type"}:
+        target = item.get("record_target")
+        return bool(
+            isinstance(target, dict)
+            and set(target) == {"group_id", "record_id", "column"}
+            and isinstance(target.get("group_id"), str)
+            and target["group_id"].isidentifier()
+            and len(target["group_id"]) <= 64
+            and type(target.get("record_id")) is int
+            and target["record_id"] > 0
+            and isinstance(target.get("column"), str)
+            and re.fullmatch(r"[A-Z]{1,3}", target["column"])
+        )
+    return False
+
+
+def _saved_cell_edit_identity(item):
+    if "record_target" in item:
+        return "record:" + json.dumps(
+            item["record_target"], ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        )
+    return "coordinate:" + item["element_id"]
+
 _ERROR_CODE_RE = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
 _EMPTY_PROPOSAL = {
     "schema_version": "m2.mapping-proposal.v1",
@@ -102,6 +138,7 @@ class OfficeMappingSession(models.Model):
     template_fingerprint = fields.Char(readonly=True, copy=False, size=64)
     proposal_data_fingerprint = fields.Char(readonly=True, copy=False, size=64)
     preview_data_fingerprint = fields.Char(readonly=True, copy=False, size=64)
+    pending_cell_override_json = fields.Text(readonly=True, copy=False, default=False)
     context_json = fields.Text(readonly=True, copy=False, default="{}")
     error_code = fields.Char(readonly=True, copy=False, size=64)
 
@@ -242,7 +279,7 @@ class OfficeMappingSession(models.Model):
             or set(context) - {
                 "target_manifest", "allowed_fields", "mapping_groups", "template_text",
                 "manifest_metadata_version", "document_format", "selected_record_ids",
-                "extra_authorized_fields",
+                "extra_authorized_fields", "extra_authorized_collection_fields",
             }
             or not isinstance(context["target_manifest"], list)
             or not isinstance(context["allowed_fields"], dict)
@@ -291,6 +328,30 @@ class OfficeMappingSession(models.Model):
                 )
             )
             or (
+                "extra_authorized_collection_fields" in context
+                and (
+                    not isinstance(context["extra_authorized_collection_fields"], dict)
+                    or len(context["extra_authorized_collection_fields"]) > 40
+                    or any(
+                        not isinstance(collection, str)
+                        or not collection.strip()
+                        or len(collection) > 255
+                        or not isinstance(paths, list)
+                        or len(paths) > 64
+                        or any(
+                            not isinstance(path, str) or not path.strip() or len(path) > 255
+                            for path in paths
+                        )
+                        or len(set(paths)) != len(paths)
+                        for collection, paths in context["extra_authorized_collection_fields"].items()
+                    )
+                    or sum(
+                        len(paths)
+                        for paths in context["extra_authorized_collection_fields"].values()
+                    ) > 64
+                )
+            )
+            or (
                 "template_text" in context
                 and (
                     not isinstance(context["template_text"], list)
@@ -332,7 +393,7 @@ class OfficeMappingSession(models.Model):
         except (TypeError, json.JSONDecodeError) as exc:
             raise ValidationError(_("Invalid mapping rules.")) from exc
         base_keys = {"schema_version", "mappings", "clarifications", "skipped_targets"}
-        optional_keys = {"clear_targets", "format_patches"}
+        optional_keys = {"clear_targets", "format_patches", "cell_edits", "header_edits"}
         if (
             not isinstance(rules, dict)
             or not base_keys.issubset(rules)
@@ -360,6 +421,33 @@ class OfficeMappingSession(models.Model):
             )
         ):
             raise ValidationError(_("Invalid number-format patches."))
+        if "cell_edits" in rules and (
+            not isinstance(rules["cell_edits"], list)
+            or len(rules["cell_edits"]) > 200
+            or any(not _valid_saved_cell_edit(item) for item in rules["cell_edits"])
+            or len({_saved_cell_edit_identity(item) for item in rules["cell_edits"]})
+            != len(rules["cell_edits"])
+        ):
+            raise ValidationError(_("Invalid explicit cell edits."))
+        if "header_edits" in rules and (
+            not isinstance(rules["header_edits"], list)
+            or len(rules["header_edits"]) > 200
+            or any(
+                not isinstance(item, dict)
+                or set(item) != {"element_id", "value"}
+                or not isinstance(item["element_id"], str)
+                or not item["element_id"].strip()
+                or len(item["element_id"]) > 255
+                or not isinstance(item["value"], str)
+                or not item["value"]
+                or len(item["value"]) > 300
+                or any(ord(char) < 32 for char in item["value"])
+                for item in rules["header_edits"]
+            )
+            or len({item["element_id"] for item in rules["header_edits"]})
+            != len(rules["header_edits"])
+        ):
+            raise ValidationError(_("Invalid explicit header edits."))
         if data_fingerprint is not None and not re.fullmatch(r"[0-9a-f]{64}", data_fingerprint):
             raise ValidationError(_("Invalid proposal data fingerprint."))
 
@@ -413,6 +501,7 @@ class OfficeMappingSession(models.Model):
                 "preview_proposal_revision": 0,
                 "preview_attachment_id": False,
                 "preview_data_fingerprint": False,
+                "pending_cell_override_json": False,
                 "final_request_uuid": False,
                 "state": target_state,
                 "revision": new_revision,
@@ -422,9 +511,95 @@ class OfficeMappingSession(models.Model):
             values["proposal_data_fingerprint"] = data_fingerprint
         super(OfficeMappingSession, self).write(values)
         self.invalidate_recordset(
-            ["mapping_rules_json", "proposal_history_json", "confirmed_revision", "proposal_revision", "proposal_data_fingerprint", "preview_proposal_revision", "state", "revision", "error_code", "final_request_uuid"]
+            ["mapping_rules_json", "proposal_history_json", "confirmed_revision", "proposal_revision", "proposal_data_fingerprint", "preview_proposal_revision", "state", "revision", "error_code", "final_request_uuid", "pending_cell_override_json"]
         )
         return {"session_id": self.id, "state": target_state, "revision": new_revision}
+
+    def _set_pending_cell_override_from_service(self, pending_json, expected_revision):
+        """Persist a scoped write-risk confirmation without changing the mapping revision."""
+        self.ensure_one()
+        self.check_access("write")
+        try:
+            pending = json.loads(pending_json)
+        except (TypeError, json.JSONDecodeError) as exc:
+            raise ValidationError(_("Invalid Office operation confirmation.")) from exc
+        required = {
+            "thread_id",
+            "user_id",
+            "request_message_id",
+            "revision",
+            "proposal_revision",
+            "preview_attachment_id",
+            "template_fingerprint",
+            "context_fingerprint",
+            "document_fingerprint",
+            "cell_edits",
+            "observed_values",
+        }
+        optional = {"operation_scope", "risks"}
+        if (
+            not isinstance(pending, dict)
+            or not required.issubset(pending)
+            or set(pending) - required - optional
+            or ("operation_scope" in pending and not isinstance(pending["operation_scope"], dict))
+            or ("risks" in pending and not isinstance(pending["risks"], list))
+        ):
+            raise ValidationError(_("Invalid Office operation confirmation."))
+        if (
+            type(expected_revision) is not int
+            or type(pending["thread_id"]) is not int
+            or type(pending["user_id"]) is not int
+            or type(pending["request_message_id"]) is not int
+            or type(pending["revision"]) is not int
+            or type(pending["proposal_revision"]) is not int
+            or pending["revision"] != expected_revision
+            or pending["thread_id"] != self.thread_id.id
+            or pending["user_id"] != self.owner_id.id
+            or not isinstance(pending["cell_edits"], list)
+            or not isinstance(pending["observed_values"], dict)
+            or (
+                not pending["cell_edits"]
+                and not pending.get("risks")
+            )
+            or (
+                not pending["cell_edits"]
+                and not pending.get("operation_scope")
+            )
+        ):
+            raise ValidationError(_("Invalid Office operation confirmation."))
+        self.flush_recordset(["revision", "proposal_revision"])
+        self.env.cr.execute(
+            "SELECT revision, proposal_revision FROM office_mapping_session WHERE id = %s FOR UPDATE",
+            [self.id],
+        )
+        row = self.env.cr.fetchone()
+        if not row or row[0] != expected_revision or row[1] != pending["proposal_revision"]:
+            raise ValidationError(_("MAPPING_REVISION_STALE: the mapping changed before overwrite confirmation."))
+        super(OfficeMappingSession, self).write(
+            {"pending_cell_override_json": json.dumps(pending, ensure_ascii=False, sort_keys=True, separators=(",", ":"))}
+        )
+        self.invalidate_recordset(["pending_cell_override_json"])
+        return True
+
+    def _clear_pending_cell_override_from_service(self, expected_revision):
+        """Clear a consumed or superseded overwrite confirmation under revision lock."""
+        self.ensure_one()
+        self.check_access("write")
+        if type(expected_revision) is not int or expected_revision < 1:
+            raise ValidationError(_("Invalid mapping session revision."))
+        self.flush_recordset(["revision"])
+        self.env.cr.execute(
+            "SELECT revision FROM office_mapping_session WHERE id = %s FOR UPDATE",
+            [self.id],
+        )
+        row = self.env.cr.fetchone()
+        if not row:
+            raise AccessError(_("The mapping session is unavailable."))
+        if row[0] != expected_revision:
+            raise ValidationError(_("MAPPING_REVISION_STALE: the mapping changed before confirmation was cleared."))
+        super(OfficeMappingSession, self).write({"pending_cell_override_json": False})
+        self.invalidate_recordset(["pending_cell_override_json"])
+        return True
 
     def _store_preview_from_service(
         self, attachment, expected_revision, data_fingerprint, template_fingerprint
@@ -454,6 +629,7 @@ class OfficeMappingSession(models.Model):
             raise ValidationError(_("The preview attachment must be private and session-bound."))
         values = {
             "preview_attachment_id": attachment.id,
+            "pending_cell_override_json": False,
             "preview_proposal_revision": row[1],
             "final_request_uuid": False,
             "template_fingerprint": template_fingerprint,

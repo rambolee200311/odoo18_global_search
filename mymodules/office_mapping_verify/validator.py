@@ -1,7 +1,9 @@
 """Fail-closed validation for untrusted mapping proposals and user edits."""
 
 from collections.abc import Mapping, Sequence
+import math
 import re
+from datetime import date, datetime
 from typing import Any
 
 from .contracts import (
@@ -9,6 +11,8 @@ from .contracts import (
     CLARIFICATION_REASON_CODES,
     EXTENDED_ROOT_KEYS,
     has_valid_root_keys,
+    CONCAT_MAPPING_KEYS,
+    CONCAT_SEPARATOR_MAPPING_KEYS,
     FALLBACK_MAPPING_KEYS,
     FORMULA_MAPPING_KEYS,
     LITERAL_MAPPING_KEYS,
@@ -21,8 +25,10 @@ from .contracts import (
     TARGET_VALUE_TYPES,
     ValidationReport,
     normalize_empty_value_mappings,
+    normalize_legacy_header_edits,
 )
 from .formula import formula_references
+from .transforms import validate_transform
 
 
 def _append_once(items: list[str], value: str) -> None:
@@ -146,10 +152,21 @@ def _normalize_allowed_fields(allowed_fields: Any) -> tuple[dict[str, str], list
 
 def _proposal_shape_errors(
     proposal: Any,
-) -> tuple[list[str], list[dict[str, Any]], list[dict[str, Any]], list[str], list[str], list[dict[str, Any]]]:
+) -> tuple[
+    list[str],
+    list[dict[str, Any]],
+    list[dict[str, Any]],
+    list[str],
+    list[str],
+    list[dict[str, Any]],
+    list[dict[str, Any]],
+]:
     errors: list[str] = []
     if not isinstance(proposal, Mapping):
-        return ["invalid_proposal_object"], [], [], [], [], []
+        return ["invalid_proposal_object"], [], [], [], [], [], []
+    if "cell_edits" in proposal and "header_edits" in proposal:
+        _append_once(errors, "duplicate_explicit_cell_edit_location")
+    proposal = normalize_legacy_header_edits(proposal)
     proposal = normalize_empty_value_mappings(proposal)
     if not has_valid_root_keys(set(proposal)):
         _append_once(errors, "invalid_proposal_keys")
@@ -161,6 +178,7 @@ def _proposal_shape_errors(
     clear_targets = proposal.get("clear_targets", [])
     clear_columns = proposal.get("clear_columns", [])
     format_patches = proposal.get("format_patches", [])
+    cell_edits = proposal.get("cell_edits", [])
     if not isinstance(mappings, list):
         _append_once(errors, "invalid_mappings")
         mappings = []
@@ -179,7 +197,51 @@ def _proposal_shape_errors(
     if not isinstance(format_patches, list):
         _append_once(errors, "invalid_format_patches")
         format_patches = []
-    return errors, mappings, clarifications, skipped, clear_targets, format_patches
+    if not isinstance(cell_edits, list):
+        _append_once(errors, "invalid_cell_edits")
+        cell_edits = []
+    if len(cell_edits) > ParseLimits().max_mappings:
+        _append_once(errors, "too_many_cell_edits")
+    for edit in cell_edits:
+        coordinate_shape = isinstance(edit, Mapping) and set(edit) == {
+            "element_id", "value", "value_type"
+        }
+        record_shape = isinstance(edit, Mapping) and set(edit) == {
+            "record_target", "value", "value_type"
+        }
+        record_target = edit.get("record_target") if record_shape else None
+        valid_record_target = (
+            isinstance(record_target, Mapping)
+            and set(record_target) == {"group_id", "record_id", "column"}
+            and isinstance(record_target.get("group_id"), str)
+            and record_target.get("group_id", "").isidentifier()
+            and len(record_target.get("group_id", "")) <= 64
+            and type(record_target.get("record_id")) is int
+            and record_target.get("record_id", 0) > 0
+            and isinstance(record_target.get("column"), str)
+            and re.fullmatch(r"[A-Z]{1,3}", record_target.get("column", ""))
+        )
+        target_shape_valid = (
+            coordinate_shape
+            and isinstance(edit.get("element_id"), str)
+            and bool(edit.get("element_id", "").strip())
+            and len(edit.get("element_id", "")) <= ParseLimits().max_identifier_chars
+        ) or (record_shape and valid_record_target)
+        if (
+            not target_shape_valid
+            or not (
+                (edit.get("value_type") == "string" and isinstance(edit.get("value"), str)
+                 and len(edit.get("value", "")) <= 300 and not any(ord(char) < 32 for char in edit.get("value", "")))
+                or (edit.get("value_type") == "number" and isinstance(edit.get("value"), (int, float))
+                    and not isinstance(edit.get("value"), bool)
+                    and (not isinstance(edit.get("value"), float) or math.isfinite(edit.get("value"))))
+                or (edit.get("value_type") == "boolean" and type(edit.get("value")) is bool)
+                or (edit.get("value_type") == "date" and isinstance(edit.get("value"), str) and _valid_iso_date(edit.get("value")))
+                or (edit.get("value_type") == "datetime" and isinstance(edit.get("value"), str) and _valid_iso_datetime(edit.get("value")))
+            )
+        ):
+            _append_once(errors, "invalid_cell_edit_shape")
+    return errors, mappings, clarifications, skipped, clear_targets, format_patches, cell_edits
 
 
 def expand_table_column_operations(
@@ -250,6 +312,9 @@ def validate_proposal(
     proposal: Any,
     target_manifest: Sequence[Mapping[str, Any]],
     allowed_fields: Mapping[str, str],
+    *,
+    limits: ParseLimits | None = None,
+    ordered_cell_edit_overrides: bool = False,
 ) -> ValidationReport:
     """Validate schema, membership, type compatibility and completeness.
 
@@ -257,13 +322,23 @@ def validate_proposal(
     normalized M1 value type. No ACL check or type conversion occurs here.
     """
 
+    active_limits = limits or ParseLimits()
     manifest, manifest_errors = _normalize_manifest(target_manifest)
     fields, field_errors = _normalize_allowed_fields(allowed_fields)
+    proposal = normalize_legacy_header_edits(proposal)
     expanded_proposal, column_errors = expand_table_column_operations(proposal, manifest)
-    shape_errors, mappings, clarifications, skipped, clear_targets, format_patches = _proposal_shape_errors(expanded_proposal)
+    (
+        shape_errors,
+        mappings,
+        clarifications,
+        skipped,
+        clear_targets,
+        format_patches,
+        cell_edits,
+    ) = _proposal_shape_errors(expanded_proposal)
     structural_errors = manifest_errors + field_errors + column_errors + shape_errors
     if not structural_errors:
-        if len(mappings) > ParseLimits().max_mappings:
+        if len(mappings) > active_limits.max_mappings:
             _append_once(structural_errors, "too_many_mappings")
         if len(clarifications) > ParseLimits().max_clarifications:
             _append_once(structural_errors, "too_many_clarifications")
@@ -281,6 +356,7 @@ def validate_proposal(
     duplicates: list[str] = []
     skipped_unapproved: list[str] = []
     valid_candidates: dict[str, bool] = {}
+    mapped_target_ids: set[str] = set()
 
     for mapping in mappings:
         shape = _mapping_shape(mapping)
@@ -297,6 +373,7 @@ def validate_proposal(
             valid_candidates[element_id] = False
             continue
         valid_candidates[element_id] = False
+        mapped_target_ids.add(element_id)
         target = targets.get(element_id)
         if target is None:
             _append_once(unknown_targets, element_id)
@@ -304,7 +381,8 @@ def validate_proposal(
         if target.get("table_role") == "table_header":
             _append_once(type_errors, f"target_not_writable:{element_id}")
             continue
-        if shape == MAPPING_KEYS:
+        base_shape = shape - {"transform"}
+        if base_shape == MAPPING_KEYS:
             source_field = mapping["source_field"]
             if not isinstance(source_field, str) or not source_field.strip() or source_field not in fields:
                 _append_once(unknown_fields, source_field if isinstance(source_field, str) else "<invalid>")
@@ -315,7 +393,7 @@ def validate_proposal(
             if fields[source_field] != value_type or value_type not in target["allowed_value_types"]:
                 _append_once(type_errors, f"type_mismatch:{element_id}")
                 continue
-        elif shape == FALLBACK_MAPPING_KEYS:
+        elif base_shape == FALLBACK_MAPPING_KEYS:
             sources = mapping["source_fields"]
             if (
                 not isinstance(sources, list)
@@ -339,7 +417,33 @@ def validate_proposal(
             ):
                 _append_once(type_errors, f"type_mismatch:{element_id}")
                 continue
-        elif shape == FORMULA_MAPPING_KEYS:
+        elif base_shape in (CONCAT_MAPPING_KEYS, CONCAT_SEPARATOR_MAPPING_KEYS):
+            sources = mapping.get("concat_fields")
+            separator = mapping.get("separator", "")
+            if (
+                not isinstance(sources, list)
+                or not 2 <= len(sources) <= 8
+                or any(not isinstance(source, str) or not source.strip() for source in sources)
+                or len(set(sources)) != len(sources)
+                or not isinstance(separator, str)
+                or len(separator) > 32
+                or any(ord(char) < 32 for char in separator)
+            ):
+                _append_once(structural_errors, f"invalid_concat_fields:{element_id}")
+                continue
+            missing_sources = [source for source in sources if source not in fields]
+            for source in missing_sources:
+                _append_once(unknown_fields, source)
+            if missing_sources:
+                continue
+            if (
+                value_type != "string"
+                or any(fields[source] != "string" for source in sources)
+                or "string" not in target["allowed_value_types"]
+            ):
+                _append_once(type_errors, f"type_mismatch:{element_id}")
+                continue
+        elif base_shape == FORMULA_MAPPING_KEYS:
             try:
                 formula_references(mapping["formula"])
             except (KeyError, ValueError):
@@ -358,6 +462,14 @@ def validate_proposal(
                 and not isinstance(literal, bool)
             ) or (
                 value_type == "boolean" and type(literal) is bool
+            ) or (
+                value_type == "date"
+                and isinstance(literal, str)
+                and _valid_iso_date(literal)
+            ) or (
+                value_type == "datetime"
+                and isinstance(literal, str)
+                and _valid_iso_datetime(literal)
             )
             if not valid_literal:
                 _append_once(type_errors, f"invalid_literal_value:{element_id}")
@@ -365,6 +477,61 @@ def validate_proposal(
             if value_type not in target["allowed_value_types"]:
                 _append_once(type_errors, f"type_mismatch:{element_id}")
                 continue
+        if "transform" in shape:
+            if base_shape not in (MAPPING_KEYS, FALLBACK_MAPPING_KEYS):
+                _append_once(type_errors, f"unsupported_transform:{element_id}")
+                continue
+            try:
+                validate_transform(mapping["transform"], value_type)
+            except (TypeError, ValueError):
+                _append_once(type_errors, f"invalid_transform:{element_id}")
+                continue
+        valid_candidates[element_id] = True
+
+    cell_edit_ids: set[str] = set()
+    for edit in cell_edits:
+        if isinstance(edit, Mapping) and "record_target" in edit:
+            _append_once(structural_errors, "record_target_requires_session_resolution")
+            continue
+        element_id = edit.get("element_id") if isinstance(edit, Mapping) else None
+        if not isinstance(element_id, str) or not element_id.strip():
+            _append_once(structural_errors, "invalid_cell_edit_target")
+            continue
+        if element_id in cell_edit_ids:
+            _append_once(duplicates, f"duplicate_cell_edit:{element_id}")
+            continue
+        cell_edit_ids.add(element_id)
+        target = targets.get(element_id)
+        if target is None:
+            _append_once(unknown_targets, element_id)
+            continue
+        # Explicit cell writes can update a detected header or any target the
+        # server manifest already marks writable. They do not turn unrelated
+        # protected structures into authorized targets.
+        if target.get("writable") is not True and not (
+            target.get("table_role") == "table_header" and isinstance(target.get("table_header"), str)
+        ):
+            _append_once(type_errors, f"cell_edit_target_not_writable:{element_id}")
+            continue
+        value_type = edit.get("value_type")
+        value = edit.get("value")
+        valid_value = (
+            (value_type == "string" and isinstance(value, str))
+            or (value_type == "number" and isinstance(value, (int, float)) and not isinstance(value, bool)
+                and (not isinstance(value, float) or math.isfinite(value)))
+            or (value_type == "boolean" and type(value) is bool)
+            or (value_type == "date" and isinstance(value, str) and _valid_iso_date(value))
+            or (value_type == "datetime" and isinstance(value, str) and _valid_iso_datetime(value))
+        )
+        if not valid_value:
+            _append_once(type_errors, f"invalid_cell_edit_value:{element_id}")
+            continue
+        if value_type not in target["allowed_value_types"]:
+            _append_once(type_errors, f"type_mismatch:{element_id}")
+            continue
+        if element_id in mapped_target_ids and not ordered_cell_edit_overrides:
+            _append_once(structural_errors, f"target_mapped_and_cell_edited:{element_id}")
+            continue
         valid_candidates[element_id] = True
 
     pending_clarifications: list[str] = []
@@ -418,8 +585,6 @@ def validate_proposal(
         if target is None:
             _append_once(unknown_targets, element_id)
             continue
-        if target.get("table_role") == "table_header":
-            _append_once(type_errors, f"target_not_writable:{element_id}")
         # A clear is an explicit string write. It may replace existing values
         # or formulas regardless of template labels or the old writability bit.
 
@@ -441,8 +606,6 @@ def validate_proposal(
         if target is None:
             _append_once(unknown_targets, element_id)
             continue
-        if target.get("table_role") == "table_header":
-            _append_once(type_errors, f"target_not_writable:{element_id}")
         if (
             not isinstance(number_format, str)
             or not number_format
@@ -453,11 +616,15 @@ def validate_proposal(
 
     for element_id in clear_ids.intersection(valid_candidates):
         _append_once(structural_errors, f"target_mapped_and_cleared:{element_id}")
+    for element_id in clear_ids.intersection(cell_edit_ids):
+        _append_once(structural_errors, f"target_cell_edited_and_cleared:{element_id}")
     for element_id in clear_ids.intersection(skipped_ids):
         _append_once(structural_errors, f"target_skipped_and_cleared:{element_id}")
 
     for element_id in skipped_ids.intersection(valid_candidates):
         _append_once(structural_errors, f"target_mapped_and_skipped:{element_id}")
+    for element_id in skipped_ids.intersection(cell_edit_ids):
+        _append_once(structural_errors, f"target_cell_edited_and_skipped:{element_id}")
 
     valid_mapped = {element_id for element_id, valid in valid_candidates.items() if valid}
     # A template label is descriptive metadata, not a business requirement.
@@ -486,6 +653,26 @@ def validate_proposal(
         skipped_unapproved=tuple(skipped_unapproved),
         ready_for_review=ready,
     )
+
+
+def _valid_iso_date(value: str) -> bool:
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+        return False
+    try:
+        date.fromisoformat(value)
+        return True
+    except ValueError:
+        return False
+
+
+def _valid_iso_datetime(value: str) -> bool:
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?", value):
+        return False
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        return parsed.utcoffset() is None
+    except ValueError:
+        return False
 
 
 def validate_user_revision(

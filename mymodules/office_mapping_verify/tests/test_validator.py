@@ -10,6 +10,7 @@ from mymodules.office_mapping_verify import (
     apply_manual_edits,
     validate_proposal,
     validate_user_revision,
+    parse_mapping_proposal,
 )
 from mymodules.office_mapping_verify.validator import expand_table_column_operations
 
@@ -67,11 +68,12 @@ def proposal(mappings=None, clarifications=None, skipped=None, **overrides):
     return value
 
 
-def validate(value, manifest=None, fields=None):
+def validate(value, manifest=None, fields=None, **kwargs):
     return validate_proposal(
         value,
         manifest if manifest is not None else [target("xlsx:Sheet1!A1")],
         fields if fields is not None else {"name": "string"},
+        **kwargs,
     )
 
 
@@ -88,6 +90,73 @@ def test_numeric_literal_is_valid_for_numeric_target_without_source_field():
     )
     report = validate(value, [target("xlsx:Sheet1!B4", allowed=("number",))], {})
     assert report.ready_for_review is True
+
+
+def test_iso_date_literal_is_valid_for_date_target_and_rejected_when_invalid():
+    value = proposal(
+        [{"element_id": "xlsx:Sheet1!B2", "literal_value": "2026-11-10", "value_type": "date"}]
+    )
+    report = validate(value, [target("xlsx:Sheet1!B2", allowed=("date",))], {})
+    assert report.ready_for_review is True, report.to_dict()
+    assert parse_mapping_proposal(json.dumps(value))["mappings"][0]["literal_value"] == "2026-11-10"
+
+    invalid = proposal(
+        [{"element_id": "xlsx:Sheet1!B2", "literal_value": "2026-02-30", "value_type": "date"}]
+    )
+    assert not validate(invalid, [target("xlsx:Sheet1!B2", allowed=("date",))], {}).ready_for_review
+
+
+def test_date_offset_transform_is_a_bounded_typed_operation():
+    value = proposal(
+        [
+            {
+                "element_id": "xlsx:Sheet1!B2",
+                "source_field": "date_order",
+                "value_type": "date",
+                "transform": {"type": "date_offset", "days": 7},
+            }
+        ]
+    )
+    report = validate(value, [target("xlsx:Sheet1!B2", allowed=("date",))], {"date_order": "date"})
+    assert report.ready_for_review is True, report.to_dict()
+    parsed = parse_mapping_proposal(json.dumps(value))
+    assert parsed["mappings"][0]["transform"] == {"type": "date_offset", "days": 7}
+
+    for transform in (
+        {"type": "date_offset", "days": True},
+        {"type": "date_offset", "days": 365001},
+        {"type": "python", "expression": "__import__('os').system('id')"},
+    ):
+        invalid = proposal([{**value["mappings"][0], "transform": transform}])
+        assert not validate(invalid, [target("xlsx:Sheet1!B2", allowed=("date",))], {"date_order": "date"}).ready_for_review
+
+
+def test_concatenated_mapping_requires_authorized_string_fields():
+    value = proposal([{
+        "element_id": "xlsx:Sheet1!A1",
+        "concat_fields": ["comment", "name"],
+        "separator": " ",
+        "value_type": "string",
+    }])
+    report = validate(
+        value,
+        [target("xlsx:Sheet1!A1", allowed=("string",))],
+        {"comment": "string", "name": "string"},
+    )
+    assert report.ready_for_review is True, report.to_dict()
+
+    wrong_type = validate(
+        value,
+        [target("xlsx:Sheet1!A1", allowed=("string",))],
+        {"comment": "string", "name": "number"},
+    )
+    assert "type_mismatch:xlsx:Sheet1!A1" in wrong_type.type_errors
+
+
+def test_date_offset_applies_to_iso_date_without_changing_type():
+    from mymodules.office_mapping_verify.transforms import apply_transform
+
+    assert apply_transform("2026-11-03", {"type": "date_offset", "days": 7}, "date") == "2026-11-10"
 
 
 def test_number_format_patch_is_independent_of_value_mapping():
@@ -111,6 +180,122 @@ def test_nonwritable_table_header_cannot_receive_mapping():
     report = validate(proposal([mapping("xlsx:Sheet1!A1")]), [header], {"name": "string"})
     assert report.status == "invalid"
     assert "target_not_writable:xlsx:Sheet1!A1" in report.type_errors
+
+
+def test_explicit_header_edit_is_allowed_only_for_detected_header_text():
+    header = {
+        **target("xlsx:Orders!F1"),
+        "writable": False,
+        "table_role": "table_header",
+        "table_header": "供应商产品名称",
+    }
+    value = proposal(
+        mappings=[],
+        header_edits=[{"element_id": "xlsx:Orders!F1", "value": "供应商商品描述"}],
+    )
+    report = validate(value, [header], {})
+    assert report.ready_for_review is True, report.to_dict()
+
+
+def test_explicit_cell_edit_accepts_authorized_data_and_rejects_unknown_targets():
+    value = proposal(
+        mappings=[],
+        header_edits=[{"element_id": "xlsx:Orders!F2", "value": "新标签"}],
+    )
+    data_target = {**target("xlsx:Orders!F2"), "table_role": "table_data", "table_header": "供应商产品名称"}
+    data_report = validate(value, [data_target], {})
+    assert data_report.ready_for_review is True, data_report.to_dict()
+
+    unknown_report = validate(value, [], {})
+    assert unknown_report.status == "invalid"
+    assert "xlsx:Orders!F2" in unknown_report.unknown_targets
+
+
+def test_explicit_header_edit_does_not_make_ordinary_mapping_writable():
+    header = {
+        **target("xlsx:Orders!F1"),
+        "writable": False,
+        "table_role": "table_header",
+        "table_header": "供应商产品名称",
+    }
+    ordinary_mapping = proposal([mapping("xlsx:Orders!F1")])
+    report = validate(ordinary_mapping, [header], {"name": "string"})
+    assert report.status == "invalid"
+    assert "target_not_writable:xlsx:Orders!F1" in report.type_errors
+
+
+def test_explicit_cell_edit_overwrites_existing_header_or_data_only_when_in_manifest():
+    manifest = [
+        {
+            **target("xlsx:Orders!F1", writable=False),
+            "table_role": "table_header",
+            "table_header": "供应商产品名称",
+        },
+        {**target("xlsx:Orders!F2"), "table_role": "table_data", "table_header": "供应商产品名称"},
+    ]
+    value = proposal(
+        mappings=[],
+        cell_edits=[
+            {"element_id": "xlsx:Orders!F1", "value": "供应商商品描述", "value_type": "string"},
+            {"element_id": "xlsx:Orders!F2", "value": "说明文本", "value_type": "string"},
+        ],
+    )
+    report = validate(value, manifest, {})
+    assert report.ready_for_review is True, report.to_dict()
+
+    outside = proposal(
+        mappings=[],
+        cell_edits=[{"element_id": "xlsx:Orders!Z999", "value": "越界", "value_type": "string"}],
+    )
+    outside_report = validate(outside, manifest, {})
+    assert outside_report.status == "invalid"
+    assert "xlsx:Orders!Z999" in outside_report.unknown_targets
+
+
+def test_explicit_cell_edit_does_not_bypass_other_nonwritable_manifest_targets():
+    protected = target("xlsx:Orders!F2", writable=False)
+    value = proposal(
+        mappings=[],
+        cell_edits=[{"element_id": "xlsx:Orders!F2", "value": "new value", "value_type": "string"}],
+    )
+    report = validate(value, [protected], {})
+    assert report.status == "invalid"
+    assert "cell_edit_target_not_writable:xlsx:Orders!F2" in report.type_errors
+
+
+def test_mapping_and_cell_edit_overlap_requires_declared_execution_order():
+    target_id = "xlsx:Orders!B2"
+    value = proposal(
+        mappings=[mapping(target_id, "name")],
+        cell_edits=[{"element_id": target_id, "value": "", "value_type": "string"}],
+    )
+    manifest = [target(target_id)]
+
+    unordered = validate(value, manifest, {"name": "string"})
+    assert unordered.status == "invalid"
+    assert f"target_mapped_and_cell_edited:{target_id}" in unordered.structural_errors
+
+    ordered = validate(
+        value,
+        manifest,
+        {"name": "string"},
+        ordered_cell_edit_overrides=True,
+    )
+    assert ordered.ready_for_review is True, ordered.to_dict()
+
+
+def test_record_target_requires_session_resolution_before_mapping_validation():
+    value = proposal(
+        mappings=[],
+        cell_edits=[{
+            "record_target": {"group_id": "repeat_rows", "record_id": 42, "column": "B"},
+            "value": False,
+            "value_type": "boolean",
+        }],
+    )
+    report = validate(value, [], {})
+    assert report.status == "invalid"
+    assert "record_target_requires_session_resolution" in report.structural_errors
 
 
 def test_column_operations_expand_only_to_detected_writable_table_data():
@@ -289,7 +474,9 @@ def test_string_manifest_and_non_mapping_allowed_fields_fail_closed():
 def test_invalid_allowed_field_keys_and_types_fail_closed():
     report = validate(proposal(), [], {"": "string", "bad": "date", 1: "boolean"})
     assert "invalid_allowed_field_id" in report.structural_errors
-    assert "unsupported_allowed_field_type" in report.structural_errors
+    assert "unsupported_allowed_field_type" not in report.structural_errors
+    invalid_type = validate(proposal(), [], {"bad": "binary"})
+    assert "unsupported_allowed_field_type" in invalid_type.structural_errors
 
 
 @pytest.mark.parametrize(

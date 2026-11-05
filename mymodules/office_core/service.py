@@ -94,6 +94,8 @@ def _child_worker(send_conn, operation: str, args: tuple[Any, ...], budget: Reso
                 budget,
                 args[4] if len(args) > 4 else None,
                 args[5] if len(args) > 5 else (),
+                args[6] if len(args) > 6 else (),
+                args[7] if len(args) > 7 else (),
             )
         elif operation == "operations":
             result = execute_operations_inline(*args, budget)
@@ -184,6 +186,8 @@ def render_candidate(
     *,
     preprocessing: dict[str, object] | None = None,
     authorized_blank_targets: tuple[str, ...] = (),
+    explicit_cell_edits: list[dict[str, object]] | None = None,
+    explicit_header_edits: list[dict[str, str]] | None = None,
 ) -> RenderCandidate:
     """Render and independently verify an isolated candidate byte stream.
 
@@ -194,7 +198,16 @@ def render_candidate(
     """
     return _run_worker(
         "render",
-        (content, filename, mime_type, mapping, preprocessing, authorized_blank_targets),
+        (
+            content,
+            filename,
+            mime_type,
+            mapping,
+            preprocessing,
+            authorized_blank_targets,
+            explicit_cell_edits or [],
+            explicit_header_edits or [],
+        ),
         budget,
     )
 

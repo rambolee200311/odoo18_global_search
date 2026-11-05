@@ -7,7 +7,7 @@ import re
 from odoo import _
 from odoo.exceptions import AccessError, UserError, ValidationError
 
-from .ai_orchestrator import _authorized_scalar_field_type
+from .ai_orchestrator import _authorized_scalar_field_type, _scalar_field_path_status
 
 
 _MAX_TEMPLATE_TEXT_ITEMS = 160
@@ -18,6 +18,8 @@ _NESTED_FIELD_CANDIDATE_RESERVE = 125
 _MAX_REPEAT_FIELDS = 160
 _MAX_NESTED_FIELD_CHECKS = 20_000
 _MAX_SELECTED_RECORDS = 100
+_MAX_REQUESTED_COLLECTIONS = 40
+_MAX_REQUESTED_COLLECTION_FIELDS = 64
 SELECTED_RECORDS_COLLECTION = "selected_records"
 _SCALAR_ODOO_FIELD_TYPES = frozenset(
     {"char", "text", "html", "selection", "integer", "float", "monetary", "boolean", "date", "datetime"}
@@ -280,13 +282,47 @@ def _field_metadata(env, model_name, fields):
     return result
 
 
-def _repeat_row_collection_candidates(env, target):
+def _normalize_requested_collection_fields(requested_fields_by_collection):
+    """Validate a bounded, collection-scoped field discovery hint."""
+    if requested_fields_by_collection is None:
+        return {}
+    if (
+        not isinstance(requested_fields_by_collection, dict)
+        or len(requested_fields_by_collection) > _MAX_REQUESTED_COLLECTIONS
+    ):
+        raise ValidationError(_("The explicitly requested collection fields are invalid."))
+    normalized = {}
+    total_fields = 0
+    for collection_field, field_paths in requested_fields_by_collection.items():
+        if (
+            not isinstance(collection_field, str)
+            or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", collection_field)
+            or not isinstance(field_paths, list)
+            or len(field_paths) > _MAX_REQUESTED_COLLECTION_FIELDS
+            or any(
+                not isinstance(path, str) or not path.strip() or len(path) > 255
+                for path in field_paths
+            )
+            or len(set(field_paths)) != len(field_paths)
+        ):
+            raise ValidationError(_("The explicitly requested collection fields are invalid."))
+        total_fields += len(field_paths)
+        if total_fields > _MAX_REQUESTED_COLLECTION_FIELDS:
+            raise ValidationError(_("Too many explicitly requested collection fields."))
+        normalized[collection_field] = list(field_paths)
+    return normalized
+
+
+def _repeat_row_collection_candidates(env, target, requested_fields_by_collection=None):
     """Expose readable one2many collections as repeat-row input candidates.
 
     Values are intentionally omitted here. The native Retriever must fetch
     values on demand, and it separately constrains the query to records linked
     to this exact Office Session target.
     """
+    requested_fields_by_collection = _normalize_requested_collection_fields(
+        requested_fields_by_collection
+    )
     target.check_access("read")
     candidates = []
     for field_name, relation in sorted(target._fields.items()):
@@ -301,6 +337,19 @@ def _repeat_row_collection_candidates(env, target):
             fields = _field_candidates(env, records)
         except (AccessError, UserError):
             continue
+        requested_paths = requested_fields_by_collection.get(field_name, [])
+        explicitly_authorized = {}
+        unavailable_requested_fields = []
+        unavailable_requested_field_reasons = {}
+        for path in requested_paths:
+            path_results = [_scalar_field_path_status(record, path) for record in records]
+            row_types = {value_type for value_type, _reason in path_results}
+            if len(row_types) == 1 and None not in row_types:
+                explicitly_authorized[path] = row_types.pop()
+            else:
+                unavailable_requested_fields.append(path)
+                reasons = sorted({reason for value_type, reason in path_results if not value_type and reason})
+                unavailable_requested_field_reasons[path] = reasons or ["inconsistent_type_across_rows"]
         priority = {name: index for index, name in enumerate(_REPEAT_ROW_FIELD_PRIORITY)}
 
         def field_rank(name):
@@ -313,28 +362,50 @@ def _repeat_row_collection_candidates(env, target):
                 semantic_rank = len(priority) + 1
             return semantic_rank, name.count(".") + 1, name
 
-        # Keep the schema bounded without allowing either the record's many
-        # direct fields or its related fields to consume the entire budget.
-        # The two groups are ranked independently, so high-value identifiers
-        # (for example a related product code) remain available while ordinary
-        # direct values (for example a numeric color field) are not crowded out.
-        direct_fields = sorted((name for name in fields if "." not in name), key=field_rank)
-        related_fields = sorted((name for name in fields if "." in name), key=field_rank)
-        if direct_fields and related_fields:
-            direct_budget = min(len(direct_fields), (_MAX_REPEAT_FIELDS + 1) // 2)
-            related_budget = min(len(related_fields), _MAX_REPEAT_FIELDS - direct_budget)
-            direct_budget = min(len(direct_fields), _MAX_REPEAT_FIELDS - related_budget)
-        else:
-            direct_budget = min(len(direct_fields), _MAX_REPEAT_FIELDS)
-            related_budget = min(len(related_fields), _MAX_REPEAT_FIELDS - direct_budget)
-        ordered_fields = direct_fields[:direct_budget] + related_fields[:related_budget]
+        # Explicitly requested, authorized paths are reserved before filling
+        # the bounded discovery schema. Fill the remaining capacity by semantic
+        # rank while alternating direct and related candidates, so a large
+        # group cannot crowd out the other. Avoid slicing a ranked list: the
+        # selected set and the reason an item is retained remain explicit.
+        allowed_fields = dict(explicitly_authorized)
+        direct_fields = sorted(
+            (name for name in fields if "." not in name and name not in allowed_fields),
+            key=field_rank,
+        )
+        related_fields = sorted(
+            (name for name in fields if "." in name and name not in allowed_fields),
+            key=field_rank,
+        )
+        buckets = {"direct": direct_fields, "related": related_fields}
+        positions = {"direct": 0, "related": 0}
+        selected_counts = {
+            "direct": sum("." not in name for name in allowed_fields),
+            "related": sum("." in name for name in allowed_fields),
+        }
+        while len(allowed_fields) < _MAX_REPEAT_FIELDS:
+            available = [
+                group
+                for group in ("direct", "related")
+                if positions[group] < len(buckets[group])
+            ]
+            if not available:
+                break
+            # Prefer the group currently represented by fewer fields. Direct
+            # wins ties for deterministic output; field_rank orders each group.
+            group = min(available, key=lambda item: (selected_counts[item], item != "direct"))
+            candidate_name = buckets[group][positions[group]]
+            positions[group] += 1
+            allowed_fields[candidate_name] = fields[candidate_name]
+            selected_counts[group] += 1
         candidates.append(
             {
                 "collection_field": field_name,
                 "relation_model": relation.comodel_name,
                 "inverse_field": relation.inverse_name,
                 "row_count": len(records),
-                "allowed_fields": {name: fields[name] for name in ordered_fields},
+                "allowed_fields": allowed_fields,
+                "unavailable_requested_fields": unavailable_requested_fields,
+                "unavailable_requested_field_reasons": unavailable_requested_field_reasons,
             }
         )
         if len(candidates) >= 40:
@@ -448,7 +519,7 @@ def _template_context(inspection):
             # to write or clear; omitted cells remain untouched.
             "required": False,
             "writable": getattr(item, "table_role", None) != "table_header",
-            "allowed_value_types": ["string", "number", "boolean", "formula"],
+            "allowed_value_types": ["string", "number", "boolean", "date", "datetime", "formula"],
             "approved_to_skip": True,
         }
         table_role = getattr(item, "table_role", None)

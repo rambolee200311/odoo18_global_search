@@ -355,6 +355,8 @@ class OfficeDocumentRequest(models.Model):
         thread_id=None,
         input_message_id=None,
         preprocessing=None,
+        explicit_cell_edits=None,
+        explicit_header_edits=None,
     ):
         """Synchronously render a private result using only the current user context."""
         if not isinstance(mapping_plan, dict):
@@ -425,6 +427,8 @@ class OfficeDocumentRequest(models.Model):
                     and isinstance(write.get("element_id"), str)
                     and write.get("value") == {"type": "string", "data": ""}
                 ) if isinstance(mapping_plan, dict) and isinstance(mapping_plan.get("writes"), list) else (),
+                explicit_cell_edits=explicit_cell_edits or [],
+                explicit_header_edits=explicit_header_edits or [],
             )
             verification_payload = candidate.verification
             if not isinstance(verification_payload, dict):
