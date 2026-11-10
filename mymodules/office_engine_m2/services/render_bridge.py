@@ -9,7 +9,7 @@ import re
 import uuid
 from datetime import date, datetime
 
-from odoo import _, fields
+from odoo import _, api, fields
 from odoo.exceptions import AccessError, UserError, ValidationError
 from office_mapping_verify import ParseLimits, validate_proposal
 from office_mapping_verify import apply_transform
@@ -128,6 +128,91 @@ def _stable_request_uuid(env, session, attempt_revision=None):
 
 def _render_result_url(attachment_id):
     return f"/web/content/{int(attachment_id)}?download=true"
+
+
+def finalize_confirmed_mapping_in_isolated_transaction(
+    env,
+    thread_id,
+    session_id,
+    expected_revision,
+    proposal_revision,
+    *,
+    confirmation_proof=None,
+):
+    """Run the confirmed M1 handoff outside the LLM tool wrapper savepoint.
+
+    The legacy renderer commits its request/output from an independent cursor.
+    Its caller must therefore have a root transaction that can checkpoint the
+    authorized ``generating`` Session state, observe the generated request,
+    register V1, and commit completion. LLM tool execution itself is wrapped
+    in a savepoint; committing that cursor would invalidate the savepoint.
+    This helper uses a fresh cursor and rechecks ownership, Thread, revision,
+    and the latest user confirmation before any rendering side effect.
+    """
+    context = dict(env.context)
+    # The current tool-call message is owned by the outer streaming
+    # transaction. It is not needed for final authorization and must not be
+    # carried as a cross-cursor recordset.
+    context.pop("message", None)
+    with env.registry.cursor() as cursor:
+        isolated_env = api.Environment(cursor, env.uid, context)
+        result = isolated_env["office.mapping.tool"]._office_finalize(
+            session_id,
+            expected_revision,
+            proposal_revision,
+            expected_thread_id=thread_id,
+            confirmation_proof=confirmation_proof,
+        )
+        # Structured failures may contain a legitimate retryable Session
+        # transition, so commit the result atomically with its state.
+        cursor.commit()
+        return result
+
+
+def _register_initial_workbook_version(env, session, request_uuid):
+    """Best-effort V1 registration without changing the established M1 result contract."""
+    from .workbook_version_service import record_finalize_reference, register_initial_v1
+
+    request = env["office.document.request"].search(
+        [
+            ("request_uuid", "=", request_uuid),
+            ("owner_id", "=", env.uid),
+            ("thread_id", "=", session.thread_id.id),
+            ("input_message_id", "=", session.source_message_id.id),
+            ("source_attachment_id", "=", session.source_attachment_id.id),
+            ("state", "=", "generated"),
+            ("output_attachment_id", "!=", False),
+        ],
+        limit=1,
+    )
+    if not request:
+        _logger.warning(
+            "M1 output could not be registered as V1; session_id=%s reason=request_unavailable",
+            session.id,
+        )
+        return {"version": False, "state": "legacy", "error_code": "m1_version_registration_unavailable"}
+    try:
+        with env.cr.savepoint():
+            version = register_initial_v1(env, session.id, request.id)
+            delivery_message_id = env["office.document.request"]._ensure_output_delivery_message(request.id)
+            if not delivery_message_id:
+                raise ValidationError(_("The generated workbook has no verified Thread delivery message."))
+            record_finalize_reference(
+                env,
+                version.id,
+                request.output_attachment_id.id,
+                delivery_message_id,
+            )
+        return {"version": version, "state": version.state, "error_code": False}
+    except Exception:
+        # M1 has already committed its verified, private output. Preserve its
+        # historical return behavior, while making the missing V1 explicit.
+        _logger.exception(
+            "M1 output remains outside workbook version lineage; session_id=%s request_uuid=%s",
+            session.id,
+            request_uuid,
+        )
+        return {"version": False, "state": "legacy", "error_code": "m1_version_registration_unavailable"}
 
 
 def _compile_plan(env, session):
@@ -601,6 +686,7 @@ def render_confirmed_mapping(env, session_id, expected_revision):
         if request and request.output_attachment_id:
             output = request.output_attachment_id
             output.check_access("read")
+            version_result = _register_initial_workbook_version(env, session, final_request_uuid)
             delivery_message_id = env["office.document.request"]._ensure_output_delivery_message(
                 request.id
             )
@@ -614,6 +700,9 @@ def render_confirmed_mapping(env, session_id, expected_revision):
                 "filename": output.name or False,
                 "mimetype": output.mimetype or False,
                 "delivery_message_id": delivery_message_id or False,
+                "workbook_version_id": version_result["version"].id if version_result["version"] else False,
+                "workbook_version_state": version_result["state"],
+                "workbook_version_error_code": version_result["error_code"],
             }
     if session.revision != expected_revision or session.state != "confirmation_required":
         raise ValidationError(_("MAPPING_REVISION_STALE: refresh the current preview and confirm again."))
@@ -658,6 +747,20 @@ def render_confirmed_mapping(env, session_id, expected_revision):
     confirmed = session._mark_confirmed_from_service(expected_revision)
     session.invalidate_recordset(["revision", "state", "confirmed_revision"])
     session._transition_from_service("generating", confirmed["revision"])
+    session.invalidate_recordset(["revision", "state", "proposal_revision"])
+    version_binding = {
+        "session_id": session.id,
+        "session_revision": session.revision,
+        "proposal_revision": session.proposal_revision,
+    }
+    # The M1 request is executed and committed on independent cursors. Persist
+    # the already authorized `generating` transition first so those cursors can
+    # validate the exact Session binding, and so this caller's next transaction
+    # can observe the generated request/output before registering V1. Without
+    # this checkpoint PostgreSQL's repeatable-read snapshot cannot see the
+    # child cursor's committed request row and V1 silently remains legacy.
+    env.cr.commit()
+    session.invalidate_recordset(["revision", "state", "proposal_revision"])
     request_uuid = session.final_request_uuid or _stable_request_uuid(
         env, session, expected_revision
     )
@@ -678,6 +781,7 @@ def render_confirmed_mapping(env, session_id, expected_revision):
                 if summary.get("explicit_cell_edits")
                 else {}
             ),
+            version_binding=version_binding,
         )
         session.invalidate_recordset(["revision", "state"])
         if result.get("state") != "generated" or not result.get("output_attachment_id"):
@@ -694,7 +798,16 @@ def render_confirmed_mapping(env, session_id, expected_revision):
                 "message": result.get("message") or _("The final document was not generated. The verified preview remains available."),
                 "output_attachment_id": False,
             }
+        # _render_request_sync commits its generated request and output from a
+        # second connection. Rebase this root transaction after that commit so
+        # the request/attachment are visible under PostgreSQL REPEATABLE READ.
+        # This function is called for production finalization through the
+        # isolated root-cursor gate above; it must not run inside an LLM tool
+        # wrapper savepoint.
+        env.cr.commit()
+        session.invalidate_recordset(["revision", "state", "proposal_revision"])
         result_request_uuid = result.get("request_uuid") or request_uuid
+        version_result = _register_initial_workbook_version(env, session, result_request_uuid)
         if not result.get("delivery_message_id"):
             retryable = session._recover_finalize_failure_from_service(
                 session.revision, final_request_uuid=result_request_uuid
@@ -715,6 +828,9 @@ def render_confirmed_mapping(env, session_id, expected_revision):
                 "request_uuid": result_request_uuid,
                 "output_attachment_id": False,
                 "delivery_message_id": False,
+                "workbook_version_id": version_result["version"].id if version_result["version"] else False,
+                "workbook_version_state": version_result["state"],
+                "workbook_version_error_code": version_result["error_code"],
             }
         output_id = result["output_attachment_id"]
         completed = session._transition_from_service(
@@ -732,6 +848,9 @@ def render_confirmed_mapping(env, session_id, expected_revision):
             "filename": result.get("filename") or False,
             "mimetype": result.get("mimetype") or False,
             "delivery_message_id": result.get("delivery_message_id") or False,
+            "workbook_version_id": version_result["version"].id if version_result["version"] else False,
+            "workbook_version_state": version_result["state"],
+            "workbook_version_error_code": version_result["error_code"],
         }
     except Exception as exc:
         _logger.exception("Final Office rendering failed for Session %s", session.id)

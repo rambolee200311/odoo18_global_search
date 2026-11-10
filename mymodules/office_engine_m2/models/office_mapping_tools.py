@@ -41,19 +41,19 @@ from ..services.ai_orchestrator import (
     _resolve_record_target_cell_edits,
     _scalar_field_path_status,
 )
-from ..services.render_bridge import render_confirmed_mapping, render_preview
-
-
-_CONFIRMATIONS = frozenset(
-    {
-        "确认",
-        "确认生成",
-        "确认并生成",
-        "生成正式文件",
-        "确认生成正式文件",
-        "确认并生成正式文件",
-    }
+from ..services.edit_orchestrator import dispatch_office_action
+from ..services.finalize_confirmation import (
+    build_finalize_confirmation_proof,
+    is_explicit_finalize_confirmation,
+    validate_finalize_confirmation_proof,
 )
+from ..services.render_bridge import (
+    finalize_confirmed_mapping_in_isolated_transaction,
+    render_confirmed_mapping,
+    render_preview,
+)
+
+
 _logger = logging.getLogger(__name__)
 _CONFIRMATION_AUTHORIZED = object()
 
@@ -107,8 +107,7 @@ def _normalize_office_mapping_result(result):
 
 def _is_explicit_finalize_confirmation(body):
     """Accept only an exact, user-authored confirmation phrase."""
-    confirmation = tools.html2plaintext(body or "").strip()
-    return confirmation in _CONFIRMATIONS
+    return is_explicit_finalize_confirmation(body)
 
 
 def _is_exact_cell_override_confirmation(body):
@@ -1538,6 +1537,167 @@ class LLMThreadOfficeTools(models.AbstractModel):
         if thread.user_id.id != self.env.uid:
             raise AccessError(_("The Office chat context is unavailable."))
         return thread, message
+
+    @llm_tool(
+        name="office",
+        schema={
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "action": {
+                    "type": "string",
+                    "enum": ["status", "retrieve", "plan", "edit", "accept", "reject"],
+                    "description": "The bounded Office action. Candidate identity is resolved from this Thread's trusted tool history.",
+                },
+                "query_spec": {
+                    "type": ["object", "null"],
+                    "additionalProperties": False,
+                    "description": "Required only for action=retrieve. Uses the existing odoo_record_retriever query parameters; no workbook version is required for this read-only action.",
+                    "properties": {
+                        "model": {"type": "string", "minLength": 1},
+                        "domain": {
+                            "type": "array",
+                            "items": {
+                                "type": "array",
+                                "items": {"anyOf": [
+                                    {"type": "string"}, {"type": "integer"},
+                                    {"type": "number"}, {"type": "boolean"},
+                                    {"type": "null"},
+                                ]},
+                            },
+                        },
+                        "fields": {"type": "array", "items": {"type": "string"}},
+                        "limit": {"type": "integer", "minimum": 1, "maximum": 500},
+                        "offset": {"type": "integer", "minimum": 0},
+                        "order": {"type": ["string", "null"]},
+                        "include_pagination": {"type": "boolean"},
+                    },
+                    "required": ["model"],
+                },
+                "interpretation": {
+                    "type": ["object", "null"],
+                    "additionalProperties": False,
+                    "properties": {
+                        "summary": {"type": "string", "maxLength": 2000},
+                        "target_scope": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "required": ["description", "basis"],
+                            "properties": {
+                                "description": {"type": "string", "maxLength": 1000},
+                                "basis": {"type": "string", "enum": ["explicit", "inferred", "ambiguous"]},
+                            },
+                        },
+                        "assumptions": {"type": "array", "maxItems": 32, "items": {"type": "string", "maxLength": 512}},
+                        "unknowns": {"type": "array", "maxItems": 32, "items": {"type": "string", "maxLength": 512}},
+                    },
+                    "required": ["summary", "target_scope", "assumptions", "unknowns"],
+                },
+                "expected_effect": {
+                    "type": ["object", "null"],
+                    "additionalProperties": False,
+                    "description": (
+                        "Use the frozen CB-03 Expected Effect shape: target_scopes, allowed_change_kinds, "
+                        "expected_assertions, and unknowns. For a plan, omit parent_version_id, input_sha256, "
+                        "and effect_digest; the server binds those to the current accepted workbook and computes "
+                        "the digest. Reuse the returned canonical expected_effect for edit. For a cell value change, "
+                        "target_scopes contains {kind:'cell',sheet:'<worksheet>',address:'A1'}, allowed_change_kinds "
+                        "contains 'cell_value', and expected_assertions contains {kind:'cell_value',sheet:'<worksheet>', "
+                        "address:'A1',value_type:'string',value:'new value'}. Do not send legacy targets/change/scope "
+                        "keys. This is a bounded verification declaration, not an Excel editing DSL."
+                    ),
+                    "properties": {
+                        "schema_version": {"type": "string", "enum": ["1"]},
+                        "parent_version_id": {"type": "integer", "minimum": 1},
+                        "input_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                        "effect_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                        "target_scopes": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": False,
+                                "properties": {
+                                    "kind": {"type": "string", "enum": ["cell", "range", "worksheet_structure", "workbook_structure"]},
+                                    "sheet": {"type": "string"},
+                                    "address": {"type": "string", "pattern": "^[A-Z]{1,3}[1-9][0-9]*$"},
+                                    "start": {"type": "string", "pattern": "^[A-Z]{1,3}[1-9][0-9]*$"},
+                                    "end": {"type": "string", "pattern": "^[A-Z]{1,3}[1-9][0-9]*$"},
+                                },
+                                "required": ["kind"],
+                            },
+                        },
+                        "allowed_change_kinds": {
+                            "type": "array",
+                            "items": {"type": "string", "enum": ["cell_value", "formula_text", "cell_style", "worksheet_structure", "workbook_structure"]},
+                        },
+                        "expected_assertions": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": False,
+                                "properties": {
+                                    "kind": {"type": "string", "enum": ["cell_value"]},
+                                    "sheet": {"type": "string"},
+                                    "address": {"type": "string", "pattern": "^[A-Z]{1,3}[1-9][0-9]*$"},
+                                    "value_type": {"type": "string", "enum": ["string", "number", "boolean", "blank", "date", "datetime"]},
+                                    "value": {"type": ["string", "number", "boolean", "null"]},
+                                },
+                                "required": ["kind", "sheet", "address", "value_type", "value"],
+                            },
+                        },
+                        "unknowns": {"type": "array", "items": {"type": "string"}},
+                    },
+                    "required": ["target_scopes", "allowed_change_kinds", "expected_assertions", "unknowns"],
+                },
+                "model_risk_claims": {"type": ["array", "null"], "maxItems": 32, "items": {"type": "object"}, "description": "Unverified model-generated claims to display separately from locally verified facts. Their presence does not trigger local business-risk policy."},
+                "confirmation_required": {
+                    "type": ["boolean", "null"],
+                    "description": "For plan/edit, the LLM's explicit judgment whether a material business risk not already authorized by the user's request needs a real user confirmation. The server binds this value and does not infer business risk. Required for plan and must be repeated unchanged for edit.",
+                },
+                "confirmation_reason": {
+                    "type": ["string", "null"],
+                    "maxLength": 2000,
+                    "description": "User-facing explanation supplied by the LLM when confirmation_required=true. It is a model claim, not a locally verified business fact. Must be repeated unchanged with edit.",
+                },
+            },
+            "required": ["action"],
+        },
+        destructive_hint=True,
+        description=(
+            "The single Office facade. action=retrieve is a read-only call to the Thread-bound existing Odoo "
+            "Record Retriever and does not require an accepted workbook version. Candidate actions resolve the "
+            "current user's Thread, accepted workbook version, and persisted Office tool history. The LLM owns intent ambiguity and business-risk judgment; "
+            "for plan, explicitly provide confirmation_required and any confirmation_reason. The server binds that "
+            "decision to the current user, Thread, Session, version, file SHA and request, then verifies a real user "
+            "confirmation before execution when requested. A generated Candidate never advances Current until the "
+            "user explicitly accepts it. Local checks remain authoritative for permissions, safety, versions and file "
+            "integrity. External Provider file processing remains disabled while the SRS/data-policy release gate is open."
+        ),
+    )
+    def office(
+        self,
+        action: str,
+        query_spec: dict | None = None,
+        interpretation: dict | None = None,
+        expected_effect: dict | None = None,
+        model_risk_claims: list[dict] | None = None,
+        confirmation_required: bool | None = None,
+        confirmation_reason: str | None = None,
+    ) -> dict:
+        """Dispatch a bounded Office action through trusted services."""
+        thread, tool_message = self._office_tool_context()
+        return dispatch_office_action(
+            self.env,
+            thread,
+            tool_message,
+            action,
+            query_spec=query_spec,
+            interpretation=interpretation,
+            expected_effect=expected_effect,
+            model_risk_claims=model_risk_claims,
+            confirmation_required=confirmation_required,
+            confirmation_reason=confirmation_reason,
+        )
 
     def _cell_override_confirmation_gate(
         self,
@@ -3240,7 +3400,29 @@ class LLMThreadOfficeTools(models.AbstractModel):
     ) -> dict:
         """Return a structured result for every expected finalization outcome."""
         try:
-            return self._office_finalize(session_id, expected_revision, proposal_revision)
+            thread, _tool_message = self._office_tool_context()
+            session = _owned_session(self.env, session_id)
+            if session.thread_id != thread or session.owner_id.id != self.env.uid:
+                raise AccessError(_("The mapping Session is unavailable."))
+            confirmation_proof = None
+            if session.state != "completed":
+                latest_user = _latest_office_user_message(self.env, thread)
+                confirmation_proof = build_finalize_confirmation_proof(
+                    self.env,
+                    thread,
+                    session,
+                    latest_user,
+                    expected_revision,
+                    proposal_revision,
+                )
+            return finalize_confirmed_mapping_in_isolated_transaction(
+                self.env,
+                thread.id,
+                session_id,
+                expected_revision,
+                proposal_revision,
+                confirmation_proof=confirmation_proof,
+            )
         except AccessError as exc:
             return {
                 "status": "failed",
@@ -3265,9 +3447,25 @@ class LLMThreadOfficeTools(models.AbstractModel):
                 "message": _("The final document could not be generated. The current verified preview remains available; please retry or ask for help."),
             }
 
-    def _office_finalize(self, session_id, expected_revision, proposal_revision):
+    def _office_finalize(
+        self,
+        session_id,
+        expected_revision,
+        proposal_revision,
+        *,
+        expected_thread_id=None,
+        confirmation_proof=None,
+    ):
         """Finalize only after an exact user confirmation for the current Proposal revision."""
-        thread, _tool_message = self._office_tool_context()
+        if expected_thread_id is None:
+            thread, _tool_message = self._office_tool_context()
+        else:
+            thread = self.env["llm.thread"].browse(expected_thread_id).exists()
+            if not thread:
+                raise AccessError(_("The Office chat context is unavailable."))
+            thread.check_access("read")
+            if thread.user_id.id != self.env.uid:
+                raise AccessError(_("The Office chat context is unavailable."))
         session = _owned_session(self.env, session_id)
         if session.thread_id != thread or session.owner_id.id != self.env.uid:
             raise AccessError(_("The mapping Session is unavailable."))
@@ -3286,19 +3484,19 @@ class LLMThreadOfficeTools(models.AbstractModel):
                 or session.preview_proposal_revision != proposal_revision
             ):
                 raise ValidationError(_("MAPPING_REVISION_STALE: generate a current preview and confirm again."))
-            latest_user = self.env["mail.message"].search(
-                [
-                    ("model", "=", "llm.thread"),
-                    ("res_id", "=", thread.id),
-                    ("llm_role", "=", "user"),
-                    ("author_id", "=", self.env.user.partner_id.id),
-                    ("is_error", "=", False),
-                ],
-                order="id desc",
-                limit=1,
-            )
-            if latest_user not in thread.message_ids or not _is_explicit_finalize_confirmation(latest_user.body):
-                raise AccessError(_("Send an explicit confirmation message before final file generation."))
+            if confirmation_proof is not None:
+                validate_finalize_confirmation_proof(
+                    self.env,
+                    confirmation_proof,
+                    thread,
+                    session,
+                    expected_revision,
+                    proposal_revision,
+                )
+            else:
+                latest_user = _latest_office_user_message(self.env, thread)
+                if not _is_explicit_finalize_confirmation(latest_user.body):
+                    raise AccessError(_("Send an explicit confirmation message before final file generation."))
 
         result = render_confirmed_mapping(self.env, session.id, expected_revision)
         if result.get("requires_reconfirmation"):

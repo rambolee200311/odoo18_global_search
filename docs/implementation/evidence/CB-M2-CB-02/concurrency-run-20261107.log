@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/docs/implementation/evidence/CB-M2-CB-02/run-concurrency-acceptance-shell.py", line 16, in <module>
+    import odoo
+ModuleNotFoundError: No module named 'odoo'

@@ -1,0 +1,78 @@
+{
+  "api_request_count_this_attempt": 2,
+  "api_requests": [
+    {
+      "attempt_request": 1,
+      "operation": "responses.create"
+    },
+    {
+      "attempt_request": 2,
+      "operation": "containers.delete"
+    }
+  ],
+  "attempt_number": 2,
+  "budget_preflight": {
+    "cap_usd": 2.0,
+    "cumulative_reserve_with_10_percent_margin_usd": 0.714182,
+    "input_token_reserve_this_attempt": 1000000,
+    "output_token_cap_this_attempt": 4000,
+    "previous_actual_token_cost_usd": 0.0020561999999999998,
+    "two_container_reserves_usd": 0.24,
+    "within_cap": true
+  },
+  "cleanup": {
+    "container_delete": "success",
+    "container_id": "cntr_6aed45efdb548191ac67229660f727ff046b7d23d227b331"
+  },
+  "elapsed_seconds": 12.239,
+  "error": {
+    "class": "TestFailure",
+    "code": "no_downloadable_xlsx_file_annotation"
+  },
+  "limits": {
+    "automatic_retries": 0,
+    "budget_cap_usd": 2.0,
+    "max_builtin_tool_calls": 1,
+    "max_output_tokens": 4000,
+    "max_resource_http_requests_this_attempt": 3,
+    "max_test_responses_requests_total": 3,
+    "memory_limit": "1g",
+    "network": "disabled",
+    "test_responses_requests_used_before_this_attempt": 1,
+    "timeout_seconds": 120
+  },
+  "model": "gpt-5.6-luna",
+  "provider_preflight": {
+    "active_default_chat_match_count": 1,
+    "api_base_class": "standard_https_openai_api_v1",
+    "credential_present": true,
+    "credential_source": "existing Odoo provider client; key value not read into logs",
+    "service": "openai"
+  },
+  "provider_response": {
+    "code_interpreter_tool_call_ids": [
+      "ci_0b660b22ec63b11a016aed45f402f887d2a9269d250893c03d"
+    ],
+    "container_id": "cntr_6aed45efdb548191ac67229660f727ff046b7d23d227b331",
+    "estimated_token_cost_usd": 0.0011958,
+    "model": "gpt-5.6-luna",
+    "output_file_id": null,
+    "output_filename": null,
+    "output_item_types": [
+      "reasoning",
+      "code_interpreter_call",
+      "reasoning",
+      "message"
+    ],
+    "request_id": "req_897c5357c50e4bf78c95d8bd77f337b8",
+    "response_id": "resp_0b660b22ec63b11a016aed45ed596087d2b4d69ba18924e01c",
+    "status": "completed",
+    "usage": {
+      "input_tokens": 2079,
+      "output_tokens": 650,
+      "total_tokens": 2729
+    }
+  },
+  "provider_test_request_count_cumulative": 2,
+  "status": "fail"
+}

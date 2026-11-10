@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/shell.py", line 130, in run
+    self.shell(config['db_name'])
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/shell.py", line 123, in shell
+    self.console(local_vars)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/shell.py", line 68, in console
+    exec(sys.stdin.read(), local_vars)
+  File "<string>", line 34, in <module>
+AssertionError

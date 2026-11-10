@@ -1,0 +1,5 @@
+2026-11-09 01:12:45,534 55529 INFO ? odoo: Odoo version 18.0 
+2026-11-09 01:12:45,534 55529 INFO ? odoo: Using configuration file at /Users/lijianqiang/Documents/odoo18_global_search/odoo.conf 
+2026-11-09 01:12:45,534 55529 INFO ? odoo: addons paths: ['/Users/lijianqiang/Documents/odoo18_global_search/odoo/addons', '/Users/lijianqiang/Library/Application Support/Odoo/addons/18.0', '/Users/lijianqiang/Documents/odoo18_global_search/addons', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/odoo-llm', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/queue'] 
+2026-11-09 01:12:45,534 55529 INFO ? odoo: database: odoo@127.0.0.1:5555 
+2026-11-09 01:12:45,534 55529 INFO ? odoo.sql_db: Connection to the database failed 

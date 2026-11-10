@@ -13,6 +13,7 @@ import sys
 import time
 import uuid
 from contextlib import contextmanager
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -68,6 +69,7 @@ _MIME_TYPES = {
     "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 }
+M1_VALIDATOR_POLICY_VERSION = "office_verify.m1.readback.v1"
 _MAX_MAPPING_BYTES = 1 * 1024 * 1024
 _MAX_FILE_SIZE = 32 * 1024 * 1024
 _MAX_EXPANDED_SIZE = 100 * 1024 * 1024
@@ -89,6 +91,19 @@ class _RequestFailure(Exception):
         self.code = code
         self.stage = stage
         self.message = message
+
+
+@dataclass(frozen=True)
+class _M1VersionBindingProof:
+    """Server-created binding validated against the locked M1 Session."""
+
+    session_id: int
+    session_revision: int
+    proposal_revision: int
+    owner_id: int
+    thread_id: int
+    source_attachment_id: int
+    input_message_id: int
 
 
 @contextmanager
@@ -198,6 +213,18 @@ class OfficeDocumentRequest(models.Model):
     failed_stage = fields.Char(readonly=True, copy=False)
     input_sha256 = fields.Char(readonly=True, copy=False, size=64)
     output_sha256 = fields.Char(readonly=True, copy=False, size=64)
+    # M1 read-back evidence is persisted only from the internal delivery path.
+    # Integer bindings avoid a dependency from this lower-level addon on M2.
+    m1_validation_status = fields.Selection([("VERIFIED", "Verified")], readonly=True, copy=False)
+    m1_validator_policy_version = fields.Char(readonly=True, copy=False, size=128)
+    m1_validation_report_id = fields.Char(readonly=True, copy=False, size=64)
+    m1_validation_report_sha256 = fields.Char(readonly=True, copy=False, size=64)
+    m1_validation_input_sha256 = fields.Char(readonly=True, copy=False, size=64)
+    m1_validation_output_sha256 = fields.Char(readonly=True, copy=False, size=64)
+    m1_validation_completed_at = fields.Datetime(readonly=True, copy=False)
+    m1_version_session_id = fields.Integer(readonly=True, copy=False)
+    m1_version_session_revision = fields.Integer(readonly=True, copy=False)
+    m1_version_proposal_revision = fields.Integer(readonly=True, copy=False)
     started_at = fields.Datetime(required=True, readonly=True, copy=False)
     finished_at = fields.Datetime(readonly=True, copy=False)
 
@@ -308,9 +335,60 @@ class OfficeDocumentRequest(models.Model):
             "input_sha256",
             "output_sha256",
             "finished_at",
+            "m1_validation_status",
+            "m1_validator_policy_version",
+            "m1_validation_report_id",
+            "m1_validation_report_sha256",
+            "m1_validation_input_sha256",
+            "m1_validation_output_sha256",
+            "m1_validation_completed_at",
+            "m1_version_session_id",
+            "m1_version_session_revision",
+            "m1_version_proposal_revision",
         }
         if set(vals) - allowed:
             raise ValidationError(_("The Office request update contains unsupported fields."))
+        proof_fields = {
+            "m1_validation_status",
+            "m1_validator_policy_version",
+            "m1_validation_report_id",
+            "m1_validation_report_sha256",
+            "m1_validation_input_sha256",
+            "m1_validation_output_sha256",
+            "m1_validation_completed_at",
+            "m1_version_session_id",
+            "m1_version_session_revision",
+            "m1_version_proposal_revision",
+        }
+        if proof_fields.intersection(vals):
+            if proof_fields - set(vals) or vals.get("state") != "generated":
+                raise ValidationError(_("M1 validation proof must be persisted atomically with generation."))
+            if any(request.state != "processing" for request in self):
+                raise ValidationError(_("M1 validation proof can only be stored for a new generated result."))
+            for key in (
+                "m1_validation_report_id", "m1_validation_report_sha256",
+                "m1_validation_input_sha256", "m1_validation_output_sha256",
+            ):
+                if not re.fullmatch(r"[0-9a-f]{64}", vals.get(key) or ""):
+                    raise ValidationError(_("M1 validation proof contains an invalid digest."))
+            if (
+                vals.get("m1_validation_status") != "VERIFIED"
+                or vals.get("m1_validation_report_sha256") != vals.get("m1_validation_report_id")
+                or vals.get("m1_validation_input_sha256") != vals.get("input_sha256", self.input_sha256)
+                or vals.get("m1_validation_output_sha256") != vals.get("output_sha256")
+                or vals.get("m1_validator_policy_version") != M1_VALIDATOR_POLICY_VERSION
+            ):
+                raise ValidationError(_("M1 validation proof does not match the generated request."))
+            binding = (
+                vals.get("m1_version_session_id"),
+                vals.get("m1_version_session_revision"),
+                vals.get("m1_version_proposal_revision"),
+            )
+            if any(value not in (None, False) for value in binding) and any(
+                type(value) is not int or value < (0 if index else 1)
+                for index, value in enumerate(binding)
+            ):
+                raise ValidationError(_("The M1 version binding is invalid."))
         transitions = {
             "accepted": {"validating", "failed"},
             "validating": {"processing", "failed"},
@@ -339,6 +417,16 @@ class OfficeDocumentRequest(models.Model):
                 or output.public
             ):
                 raise ValidationError(_("The output attachment must be private and bound to this request."))
+            if request.m1_validation_status:
+                if (
+                    request.m1_validation_status != "VERIFIED"
+                    or request.m1_validator_policy_version != M1_VALIDATOR_POLICY_VERSION
+                    or request.m1_validation_report_sha256 != request.m1_validation_report_id
+                    or request.m1_validation_input_sha256 != request.input_sha256
+                    or request.m1_validation_output_sha256 != request.output_sha256
+                    or not request.m1_validation_completed_at
+                ):
+                    raise ValidationError(_("Persisted M1 validation proof is inconsistent."))
 
     @api.constrains("request_uuid")
     def _check_request_uuid(self):
@@ -357,6 +445,7 @@ class OfficeDocumentRequest(models.Model):
         preprocessing=None,
         explicit_cell_edits=None,
         explicit_header_edits=None,
+        version_binding=None,
     ):
         """Synchronously render a private result using only the current user context."""
         if not isinstance(mapping_plan, dict):
@@ -368,11 +457,31 @@ class OfficeDocumentRequest(models.Model):
         if mapping_size > _MAX_MAPPING_BYTES:
             raise UserError(_("The Mapping Plan exceeds the allowed size."))
 
+        version_binding = self._check_m1_version_binding(
+            self.env,
+            self.env.uid,
+            source_attachment_id,
+            thread_id,
+            input_message_id,
+            version_binding,
+        )
+
         dbname, uid, context = self.env.cr.dbname, self.env.uid, dict(self.env.context)
         request_id, content, filename, mimetype, input_sha256, already_exists, preflight_error = self._begin_request(
             dbname, uid, context, request_uuid, source_attachment_id, thread_id, input_message_id
         )
         if already_exists:
+            if version_binding:
+                existing = self.browse(request_id).exists()
+                if (
+                    not existing
+                    or existing.state != "generated"
+                    or existing.m1_validation_status != "VERIFIED"
+                    or existing.m1_version_session_id != version_binding.session_id
+                    or existing.m1_version_session_revision != version_binding.session_revision
+                    or existing.m1_version_proposal_revision != version_binding.proposal_revision
+                ):
+                    raise ValidationError(_("The existing M1 request is not bound to this Session revision."))
             return self._existing_result(dbname, uid, context, request_id)
         if preflight_error:
             return self._fail_request(
@@ -437,6 +546,7 @@ class OfficeDocumentRequest(models.Model):
                 )
             verification_status = verification_payload.get("status")
             verification_sha = verification_payload.get("output_sha256")
+            report = verification_payload.get("office_verify")
             if verification_status != "PASS":
                 raise _RequestFailure(
                     "OFFICE_INTEGRITY_FAILED", "verify", "生成文件未通过完整性回读检查。"
@@ -444,6 +554,15 @@ class OfficeDocumentRequest(models.Model):
             if verification_sha != candidate.candidate_sha256:
                 raise _RequestFailure(
                     "OFFICE_INTEGRITY_FAILED", "verify", "生成文件摘要与回读结果不一致。"
+                )
+            if (
+                not isinstance(report, dict)
+                or report.get("status") != "PASS"
+                or report.get("input_sha256") != input_sha256
+                or report.get("output_sha256") != candidate.candidate_sha256
+            ):
+                raise _RequestFailure(
+                    "OFFICE_INTEGRITY_FAILED", "verify", "独立回读证明未绑定本次输入和候选文件。"
                 )
             try:
                 return self._deliver_result(
@@ -460,6 +579,7 @@ class OfficeDocumentRequest(models.Model):
                     filename,
                     fmt,
                     verification_payload,
+                    version_binding,
                 )
             except Exception as exc:
                 raise _RequestFailure(
@@ -662,6 +782,48 @@ class OfficeDocumentRequest(models.Model):
         elif source.res_model == "mail.message":
             raise AccessError(_("Message attachments require a validated message context."))
 
+    @staticmethod
+    def _check_m1_version_binding(env, uid, source_attachment_id, thread_id, input_message_id, binding):
+        if binding in (None, False):
+            return False
+        if not isinstance(binding, dict) or set(binding) != {
+            "session_id", "session_revision", "proposal_revision"
+        }:
+            raise AccessError(_("The M1 version binding is unavailable."))
+        session_id = binding["session_id"]
+        session_revision = binding["session_revision"]
+        proposal_revision = binding["proposal_revision"]
+        if (
+            type(session_id) is not int or session_id < 1
+            or type(session_revision) is not int or session_revision < 1
+            or type(proposal_revision) is not int or proposal_revision < 0
+            or "office.mapping.session" not in env.registry.models
+        ):
+            raise AccessError(_("The M1 version binding is unavailable."))
+        session = env["office.mapping.session"].browse(session_id).exists()
+        if not session:
+            raise AccessError(_("The M1 version binding is unavailable."))
+        session.check_access("read")
+        if (
+            session.owner_id.id != uid
+            or session.thread_id.id != thread_id
+            or session.source_message_id.id != input_message_id
+            or session.source_attachment_id.id != source_attachment_id
+            or session.revision != session_revision
+            or session.proposal_revision != proposal_revision
+            or session.state != "generating"
+        ):
+            raise AccessError(_("The M1 version binding is stale or belongs to another Session."))
+        return _M1VersionBindingProof(
+            session_id=session_id,
+            session_revision=session_revision,
+            proposal_revision=proposal_revision,
+            owner_id=uid,
+            thread_id=thread_id,
+            source_attachment_id=source_attachment_id,
+            input_message_id=input_message_id,
+        )
+
     def _deliver_result(
         self,
         dbname,
@@ -677,6 +839,7 @@ class OfficeDocumentRequest(models.Model):
         filename,
         fmt,
         verification,
+        version_binding,
     ):
         cursor, env = _new_environment(dbname, uid, context)
         try:
@@ -686,6 +849,35 @@ class OfficeDocumentRequest(models.Model):
             self._validate_request_input(
                 env, request, source_attachment_id, thread_id, input_message_id, input_sha256
             )
+            # _render_request_sync validated this immutable proof in the parent
+            # transaction. That transaction has already moved the Session to
+            # ``generating`` and holds its row lock. A worker cursor cannot see
+            # that uncommitted state, so it must validate the proof's exact
+            # request bindings rather than reread the stale committed revision.
+            if not isinstance(version_binding, _M1VersionBindingProof):
+                raise AccessError(_("The M1 version binding is unavailable."))
+            if (
+                version_binding.owner_id != uid
+                or version_binding.thread_id != thread_id
+                or version_binding.source_attachment_id != source_attachment_id
+                or version_binding.input_message_id != input_message_id
+            ):
+                raise AccessError(_("The M1 version binding is stale or belongs to another Session."))
+            report = verification.get("office_verify") if isinstance(verification, dict) else None
+            if (
+                not isinstance(report, dict)
+                or report.get("status") != "PASS"
+                or report.get("input_sha256") != input_sha256
+                or report.get("output_sha256") != candidate_sha256
+            ):
+                raise ValidationError(_("The M1 read-back report does not match the output bytes."))
+            canonical_report = json.dumps(
+                {"policy": M1_VALIDATOR_POLICY_VERSION, "report": report},
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+            ).encode("utf-8")
+            report_digest = hashlib.sha256(canonical_report).hexdigest()
             clean_name = "office-output-" + request.request_uuid + "." + fmt
             request_uuid = request.request_uuid
             create_started_at = _now_utc()
@@ -710,6 +902,16 @@ class OfficeDocumentRequest(models.Model):
                         "error_code": False,
                         "failed_stage": False,
                         "finished_at": _now_utc(),
+                        "m1_validation_status": "VERIFIED",
+                        "m1_validator_policy_version": M1_VALIDATOR_POLICY_VERSION,
+                        "m1_validation_report_id": report_digest,
+                        "m1_validation_report_sha256": report_digest,
+                        "m1_validation_input_sha256": input_sha256,
+                        "m1_validation_output_sha256": candidate_sha256,
+                        "m1_validation_completed_at": _now_utc(),
+                        "m1_version_session_id": version_binding.session_id if version_binding else False,
+                        "m1_version_session_revision": version_binding.session_revision if version_binding else False,
+                        "m1_version_proposal_revision": version_binding.proposal_revision if version_binding else False,
                     }
                 )
             output.check("read")

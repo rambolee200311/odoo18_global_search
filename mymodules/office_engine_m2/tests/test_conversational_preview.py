@@ -275,6 +275,7 @@ class TestOfficeNativeConversation(TransactionCase):
         self.assertEqual(
             names,
             {
+                "office",
                 "office_prepare_context",
                 "office_save_mapping_preview",
                 "office_restore_proposal_revision",

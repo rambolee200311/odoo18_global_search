@@ -1,0 +1,121 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ CandidateVerifyTests.test_expected_effect_budget_is_separate_from_m1_mapping_budget _
+
+self = <office_verify.tests.test_candidate_verify.CandidateVerifyTests testMethod=test_expected_effect_budget_is_separate_from_m1_mapping_budget>
+
+    def test_expected_effect_budget_is_separate_from_m1_mapping_budget(self):
+        source = workbook("10")
+        effect = effect_for(source, unknowns=("u" * 100,))
+        budget = VerificationBudget(max_mapping_bytes=64, max_expected_effect_bytes=512)
+>       _, digest = _canonical_effect(effect, hashlib.sha256(source).hexdigest(), budget)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+mymodules/office_verify/tests/test_candidate_verify.py:252: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+effect = {'allowed_change_kinds': ['cell_value'], 'effect_digest': 'bb94bb26fa58160bde8e81b394c70376638919525e051300926c2b1a25b...': 'Data', 'value': 15, ...}], 'input_sha256': 'daabef7b6b58714ce00abc84df77ae1f9199ec7c58b43b8d698cdaa59ecc79e9', ...}
+source_sha = 'daabef7b6b58714ce00abc84df77ae1f9199ec7c58b43b8d698cdaa59ecc79e9'
+budget = VerificationBudget(max_file_size=33554432, max_expanded_size=104857600, max_zip_entries=512, max_entry_size=20971520, ...agraphs=100000, max_mapping_bytes=64, max_expected_effect_bytes=512, max_memory_bytes=4294967296, timeout_seconds=15.0)
+
+    def _canonical_effect(effect: object, source_sha: str, budget: VerificationBudget) -> tuple[dict[str, object], str]:
+        required = {
+            "schema_version", "parent_version_id", "input_sha256", "target_scopes",
+            "allowed_change_kinds", "expected_assertions", "unknowns", "effect_digest",
+        }
+        if not isinstance(effect, dict) or set(effect) != required or effect.get("schema_version") != "1":
+            raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 结构或版本无效。")
+        parent_id = effect.get("parent_version_id")
+        if type(parent_id) is not int or parent_id < 1:
+            raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 父版本无效。")
+        if effect.get("input_sha256") != source_sha:
+            raise _fail("OFFICE_INVALID_OR_MISMATCHED", "effect", "Expected Effect 的输入文件指纹不匹配。")
+        scopes = effect.get("target_scopes")
+        allowed = effect.get("allowed_change_kinds")
+        assertions = effect.get("expected_assertions")
+        unknowns = effect.get("unknowns")
+        if not isinstance(scopes, list) or not scopes or len(scopes) > budget.max_cells:
+            raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 目标范围无效。")
+        if not isinstance(allowed, list) or any(item not in _CANDIDATE_CHANGE_KINDS for item in allowed) or len(set(allowed)) != len(allowed):
+            raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 变化类别无效。")
+        if not isinstance(assertions, list) or len(assertions) > budget.max_cells:
+            raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 预期断言无效。")
+        if not isinstance(unknowns, list) or len(unknowns) > 256 or any(not isinstance(item, str) or not item or len(item) > 512 for item in unknowns):
+            raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 未知项无效。")
+    
+        clean_scopes: list[dict[str, str]] = []
+        for scope in scopes:
+            if not isinstance(scope, dict) or not isinstance(scope.get("kind"), str):
+                raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 目标描述无效。")
+            kind = scope["kind"]
+            if kind == "workbook_structure" and set(scope) == {"kind"}:
+                clean_scopes.append({"kind": kind})
+                continue
+            if kind == "worksheet_structure" and set(scope) == {"kind", "sheet"}:
+                if not isinstance(scope["sheet"], str) or not scope["sheet"] or len(scope["sheet"]) > 255:
+                    raise _fail("OFFICE_MAPPING_INVALID", "effect", "Worksheet 目标无效。")
+                clean_scopes.append({"kind": kind, "sheet": scope["sheet"]})
+                continue
+            if kind == "cell" and set(scope) == {"kind", "sheet", "address"}:
+                if not isinstance(scope["sheet"], str) or not scope["sheet"] or len(scope["sheet"]) > 255 or not isinstance(scope["address"], str) or not _A1.fullmatch(scope["address"]):
+                    raise _fail("OFFICE_MAPPING_INVALID", "effect", "单元格目标无效。")
+                clean_scopes.append({"kind": kind, "sheet": scope["sheet"], "address": scope["address"]})
+                continue
+            if kind == "range" and set(scope) == {"kind", "sheet", "start", "end"}:
+                if not isinstance(scope["sheet"], str) or not scope["sheet"] or len(scope["sheet"]) > 255 or not all(isinstance(scope[x], str) and _A1.fullmatch(scope[x]) for x in ("start", "end")):
+                    raise _fail("OFFICE_MAPPING_INVALID", "effect", "单元格区域目标无效。")
+                start, end = scope["start"], scope["end"]
+                width = _col_number(re.match(r"[A-Z]+", end).group()) - _col_number(re.match(r"[A-Z]+", start).group()) + 1
+                height = int(re.search(r"[0-9]+$", end).group()) - int(re.search(r"[0-9]+$", start).group()) + 1
+                if width <= 0 or height <= 0 or width * height > budget.max_cells:
+                    raise _fail("OFFICE_RESOURCE_LIMIT", "effect", "Expected Effect 单元格区域超过限制或反向定义。")
+                clean_scopes.append({"kind": kind, "sheet": scope["sheet"], "start": start, "end": end})
+                continue
+            raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 使用了不支持的目标结构。")
+    
+        clean_assertions: list[dict[str, object]] = []
+        assertion_targets: set[tuple[str, str]] = set()
+        for assertion in assertions:
+            if not isinstance(assertion, dict) or set(assertion) != {"kind", "sheet", "address", "value_type", "value"}:
+                raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 断言包含缺失或额外字段。")
+            if assertion["kind"] != "cell_value" or not isinstance(assertion["sheet"], str) or not assertion["sheet"] or not isinstance(assertion["address"], str) or not _A1.fullmatch(assertion["address"]):
+                raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 仅支持受限的单元格值断言。")
+            key = (assertion["sheet"], assertion["address"])
+            if key in assertion_targets:
+                raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 断言目标重复。")
+            assertion_targets.add(key)
+            if not any(_scope_contains(scope, f"xlsx:{key[0]}!{key[1]}", "cell_value") for scope in clean_scopes):
+                raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 断言不在声明的目标范围内。")
+            kind, value = assertion["value_type"], assertion["value"]
+            valid = (
+                (kind == "string" and isinstance(value, str))
+                or (kind == "number" and type(value) in {int, float} and math.isfinite(float(value)))
+                or (kind == "boolean" and isinstance(value, bool))
+                or (kind == "blank" and value is None)
+                or (kind in {"date", "datetime"} and isinstance(value, str))
+            )
+            if not valid:
+                raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 的值类型不受支持或与值不匹配。")
+            clean_assertions.append(dict(assertion))
+    
+        payload = {
+            "schema_version": "1",
+            "parent_version_id": parent_id,
+            "input_sha256": source_sha,
+            "target_scopes": clean_scopes,
+            "allowed_change_kinds": list(allowed),
+            "expected_assertions": clean_assertions,
+            "unknowns": list(unknowns),
+        }
+        try:
+            canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode("utf-8")
+        except (TypeError, ValueError, UnicodeEncodeError) as exc:
+            raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 不是规范 JSON。") from exc
+        if len(canonical) > budget.max_mapping_bytes:
+>           raise _fail("OFFICE_RESOURCE_LIMIT", "effect", "Expected Effect 超过现有序列化预算。")
+E           office_verify.errors.OfficeVerifyError: OFFICE_RESOURCE_LIMIT:effect: Expected Effect 超过现有序列化预算。
+
+mymodules/office_verify/verify.py:727: OfficeVerifyError
+=========================== short test summary info ============================
+FAILED mymodules/office_verify/tests/test_candidate_verify.py::CandidateVerifyTests::test_expected_effect_budget_is_separate_from_m1_mapping_budget
+1 failed, 18 deselected in 0.15s

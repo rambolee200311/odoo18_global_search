@@ -1,0 +1,7 @@
+{
+  "phase1b_fixture": "PASS",
+  "phase1c_v1_fixture": "PASS",
+  "phase1d_structure_fixture": "PASS",
+  "scope": "offline fixture checks only; no Provider calls or candidate edits",
+  "zip_integrity_all": "PASS"
+}

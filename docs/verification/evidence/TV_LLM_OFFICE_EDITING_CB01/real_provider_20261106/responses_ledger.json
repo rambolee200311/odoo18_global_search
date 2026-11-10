@@ -1,0 +1,49 @@
+{
+  "attempts": [
+    {
+      "active_default_model_count": 1,
+      "api_key_value_logged": false,
+      "attempt": 1,
+      "candidate_sha256": "9b2a7c48928737a0a8ee7878770e7206bafbc394f2631a764e1b0ece55f8266f",
+      "cleanup_state": "completed",
+      "container_id": "cntr_6aed953e1e908191908c4929d71f46830e6895d01718b496",
+      "container_memory_limit": "1g",
+      "container_network": "disabled",
+      "download_request_id": "req_8da4ac7be1584ab389601851c62644ef",
+      "duration_ms": 24919,
+      "endpoint_policy": "HTTPS api.openai.com/v1 validated in memory",
+      "error_category": null,
+      "estimated_total_cost_usd_not_invoice": 0.0337614,
+      "fixture_bytes": 5563,
+      "input_sha256": "756a1ffa467e24da035952cbbf63c5d1c0ad8d47bf53bf17a4b8e4613e95d82b",
+      "instruction_summary": "Set Inventory!B2 from 10 to 15; preserve all other content.",
+      "max_input_bytes": 2000000,
+      "max_output_bytes": 2000000,
+      "max_output_tokens": 4000,
+      "model": "gpt-5.6-luna",
+      "provider_file_ids": [
+        "cfile_6aed954637888191ac5bf1f739cee762"
+      ],
+      "provider_response_id": "resp_08d257b63d57f6c1016aed953b25b887d288a414dec2c8ed93",
+      "provider_service": "openai",
+      "request_id": "req_2d5daa2765b44dc2bcd8e3f1207d3a55",
+      "request_timeout_seconds": 120,
+      "responses_create_attempted": true,
+      "status": "candidate_received",
+      "tool_call_ids": [
+        "ci_08d257b63d57f6c1016aed954295f887d2a29c3f8e9a36db5e"
+      ],
+      "usage": {
+        "input_tokens": 2149,
+        "output_tokens": 693,
+        "reasoning_tokens": 331,
+        "total_tokens": 2842
+      }
+    }
+  ],
+  "authorization": "CC-M2-CB-01 real Provider test; synthetic XLSX only",
+  "concurrent_requests": 1,
+  "max_responses_create_authorized": 10,
+  "model": "gpt-5.6-luna",
+  "sdk_automatic_retries": 0
+}

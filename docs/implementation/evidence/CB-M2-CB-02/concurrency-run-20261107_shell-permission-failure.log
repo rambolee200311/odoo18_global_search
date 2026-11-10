@@ -1,0 +1,35 @@
+Command:
+./venv/bin/python odoo-bin shell -c odoo.conf -d odoo18ce --no-http < docs/implementation/evidence/CB-M2-CB-02/run-concurrency-acceptance-shell.py
+
+Result: exit code 1. Captured stderr from the actual tool invocation; failure occurred in Odoo shell server.start()/shutdown handling before ORM cursor creation or DB writes.
+
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/shell.py", line 129, in run
+    self.init(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/shell.py", line 62, in init
+    odoo.service.server.start(preload=[], stop=True)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 639, in run
+    self.stop()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/queue/queue_job/jobrunner/__init__.py", line 152, in threaded_stop
+    res = orig_threaded_stop(server)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 612, in stop
+    children = current_process.children(recursive=False)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/psutil/__init__.py", line 278, in wrapper
+    return fun(self, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/psutil/__init__.py", line 903, in children
+    ppid_map = _ppid_map()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/psutil/__init__.py", line 258, in _ppid_map
+    for pid in pids():
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/psutil/__init__.py", line 1369, in pids
+    ret = sorted(_psplatform.pids())
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/psutil/_psosx.py", line 313, in pids
+    ls = cext.pids()
+PermissionError: [Errno 1] Operation not permitted (originated from sysctl(KERN_PROC_ALL))
+
+No provider call and no database or business data changes occurred.

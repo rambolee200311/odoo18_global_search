@@ -1,0 +1,155 @@
+{
+  "api_request_count_this_attempt_including_cleanup": 4,
+  "api_requests": [
+    {
+      "attempt_request": 1,
+      "operation": "responses.create"
+    },
+    {
+      "attempt_request": 2,
+      "operation": "container_file_content.retrieve"
+    },
+    {
+      "attempt_request": 3,
+      "operation": "containers.delete"
+    },
+    {
+      "attempt_request": 4,
+      "operation": "responses.delete"
+    }
+  ],
+  "attempt_number": 3,
+  "budget": {
+    "cap_usd": 2.0,
+    "container_reserve_total_usd": 0.36,
+    "cumulative_reserve_with_10_percent_margin_usd": 0.401733,
+    "prior_token_costs_usd": [
+      0.0020561999999999998,
+      0.0011958
+    ],
+    "this_attempt_token_cost_usd": 0.00196,
+    "within_cap": true
+  },
+  "budget_preflight": {
+    "cap_usd": 2.0,
+    "container_reserve_units_each": 4,
+    "cumulative_reserve_with_10_percent_margin_usd": 0.847497,
+    "input_token_reserve_this_attempt": 1000000,
+    "output_token_cap_this_attempt": 4000,
+    "prior_actual_token_costs_usd": [
+      0.0020561999999999998,
+      0.0011958
+    ],
+    "prior_container_count": 2,
+    "within_cap": true
+  },
+  "cleanup_container": "success",
+  "cleanup_response": "success",
+  "download": {
+    "checks": {
+      "defined_names_unchanged": true,
+      "dimensions_unchanged": true,
+      "formula_d2_preserved": true,
+      "formula_d3_preserved": true,
+      "formula_text_only_checked_not_recalculated": true,
+      "notes_unchanged": true,
+      "only_target_cell_value_changed": true,
+      "sheetnames_unchanged": true,
+      "styles_unchanged": true,
+      "target_type_numeric": true,
+      "target_value": true,
+      "untargeted_quantity_unchanged": true
+    },
+    "dimension_differences": [],
+    "file": "tv_phase1a2_output.xlsx",
+    "output_sha256": "3981e64c9c8caa9c01a18f256b67150c529243d86dbe1abdc663e212ffa52567",
+    "output_size_bytes": 5713,
+    "provider_file_id": "cfile_6aed467d692481919173fea2a018143d",
+    "provider_filename": "tv_phase1a2_output.xlsx",
+    "request_id": null,
+    "style_differences": [],
+    "value_differences": []
+  },
+  "elapsed_seconds": 18.874,
+  "limits": {
+    "automatic_retries": 0,
+    "budget_cap_usd": 2.0,
+    "max_resource_http_calls_this_attempt": 5,
+    "max_test_responses_requests_total": 3,
+    "memory_limit": "1g",
+    "network": "disabled",
+    "output_tokens": 4000,
+    "previous_test_responses_requests": 2,
+    "requested_builtin_tool_calls": 1,
+    "timeout_seconds": 120
+  },
+  "model": "gpt-5.6-luna",
+  "provider_preflight": {
+    "active_default_chat_match_count": 1,
+    "api_base_class": "standard_https_openai_api_v1",
+    "credential_present": true,
+    "credential_source": "existing Odoo provider client; key value not read into logs",
+    "service": "openai"
+  },
+  "provider_response": {
+    "code_interpreter_tool_call_ids": [
+      "ci_011d206f3d9927e8006aed4674da1487d2b39801afb9a0ca3f",
+      "ci_011d206f3d9927e8006aed4679630887d296461ea7bc36238d"
+    ],
+    "container_id": "cntr_6aed4671001c81918746632af73ab2130f84aaab865e1536",
+    "estimated_token_cost_usd": 0.00196,
+    "incomplete_reason": null,
+    "model": "gpt-5.6-luna",
+    "output_file_id_from_citation": "cfile_6aed467d692481919173fea2a018143d",
+    "output_filename_from_citation": "tv_phase1a2_output.xlsx",
+    "output_items": [
+      {
+        "id": "rs_011d206f3d9927e8006aed4672d0e487d2a7406b43fe54684e",
+        "type": "reasoning"
+      },
+      {
+        "id": "ci_011d206f3d9927e8006aed4674da1487d2b39801afb9a0ca3f",
+        "tool_output_count": 0,
+        "tool_output_types": [],
+        "type": "code_interpreter_call"
+      },
+      {
+        "id": "rs_011d206f3d9927e8006aed4678bb1087d2ad035fc51ade92c8",
+        "type": "reasoning"
+      },
+      {
+        "id": "ci_011d206f3d9927e8006aed4679630887d296461ea7bc36238d",
+        "tool_output_count": 0,
+        "tool_output_types": [],
+        "type": "code_interpreter_call"
+      },
+      {
+        "id": "rs_011d206f3d9927e8006aed467cfdb887d2bbe181a891b23417",
+        "type": "reasoning"
+      },
+      {
+        "content": [
+          {
+            "annotation_types": [
+              "container_file_citation"
+            ],
+            "type": "output_text"
+          }
+        ],
+        "id": "msg_011d206f3d9927e8006aed467d1ac487d282ea5d7e6676492e",
+        "type": "message"
+      }
+    ],
+    "request_id": "req_4cbc6f75ebb34bb69107ecd35a4954d3",
+    "response_id": "resp_011d206f3d9927e8006aed466e8ac887d2a38b11166f168488",
+    "status": "completed",
+    "usage": {
+      "input_tokens": 3056,
+      "output_tokens": 1124,
+      "total_tokens": 4180
+    }
+  },
+  "status": "pass",
+  "test_response_request_count_cumulative": 3,
+  "total_api_requests_never_exceeds_this_attempt": 5
+}

@@ -1,0 +1,12 @@
+2026-11-08 03:05:01,165 42736 INFO ? odoo: Odoo version 18.0 
+2026-11-08 03:05:01,165 42736 INFO ? odoo: Using configuration file at /Users/lijianqiang/Documents/odoo18_global_search/odoo.conf 
+2026-11-08 03:05:01,165 42736 INFO ? odoo: addons paths: ['/Users/lijianqiang/Documents/odoo18_global_search/odoo/addons', '/Users/lijianqiang/Library/Application Support/Odoo/addons/18.0', '/Users/lijianqiang/Documents/odoo18_global_search/addons', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/odoo-llm', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/queue'] 
+2026-11-08 03:05:01,165 42736 INFO ? odoo: database: odoo@127.0.0.1:5555 
+2026-11-08 03:05:01,165 42736 INFO ? odoo.sql_db: Connection to the database failed 
+2026-11-08 03:05:14,997 42854 INFO ? odoo: Odoo version 18.0 
+2026-11-08 03:05:14,997 42854 INFO ? odoo: Using configuration file at /Users/lijianqiang/Documents/odoo18_global_search/odoo.conf 
+2026-11-08 03:05:14,997 42854 INFO ? odoo: addons paths: ['/Users/lijianqiang/Documents/odoo18_global_search/odoo/addons', '/Users/lijianqiang/Library/Application Support/Odoo/addons/18.0', '/Users/lijianqiang/Documents/odoo18_global_search/addons', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/odoo-llm', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/queue'] 
+2026-11-08 03:05:14,997 42854 INFO ? odoo: database: odoo@127.0.0.1:5555 
+2026-11-08 03:05:15,091 42854 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltopdf to print a pdf version of the reports. 
+2026-11-08 03:05:15,093 42854 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltoimage to generate images from html. 
+2026-11-08 03:05:15,196 42854 INFO ? odoo.addons.queue_job.post_load: Apply Request._get_session_and_dbname monkey patch to capture db from request with multiple databases 

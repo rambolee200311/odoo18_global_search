@@ -13,7 +13,7 @@ from decimal import Decimal, InvalidOperation
 from lxml import etree
 
 from .errors import OfficeVerifyError
-from .models import VerificationBudget, VerificationPolicy, VerificationReport
+from .models import CandidateValidationReport, VerificationBudget, VerificationPolicy, VerificationReport
 from .security import CT_NS, Package, _is_safe_picture_drawing, _safe_xlsx_extension_list, read_package, reject_unsupported_nodes
 
 NS_REL_DOC = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}"
@@ -59,6 +59,16 @@ def _content_type_signature(package: Package) -> tuple[tuple[str, str, str], ...
 
 def _elements(root: etree._Element, local: str) -> list[etree._Element]:
     return [node for node in root.iter() if _name(node) == local]
+
+
+def _semantic_xml_signature(node: etree._Element) -> tuple[object, ...]:
+    """Represent XML by expanded names so namespace prefix spelling is immaterial."""
+    return (
+        node.tag,
+        tuple(sorted(node.attrib.items())),
+        (node.text or "").strip(),
+        tuple(_semantic_xml_signature(child) for child in node if isinstance(child.tag, str)),
+    )
 
 
 def _validate_plan(plan: object, source_sha: str, budget: VerificationBudget) -> list[dict[str, object]]:
@@ -396,8 +406,18 @@ def _cell_value(cell: etree._Element, shared: list[str]) -> tuple[str, object]:
         if raw not in {"0", "1"}:
             raise _fail("OFFICE_INVALID_OR_MISMATCHED", "xlsx", "布尔单元格值无效。")
         return "boolean", raw == "1"
-    if cell_type in {"e", "d"}:
-        raise _fail("OFFICE_UNSUPPORTED_FEATURE", "xlsx", "错误或日期序列单元格当前不在回读白名单中。")
+    if cell_type == "d":
+        if raw is None:
+            raise _fail("OFFICE_INVALID_OR_MISMATCHED", "xlsx", "日期单元格缺少值。")
+        try:
+            if "T" in raw or "t" in raw:
+                value = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+                return "datetime", value
+            return "date", date.fromisoformat(raw)
+        except ValueError as exc:
+            raise _fail("OFFICE_INVALID_OR_MISMATCHED", "xlsx", "日期单元格值无效。") from exc
+    if cell_type == "e":
+        raise _fail("OFFICE_UNSUPPORTED_FEATURE", "xlsx", "错误单元格当前不在回读白名单中。")
     if raw is None:
         return "blank", None
     try:
@@ -468,7 +488,14 @@ def _xlsx_state(
         22: "m/d/yy h:mm", 37: "#,##0 ;(#,##0)", 38: "#,##0 ;[Red](#,##0)",
         39: "#,##0.00;(#,##0.00)", 40: "#,##0.00;[Red](#,##0.00)",
     }
+    built_in_formats.update({
+        format_id: f"builtin_date:{format_id}"
+        for format_id in (*range(27, 37), *range(50, 59))
+    })
     merges: dict[str, tuple[str, ...]] = {}
+    worksheet_structures: dict[str, tuple[bytes, ...]] = {}
+    row_structures: dict[str, tuple[tuple[str, tuple[tuple[str, str], ...]], ...]] = {}
+    cell_structures: dict[str, tuple[tuple[tuple[str, str], ...], tuple[str, ...]]] = {}
     cell_count = 0
     sheet_names = tuple(title for title, _ in sheets)
     for title, part in sheets:
@@ -491,6 +518,10 @@ def _xlsx_state(
             if cell_count > budget.max_cells:
                 raise _fail("OFFICE_RESOURCE_LIMIT", "xlsx", "工作表单元格数量超过限制。")
             kind, value = _cell_value(cell, shared)
+            cell_structures[f"xlsx:{title}!{address}"] = (
+                tuple(sorted((key, value) for key, value in cell.attrib.items() if key not in {"r", "s", "t"})),
+                tuple(_name(child) for child in cell if _name(child) not in {"f", "v", "is"}),
+            )
             coordinate = re.fullmatch(r"([A-Z]{1,3})([1-9][0-9]*)", address)
             if coordinate is None:
                 raise _fail("OFFICE_INVALID_OR_MISMATCHED", "xlsx", "工作表单元格坐标无效或重复。")
@@ -505,6 +536,23 @@ def _xlsx_state(
         if any(not value for value in merge_refs):
             raise _fail("OFFICE_INVALID_OR_MISMATCHED", "xlsx", "合并单元格引用无效。")
         merges[title] = merge_refs
+        worksheet_structures[title] = tuple(
+            _canonical(node)
+            for node in root
+            # Worksheet dimension is derived from populated coordinates and
+            # can change during an ordinary cell write. It is not independent
+            # worksheet structure; the package/XML and cell-coordinate checks
+            # above remain responsible for integrity.
+            if _name(node) not in {"sheetData", "mergeCells", "extLst", "dimension"}
+        )
+        row_structures[title] = tuple(sorted(
+            (node.get("r", ""), tuple(sorted((key, value) for key, value in node.attrib.items() if key != "r")))
+            for node in _elements(root, "row")
+            # Empty row elements are a serialization detail when a new cell is
+            # written. Meaningful row properties (height, hidden, style, etc.)
+            # remain compared and unauthorized differences still fail.
+            if any(key != "r" for key in node.attrib)
+        ))
         merged_nonanchors: set[str] = set()
         for merge in merge_refs:
             match = re.fullmatch(r"([A-Z]+[1-9][0-9]*):([A-Z]+[1-9][0-9]*)", merge)
@@ -531,7 +579,22 @@ def _xlsx_state(
             xf = deepcopy(effective_xfs[style_index])
             num_fmt_id = int(xf.get("numFmtId", "0"))
             xf.attrib.pop("numFmtId", None)
-            style_bases[key] = _canonical(xf)
+            # Writers may serialize the OOXML defaults explicitly on an xf
+            # that was previously represented by omitted attributes. Compare
+            # the effective style, not whether default zero/false attributes
+            # happened to be present in this serialization.
+            for attribute in (
+                "fontId", "fillId", "borderId", "xfId", "pivotButton", "quotePrefix",
+            ):
+                if xf.get(attribute) == "0":
+                    xf.attrib.pop(attribute, None)
+            for attribute in (
+                "applyNumberFormat", "applyFont", "applyFill", "applyBorder",
+                "applyAlignment", "applyProtection",
+            ):
+                if (xf.get(attribute) or "").lower() in {"0", "false"}:
+                    xf.attrib.pop(attribute, None)
+            style_bases[key] = repr(_semantic_xml_signature(xf)).encode("utf-8")
             number_formats[key] = custom_formats.get(
                 num_fmt_id, built_in_formats.get(num_fmt_id, f"builtin:{num_fmt_id}")
             )
@@ -564,7 +627,435 @@ def _xlsx_state(
         "style_bases": style_bases,
         "number_formats": number_formats,
         "merges": merges,
+        "worksheet_structures": worksheet_structures,
+        "row_structures": row_structures,
+        "cell_structures": cell_structures,
+        "sheet_parts": {title: part for title, part in sheets},
+        "workbook_structures": tuple(
+            _canonical(node)
+            for node in workbook_root
+            if _name(node) not in {"sheets", "workbookPr"}
+        ),
+        "workbook_attributes": tuple(sorted(workbook_root.attrib.items())),
+        "workbook_properties": tuple(sorted(workbook_properties.attrib.items())) if workbook_properties is not None else (),
+        "content_types": _content_type_signature(package),
     }
+
+
+_CANDIDATE_CHANGE_KINDS = {
+    "cell_value", "formula_text", "cell_style", "worksheet_structure", "workbook_structure"
+}
+_A1 = re.compile(r"^[A-Z]{1,3}[1-9][0-9]*$")
+_SHA256 = re.compile(r"^[0-9a-f]{64}$")
+
+
+def _candidate_failure(message: str, *, input_sha: str, output_sha: str, parent_id: int, digest: str) -> CandidateValidationReport:
+    return CandidateValidationReport(
+        validation_result="FAILED",
+        input_sha256=input_sha,
+        output_sha256=output_sha,
+        parent_version_id=parent_id,
+        effect_digest=digest,
+        actual_effects=(),
+        risk_facts=(),
+        feature_results=(),
+        error={"error_code": "OFFICE_TARGET_MISMATCH", "failed_stage": "effect", "message": message},
+    )
+
+
+def _canonical_effect(effect: object, source_sha: str, budget: VerificationBudget) -> tuple[dict[str, object], str]:
+    required = {
+        "schema_version", "parent_version_id", "input_sha256", "target_scopes",
+        "allowed_change_kinds", "expected_assertions", "unknowns", "effect_digest",
+    }
+    if not isinstance(effect, dict) or set(effect) != required or effect.get("schema_version") != "1":
+        raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 结构或版本无效。")
+    parent_id = effect.get("parent_version_id")
+    if type(parent_id) is not int or parent_id < 1:
+        raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 父版本无效。")
+    if effect.get("input_sha256") != source_sha:
+        raise _fail("OFFICE_INVALID_OR_MISMATCHED", "effect", "Expected Effect 的输入文件指纹不匹配。")
+    scopes = effect.get("target_scopes")
+    allowed = effect.get("allowed_change_kinds")
+    assertions = effect.get("expected_assertions")
+    unknowns = effect.get("unknowns")
+    if not isinstance(scopes, list) or not scopes or len(scopes) > budget.max_cells:
+        raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 目标范围无效。")
+    if not isinstance(allowed, list) or any(item not in _CANDIDATE_CHANGE_KINDS for item in allowed) or len(set(allowed)) != len(allowed):
+        raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 变化类别无效。")
+    if not isinstance(assertions, list) or len(assertions) > budget.max_cells:
+        raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 预期断言无效。")
+    if not isinstance(unknowns, list) or len(unknowns) > 256 or any(not isinstance(item, str) or not item or len(item) > 512 for item in unknowns):
+        raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 未知项无效。")
+
+    clean_scopes: list[dict[str, str]] = []
+    for scope in scopes:
+        if not isinstance(scope, dict) or not isinstance(scope.get("kind"), str):
+            raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 目标描述无效。")
+        kind = scope["kind"]
+        if kind == "workbook_structure" and set(scope) == {"kind"}:
+            clean_scopes.append({"kind": kind})
+            continue
+        if kind == "worksheet_structure" and set(scope) == {"kind", "sheet"}:
+            if not isinstance(scope["sheet"], str) or not scope["sheet"] or len(scope["sheet"]) > 255:
+                raise _fail("OFFICE_MAPPING_INVALID", "effect", "Worksheet 目标无效。")
+            clean_scopes.append({"kind": kind, "sheet": scope["sheet"]})
+            continue
+        if kind == "cell" and set(scope) == {"kind", "sheet", "address"}:
+            if not isinstance(scope["sheet"], str) or not scope["sheet"] or len(scope["sheet"]) > 255 or not isinstance(scope["address"], str) or not _A1.fullmatch(scope["address"]):
+                raise _fail("OFFICE_MAPPING_INVALID", "effect", "单元格目标无效。")
+            clean_scopes.append({"kind": kind, "sheet": scope["sheet"], "address": scope["address"]})
+            continue
+        if kind == "range" and set(scope) == {"kind", "sheet", "start", "end"}:
+            if not isinstance(scope["sheet"], str) or not scope["sheet"] or len(scope["sheet"]) > 255 or not all(isinstance(scope[x], str) and _A1.fullmatch(scope[x]) for x in ("start", "end")):
+                raise _fail("OFFICE_MAPPING_INVALID", "effect", "单元格区域目标无效。")
+            start, end = scope["start"], scope["end"]
+            width = _col_number(re.match(r"[A-Z]+", end).group()) - _col_number(re.match(r"[A-Z]+", start).group()) + 1
+            height = int(re.search(r"[0-9]+$", end).group()) - int(re.search(r"[0-9]+$", start).group()) + 1
+            if width <= 0 or height <= 0 or width * height > budget.max_cells:
+                raise _fail("OFFICE_RESOURCE_LIMIT", "effect", "Expected Effect 单元格区域超过限制或反向定义。")
+            clean_scopes.append({"kind": kind, "sheet": scope["sheet"], "start": start, "end": end})
+            continue
+        raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 使用了不支持的目标结构。")
+
+    clean_assertions: list[dict[str, object]] = []
+    assertion_targets: set[tuple[str, str]] = set()
+    for assertion in assertions:
+        if not isinstance(assertion, dict) or set(assertion) != {"kind", "sheet", "address", "value_type", "value"}:
+            raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 断言包含缺失或额外字段。")
+        if assertion["kind"] != "cell_value" or not isinstance(assertion["sheet"], str) or not assertion["sheet"] or not isinstance(assertion["address"], str) or not _A1.fullmatch(assertion["address"]):
+            raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 仅支持受限的单元格值断言。")
+        key = (assertion["sheet"], assertion["address"])
+        if key in assertion_targets:
+            raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 断言目标重复。")
+        assertion_targets.add(key)
+        if not any(_scope_contains(scope, f"xlsx:{key[0]}!{key[1]}", "cell_value") for scope in clean_scopes):
+            raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 断言不在声明的目标范围内。")
+        kind, value = assertion["value_type"], assertion["value"]
+        valid = (
+            (kind == "string" and isinstance(value, str))
+            or (kind == "number" and type(value) in {int, float} and math.isfinite(float(value)))
+            or (kind == "boolean" and isinstance(value, bool))
+            or (kind == "blank" and value is None)
+            or (kind in {"date", "datetime"} and isinstance(value, str))
+        )
+        if not valid:
+            raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 的值类型不受支持或与值不匹配。")
+        clean_assertions.append(dict(assertion))
+
+    payload = {
+        "schema_version": "1",
+        "parent_version_id": parent_id,
+        "input_sha256": source_sha,
+        "target_scopes": clean_scopes,
+        "allowed_change_kinds": list(allowed),
+        "expected_assertions": clean_assertions,
+        "unknowns": list(unknowns),
+    }
+    try:
+        canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode("utf-8")
+    except (TypeError, ValueError, UnicodeEncodeError) as exc:
+        raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 不是规范 JSON。") from exc
+    if len(canonical) > budget.max_expected_effect_bytes:
+        raise _fail("OFFICE_RESOURCE_LIMIT", "effect", "Expected Effect 超过独立元数据序列化预算。")
+    digest = hashlib.sha256(canonical).hexdigest()
+    if not isinstance(effect.get("effect_digest"), str) or not _SHA256.fullmatch(effect["effect_digest"]) or effect["effect_digest"] != digest:
+        raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 指纹无效。")
+    return payload, digest
+
+
+def _scope_contains(scope: dict[str, str], target: str, change_kind: str) -> bool:
+    if target == "xlsx:__workbook__!structure":
+        return scope.get("kind") == "workbook_structure" and change_kind == "workbook_structure"
+    match = re.fullmatch(r"xlsx:(.+)!([A-Z]{1,3}[1-9][0-9]*|__structure__)", target)
+    if not match:
+        return False
+    sheet, address = match.groups()
+    if address == "__structure__":
+        return scope.get("kind") in {"workbook_structure", "worksheet_structure"} and (
+            scope.get("kind") == "workbook_structure" or scope.get("sheet") == sheet
+        ) and change_kind == "worksheet_structure"
+    if scope.get("kind") == "workbook_structure":
+        return False
+    if scope.get("sheet") != sheet:
+        return False
+    if scope.get("kind") == "cell":
+        return scope.get("address") == address
+    if scope.get("kind") == "range":
+        return _coordinate_in_range(address, scope["start"], scope["end"])
+    return False
+
+
+def _candidate_typed_value(value: tuple[str, object] | None) -> dict[str, object]:
+    if value is None:
+        return {"type": "blank", "value": None}
+    kind, raw = value
+    if kind == "formula":
+        expression, attributes = raw
+        return {"type": "formula", "value": expression, "attributes": dict(attributes)}
+    if kind in {"date", "datetime"} and isinstance(raw, (date, datetime)):
+        return {"type": kind, "value": raw.isoformat()}
+    if kind == "number" and isinstance(raw, Decimal):
+        return {"type": "number", "value": str(raw)}
+    return {"type": kind, "value": raw}
+
+
+def _candidate_expected_matches(assertion: dict[str, object], state: dict[str, object]) -> bool:
+    key = f"xlsx:{assertion['sheet']}!{assertion['address']}"
+    cells = state["cells"]
+    actual = cells.get(key)
+    kind = str(assertion["value_type"])
+    expected = assertion["value"]
+    if kind == "blank":
+        return actual is None or actual[0] == "blank"
+    if actual is None:
+        return False
+    actual_kind, actual_value = actual
+    if kind in {"date", "datetime"}:
+        try:
+            parsed_expected = date.fromisoformat(expected) if kind == "date" else datetime.fromisoformat(expected.replace("Z", "+00:00"))
+        except (AttributeError, TypeError, ValueError):
+            return False
+        if actual_kind == kind:
+            return actual_value == parsed_expected
+        if actual_kind != "number":
+            return False
+        number_format = state["number_formats"].get(key, "General")
+        if not _number_format_has_date_semantics(number_format):
+            return False
+        try:
+            expected_serial = _excel_date_serial(kind, expected, bool(state["date_1904"]))
+            if kind == "date" and actual_value != actual_value.to_integral_value():
+                return False
+            return abs(actual_value - expected_serial) <= Decimal("0.0000000001")
+        except (InvalidOperation, TypeError, ValueError):
+            return False
+    if kind == "number":
+        try:
+            return actual_kind == "number" and not isinstance(expected, bool) and actual_value == Decimal(str(expected))
+        except InvalidOperation:
+            return False
+    return actual_kind == kind and actual_value is expected if kind == "boolean" else actual_kind == kind and actual_value == expected
+
+
+def _number_format_has_date_semantics(number_format: str) -> bool:
+    """Distinguish Excel date serials from ordinary numbers using the cell format."""
+    if number_format.startswith("builtin_date:"):
+        return True
+    cleaned = re.sub(r'"[^\"]*"|\\.|_.|\*.', "", number_format.lower())
+    cleaned = re.sub(r"\[[^\]]*\]", "", cleaned)
+    has_calendar_component = bool(re.search(r"[yd]", cleaned))
+    has_month_component = "m" in cleaned
+    has_clock_component = bool(re.search(r"[hs]", cleaned)) or "am/pm" in cleaned or "a/p" in cleaned
+    return has_calendar_component or (has_month_component and not has_clock_component)
+
+
+def verify_candidate_inline(
+    source_bytes: bytes,
+    candidate_bytes: bytes,
+    filename: str,
+    mime_type: str,
+    expected_effect: object,
+    policy: VerificationPolicy,
+    budget: VerificationBudget,
+) -> CandidateValidationReport:
+    """Compare XLSX bytes against a bounded, read-only Expected Effect contract."""
+    if not isinstance(policy, VerificationPolicy) or not isinstance(budget, VerificationBudget):
+        raise _fail("OFFICE_INVALID_OR_MISMATCHED", "input", "验证策略或资源预算类型无效。")
+    policy.validate()
+    budget.validate()
+    if not isinstance(source_bytes, bytes) or not isinstance(candidate_bytes, bytes):
+        raise _fail("OFFICE_INVALID_OR_MISMATCHED", "input", "源文件和候选文件必须以字节传入。")
+    if len(source_bytes) > budget.max_file_size or len(candidate_bytes) > budget.max_file_size:
+        raise _fail("OFFICE_RESOURCE_LIMIT", "input", "文件超过输入大小限制。")
+    source_sha = hashlib.sha256(source_bytes).hexdigest()
+    output_sha = hashlib.sha256(candidate_bytes).hexdigest()
+    raw_parent = expected_effect.get("parent_version_id") if isinstance(expected_effect, dict) else 0
+    parent_id = raw_parent if type(raw_parent) is int else 0
+    raw_digest = expected_effect.get("effect_digest", "") if isinstance(expected_effect, dict) else ""
+    digest = raw_digest if isinstance(raw_digest, str) else ""
+    effect, digest = _canonical_effect(expected_effect, source_sha, budget)
+    if parent_id != effect["parent_version_id"]:
+        raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 父版本无效。")
+    if not filename.lower().endswith(".xlsx") or mime_type.lower().split(";", 1)[0].strip() not in {
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/octet-stream"
+    }:
+        raise _fail("OFFICE_UNSUPPORTED_FEATURE", "format", "Candidate Validator 仅支持 XLSX。")
+    source = read_package(source_bytes, filename, mime_type, budget)
+    output = read_package(candidate_bytes, filename, mime_type, budget)
+    if source.kind != "xlsx" or output.kind != "xlsx":
+        raise _fail("OFFICE_UNSUPPORTED_FEATURE", "format", "Candidate Validator 仅支持 XLSX。")
+    reject_unsupported_nodes(source)
+    reject_unsupported_nodes(output)
+    source_state = _xlsx_state(source, budget, policy)
+    output_state = _xlsx_state(output, budget, policy)
+    changes: list[dict[str, object]] = []
+    risks: list[dict[str, object]] = []
+    valid = True
+
+    source_cells = source_state["cells"]
+    output_cells = output_state["cells"]
+    for target in sorted(set(source_cells) | set(output_cells)):
+        before = source_cells.get(target)
+        after = output_cells.get(target)
+        if before == after:
+            continue
+        change_kind = "formula_text" if (before and before[0] == "formula") or (after and after[0] == "formula") else "cell_value"
+        entry = {"target": target, "change_kind": change_kind, "before": _candidate_typed_value(before), "after": _candidate_typed_value(after)}
+        changes.append(entry)
+        if before and before[0] != "blank" and before[1] not in (None, ""):
+            risks.append({"kind": "existing_value_replaced", "target": target, "before": _candidate_typed_value(before), "after": _candidate_typed_value(after)})
+            if before[0] == "formula":
+                risks.append({"kind": "existing_formula_replaced", "target": target})
+        if change_kind not in effect["allowed_change_kinds"] or not any(_scope_contains(scope, target, change_kind) for scope in effect["target_scopes"]):
+            valid = False
+
+    for target in sorted(set(source_state["caches"]) | set(output_state["caches"])):
+        before, after = source_state["caches"].get(target), output_state["caches"].get(target)
+        if before != after:
+            changes.append({"target": target, "change_kind": "formula_cache", "before": before, "after": after})
+            risks.append({"kind": "formula_cache_changed", "target": target})
+            valid = False
+
+    source_style_keys = set(source_state["style_bases"]) | set(source_state["number_formats"])
+    output_style_keys = set(output_state["style_bases"]) | set(output_state["number_formats"])
+    default_style_signature = repr(
+        _semantic_xml_signature(etree.Element(NS_X + "xf"))
+    ).encode("utf-8")
+    for target in sorted(source_style_keys | output_style_keys):
+        before_style = (
+            source_state["style_bases"].get(target, default_style_signature),
+            source_state["number_formats"].get(target, "General"),
+        )
+        after_style = (
+            output_state["style_bases"].get(target, default_style_signature),
+            output_state["number_formats"].get(target, "General"),
+        )
+        if before_style == after_style:
+            continue
+        entry = {
+            "target": target, "change_kind": "cell_style",
+            "before": {"style": before_style[0].hex() if before_style[0] else None, "number_format": before_style[1]},
+            "after": {"style": after_style[0].hex() if after_style[0] else None, "number_format": after_style[1]},
+        }
+        changes.append(entry)
+        if "cell_style" not in effect["allowed_change_kinds"] or not any(_scope_contains(scope, target, "cell_style") for scope in effect["target_scopes"]):
+            valid = False
+
+    if source_state["sheets"] != output_state["sheets"]:
+        changes.append({"target": "xlsx:__workbook__!structure", "change_kind": "workbook_structure", "before": list(source_state["sheets"]), "after": list(output_state["sheets"])})
+    if source_state["sheet_states"] != output_state["sheet_states"]:
+        for sheet in sorted(set(source_state["sheets"]) | set(output_state["sheets"])):
+            before_state = next((state for name, state in source_state["sheet_states"] if name == sheet), None)
+            after_state = next((state for name, state in output_state["sheet_states"] if name == sheet), None)
+            if before_state != after_state:
+                changes.append({"target": f"xlsx:{sheet}!__structure__", "change_kind": "worksheet_structure", "before": before_state, "after": after_state})
+    for field in ("merges", "worksheet_structures", "row_structures"):
+        before_values = source_state[field]
+        after_values = output_state[field]
+        for sheet in sorted(set(before_values) | set(after_values)):
+            before = before_values.get(sheet)
+            after = after_values.get(sheet)
+            if before == after:
+                continue
+            if field == "worksheet_structures":
+                before = [item.hex() for item in before or ()]
+                after = [item.hex() for item in after or ()]
+            elif field == "cell_structures":
+                before = [[list(attrs), list(children)] for attrs, children in (before or (((), ()),))]
+                after = [[list(attrs), list(children)] for attrs, children in (after or (((), ()),))]
+            elif field == "row_structures":
+                before = [[row, [list(pair) for pair in attrs]] for row, attrs in before or ()]
+                after = [[row, [list(pair) for pair in attrs]] for row, attrs in after or ()]
+            else:
+                before, after = list(before or ()), list(after or ())
+            changes.append({"target": f"xlsx:{sheet}!__structure__", "change_kind": "worksheet_structure", "before": before, "after": after})
+
+    for target in sorted(set(source_state["cell_structures"]) | set(output_state["cell_structures"])):
+        before = source_state["cell_structures"].get(target, ((), ()))
+        after = output_state["cell_structures"].get(target, ((), ()))
+        if before != after:
+            changes.append({
+                "target": target, "change_kind": "worksheet_structure",
+                "before": [list(before[0]), list(before[1])],
+                "after": [list(after[0]), list(after[1])],
+            })
+
+    source_parts = source_state["sheet_parts"]
+    output_parts = output_state["sheet_parts"]
+    for sheet in sorted(set(source_parts) & set(output_parts)):
+        if source_parts[sheet] != output_parts[sheet]:
+            changes.append({"target": f"xlsx:{sheet}!__structure__", "change_kind": "worksheet_structure", "before": source_parts[sheet], "after": output_parts[sheet]})
+    if source_state["workbook_structures"] != output_state["workbook_structures"]:
+        changes.append({"target": "xlsx:__workbook__!structure", "change_kind": "workbook_structure", "before": [item.hex() for item in source_state["workbook_structures"]], "after": [item.hex() for item in output_state["workbook_structures"]]})
+
+    def known_candidate_part(name: str) -> bool:
+        return name in {
+            "[Content_Types].xml", "xl/workbook.xml", "xl/_rels/workbook.xml.rels",
+            "xl/styles.xml", "xl/sharedStrings.xml", "xl/calcChain.xml",
+        } or bool(re.fullmatch(r"xl/worksheets/sheet[0-9]+\.xml", name))
+
+    source_names, output_names = set(source.entries), set(output.entries)
+    sheet_part_pattern = re.compile(r"xl/worksheets/sheet[0-9]+\.xml$")
+    source_sheet_names = {name for name in source_names if sheet_part_pattern.fullmatch(name)}
+    output_sheet_names = {name for name in output_names if sheet_part_pattern.fullmatch(name)}
+    referenced_source_parts = set(source_parts.values())
+    referenced_output_parts = set(output_parts.values())
+    if (source_sheet_names ^ output_sheet_names) != (referenced_source_parts ^ referenced_output_parts):
+        changes.append({"target": "xlsx:__package__!worksheet_parts", "change_kind": "unsupported_structure", "before": sorted(source_sheet_names), "after": sorted(output_sheet_names)})
+    for name in sorted(source_names | output_names):
+        before_part, after_part = source.raw_parts.get(name), output.raw_parts.get(name)
+        if before_part == after_part or known_candidate_part(name):
+            continue
+        changes.append({
+            "target": f"xlsx:__package__!{name}", "change_kind": "unsupported_structure",
+            "before": hashlib.sha256(before_part).hexdigest() if before_part is not None else None,
+            "after": hashlib.sha256(after_part).hexdigest() if after_part is not None else None,
+        })
+    if source_state["workbook_attributes"] != output_state["workbook_attributes"] or source_state["workbook_properties"] != output_state["workbook_properties"]:
+        changes.append({
+            "target": "xlsx:__workbook__!structure", "change_kind": "workbook_structure",
+            "before": {"attributes": list(source_state["workbook_attributes"]), "properties": list(source_state["workbook_properties"])},
+            "after": {"attributes": list(output_state["workbook_attributes"]), "properties": list(output_state["workbook_properties"])},
+        })
+    if source_state["content_types"] != output_state["content_types"] and source_state["sheets"] == output_state["sheets"]:
+        changes.append({"target": "xlsx:__package__!content_types", "change_kind": "unsupported_structure", "before": list(source_state["content_types"]), "after": list(output_state["content_types"])})
+    non_sheet_part_changes = (source_names ^ output_names) - source_sheet_names - output_sheet_names
+    for name in sorted(non_sheet_part_changes):
+        changes.append({"target": f"xlsx:__package__!{name}", "change_kind": "unsupported_structure", "before": name in source_names, "after": name in output_names})
+
+    for entry in changes:
+        kind = entry["change_kind"]
+        if kind not in effect["allowed_change_kinds"] or not any(_scope_contains(scope, entry["target"], kind) for scope in effect["target_scopes"]):
+            valid = False
+
+    expected_ok = all(_candidate_expected_matches(assertion, output_state) for assertion in effect["expected_assertions"])
+    if not expected_ok:
+        valid = False
+    if not valid:
+        result = "FAILED"
+    elif effect["unknowns"] or not effect["expected_assertions"]:
+        result = "PARTIALLY_VERIFIED"
+    else:
+        result = "VERIFIED"
+    features = (
+        {"feature": "cell_values_and_types", "capability": "SUPPORTED", "checked": True},
+        {"feature": "regular_formula_text", "capability": "SUPPORTED", "checked": True, "calculation": "NOT_CHECKED"},
+        {"feature": "formula_cached_values", "capability": "PARTIALLY_SUPPORTED", "checked": True, "calculation": "NOT_CHECKED"},
+        {"feature": "common_cell_styles", "capability": "SUPPORTED", "checked": True},
+        {"feature": "basic_worksheet_structure", "capability": "SUPPORTED", "checked": True},
+    )
+    return CandidateValidationReport(
+        validation_result=result,
+        input_sha256=source_sha,
+        output_sha256=output_sha,
+        parent_version_id=effect["parent_version_id"],
+        effect_digest=digest,
+        actual_effects=tuple(changes),
+        risk_facts=tuple(risks),
+        feature_results=features,
+        unknowns=tuple(effect["unknowns"]),
+    )
 
 
 def _col_number(value: str) -> int:

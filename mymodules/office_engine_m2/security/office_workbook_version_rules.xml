@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="office_workbook_version_owner_company_rule" model="ir.rule">
+        <field name="name">Office workbook versions: owner and allowed companies</field>
+        <field name="model_id" ref="model_office_workbook_version"/>
+        <field name="domain_force">[('owner_id', '=', user.id), ('company_id', 'in', company_ids)]</field>
+        <field name="global" eval="True"/>
+    </record>
+</odoo>

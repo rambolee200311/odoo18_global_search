@@ -1,0 +1,95 @@
+{
+  "api_endpoint_class": "official_openai_api",
+  "api_request_count": 2,
+  "api_requests": [
+    {
+      "attempt": 1,
+      "operation": "responses.create"
+    },
+    {
+      "attempt": 2,
+      "operation": "containers.delete"
+    }
+  ],
+  "budget_preflight": {
+    "cap_usd": 2.0,
+    "container_reserve_units": 4,
+    "including_10_percent_margin_usd": 0.574376,
+    "input_token_reserve": 1000000,
+    "output_token_cap": 1200,
+    "within_cap": true
+  },
+  "cleanup": {
+    "container_delete": "success",
+    "container_id": "cntr_6aed456643d081918ff6b94e40e04a7504c5038c6ba09a5f"
+  },
+  "elapsed_seconds": 27.971,
+  "error": {
+    "class": "TestFailure",
+    "code": "provider_response_not_completed"
+  },
+  "input": {
+    "file": "tv_phase1a2_input.xlsx",
+    "formulas": [
+      "Inventory!D2 =B2*C2",
+      "Inventory!D3 =B3*C3"
+    ],
+    "sha256": "5a246ca4c8539ea723294d08689a63731c560b9e9fc87d3100ea0c49a9bb32a0",
+    "sheetnames": [
+      "Inventory",
+      "Notes"
+    ],
+    "size_bytes": 5708
+  },
+  "limits": {
+    "budget_cap_usd": 2.0,
+    "client_timeout_seconds": 120,
+    "code_interpreter_memory_limit": "1g",
+    "code_interpreter_network": "disabled",
+    "max_api_http_requests": 3,
+    "max_builtin_tool_calls": 1,
+    "max_output_tokens": 1200,
+    "sdk_automatic_retries": 0
+  },
+  "model": "gpt-5.6-luna",
+  "provider_preflight": {
+    "active_default_chat_match_count": 1,
+    "api_base": "https://api.openai.com/v1 (verified without logging its value)",
+    "credential_present": true,
+    "project_identity": "credential selected from active Odoo provider; project identifier is not stored in llm.provider",
+    "service": "openai"
+  },
+  "provider_response": {
+    "code_interpreter_tool_call_ids": [
+      "ci_058495d0a11bd388016aed456b805487d2b17c2809bb63b38c",
+      "ci_058495d0a11bd388016aed457112e487d2a3c8393a1b8887fe",
+      "ci_058495d0a11bd388016aed45760d0c87d2aa3c6f64c386e9e3",
+      "ci_058495d0a11bd388016aed457a87f487d29bba9c3bdfdb770d"
+    ],
+    "container_id": "cntr_6aed456643d081918ff6b94e40e04a7504c5038c6ba09a5f",
+    "estimated_token_cost_usd": 0.0020561999999999998,
+    "model": "gpt-5.6-luna",
+    "output_file_id": null,
+    "output_filename": null,
+    "output_item_types": [
+      "reasoning",
+      "code_interpreter_call",
+      "reasoning",
+      "code_interpreter_call",
+      "reasoning",
+      "code_interpreter_call",
+      "reasoning",
+      "code_interpreter_call"
+    ],
+    "request_id": "req_60f6d439fc894d47a484d2f0b0332ef6",
+    "response_id": "resp_058495d0a11bd388016aed4561868c87d2a71d0460cf44ed0e",
+    "status": "incomplete",
+    "usage": {
+      "input_tokens": 3081,
+      "output_tokens": 1200,
+      "total_tokens": 4281
+    }
+  },
+  "status": "fail",
+  "total_api_requests_never_exceeds": 3
+}

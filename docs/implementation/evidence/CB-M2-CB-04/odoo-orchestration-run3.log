@@ -1,0 +1,175 @@
+2026-11-09 01:29:46,627 57272 INFO ? odoo: Odoo version 18.0 
+2026-11-09 01:29:46,627 57272 INFO ? odoo: Using configuration file at /Users/lijianqiang/Documents/odoo18_global_search/odoo.conf 
+2026-11-09 01:29:46,627 57272 INFO ? odoo: addons paths: ['/Users/lijianqiang/Documents/odoo18_global_search/odoo/addons', '/Users/lijianqiang/Library/Application Support/Odoo/addons/18.0', '/Users/lijianqiang/Documents/odoo18_global_search/addons', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/odoo-llm', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/queue'] 
+2026-11-09 01:29:46,627 57272 INFO ? odoo: database: odoo@127.0.0.1:5555 
+2026-11-09 01:29:46,700 57272 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltopdf to print a pdf version of the reports. 
+2026-11-09 01:29:46,702 57272 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltoimage to generate images from html. 
+2026-11-09 01:29:46,797 57272 INFO ? odoo.addons.queue_job.post_load: Apply Request._get_session_and_dbname monkey patch to capture db from request with multiple databases 
+2026-11-09 01:29:46,798 57272 INFO ? odoo.service.server: HTTP service (werkzeug) running on localhost:55884 
+2026-11-09 01:29:46,815 57272 INFO odoo18ce odoo.tests.common: Importing test framework 
+2026-11-09 01:29:46,850 57272 INFO odoo18ce odoo.modules.loading: loading 1 modules... 
+2026-11-09 01:29:46,852 57272 INFO odoo18ce odoo.modules.loading: 1 modules loaded in 0.00s, 0 queries (+0 extra) 
+2026-11-09 01:29:46,861 57272 INFO odoo18ce odoo.modules.loading: updating modules list 
+2026-11-09 01:29:46,863 57272 INFO odoo18ce odoo.addons.base.models.ir_module: ALLOW access to module.update_list on [] to user __system__ #1 via n/a 
+2026-11-09 01:29:47,575 57272 INFO odoo18ce odoo.addons.base.models.ir_module: ALLOW access to module.button_upgrade on ['Office Engine M2 Orchestration'] to user __system__ #1 via n/a 
+2026-11-09 01:29:47,575 57272 INFO odoo18ce odoo.addons.base.models.ir_module: ALLOW access to module.update_list on ['Office Engine M2 Orchestration'] to user __system__ #1 via n/a 
+2026-11-09 01:29:47,840 57272 INFO odoo18ce odoo.addons.base.models.ir_module: ALLOW access to module.button_install on [] to user __system__ #1 via n/a 
+2026-11-09 01:29:47,850 57272 WARNING odoo18ce odoo.modules.graph: module wd_qooling_app: not installable, skipped 
+2026-11-09 01:29:47,850 57272 WARNING odoo18ce odoo.modules.graph: module wd_advanced_m2o_record_panel: not installable, skipped 
+2026-11-09 01:29:47,851 57272 WARNING odoo18ce odoo.modules.graph: module wd_evidence_album: not installable, skipped 
+2026-11-09 01:29:47,852 57272 INFO odoo18ce odoo.modules.loading: loading 89 modules... 
+2026-11-09 01:29:48,481 57272 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x119a78880, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/llm_thread.py', line 14, code <module>> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/__init__.py", line 1, in <module>
+    from . import models
+  File "<frozen importlib._bootstrap>", line 1232, in _handle_fromlist
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/__init__.py", line 3, in <module>
+    from . import llm_thread
+  File "<frozen importlib._bootstrap>", line 1232, in _handle_fromlist
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/llm_thread.py", line 14, in <module>
+    _REJECT_MESSAGE = _(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-09 01:29:48,520 57272 INFO odoo18ce odoo.modules.loading: Loading module office_engine_m2 (64/89) 
+2026-11-09 01:29:48,662 57272 INFO odoo18ce odoo.modules.registry: module office_engine_m2: creating or updating database tables 
+2026-11-09 01:29:48,739 57272 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/security/office_engine_m2_groups.xml 
+2026-11-09 01:29:48,742 57272 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/data/office_tools.xml 
+2026-11-09 01:29:48,744 57272 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/security/office_mapping_session_rules.xml 
+2026-11-09 01:29:48,748 57272 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/security/office_workbook_version_rules.xml 
+2026-11-09 01:29:48,750 57272 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/security/office_export_skill_rules.xml 
+2026-11-09 01:29:48,752 57272 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/security/ir.model.access.csv 
+2026-11-09 01:29:49,004 57272 INFO odoo18ce odoo.addons.base.models.ir_module: module office_engine_m2: no translation for language zh_CN 
+2026-11-09 01:29:49,005 57272 INFO odoo18ce odoo.addons.base.models.ir_module: module office_engine_m2: no translation for language nl_NL 
+2026-11-09 01:29:49,177 57272 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_confirmed_broad_scope_runs_only_after_exact_reply_and_keeps_receipt_bound ... 
+2026-11-09 01:29:49,615 57272 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: ====================================================================== 
+2026-11-09 01:29:49,615 57272 ERROR odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: FAIL: TestEditOrchestration.test_confirmed_broad_scope_runs_only_after_exact_reply_and_keeps_receipt_bound
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_edit_orchestration.py", line 190, in test_confirmed_broad_scope_runs_only_after_exact_reply_and_keeps_receipt_bound
+    self.assertEqual(result["status"], "completed")
+AssertionError: 'failed' != 'completed'
+- failed
++ completed
+
+ 
+2026-11-09 01:29:49,617 57272 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_explicit_edit_uses_current_version_and_accepts_only_after_cb03_receipt ... 
+2026-11-09 01:29:50,029 57272 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: ====================================================================== 
+2026-11-09 01:29:50,029 57272 ERROR odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: FAIL: TestEditOrchestration.test_explicit_edit_uses_current_version_and_accepts_only_after_cb03_receipt
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_edit_orchestration.py", line 163, in test_explicit_edit_uses_current_version_and_accepts_only_after_cb03_receipt
+    self.assertEqual(result["status"], "completed")
+AssertionError: 'failed' != 'completed'
+- failed
++ completed
+
+ 
+2026-11-09 01:29:50,031 57272 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_facade_fails_closed_while_srs_external_processing_gate_is_open ... 
+2026-11-09 01:29:50,101 57272 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_out_of_scope_candidate_is_not_accepted ... 
+2026-11-09 01:29:50,471 57272 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_provider_failure_does_not_register_candidate_or_advance_current ... 
+2026-11-09 01:29:50,571 57272 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_two_successive_edits_use_successive_accepted_workbook_versions ... 
+2026-11-09 01:29:51,287 57272 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: ====================================================================== 
+2026-11-09 01:29:51,287 57272 ERROR odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: FAIL: TestEditOrchestration.test_two_successive_edits_use_successive_accepted_workbook_versions
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_edit_orchestration.py", line 239, in test_two_successive_edits_use_successive_accepted_workbook_versions
+    self.assertEqual(first["operation_status"], "accepted_current")
+AssertionError: 'candidate_execution_failed' != 'accepted_current'
+- candidate_execution_failed
++ accepted_current
+
+ 
+2026-11-09 01:29:51,289 57272 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_verified_candidate_review_accept_and_reject_are_user_bound ... 
+2026-11-09 01:29:51,747 57272 INFO odoo18ce odoo.addons.base.models.ir_attachment: filestore gc 11 checked, 11 removed 
+2026-11-09 01:29:51,752 57272 WARNING odoo18ce odoo.tests.common: A child process was found, terminating it: psutil.Process(pid=57301, name='Python', status='running', started='01:29:49') 
+2026-11-09 01:30:01,790 57272 ERROR odoo18ce odoo.sql_db: bad query: b' UPDATE "ir_module_module"\n                    SET "state" = "__tmp"."state"::VARCHAR, "write_date" = "__tmp"."write_date"::timestamp, "write_uid" = "__tmp"."write_uid"::int4\n                    FROM (VALUES (739, \'installed\', \'2026-11-09 01:29:49.010103\', 1)) AS "__tmp"("id", "state", "write_date", "write_uid")\n                    WHERE "ir_module_module"."id" = "__tmp"."id"\n                '
+ERROR: could not serialize access due to concurrent update
+ 
+2026-11-09 01:30:01,793 57272 WARNING odoo18ce odoo.modules.loading: Transient module states were reset 
+2026-11-09 01:30:01,793 57272 ERROR odoo18ce odoo.modules.registry: Failed to load registry 
+2026-11-09 01:30:01,793 57272 CRITICAL odoo18ce odoo.service.server: Failed to initialize database `odoo18ce`. 
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+                        ^^^^^^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 305, in load_module_graph
+    module.env.flush_all()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/api.py", line 862, in flush_all
+    self[model_name].flush_model()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/models.py", line 6774, in flush_model
+    self._flush(fnames)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/models.py", line 6852, in _flush
+    model.browse(some_ids)._write_multi(vals_list)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/models.py", line 4938, in _write_multi
+    self.env.execute_query(SQL(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/api.py", line 993, in execute_query
+    self.cr.execute(query)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/sql_db.py", line 371, in execute
+    res = self._obj.execute(query, params)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.SerializationFailure: could not serialize access due to concurrent update
+
+2026-11-09 01:30:01,795 57272 INFO odoo18ce odoo.service.server: Initiating shutdown 
+2026-11-09 01:30:01,796 57272 INFO odoo18ce odoo.service.server: Hit CTRL-C again or send a second signal to force the shutdown. 
+2026-11-09 01:30:01,827 57272 INFO odoo18ce odoo.sql_db: ConnectionPool(read/write;used=0/count=0/max=64): Closed 2 connections  
+2026-11-09 01:30:01,836 57272 INFO odoo18ce odoo.service.server: A child process was found, pid is psutil.Process(pid=57301, name='Python', status='running', started='01:29:49'), process may hang 

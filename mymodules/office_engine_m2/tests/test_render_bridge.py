@@ -1,5 +1,6 @@
 import base64
-from contextlib import nullcontext
+import hashlib
+import json
 from io import BytesIO
 import re
 from unittest.mock import patch
@@ -98,7 +99,10 @@ class TestOfficeRenderBridge(TransactionCase):
         return session, thread, message, attachment, target, preview["revision"]
 
     def _synthetic_context(self):
-        return nullcontext()
+        # Odoo TransactionCase forbids committing its shared test cursor. The
+        # RenderBridge tests mock the independent M1 worker, so model the
+        # checkpoint boundary without committing test fixtures.
+        return patch.object(self.env.cr, "commit")
 
     def test_preview_filename_uses_any_target_model_display_name(self):
         session, _thread, _message, _source, target, _revision = self._session()
@@ -111,13 +115,38 @@ class TestOfficeRenderBridge(TransactionCase):
         session, thread, message, source, target, revision = self._session()
         request_model = self.env["office.document.request"]
         source_hash = session.template_fingerprint
-        output_bytes = b"synthetic-m1-output"
         calls = []
 
-        def fake_m1(_request_recordset, request_uuid, source_attachment_id, plan, thread_id, message_id):
+        def fake_m1(
+            _request_recordset, request_uuid, source_attachment_id, plan, thread_id,
+            message_id, version_binding=None,
+        ):
             calls.append((request_uuid, plan, source_attachment_id, thread_id, message_id))
+            from odoo.addons.office_engine_m2.services.workbook_version_service import (
+                M1_VALIDATOR_POLICY_VERSION,
+            )
+            from odoo.addons.office_engine_odoo.models.office_document_request import _resource_budget
+
             request = request_model.search([("request_uuid", "=", request_uuid)], limit=1)
             if not request:
+                candidate = render_candidate(
+                    source.raw,
+                    source.name,
+                    source.mimetype,
+                    plan,
+                    _resource_budget(),
+                )
+                report = candidate.verification["office_verify"]
+                output_bytes = candidate.content
+                output_hash = candidate.candidate_sha256
+                report_digest = hashlib.sha256(
+                    json.dumps(
+                        {"policy": M1_VALIDATOR_POLICY_VERSION, "report": report},
+                        sort_keys=True,
+                        separators=(",", ":"),
+                        ensure_ascii=False,
+                    ).encode("utf-8")
+                ).hexdigest()
                 with _internal_mutation():
                     request = request_model.create(
                         {
@@ -144,8 +173,18 @@ class TestOfficeRenderBridge(TransactionCase):
                     request.write(
                         {
                             "output_attachment_id": output.id,
-                            "output_sha256": source_hash,
+                            "output_sha256": output_hash,
                             "state": "generated",
+                            "m1_validation_status": "VERIFIED",
+                            "m1_validator_policy_version": M1_VALIDATOR_POLICY_VERSION,
+                            "m1_validation_report_id": report_digest,
+                            "m1_validation_report_sha256": report_digest,
+                            "m1_validation_input_sha256": source_hash,
+                            "m1_validation_output_sha256": output_hash,
+                            "m1_validation_completed_at": "2026-11-06 09:00:00",
+                            "m1_version_session_id": version_binding["session_id"],
+                            "m1_version_session_revision": version_binding["session_revision"],
+                            "m1_version_proposal_revision": version_binding["proposal_revision"],
                         }
                     )
             else:
@@ -170,6 +209,13 @@ class TestOfficeRenderBridge(TransactionCase):
         self.assertEqual(session.state, "completed")
         self.assertTrue(result["download_url"].endswith("?download=true"))
         self.assertEqual(result["output_attachment_id"], duplicate["output_attachment_id"])
+        self.assertEqual(result["workbook_version_state"], "finalized")
+        self.assertEqual(duplicate["workbook_version_id"], result["workbook_version_id"])
+        self.assertEqual(session.current_version_id.id, result["workbook_version_id"])
+        version = self.env["office.workbook.version"].browse(result["workbook_version_id"])
+        self.assertEqual(version.delivery_state, "delivered")
+        self.assertEqual(version.final_attachment_id.id, result["output_attachment_id"])
+        self.assertEqual(version.final_message_id.id, result["delivery_message_id"])
         self.assertEqual(result["filename"], duplicate["filename"])
         self.assertEqual(result["mimetype"], duplicate["mimetype"])
         self.assertTrue(duplicate["delivery_message_id"])
@@ -302,7 +348,11 @@ class TestOfficeRenderBridge(TransactionCase):
             _thread_id,
             _message_id,
             preprocessing=None,
+            version_binding=None,
         ):
+            self.assertEqual(version_binding["session_id"], session.id)
+            self.assertEqual(version_binding["session_revision"], session.revision)
+            self.assertEqual(version_binding["proposal_revision"], session.proposal_revision)
             render_source = (
                 expand_repeat_rows(source_bytes, preprocessing, resource_budget).content
                 if preprocessing
@@ -578,6 +628,91 @@ class TestOfficeRenderBridge(TransactionCase):
         self.assertEqual(delivered.model, session.thread_id._name)
         self.assertEqual(delivered.res_id, session.thread_id.id)
         self.assertIn(output, delivered.attachment_ids)
+
+    def test_m1_finalize_commits_generating_checkpoint_before_subcursor_handoff_and_registers_v1(self):
+        session, thread, message, source, _target, revision = self._session()
+        events = []
+        generated_output = source.raw
+
+        def fake_commit():
+            events.append("checkpoint_commit" if not events else "post_worker_snapshot_rebase")
+
+        def fake_m1(
+            request_model, request_uuid, source_attachment_id, _plan, thread_id,
+            input_message_id, version_binding=None, **_kwargs,
+        ):
+            events.append("subcursor_handoff")
+            self.assertEqual(events, ["checkpoint_commit", "subcursor_handoff"])
+            self.assertEqual(session.state, "generating")
+            self.assertEqual(version_binding["session_revision"], session.revision)
+            from odoo.addons.office_engine_odoo.models.office_document_request import (
+                M1_VALIDATOR_POLICY_VERSION,
+                _internal_mutation,
+            )
+
+            input_sha = hashlib.sha256(source.raw or b"").hexdigest()
+            output_sha = hashlib.sha256(generated_output).hexdigest()
+            report_digest = hashlib.sha256((input_sha + output_sha + request_uuid).encode()).hexdigest()
+            with _internal_mutation():
+                request = request_model.create({
+                    "request_uuid": request_uuid,
+                    "owner_id": self.env.uid,
+                    "thread_id": thread_id,
+                    "input_message_id": input_message_id,
+                    "source_attachment_id": source_attachment_id,
+                    "input_sha256": input_sha,
+                })
+                request.write({"state": "validating"})
+                request.write({"state": "processing"})
+                output = self.env["ir.attachment"].create({
+                    "name": "synthetic-m1-v1.xlsx",
+                    "type": "binary",
+                    "raw": generated_output,
+                    "mimetype": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    "company_id": session.company_id.id,
+                    "public": False,
+                    "res_model": request._name,
+                    "res_id": request.id,
+                })
+                request.write({
+                    "state": "generated",
+                    "output_attachment_id": output.id,
+                    "output_sha256": output_sha,
+                    "m1_validation_status": "VERIFIED",
+                    "m1_validator_policy_version": M1_VALIDATOR_POLICY_VERSION,
+                    "m1_validation_report_id": report_digest,
+                    "m1_validation_report_sha256": report_digest,
+                    "m1_validation_input_sha256": input_sha,
+                    "m1_validation_output_sha256": output_sha,
+                    "m1_validation_completed_at": "2026-11-09 00:00:00",
+                    "m1_version_session_id": session.id,
+                    "m1_version_session_revision": version_binding["session_revision"],
+                    "m1_version_proposal_revision": version_binding["proposal_revision"],
+                })
+            delivery_message_id = request_model._ensure_output_delivery_message(request.id)
+            return {
+                "state": "generated", "request_uuid": request_uuid,
+                "output_attachment_id": output.id, "filename": output.name,
+                "mimetype": output.mimetype, "delivery_message_id": delivery_message_id,
+            }
+
+        with patch.object(self.env.cr, "commit", side_effect=fake_commit):
+            with patch.object(type(self.env["office.document.request"]), "_render_request_sync", fake_m1):
+                result = render_confirmed_mapping(self.env, session.id, revision)
+
+        session.invalidate_recordset()
+        self.assertEqual(
+            events,
+            ["checkpoint_commit", "subcursor_handoff", "post_worker_snapshot_rebase"],
+        )
+        self.assertEqual(result["state"], "completed", result)
+        self.assertEqual(result["workbook_version_state"], "finalized", result)
+        self.assertTrue(result["workbook_version_id"])
+        self.assertEqual(session.current_version_id.id, result["workbook_version_id"])
+        self.assertEqual(session.last_valid_version_id.id, result["workbook_version_id"])
+        self.assertEqual(session.document_revision, 1)
+        self.assertEqual(session.current_version_id.version_no, 1)
+        self.assertEqual(session.current_version_id.validation_result, "VERIFIED")
 
     def test_m1_committed_output_is_not_requeried_from_parent_snapshot(self):
         """M1 commits on another cursor; this transaction may not see its output row."""

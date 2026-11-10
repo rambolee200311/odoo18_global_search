@@ -1,0 +1,24 @@
+{
+  "assertions": {
+    "Inventory!B2_numeric_15": true,
+    "Inventory!C2_KEEP": true,
+    "Inventory!D2_formula_text": true,
+    "Inventory_other_rows_unchanged": true,
+    "Notes_values_unchanged": true,
+    "both_zip_containers_valid": true,
+    "no_non_target_value_type_or_style_changes": true
+  },
+  "changed_cells": [
+    "Inventory!B2"
+  ],
+  "formula_recalculation": "NOT TESTED",
+  "input_bytes": 5563,
+  "input_sha256": "756a1ffa467e24da035952cbbf63c5d1c0ad8d47bf53bf17a4b8e4613e95d82b",
+  "output_bytes": 5567,
+  "output_sha256": "9b2a7c48928737a0a8ee7878770e7206bafbc394f2631a764e1b0ece55f8266f",
+  "sheetnames": [
+    "Inventory",
+    "Notes"
+  ],
+  "verification": "PASS"
+}

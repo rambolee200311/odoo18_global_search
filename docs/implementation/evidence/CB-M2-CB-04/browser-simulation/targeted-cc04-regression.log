@@ -1,0 +1,501 @@
+2026-11-09 03:41:32,317 63871 INFO ? odoo: Odoo version 18.0 
+2026-11-09 03:41:32,317 63871 INFO ? odoo: Using configuration file at /Users/lijianqiang/Documents/odoo18_global_search/odoo.conf 
+2026-11-09 03:41:32,317 63871 INFO ? odoo: addons paths: ['/Users/lijianqiang/Documents/odoo18_global_search/odoo/addons', '/Users/lijianqiang/Library/Application Support/Odoo/addons/18.0', '/Users/lijianqiang/Documents/odoo18_global_search/addons', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/odoo-llm', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/queue'] 
+2026-11-09 03:41:32,317 63871 INFO ? odoo: database: odoo@127.0.0.1:5555 
+2026-11-09 03:41:32,390 63871 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltopdf to print a pdf version of the reports. 
+2026-11-09 03:41:32,392 63871 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltoimage to generate images from html. 
+2026-11-09 03:41:32,477 63871 INFO ? odoo.addons.queue_job.post_load: Apply Request._get_session_and_dbname monkey patch to capture db from request with multiple databases 
+2026-11-09 03:41:32,479 63871 INFO ? odoo.service.server: HTTP service (werkzeug) running on localhost:50328 
+2026-11-09 03:41:32,493 63871 INFO odoo18ce odoo.tests.common: Importing test framework 
+2026-11-09 03:41:32,531 63871 INFO odoo18ce odoo.modules.loading: loading 1 modules... 
+2026-11-09 03:41:32,533 63871 INFO odoo18ce odoo.modules.loading: 1 modules loaded in 0.00s, 0 queries (+0 extra) 
+2026-11-09 03:41:32,543 63871 INFO odoo18ce odoo.modules.loading: updating modules list 
+2026-11-09 03:41:32,545 63871 INFO odoo18ce odoo.addons.base.models.ir_module: ALLOW access to module.update_list on [] to user __system__ #1 via n/a 
+2026-11-09 03:41:33,318 63871 INFO odoo18ce odoo.addons.base.models.ir_module: ALLOW access to module.button_upgrade on ['Office Engine M2 Orchestration'] to user __system__ #1 via n/a 
+2026-11-09 03:41:33,319 63871 INFO odoo18ce odoo.addons.base.models.ir_module: ALLOW access to module.update_list on ['Office Engine M2 Orchestration'] to user __system__ #1 via n/a 
+2026-11-09 03:41:33,562 63871 INFO odoo18ce odoo.addons.base.models.ir_module: ALLOW access to module.button_install on [] to user __system__ #1 via n/a 
+2026-11-09 03:41:33,571 63871 WARNING odoo18ce odoo.modules.graph: module wd_qooling_app: not installable, skipped 
+2026-11-09 03:41:33,571 63871 WARNING odoo18ce odoo.modules.graph: module wd_advanced_m2o_record_panel: not installable, skipped 
+2026-11-09 03:41:33,572 63871 WARNING odoo18ce odoo.modules.graph: module wd_evidence_album: not installable, skipped 
+2026-11-09 03:41:33,572 63871 INFO odoo18ce odoo.modules.loading: loading 89 modules... 
+2026-11-09 03:41:34,185 63871 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x111e5c9e0, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/llm_thread.py', line 14, code <module>> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/__init__.py", line 1, in <module>
+    from . import models
+  File "<frozen importlib._bootstrap>", line 1232, in _handle_fromlist
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/__init__.py", line 3, in <module>
+    from . import llm_thread
+  File "<frozen importlib._bootstrap>", line 1232, in _handle_fromlist
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/llm_thread.py", line 14, in <module>
+    _REJECT_MESSAGE = _(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-09 03:41:34,220 63871 INFO odoo18ce odoo.modules.loading: Loading module office_engine_m2 (64/89) 
+2026-11-09 03:41:34,350 63871 INFO odoo18ce odoo.modules.registry: module office_engine_m2: creating or updating database tables 
+2026-11-09 03:41:34,441 63871 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/security/office_engine_m2_groups.xml 
+2026-11-09 03:41:34,444 63871 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/data/office_tools.xml 
+2026-11-09 03:41:34,447 63871 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/security/office_mapping_session_rules.xml 
+2026-11-09 03:41:34,452 63871 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/security/office_workbook_version_rules.xml 
+2026-11-09 03:41:34,454 63871 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/security/office_export_skill_rules.xml 
+2026-11-09 03:41:34,456 63871 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/security/ir.model.access.csv 
+2026-11-09 03:41:34,687 63871 INFO odoo18ce odoo.addons.base.models.ir_module: module office_engine_m2: no translation for language zh_CN 
+2026-11-09 03:41:34,687 63871 INFO odoo18ce odoo.addons.base.models.ir_module: module office_engine_m2: no translation for language nl_NL 
+2026-11-09 03:41:34,870 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_confirmed_broad_scope_runs_only_after_exact_reply_and_keeps_receipt_bound ... 
+2026-11-09 03:41:35,387 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_explicit_edit_uses_current_version_and_accepts_only_after_cb03_receipt ... 
+2026-11-09 03:41:35,789 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_explicit_single_cell_replacement_risk_is_covered_by_exact_user_intent ... 
+2026-11-09 03:41:36,203 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_facade_fails_closed_while_srs_external_processing_gate_is_open ... 
+2026-11-09 03:41:36,298 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_out_of_scope_candidate_is_not_accepted ... 
+2026-11-09 03:41:36,699 63871 WARNING odoo18ce odoo.addons.office_engine_m2.services.edit_orchestrator: Office Candidate validation did not verify candidate_id=654 result=FAILED error=None 
+2026-11-09 03:41:36,702 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_provider_failure_does_not_register_candidate_or_advance_current ... 
+2026-11-09 03:41:36,821 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_two_successive_edits_use_successive_accepted_workbook_versions ... 
+2026-11-09 03:41:37,583 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_verified_candidate_review_accept_and_reject_are_user_bound ... 
+2026-11-09 03:41:38,034 63871 INFO odoo18ce odoo.addons.base.models.ir_attachment: filestore gc 19 checked, 19 removed 
+2026-11-09 03:41:38,039 63871 WARNING odoo18ce odoo.tests.common: A child process was found, terminating it: psutil.Process(pid=63895, name='Python', status='running', started='03:41:35') 
+2026-11-09 03:41:48,112 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_render_bridge: Starting TestOfficeRenderBridge.test_completed_card_reload_restores_verified_download_link ... 
+2026-11-09 03:41:48,162 63871 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 28335]], fields=['name'], limit=1, offset=0, order=None 
+2026-11-09 03:41:49,057 63871 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 28335]], fields=['name'], limit=1, offset=0, order=None 
+2026-11-09 03:41:49,406 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_render_bridge: Starting TestOfficeRenderBridge.test_completed_finalize_uses_persisted_request_identity ... 
+2026-11-09 03:41:49,444 63871 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 28336]], fields=['name'], limit=1, offset=0, order=None 
+2026-11-09 03:41:50,171 63871 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x1131708b0, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py', line 511, code register_initial_v1> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 284, in load_module_graph
+    test_results = loader.run_suite(suite, global_report=report)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/loader.py", line 118, in run_suite
+    suite(results)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/suite.py", line 47, in run
+    test(result)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/case.py", line 678, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 357, in run
+    super().run(result)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 216, in run
+    self._callTestMethod(testMethod)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 184, in _callTestMethod
+    method()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_render_bridge.py", line 619, in test_completed_finalize_uses_persisted_request_identity
+    result = render_confirmed_mapping(self.env, session.id, revision)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/render_bridge.py", line 650, in render_confirmed_mapping
+    version_result = _register_initial_workbook_version(env, session, final_request_uuid)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/render_bridge.py", line 157, in _register_initial_workbook_version
+    version = register_initial_v1(env, session.id, request.id)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py", line 511, in register_initial_v1
+    raise ValidationError(_("The M1 output has no supported persistent validation proof."))
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-09 03:41:50,172 63871 ERROR odoo18ce odoo.addons.office_engine_m2.services.render_bridge: M1 output remains outside workbook version lineage; session_id=11595 request_uuid=e5728a51-e6c8-4dc9-be79-e6a0f7fa060c 
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/render_bridge.py", line 157, in _register_initial_workbook_version
+    version = register_initial_v1(env, session.id, request.id)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py", line 511, in register_initial_v1
+    raise ValidationError(_("The M1 output has no supported persistent validation proof."))
+odoo.exceptions.ValidationError: The M1 output has no supported persistent validation proof.
+2026-11-09 03:41:50,174 63871 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x1131b7e40, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/office_document_request.py', line 180, code _ensure_output_chat_message> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 284, in load_module_graph
+    test_results = loader.run_suite(suite, global_report=report)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/loader.py", line 118, in run_suite
+    suite(results)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/suite.py", line 47, in run
+    test(result)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/case.py", line 678, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 357, in run
+    super().run(result)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 216, in run
+    self._callTestMethod(testMethod)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 184, in _callTestMethod
+    method()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_render_bridge.py", line 619, in test_completed_finalize_uses_persisted_request_identity
+    result = render_confirmed_mapping(self.env, session.id, revision)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/render_bridge.py", line 651, in render_confirmed_mapping
+    delivery_message_id = env["office.document.request"]._ensure_output_delivery_message(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/office_document_request.py", line 292, in _ensure_output_delivery_message
+    message_id, _created = _ensure_output_chat_message(self.env, request)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/office_document_request.py", line 180, in _ensure_output_chat_message
+    body=_("已生成并归档正式 Office 文件。"),
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-09 03:41:50,188 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_render_bridge: Starting TestOfficeRenderBridge.test_confirmed_revision_retrieves_fresh_data_and_calls_m1_idempotently ... 
+2026-11-09 03:41:50,221 63871 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 28337]], fields=['name'], limit=1, offset=0, order=None 
+2026-11-09 03:41:50,926 63871 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 28337]], fields=['name'], limit=1, offset=0, order=None 
+2026-11-09 03:41:51,259 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_render_bridge: ====================================================================== 
+2026-11-09 03:41:51,259 63871 ERROR odoo18ce odoo.addons.office_engine_m2.tests.test_render_bridge: FAIL: TestOfficeRenderBridge.test_confirmed_revision_retrieves_fresh_data_and_calls_m1_idempotently
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_render_bridge.py", line 202, in test_confirmed_revision_retrieves_fresh_data_and_calls_m1_idempotently
+    result = render_confirmed_mapping(self.env, session.id, revision)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/render_bridge.py", line 723, in render_confirmed_mapping
+    env.cr.commit()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 1061, in forbidden
+    raise AssertionError('Cannot commit or rollback a cursor from inside a test, this will lead to a broken cursor when trying to rollback the test. Please rollback to a specific savepoint instead or open another cursor if really necessary')
+AssertionError: Cannot commit or rollback a cursor from inside a test, this will lead to a broken cursor when trying to rollback the test. Please rollback to a specific savepoint instead or open another cursor if really necessary
+ 
+2026-11-09 03:41:51,261 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_render_bridge: Starting TestOfficeRenderBridge.test_failed_finalize_can_retry_with_a_new_idempotency_key ... 
+2026-11-09 03:41:51,295 63871 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 28338]], fields=['name'], limit=1, offset=0, order=None 
+2026-11-09 03:41:51,988 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_render_bridge: ====================================================================== 
+2026-11-09 03:41:51,988 63871 ERROR odoo18ce odoo.addons.office_engine_m2.tests.test_render_bridge: FAIL: TestOfficeRenderBridge.test_failed_finalize_can_retry_with_a_new_idempotency_key
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_render_bridge.py", line 503, in test_failed_finalize_can_retry_with_a_new_idempotency_key
+    first = render_confirmed_mapping(self.env, session.id, revision)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/render_bridge.py", line 723, in render_confirmed_mapping
+    env.cr.commit()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 1061, in forbidden
+    raise AssertionError('Cannot commit or rollback a cursor from inside a test, this will lead to a broken cursor when trying to rollback the test. Please rollback to a specific savepoint instead or open another cursor if really necessary')
+AssertionError: Cannot commit or rollback a cursor from inside a test, this will lead to a broken cursor when trying to rollback the test. Please rollback to a specific savepoint instead or open another cursor if really necessary
+ 
+2026-11-09 03:41:51,990 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_render_bridge: Starting TestOfficeRenderBridge.test_generated_output_without_chat_message_retries_same_request ... 
+2026-11-09 03:41:52,022 63871 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 28339]], fields=['name'], limit=1, offset=0, order=None 
+2026-11-09 03:41:52,752 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_render_bridge: ====================================================================== 
+2026-11-09 03:41:52,752 63871 ERROR odoo18ce odoo.addons.office_engine_m2.tests.test_render_bridge: FAIL: TestOfficeRenderBridge.test_generated_output_without_chat_message_retries_same_request
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_render_bridge.py", line 553, in test_generated_output_without_chat_message_retries_same_request
+    first = render_confirmed_mapping(self.env, session.id, revision)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/render_bridge.py", line 723, in render_confirmed_mapping
+    env.cr.commit()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 1061, in forbidden
+    raise AssertionError('Cannot commit or rollback a cursor from inside a test, this will lead to a broken cursor when trying to rollback the test. Please rollback to a specific savepoint instead or open another cursor if really necessary')
+AssertionError: Cannot commit or rollback a cursor from inside a test, this will lead to a broken cursor when trying to rollback the test. Please rollback to a specific savepoint instead or open another cursor if really necessary
+ 
+2026-11-09 03:41:52,754 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_render_bridge: Starting TestOfficeRenderBridge.test_list_rows_expand_to_explicit_m1_writes_in_relation_order ... 
+2026-11-09 03:41:52,788 63871 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 28340]], fields=['name'], limit=1, offset=0, order=None 
+2026-11-09 03:41:53,857 63871 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['parent_id', '=', 28340]], fields=['name'], limit=3, offset=0, order=None 
+2026-11-09 03:41:53,859 63871 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 28340]], fields=['name'], limit=1, offset=0, order=None 
+2026-11-09 03:41:55,214 63871 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['parent_id', '=', 28340]], fields=['name'], limit=3, offset=0, order=None 
+2026-11-09 03:41:55,216 63871 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 28340]], fields=['name'], limit=1, offset=0, order=None 
+2026-11-09 03:41:55,867 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_render_bridge: ====================================================================== 
+2026-11-09 03:41:55,867 63871 ERROR odoo18ce odoo.addons.office_engine_m2.tests.test_render_bridge: FAIL: TestOfficeRenderBridge.test_list_rows_expand_to_explicit_m1_writes_in_relation_order
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_render_bridge.py", line 383, in test_list_rows_expand_to_explicit_m1_writes_in_relation_order
+    result = render_confirmed_mapping(self.env, session.id, confirmed["revision"])
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/render_bridge.py", line 723, in render_confirmed_mapping
+    env.cr.commit()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 1061, in forbidden
+    raise AssertionError('Cannot commit or rollback a cursor from inside a test, this will lead to a broken cursor when trying to rollback the test. Please rollback to a specific savepoint instead or open another cursor if really necessary')
+AssertionError: Cannot commit or rollback a cursor from inside a test, this will lead to a broken cursor when trying to rollback the test. Please rollback to a specific savepoint instead or open another cursor if really necessary
+ 
+2026-11-09 03:41:55,869 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_render_bridge: Starting TestOfficeRenderBridge.test_m1_committed_output_is_not_requeried_from_parent_snapshot ... 
+2026-11-09 03:41:55,904 63871 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 28344]], fields=['name'], limit=1, offset=0, order=None 
+2026-11-09 03:41:56,597 63871 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 28344]], fields=['name'], limit=1, offset=0, order=None 
+2026-11-09 03:41:56,930 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_render_bridge: ====================================================================== 
+2026-11-09 03:41:56,931 63871 ERROR odoo18ce odoo.addons.office_engine_m2.tests.test_render_bridge: FAIL: TestOfficeRenderBridge.test_m1_committed_output_is_not_requeried_from_parent_snapshot
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_render_bridge.py", line 728, in test_m1_committed_output_is_not_requeried_from_parent_snapshot
+    result = render_confirmed_mapping(self.env, session.id, revision)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/render_bridge.py", line 723, in render_confirmed_mapping
+    env.cr.commit()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 1061, in forbidden
+    raise AssertionError('Cannot commit or rollback a cursor from inside a test, this will lead to a broken cursor when trying to rollback the test. Please rollback to a specific savepoint instead or open another cursor if really necessary')
+AssertionError: Cannot commit or rollback a cursor from inside a test, this will lead to a broken cursor when trying to rollback the test. Please rollback to a specific savepoint instead or open another cursor if really necessary
+ 
+2026-11-09 03:41:56,933 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_render_bridge: Starting TestOfficeRenderBridge.test_m1_delivery_exception_returns_retryable_failure_and_preserves_preview ... 
+2026-11-09 03:41:56,967 63871 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 28345]], fields=['name'], limit=1, offset=0, order=None 
+2026-11-09 03:41:57,664 63871 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 28345]], fields=['name'], limit=1, offset=0, order=None 
+2026-11-09 03:41:57,997 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_render_bridge: ====================================================================== 
+2026-11-09 03:41:57,997 63871 ERROR odoo18ce odoo.addons.office_engine_m2.tests.test_render_bridge: FAIL: TestOfficeRenderBridge.test_m1_delivery_exception_returns_retryable_failure_and_preserves_preview
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_render_bridge.py", line 469, in test_m1_delivery_exception_returns_retryable_failure_and_preserves_preview
+    result = render_confirmed_mapping(self.env, session.id, revision)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/render_bridge.py", line 723, in render_confirmed_mapping
+    env.cr.commit()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 1061, in forbidden
+    raise AssertionError('Cannot commit or rollback a cursor from inside a test, this will lead to a broken cursor when trying to rollback the test. Please rollback to a specific savepoint instead or open another cursor if really necessary')
+AssertionError: Cannot commit or rollback a cursor from inside a test, this will lead to a broken cursor when trying to rollback the test. Please rollback to a specific savepoint instead or open another cursor if really necessary
+ 
+2026-11-09 03:41:57,999 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_render_bridge: Starting TestOfficeRenderBridge.test_m1_failure_preserves_confirmation_state_and_returns_no_download ... 
+2026-11-09 03:41:58,034 63871 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 28346]], fields=['name'], limit=1, offset=0, order=None 
+2026-11-09 03:41:58,726 63871 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 28346]], fields=['name'], limit=1, offset=0, order=None 
+2026-11-09 03:41:59,059 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_render_bridge: ====================================================================== 
+2026-11-09 03:41:59,059 63871 ERROR odoo18ce odoo.addons.office_engine_m2.tests.test_render_bridge: FAIL: TestOfficeRenderBridge.test_m1_failure_preserves_confirmation_state_and_returns_no_download
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_render_bridge.py", line 428, in test_m1_failure_preserves_confirmation_state_and_returns_no_download
+    result = render_confirmed_mapping(self.env, session.id, revision)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/render_bridge.py", line 723, in render_confirmed_mapping
+    env.cr.commit()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 1061, in forbidden
+    raise AssertionError('Cannot commit or rollback a cursor from inside a test, this will lead to a broken cursor when trying to rollback the test. Please rollback to a specific savepoint instead or open another cursor if really necessary')
+AssertionError: Cannot commit or rollback a cursor from inside a test, this will lead to a broken cursor when trying to rollback the test. Please rollback to a specific savepoint instead or open another cursor if really necessary
+ 
+2026-11-09 03:41:59,062 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_render_bridge: Starting TestOfficeRenderBridge.test_m1_finalize_commits_generating_checkpoint_before_subcursor_handoff_and_registers_v1 ... 
+2026-11-09 03:41:59,097 63871 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 28347]], fields=['name'], limit=1, offset=0, order=None 
+2026-11-09 03:41:59,790 63871 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 28347]], fields=['name'], limit=1, offset=0, order=None 
+2026-11-09 03:42:00,130 63871 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x1131b7d40, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/office_document_request.py', line 180, code _ensure_output_chat_message> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 284, in load_module_graph
+    test_results = loader.run_suite(suite, global_report=report)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/loader.py", line 118, in run_suite
+    suite(results)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/suite.py", line 47, in run
+    test(result)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/case.py", line 678, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 357, in run
+    super().run(result)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 216, in run
+    self._callTestMethod(testMethod)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 184, in _callTestMethod
+    method()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_render_bridge.py", line 699, in test_m1_finalize_commits_generating_checkpoint_before_subcursor_handoff_and_registers_v1
+    result = render_confirmed_mapping(self.env, session.id, revision)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/render_bridge.py", line 729, in render_confirmed_mapping
+    result = env["office.document.request"]._render_request_sync(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_render_bridge.py", line 690, in fake_m1
+    delivery_message_id = request_model._ensure_output_delivery_message(request.id)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/office_document_request.py", line 292, in _ensure_output_delivery_message
+    message_id, _created = _ensure_output_chat_message(self.env, request)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/office_document_request.py", line 180, in _ensure_output_chat_message
+    body=_("已生成并归档正式 Office 文件。"),
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-09 03:42:00,152 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_render_bridge: Starting TestOfficeRenderBridge.test_preview_filename_uses_any_target_model_display_name ... 
+2026-11-09 03:42:00,185 63871 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 28348]], fields=['name'], limit=1, offset=0, order=None 
+2026-11-09 03:42:00,878 63871 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_render_bridge: Starting TestOfficeRenderBridge.test_retriever_failure_stops_before_m1_and_does_not_complete_session ... 
+2026-11-09 03:42:00,908 63871 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 28349]], fields=['name'], limit=1, offset=0, order=None 
+2026-11-09 03:42:01,623 63871 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x113145cc0, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/ai_orchestrator.py', line 119, code _retrieve_record> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 284, in load_module_graph
+    test_results = loader.run_suite(suite, global_report=report)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/loader.py", line 118, in run_suite
+    suite(results)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/suite.py", line 47, in run
+    test(result)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/case.py", line 678, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 357, in run
+    super().run(result)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 216, in run
+    self._callTestMethod(testMethod)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 184, in _callTestMethod
+    method()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_render_bridge.py", line 447, in test_retriever_failure_stops_before_m1_and_does_not_complete_session
+    render_confirmed_mapping(self.env, session.id, revision)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/render_bridge.py", line 677, in render_confirmed_mapping
+    plan, data_fingerprint, summary = _compile_plan(env, session)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/render_bridge.py", line 267, in _compile_plan
+    values = _retrieve_record(env, session, mapped_root_fields) if mapped_root_fields else {}
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/ai_orchestrator.py", line 119, in _retrieve_record
+    raise UserError(_("The target record could not be retrieved.")) from exc
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-09 03:42:01,739 63871 INFO odoo18ce odoo.addons.base.models.ir_attachment: filestore gc 26 checked, 26 removed 
+2026-11-09 03:42:01,744 63871 WARNING odoo18ce odoo.tests.common: A child process was found, terminating it: psutil.Process(pid=63895, name='Python', status='running', started='03:41:35') 
+2026-11-09 03:42:11,791 63871 INFO odoo18ce odoo.modules.loading: Module office_engine_m2 loaded in 37.57s (incl. 37.04s test), 219 queries (+4306 test, +219 other) 
+2026-11-09 03:42:11,792 63871 ERROR odoo18ce odoo.modules.loading: Module office_engine_m2: 7 failures, 0 errors of 20 tests 
+2026-11-09 03:42:11,874 63871 INFO odoo18ce odoo.modules.loading: 89 modules loaded in 38.30s, 219 queries (+4525 extra) 
+2026-11-09 03:42:11,875 63871 WARNING odoo18ce odoo.modules.graph: module wd_qooling_app: not installable, skipped 
+2026-11-09 03:42:11,875 63871 WARNING odoo18ce odoo.modules.graph: module wd_advanced_m2o_record_panel: not installable, skipped 
+2026-11-09 03:42:11,875 63871 WARNING odoo18ce odoo.modules.graph: module wd_evidence_album: not installable, skipped 
+2026-11-09 03:42:11,876 63871 INFO odoo18ce odoo.modules.loading: loading 89 modules... 
+2026-11-09 03:42:11,876 63871 INFO odoo18ce odoo.modules.loading: 89 modules loaded in 0.00s, 0 queries (+0 extra) 
+2026-11-09 03:42:11,877 63871 WARNING odoo18ce odoo.modules.graph: module wd_qooling_app: not installable, skipped 
+2026-11-09 03:42:11,877 63871 WARNING odoo18ce odoo.modules.graph: module wd_advanced_m2o_record_panel: not installable, skipped 
+2026-11-09 03:42:11,877 63871 WARNING odoo18ce odoo.modules.graph: module wd_evidence_album: not installable, skipped 
+2026-11-09 03:42:11,878 63871 INFO odoo18ce odoo.modules.loading: loading 89 modules... 
+2026-11-09 03:42:11,878 63871 INFO odoo18ce odoo.modules.loading: 89 modules loaded in 0.00s, 0 queries (+0 extra) 
+2026-11-09 03:42:11,972 63871 ERROR odoo18ce odoo.modules.loading: Some modules are not loaded, some dependencies or manifest may be missing: ['wd_advanced_m2o_record_panel', 'wd_evidence_album', 'wd_qooling_app'] 
+2026-11-09 03:42:11,986 63871 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.page is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 03:42:11,987 63871 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.config.settings is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 03:42:11,987 63871 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.source.config is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 03:42:11,987 63871 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.source.record.option is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 03:42:11,987 63871 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.media is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 03:42:11,988 63871 INFO odoo18ce odoo.modules.loading: Model wd.preview.configuration is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 03:42:11,988 63871 INFO odoo18ce odoo.modules.loading: Model wd.preview.configuration.line is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 03:42:11,994 63871 INFO odoo18ce odoo.modules.loading: Model wd.qooling.inbound.form is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 03:42:11,994 63871 INFO odoo18ce odoo.modules.loading: Model wd.qooling.media.evidence.mixin is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 03:42:11,997 63871 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.extend.validity.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 03:42:11,997 63871 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 03:42:11,997 63871 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.create.page.upload.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 03:42:11,997 63871 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.source.page.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 03:42:11,997 63871 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.upload.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 03:42:12,000 63871 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.item is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 03:42:12,048 63871 INFO odoo18ce odoo.modules.loading: Model wd.qooling.outbound.form is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 03:42:12,048 63871 INFO odoo18ce odoo.modules.loading: Model wd.qooling.temperature.record is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 03:42:12,048 63871 INFO odoo18ce odoo.modules.loading: Model wd.qooling.temperature.record.line is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 03:42:12,048 63871 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.source.items.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 03:42:12,058 63871 INFO odoo18ce odoo.modules.registry: verifying fields for every extended model 
+2026-11-09 03:42:12,206 63871 ERROR odoo18ce odoo.modules.loading: At least one test failed when loading the modules. 
+2026-11-09 03:42:12,287 63871 INFO odoo18ce odoo.modules.registry: Registry changed, signaling through the database 
+2026-11-09 03:42:12,287 63871 INFO odoo18ce odoo.modules.registry: Registry loaded in 39.808s 
+2026-11-09 03:42:12,287 63871 INFO odoo18ce odoo.service.server: Starting post tests 
+2026-11-09 03:42:12,288 63871 INFO odoo18ce odoo.service.server: 0 post-tests in 0.00s, 0 queries 
+2026-11-09 03:42:12,288 63871 INFO odoo18ce odoo.tests.stats: office_engine_m2: 24 tests 37.03s 4306 queries 
+2026-11-09 03:42:12,288 63871 ERROR odoo18ce odoo.tests.result: 7 failed, 0 error(s) of 20 tests when loading database 'odoo18ce' 
+2026-11-09 03:42:12,288 63871 INFO odoo18ce odoo.service.server: Initiating shutdown 
+2026-11-09 03:42:12,288 63871 INFO odoo18ce odoo.service.server: Hit CTRL-C again or send a second signal to force the shutdown. 
+2026-11-09 03:42:12,632 63871 INFO odoo18ce odoo.sql_db: ConnectionPool(read/write;used=0/count=0/max=64): Closed 2 connections  
+2026-11-09 03:42:12,644 63871 INFO odoo18ce odoo.service.server: A child process was found, pid is psutil.Process(pid=63895, name='Python', status='running', started='03:41:35'), process may hang 

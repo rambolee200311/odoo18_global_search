@@ -1,0 +1,136 @@
+{
+  "defined_names": [],
+  "file": "tv_phase1a2_input.xlsx",
+  "sha256": "5a246ca4c8539ea723294d08689a63731c560b9e9fc87d3100ea0c49a9bb32a0",
+  "sheetnames": [
+    "Inventory",
+    "Notes"
+  ],
+  "sheets": {
+    "Inventory": {
+      "cells": {
+        "A1": {
+          "data_type": "s",
+          "number_format": "General",
+          "style_id": 1,
+          "value": "Product"
+        },
+        "A2": {
+          "data_type": "s",
+          "number_format": "General",
+          "style_id": 0,
+          "value": "ITEM-A"
+        },
+        "A3": {
+          "data_type": "s",
+          "number_format": "General",
+          "style_id": 0,
+          "value": "ITEM-B"
+        },
+        "B1": {
+          "data_type": "s",
+          "number_format": "General",
+          "style_id": 1,
+          "value": "Quantity"
+        },
+        "B2": {
+          "data_type": "n",
+          "number_format": "0",
+          "style_id": 2,
+          "value": 10
+        },
+        "B3": {
+          "data_type": "n",
+          "number_format": "0",
+          "style_id": 2,
+          "value": 20
+        },
+        "C1": {
+          "data_type": "s",
+          "number_format": "General",
+          "style_id": 1,
+          "value": "Unit Price"
+        },
+        "C2": {
+          "data_type": "n",
+          "number_format": "0.00",
+          "style_id": 3,
+          "value": 5
+        },
+        "C3": {
+          "data_type": "n",
+          "number_format": "0.00",
+          "style_id": 3,
+          "value": 8
+        },
+        "D1": {
+          "data_type": "s",
+          "number_format": "General",
+          "style_id": 1,
+          "value": "Amount"
+        },
+        "D2": {
+          "data_type": "f",
+          "number_format": "0.00",
+          "style_id": 3,
+          "value": "=B2*C2"
+        },
+        "D3": {
+          "data_type": "f",
+          "number_format": "0.00",
+          "style_id": 3,
+          "value": "=B3*C3"
+        }
+      },
+      "max_column": 4,
+      "max_row": 3,
+      "merged_ranges": [],
+      "state": "visible"
+    },
+    "Notes": {
+      "cells": {
+        "A1": {
+          "data_type": "s",
+          "number_format": "General",
+          "style_id": 1,
+          "value": "Key"
+        },
+        "A2": {
+          "data_type": "s",
+          "number_format": "General",
+          "style_id": 0,
+          "value": "Source"
+        },
+        "A3": {
+          "data_type": "s",
+          "number_format": "General",
+          "style_id": 0,
+          "value": "Status"
+        },
+        "B1": {
+          "data_type": "s",
+          "number_format": "General",
+          "style_id": 1,
+          "value": "Value"
+        },
+        "B2": {
+          "data_type": "s",
+          "number_format": "General",
+          "style_id": 0,
+          "value": "Synthetic TV"
+        },
+        "B3": {
+          "data_type": "s",
+          "number_format": "General",
+          "style_id": 0,
+          "value": "Original"
+        }
+      },
+      "max_column": 2,
+      "max_row": 3,
+      "merged_ranges": [],
+      "state": "visible"
+    }
+  },
+  "size_bytes": 5708
+}

@@ -419,7 +419,13 @@ class TestPrivateOfficeExportSkill(TransactionCase):
             request_model = self.env["office.document.request"]
             core_budget, verify_budget = _budgets()
 
-            def render_real_engine(_model, request_uuid, source_attachment_id, plan, thread_id, message_id):
+            def render_real_engine(
+                _model, request_uuid, source_attachment_id, plan, thread_id, message_id,
+                version_binding=None,
+            ):
+                self.assertEqual(version_binding["session_id"], second.id)
+                self.assertEqual(version_binding["session_revision"], second.revision)
+                self.assertEqual(version_binding["proposal_revision"], second.proposal_revision)
                 source_attachment = self.env["ir.attachment"].browse(source_attachment_id)
                 candidate = render_candidate(
                     source_attachment.raw, source_attachment.name, XLSX_MIME, plan, core_budget
@@ -442,7 +448,11 @@ class TestPrivateOfficeExportSkill(TransactionCase):
                     "delivery_message_id": 2_100_006_002,
                 }
 
-            with patch.object(
+            # TransactionCase owns a rollback-only cursor and forbids commit.
+            # This test isolates skill reuse and mocks the independent M1 worker,
+            # so keep the checkpoint inside the test transaction. The separate
+            # RenderBridge handoff test verifies checkpoint ordering.
+            with patch.object(self.env.cr, "commit"), patch.object(
                 type(request_model), "_render_request_sync", autospec=True, side_effect=render_real_engine
             ) as m1:
                 result = render_confirmed_mapping(self.env, second.id, confirmed["revision"])

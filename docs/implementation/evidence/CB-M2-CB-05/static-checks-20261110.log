@@ -1,0 +1,15 @@
+CC-M2-CB-05 static checks — 2026-11-10
+
+Command:
+python3 -m py_compile mymodules/office_engine_m2/models/office_mapping_tools.py mymodules/office_engine_m2/services/edit_orchestrator.py mymodules/office_engine_m2/models/llm_thread.py mymodules/office_engine_m2/tests/test_office_retriever_integration.py mymodules/office_engine_m2/tests/test_edit_orchestration.py mymodules/office_engine_m2/tests/__init__.py
+Result: exit 0
+
+Command:
+git diff --check -- mymodules/office_engine_m2/models/office_mapping_tools.py mymodules/office_engine_m2/models/llm_thread.py mymodules/office_engine_m2/tests/test_edit_orchestration.py docs/implementation/CC-M2-CB-05_Existing_Retriever_Integration_v0.2.2.md
+Result: exit 0
+
+Command:
+python3 -c '<trailing-whitespace check for the changed implementation, test, CC, IHR, ATR, HVR, and FR files>'
+Result: none found; exit 0
+
+Odoo TransactionCase, module upgrade, service operation, Provider call, and HVR execution: NOT RUN.

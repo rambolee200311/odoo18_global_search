@@ -1,0 +1,24 @@
+{
+  "accepted_by_message_id": 98067,
+  "artifact": {
+    "path": "/Users/lijianqiang/Documents/odoo18_global_search/docs/implementation/evidence/CB-M2-CB-04/v3-partially-accepted-candidate.xlsx",
+    "sha256": "36c8400c75b9bf48f2a39640ebc1dca83910873875ac481da99f91fb37b3b114",
+    "sheetnames": [
+      "Data"
+    ],
+    "size": 4872
+  },
+  "candidate_version_id": 1503,
+  "current_version_id": 1503,
+  "document_revision": 2,
+  "evidence_class": "Odoo TransactionCase with Mock Provider and synthetic XLSX",
+  "independent_readback": {
+    "Data!A1": 15,
+    "Data!C1": "=A1*2"
+  },
+  "input_sha256": "af984f683772c4e10878b1834fbf9de4fff7fded1583a163b5253ebc40e1561c",
+  "output_sha256": "36c8400c75b9bf48f2a39640ebc1dca83910873875ac481da99f91fb37b3b114",
+  "parent_version_id": 1502,
+  "provider_called": false,
+  "validation_result": "PARTIALLY_VERIFIED"
+}

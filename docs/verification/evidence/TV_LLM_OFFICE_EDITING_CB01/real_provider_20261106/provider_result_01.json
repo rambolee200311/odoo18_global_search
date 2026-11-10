@@ -1,0 +1,38 @@
+{
+  "candidate_present": true,
+  "candidate_sha256": "9b2a7c48928737a0a8ee7878770e7206bafbc394f2631a764e1b0ece55f8266f",
+  "cleanup_state": "completed",
+  "container_id": "cntr_6aed953e1e908191908c4929d71f46830e6895d01718b496",
+  "correlation_id": "cc01-real-provider-20261106-attempt-1",
+  "download_request_id": "req_8da4ac7be1584ab389601851c62644ef",
+  "duration_ms": 24919,
+  "elapsed_seconds": 24.957,
+  "error": null,
+  "estimated_container_cost_usd_one_session": 0.03,
+  "estimated_token_cost_usd_uncached_rate": 0.0012614000000000002,
+  "estimated_tool_call_cost_usd": 0.0025,
+  "estimated_total_cost_usd_not_invoice": 0.0337614,
+  "input_sha256": "756a1ffa467e24da035952cbbf63c5d1c0ad8d47bf53bf17a4b8e4613e95d82b",
+  "invoice_cost": "UNVERIFIED",
+  "operation_status": "candidate_received",
+  "output_bytes": 5567,
+  "output_path": "/Users/lijianqiang/Documents/odoo18_global_search/docs/verification/evidence/TV_LLM_OFFICE_EDITING_CB01/real_provider_20261106/output_candidate_01.xlsx",
+  "provider_file_ids": [
+    "cfile_6aed954637888191ac5bf1f739cee762"
+  ],
+  "provider_filename": "cc01_candidate.xlsx",
+  "provider_key_logged": false,
+  "provider_model_returned": "gpt-5.6-luna",
+  "provider_prompt_logged": false,
+  "provider_response_id": "resp_08d257b63d57f6c1016aed953b25b887d288a414dec2c8ed93",
+  "request_id": "req_2d5daa2765b44dc2bcd8e3f1207d3a55",
+  "tool_call_ids": [
+    "ci_08d257b63d57f6c1016aed954295f887d2a29c3f8e9a36db5e"
+  ],
+  "usage": {
+    "input_tokens": 2149,
+    "output_tokens": 693,
+    "reasoning_tokens": 331,
+    "total_tokens": 2842
+  }
+}

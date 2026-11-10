@@ -1,0 +1,30 @@
+2026-11-09 03:29:54,281 63074 INFO odoo18ce odoo.addons.office_engine_odoo.tests.test_attachment_identity: Starting TestAttachmentIdentity.test_m1_subcursor_delivery_uses_binding_validated_before_handoff ... 
+2026-11-09 03:29:54,364 63074 INFO odoo18ce odoo.addons.office_engine_odoo.tests.test_attachment_identity: ====================================================================== 
+2026-11-09 03:29:54,364 63074 ERROR odoo18ce odoo.addons.office_engine_odoo.tests.test_attachment_identity: ERROR: TestAttachmentIdentity.test_m1_subcursor_delivery_uses_binding_validated_before_handoff
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/tests/test_attachment_identity.py", line 326, in test_m1_subcursor_delivery_uses_binding_validated_before_handoff
+    result = OfficeDocumentRequest._deliver_result(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/office_document_request.py", line 834, in _deliver_result
+    version_binding = self._check_m1_version_binding(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/mock.py", line 1124, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/mock.py", line 1128, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/mock.py", line 1183, in _execute_mock_call
+    raise effect
+odoo.exceptions.AccessError: the child cursor still sees the prior Session revision
+ 
+2026-11-09 03:29:54,453 63074 INFO odoo18ce odoo.addons.base.models.ir_attachment: filestore gc 1 checked, 1 removed 
+2026-11-09 03:29:54,458 63074 ERROR odoo18ce odoo.modules.loading: Module office_engine_odoo: 0 failures, 1 errors of 1 tests 
+2026-11-09 03:29:54,634 63074 INFO odoo18ce odoo.modules.loading: 89 modules loaded in 1.13s, 2 queries (+65 extra) 
+2026-11-09 03:29:54,686 63074 ERROR odoo18ce odoo.modules.loading: Some modules are not loaded, some dependencies or manifest may be missing: ['wd_advanced_m2o_record_panel', 'wd_evidence_album', 'wd_qooling_app'] 
+2026-11-09 03:29:54,686 63074 ERROR odoo18ce odoo.modules.loading: At least one test failed when loading the modules. 
+2026-11-09 03:29:54,770 63074 INFO odoo18ce odoo.modules.registry: Registry loaded in 1.355s 
+2026-11-09 03:29:54,770 63074 INFO odoo18ce odoo.service.server: Starting post tests 
+2026-11-09 03:29:54,785 63074 INFO odoo18ce odoo.service.server: 0 post-tests in 0.01s, 0 queries 
+2026-11-09 03:29:54,785 63074 INFO odoo18ce odoo.tests.stats: office_engine_odoo: 3 tests 0.20s 63 queries 
+2026-11-09 03:29:54,785 63074 ERROR odoo18ce odoo.tests.result: 0 failed, 1 error(s) of 1 tests when loading database 'odoo18ce' 

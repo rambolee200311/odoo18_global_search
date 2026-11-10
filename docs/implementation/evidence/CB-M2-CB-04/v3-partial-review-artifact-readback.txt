@@ -1,0 +1,6 @@
+PASS v3-partially-accepted-candidate.xlsx bytes=4872 sha256=62fe791b8b14772dbf338038b4aadf8e2995d41b2b1319033c0a876a6c950bcc zip=valid checks={'Data!A1': 15, 'Data!C1': '=A1*2'}
+PASS lineage v3-partially-accepted-candidate.json
+PASS v3-partially-verified-v1.xlsx bytes=4868 sha256=11441f614a8811e5e53de6acc997faaae84b672ffd81033e673fd2b130924a52 zip=valid checks={}
+PASS v3-partially-verified-v2.xlsx bytes=4872 sha256=50438d02bef370f44d6804960e036449bf980e0c17acdcb76e40d1d1a692a61d zip=valid checks={'Data!A1': 15}
+PASS v3-partially-verified-v3.xlsx bytes=4874 sha256=e0866506265f432015b50cb88b7264516ba48ff5ca40fdb18d4212e9e38c0e36 zip=valid checks={'Data!A1': 15, 'Data!A2': 20}
+PASS lineage v3-partially-verified-version-chain.json

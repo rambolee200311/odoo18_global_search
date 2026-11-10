@@ -1,0 +1,7 @@
+V1: PASS; path=/Users/lijianqiang/Documents/odoo18_global_search/docs/implementation/evidence/CB-M2-CB-05/hvr_artifacts_20261110/hvr_v1_input.xlsx; bytes=4950; sha256=210c33c9c5490b7930ce8806e889d3830a9237bdcaa261f7ab1e6f5ba352282b; ZIP/openpyxl=PASS
+V2: PASS; path=/Users/lijianqiang/Documents/odoo18_global_search/docs/implementation/evidence/CB-M2-CB-05/hvr_artifacts_20261110/hvr_v2_candidate.xlsx; bytes=5049; sha256=2fd550748e270db754943a66e7445955abd2db047d2bef1e5624c96ff5806928; ZIP/openpyxl=PASS
+V3: PASS; path=/Users/lijianqiang/Documents/odoo18_global_search/docs/implementation/evidence/CB-M2-CB-05/hvr_artifacts_20261110/hvr_v3_candidate.xlsx; bytes=5107; sha256=c7bc3c001ced2374cb94a278461ec8169921d0f8b31b3e2679c9a2b6f7e7a8b6; ZIP/openpyxl=PASS
+V1 headers: PASS
+V2 contact values A2:C4: PASS
+V3 A2:C4 preserved from V2: PASS
+V3 D1:D4 addresses: PASS

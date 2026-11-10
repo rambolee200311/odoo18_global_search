@@ -11,6 +11,7 @@ from office_core import OfficeCoreError
 
 from ..services import inspect_attachment_identity
 from ..models.office_document_request import (
+    _M1VersionBindingProof,
     _ensure_output_chat_message,
     _internal_mutation,
     OfficeDocumentRequest,
@@ -18,6 +19,65 @@ from ..models.office_document_request import (
 
 
 class TestAttachmentIdentity(TransactionCase):
+    @staticmethod
+    def _readback_proof(input_sha256, output_sha256):
+        report = {
+            "status": "PASS",
+            "format": "xlsx",
+            "input_sha256": input_sha256,
+            "output_sha256": output_sha256,
+            "checked_targets": 1,
+            "checked_formulas": 0,
+            "warnings": [],
+        }
+        return {"status": "PASS", "output_sha256": output_sha256, "office_verify": report}
+
+    def test_rpc_style_write_cannot_forge_persisted_m1_validation_proof(self):
+        thread = self._thread()
+        source_bytes = self._minimal_xlsx()
+        source = self._attachment(
+            "proof-source.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            source_bytes,
+        )
+        input_message = thread.message_post(
+            body="Synthetic validation proof test.", llm_role="user", attachment_ids=[source.id]
+        )
+        request_uuid = str(uuid4())
+        source_digest = hashlib.sha256(source_bytes).hexdigest()
+        with _internal_mutation():
+            request = self.env["office.document.request"].create(
+                {
+                    "request_uuid": request_uuid,
+                    "thread_id": thread.id,
+                    "input_message_id": input_message.id,
+                    "source_attachment_id": source.id,
+                    "input_sha256": source_digest,
+                }
+            )
+            request.write({"state": "validating"})
+            request.write({"state": "processing"})
+
+        output_digest = hashlib.sha256(b"synthetic candidate bytes").hexdigest()
+        proof = {
+            "state": "generated",
+            "m1_validation_status": "VERIFIED",
+            "m1_validator_policy_version": "office_verify.m1.readback.v1",
+            "m1_validation_report_id": "a" * 64,
+            "m1_validation_report_sha256": "a" * 64,
+            "m1_validation_input_sha256": source_digest,
+            "m1_validation_output_sha256": output_digest,
+            "m1_validation_completed_at": "2026-11-06 09:00:00",
+            "m1_version_session_id": False,
+            "m1_version_session_revision": False,
+            "m1_version_proposal_revision": False,
+        }
+        with self.assertRaises(AccessError):
+            request.write(proof)
+        request.invalidate_recordset(["state", "m1_validation_status"])
+        self.assertEqual(request.state, "processing")
+        self.assertFalse(request.m1_validation_status)
+
     def test_final_output_message_is_linked_once_with_download_metadata(self):
         thread = self._thread()
         source = self._attachment(
@@ -125,6 +185,15 @@ class TestAttachmentIdentity(TransactionCase):
 
         savepoint = "office_delivery_publish_failure"
         self.env.cr.execute(f"SAVEPOINT {savepoint}")
+        binding = _M1VersionBindingProof(
+            session_id=987654321,
+            session_revision=1,
+            proposal_revision=1,
+            owner_id=self.env.uid,
+            thread_id=thread.id,
+            source_attachment_id=source.id,
+            input_message_id=input_message.id,
+        )
 
         class SavepointCursor:
             def commit(_self):
@@ -157,7 +226,10 @@ class TestAttachmentIdentity(TransactionCase):
                     hashlib.sha256(b"verified final workbook bytes").hexdigest(),
                     source.name,
                     "xlsx",
-                    {"status": "PASS"},
+                    self._readback_proof(
+                        source_digest, hashlib.sha256(b"verified final workbook bytes").hexdigest()
+                    ),
+                    binding,
                 )
 
         request.invalidate_recordset(["state", "output_attachment_id"], flush=False)
@@ -186,7 +258,10 @@ class TestAttachmentIdentity(TransactionCase):
                 hashlib.sha256(b"verified final workbook bytes").hexdigest(),
                 source.name,
                 "xlsx",
-                {"status": "PASS"},
+                self._readback_proof(
+                    source_digest, hashlib.sha256(b"verified final workbook bytes").hexdigest()
+                ),
+                binding,
             )
         request.invalidate_recordset(["state", "output_attachment_id"])
         self.assertEqual(retry["state"], "generated")
@@ -198,6 +273,88 @@ class TestAttachmentIdentity(TransactionCase):
         self.assertEqual(posted.model, thread._name)
         self.assertEqual(posted.res_id, thread.id)
         self.assertIn(request.output_attachment_id, posted.attachment_ids)
+
+    def test_m1_subcursor_delivery_uses_binding_validated_before_handoff(self):
+        """The render transaction validates a pending Session before handing off to its worker cursor."""
+        thread = self._thread()
+        source_bytes = self._minimal_xlsx()
+        source_digest = hashlib.sha256(source_bytes).hexdigest()
+        source = self._attachment(
+            "subcursor-source.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            source_bytes,
+        )
+        input_message = thread.message_post(
+            body="Synthetic render handoff.", llm_role="user", attachment_ids=[source.id]
+        )
+        request_uuid = str(uuid4())
+        with _internal_mutation():
+            request = self.env["office.document.request"].create(
+                {
+                    "request_uuid": request_uuid,
+                    "owner_id": self.env.uid,
+                    "thread_id": thread.id,
+                    "input_message_id": input_message.id,
+                    "source_attachment_id": source.id,
+                    "input_sha256": source_digest,
+                }
+            )
+            request.write({"state": "validating"})
+            request.write({"state": "processing"})
+
+        class SavepointCursor:
+            def commit(_self):
+                self.env.cr.execute("RELEASE SAVEPOINT office_m1_subcursor_handoff")
+
+            def rollback(_self):
+                self.env.cr.execute("ROLLBACK TO SAVEPOINT office_m1_subcursor_handoff")
+
+            def close(_self):
+                return None
+
+        self.env.cr.execute("SAVEPOINT office_m1_subcursor_handoff")
+        candidate_bytes = source_bytes
+        candidate_digest = hashlib.sha256(candidate_bytes).hexdigest()
+        binding = _M1VersionBindingProof(
+            session_id=987654321,
+            session_revision=8,
+            proposal_revision=2,
+            owner_id=self.env.uid,
+            thread_id=thread.id,
+            source_attachment_id=source.id,
+            input_message_id=input_message.id,
+        )
+        with patch(
+            "odoo.addons.office_engine_odoo.models.office_document_request._new_environment",
+            return_value=(SavepointCursor(), self.env),
+        ), patch.object(
+            OfficeDocumentRequest,
+            "_check_m1_version_binding",
+            side_effect=AccessError("the child cursor still sees the prior Session revision"),
+        ):
+            result = OfficeDocumentRequest._deliver_result(
+                self.env["office.document.request"],
+                self.env.cr.dbname,
+                self.env.uid,
+                dict(self.env.context),
+                request.id,
+                source.id,
+                thread.id,
+                input_message.id,
+                source_digest,
+                candidate_bytes,
+                candidate_digest,
+                source.name,
+                "xlsx",
+                self._readback_proof(source_digest, candidate_digest),
+                binding,
+            )
+
+        request.invalidate_recordset()
+        self.assertEqual(result["state"], "generated")
+        self.assertEqual(request.m1_version_session_id, binding.session_id)
+        self.assertEqual(request.m1_version_session_revision, binding.session_revision)
+        self.assertEqual(request.m1_version_proposal_revision, binding.proposal_revision)
 
     def test_delivery_commit_recovery_returns_generated_state_without_false_publish(self):
         thread = self._thread()

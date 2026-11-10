@@ -2,6 +2,9 @@
 
 import json
 import logging
+import re
+
+from markupsafe import Markup
 
 from odoo import _, api, models
 from odoo.exceptions import UserError
@@ -12,6 +15,7 @@ _logger = logging.getLogger(__name__)
 
 
 _OFFICE_TOOL_NAMES = {
+    "office",
     "office_prepare_context",
     "office_save_mapping_preview",
     "office_restore_proposal_revision",
@@ -128,6 +132,46 @@ class LLMThread(models.Model):
         upload, _attachment = self._office_latest_upload()
         return bool(upload) or bool(self._office_active_session())
 
+    def _office_has_versioned_current(self):
+        """Return whether this Thread has an accepted Candidate B workbook.
+
+        A finalized M1 V1 remains the source of the first Candidate B edit.
+        Once a version exists, exposing the M1 context/mapping tools invites
+        the model to start a new mapping Session, even though the completed
+        M1 Session is intentionally no longer considered active.
+        """
+        self.ensure_one()
+        if self.user_id.id != self.env.uid:
+            return False
+        upload, attachment = self._office_latest_upload()
+        if not upload or not attachment:
+            return False
+        session = self.env["office.mapping.session"].search(
+            [
+                ("thread_id", "=", self.id),
+                ("owner_id", "=", self.env.uid),
+                ("company_id", "in", self.env.companies.ids),
+                ("source_message_id", "=", upload.id),
+                ("source_attachment_id", "=", attachment.id),
+                ("current_version_id", "!=", False),
+            ],
+            order="id desc",
+            limit=1,
+        )
+        if not session:
+            return False
+        session.check_access("read")
+        version = session.current_version_id
+        if not version:
+            return False
+        version.check_access("read")
+        return bool(
+            version.session_id == session
+            and version.version_kind in {"initial", "edit", "restore"}
+            and version.state in {"accepted_current", "finalized"}
+            and session.last_valid_version_id == version
+        )
+
     def generate(self, user_message_body=None, attachment_ids=None, **kwargs):
         """Run the original generate loop after M1 preflight and tool binding."""
         self.ensure_one()
@@ -159,10 +203,61 @@ class LLMThread(models.Model):
         ):
             values["reasoning_effort"] = "none"
         if self._office_is_active():
-            values["tools"] = self.tool_ids.filtered(lambda tool: tool.name in _OFFICE_TOOL_NAMES)
+            if self._office_has_versioned_current():
+                # Candidate B owns every edit after M1 has accepted V1. Keep
+                # M1 mapping tools available only before a versioned current
+                # exists; the `office` facade is the sole edit entry point thereafter.
+                values["tools"] = self.tool_ids.filtered(lambda tool: tool.name == "office")
+            else:
+                values["tools"] = self.tool_ids.filtered(lambda tool: tool.name in _OFFICE_TOOL_NAMES)
             office_rules = {
                 "role": "system",
                 "content": (
+                    "For a Thread with an accepted, versioned current workbook, use the single `office` facade "
+                    "for Candidate B actions (status, plan, edit, accept, reject). First submit a generic "
+                    "interpretation and the frozen CB-03 Expected Effect to `office` action=plan. Expected Effect "
+                    "is a bounded declaration for the existing deterministic Validator, not an Excel editing DSL; "
+                    "describe target scopes and allowed change kinds at the coarsest accurate level, include exact "
+                    "assertions only when known, and list business aspects that cannot be proven in `unknowns`. "
+                    "Do not invent exact cell outcomes for complex edits. The model, not local heuristics, decides "
+                    "whether the request is ambiguous (`target_scope.basis='ambiguous'`) and whether an un-authorized "
+                    "material business risk requires confirmation (`confirmation_required` and `confirmation_reason`). "
+                    "For every plan, explicitly send confirmation_required=true or false; when true, provide a concise "
+                    "confirmation_reason and repeat both values unchanged in edit. Never infer authorization from an "
+                    "old confirmation or from model claims. "
+                    "Nonempty original values, headers, formulas, broad scope, model risk claims, and unknowns do not "
+                    "by themselves trigger a local business decision. If clarification is required, ask one focused "
+                    "question and do not edit. If a plan returns operation_status=plan_ready with a model-requested "
+                    "confirmation, explain the model-provided risk and wait for the current user's exact 确认 or 拒绝; "
+                    "then call edit with the unchanged bound plan. A returned operation_status=candidate_review_required "
+                    "is a different decision: display verified_facts, actual_effects as observed deterministic differences, "
+                    "model_claims, and unverified_aspects; do not reinterpret a local difference label as business-risk judgment. Explain that "
+                    "the Candidate is not Current. For VERIFIED or PARTIALLY_VERIFIED, provide the authenticated candidate_download_url and ask the current user to reply exactly 接受 or 拒绝. "
+                    "When a PARTIALLY_VERIFIED Candidate is accepted, keep its grade unchanged and state that its unverified aspects remain unverified. "
+                    "Local code "
+                    "validates the real user's reply, identity, Thread, Session, parent version, file SHA and revisions, "
+                    "but does not reassess whether the business risk is real or already authorized. A confirmed plan "
+                    "permits candidate generation only; it does not accept the Candidate. External Provider file "
+                    "processing is currently blocked by the SRS/data-policy release gate; do not claim an edit occurred "
+                    "unless a real tool result contains a Candidate. Always distinguish local `verified_facts`, "
+                    "`model_claims`, and `unverified_aspects`. A PARTIALLY_VERIFIED Candidate may be shown for review "
+                    "when CB-03 reports no technical failure; it is not VERIFIED. A FAILED Candidate is blocked and "
+                    "cannot be made acceptable by user confirmation. A VERIFIED or PARTIALLY_VERIFIED Candidate remains non-current "
+                    "until the current user explicitly replies 接受; the risk-plan reply 确认 does not accept a Candidate. "
+                    "A scoped CB-02 acceptance may move a PARTIALLY_VERIFIED edit Candidate to Current without changing its validation grade; a scoped rejection leaves Current and Last Valid unchanged. "
+                    "Do not claim the "
+                    "user's complete natural-language intent is independently proven. Never claim Finalize, "
+                    "attachment delivery, or download: those remain a separate CB-06 lifecycle. The current accepted "
+                    "XLSX version, not chat history, is authoritative file content. Do not use the M1 Mapping "
+                    "tools to edit a workbook after it has an accepted Candidate B current version. "
+                    "When the user asks to add or refresh Odoo data in the current workbook, first call the single "
+                    "office facade with action=retrieve and a query_spec using only the fields and records needed. "
+                    "Use include_pagination=true for result sets and continue by offset while has_more is true. "
+                    "Use returned record IDs for later reads; where the existing Retriever accepts only simple "
+                    "domain clauses, retrieve multiple known IDs with separate exact id-equality calls rather than "
+                    "using spreadsheet row positions or guessed names. Retrieval is read-only and does not require "
+                    "a Current/Revision gate or change the workbook. After retrieval, use the existing plan/edit/review "
+                    "flow; do not claim an Excel change until that flow returns a Candidate. "
                     "For an initial Office mapping request, use odoo_record_retriever to identify the exact "
                     "business record from the user's request, then call office_prepare_context. Use only the "
                     "returned target_manifest and allowed_fields. "
@@ -417,13 +512,47 @@ class LLMThread(models.Model):
                 )
         return (yield from super()._handle_non_streaming_response(response))
 
+    def _process_llm_body(self, body):
+        """Normalize malformed Candidate download href whitespace in Office chats.
+
+        The assistant can append a Markdown trailing space inside an Odoo
+        ``/web/content/<id>?download=true`` link. Odoo's binary controller
+        treats that value as invalid. Normalize only that exact internal
+        download parameter after the normal HTML sanitizer has run; attachment
+        ACL checks and the controller remain authoritative.
+        """
+        rendered = super()._process_llm_body(body)
+        if not rendered:
+            return rendered
+        # This is a syntax correction for Odoo's boolean query parameter, not
+        # an Office-session check; avoid attachment/session lookup while a
+        # message is being rendered (including error/help messages).
+        normalized = re.sub(
+            r"(?P<prefix>\bhref=[\"']/web/content/[0-9]+\?download=true)(?:%20|[ \t\r\n])+(?P<quote>[\"'])",
+            lambda match: match.group("prefix") + match.group("quote"),
+            str(rendered),
+            flags=re.IGNORECASE,
+        )
+        # ``super()`` returns sanitized Markup. ``re.sub`` downgrades it to a
+        # plain str, which Odoo correctly escapes when rendering a chatter body.
+        # Re-wrap only this already-sanitized HTML so the repaired anchor stays
+        # clickable in the native UI.
+        return Markup(normalized)
+
     def _execute_tool_call(self, tool_call, assistant_message):
         tool_name = (tool_call.get("function") or {}).get("name")
         if self._office_is_active():
-            if tool_name not in _OFFICE_TOOL_NAMES:
+            candidate_b_current = self._office_has_versioned_current()
+            allowed_tool_names = {"office"} if candidate_b_current else _OFFICE_TOOL_NAMES
+            if tool_name not in allowed_tool_names:
                 error = self.env["mail.message"].create_tool_error_message(
                     tool_call,
-                    _("This tool is not available during an Office mapping session."),
+                    _(
+                        "This M1 mapping tool is unavailable because this Thread already has an accepted versioned workbook. "
+                        "Use the office Candidate B facade for subsequent edits."
+                        if candidate_b_current
+                        else "This tool is not available during an Office mapping session."
+                    ),
                     thread_model=self,
                 )
                 yield {"type": "message_create", "message": error.to_store_format()}
@@ -535,6 +664,8 @@ class LLMTool(models.Model):
         if self.name not in _OFFICE_TOOL_NAMES:
             return super().get_input_schema()
         method = self._get_implementation_method()
+        if self.name == "office" and getattr(method, "_llm_tool_schema", None):
+            return json.loads(json.dumps(method._llm_tool_schema))
         schema = self.get_pydantic_model_from_signature(method).model_json_schema()
         if self.name == "office_save_mapping_preview":
             schema["properties"].pop("header_edits", None)

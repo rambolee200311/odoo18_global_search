@@ -1,0 +1,15 @@
+CB-02 Candidate Acceptance / Intent Binding Amendment v0.1 — local static evidence
+Date: 2026-11-08
+
+Command:
+python3 -m py_compile mymodules/office_engine_m2/models/office_workbook_version.py mymodules/office_engine_m2/services/workbook_version_service.py mymodules/office_engine_m2/tests/support/__init__.py mymodules/office_engine_m2/tests/support/validator_stub.py mymodules/office_engine_m2/tests/test_workbook_version_contract.py mymodules/office_engine_m2/tests/test_workbook_version_state.py mymodules/office_engine_m2/tests/test_candidate_validator.py mymodules/office_engine_m2/tests/integration/test_workbook_version_race.py docs/implementation/evidence/CB-M2-CB-02/run-concurrency-acceptance-shell.py
+Result: exit 0
+
+Command:
+git diff --check
+Result: exit 0
+
+Command: custom trailing-whitespace scan over the nine Python files above
+Result: PASS; 0 lines with trailing whitespace
+
+Odoo TransactionCase, module upgrade, M1 regression, and the two-connection race were NOT RUN for this Amendment. No database was connected or probed and no Odoo service was restarted. The only previously authorized database is associated with the currently serving 8091 instance, which this execution authorization prohibits upgrading. Static checks do not establish ORM integration behavior.

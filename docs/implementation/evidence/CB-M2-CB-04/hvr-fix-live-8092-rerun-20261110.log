@@ -1,0 +1,462 @@
+2026-11-09 18:07:11,359 82998 INFO ? odoo: Odoo version 18.0 
+2026-11-09 18:07:11,359 82998 INFO ? odoo: Using configuration file at /Users/lijianqiang/Documents/odoo18_global_search/odoo.conf 
+2026-11-09 18:07:11,359 82998 INFO ? odoo: addons paths: ['/Users/lijianqiang/Documents/odoo18_global_search/odoo/addons', '/Users/lijianqiang/Library/Application Support/Odoo/addons/18.0', '/Users/lijianqiang/Documents/odoo18_global_search/addons', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/odoo-llm', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/queue'] 
+2026-11-09 18:07:11,359 82998 INFO ? odoo: database: odoo@127.0.0.1:5555 
+2026-11-09 18:07:11,435 82998 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltopdf to print a pdf version of the reports. 
+2026-11-09 18:07:11,437 82998 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltoimage to generate images from html. 
+2026-11-09 18:07:11,530 82998 INFO ? odoo.addons.queue_job.post_load: Apply Request._get_session_and_dbname monkey patch to capture db from request with multiple databases 
+2026-11-09 18:07:11,532 82998 INFO ? odoo.service.server: HTTP service (werkzeug) running on localhost:8092 
+2026-11-09 18:07:11,533 82998 INFO ? odoo.addons.queue_job.jobrunner: starting jobrunner thread (in threaded server) 
+2026-11-09 18:07:11,533 82998 INFO ? odoo.addons.queue_job.jobrunner.channels: Configured channel: root(C:1,Q:0,R:0,F:0) 
+2026-11-09 18:07:11,564 82998 INFO odoo18ce odoo.modules.loading: loading 1 modules... 
+2026-11-09 18:07:11,566 82998 INFO odoo18ce odoo.modules.loading: 1 modules loaded in 0.00s, 0 queries (+0 extra) 
+2026-11-09 18:07:11,589 82998 WARNING odoo18ce odoo.modules.graph: module wd_qooling_app: not installable, skipped 
+2026-11-09 18:07:11,589 82998 WARNING odoo18ce odoo.modules.graph: module wd_advanced_m2o_record_panel: not installable, skipped 
+2026-11-09 18:07:11,607 82998 WARNING odoo18ce odoo.modules.graph: module wd_evidence_album: not installable, skipped 
+2026-11-09 18:07:11,608 82998 INFO odoo18ce odoo.modules.loading: loading 89 modules... 
+2026-11-09 18:07:12,310 82998 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x1118f1fe0, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/llm_thread.py', line 14, code <module>> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/__init__.py", line 1, in <module>
+    from . import models
+  File "<frozen importlib._bootstrap>", line 1232, in _handle_fromlist
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/__init__.py", line 3, in <module>
+    from . import llm_thread
+  File "<frozen importlib._bootstrap>", line 1232, in _handle_fromlist
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/llm_thread.py", line 14, in <module>
+    _REJECT_MESSAGE = _(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-09 18:07:12,441 82998 ERROR odoo18ce odoo.tests.common: Importing test framework, avoid importing from business modules and when not running in test mode 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/wd_global_search/__init__.py", line 3, in <module>
+    from . import tests
+  File "<frozen importlib._bootstrap>", line 1232, in _handle_fromlist
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/wd_global_search/tests/__init__.py", line 1, in <module>
+    from . import test_configuration
+  File "<frozen importlib._bootstrap>", line 1232, in _handle_fromlist
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/wd_global_search/tests/test_configuration.py", line 4, in <module>
+    from odoo.tests.common import TransactionCase
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1126, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/__init__.py", line 8, in <module>
+    from . import common
+  File "<frozen importlib._bootstrap>", line 1232, in _handle_fromlist
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 100, in <module>
+    _logger.error(
+2026-11-09 18:07:12,449 82998 INFO odoo18ce odoo.modules.loading: 89 modules loaded in 0.84s, 0 queries (+0 extra) 
+2026-11-09 18:07:12,513 82998 ERROR odoo18ce odoo.modules.loading: Some modules are not loaded, some dependencies or manifest may be missing: ['wd_advanced_m2o_record_panel', 'wd_evidence_album', 'wd_qooling_app'] 
+2026-11-09 18:07:12,513 82998 INFO odoo18ce odoo.modules.loading: Modules loaded. 
+2026-11-09 18:07:12,595 82998 INFO odoo18ce odoo.modules.registry: Registry loaded in 1.063s 
+2026-11-09 18:07:14,913 82998 INFO odoo18ce odoo.addons.base.models.ir_http: Generating routing map for key None 
+2026-11-09 18:07:14,927 82998 INFO odoo18ce odoo.addons.base.models.res_device: User 2 inserts device log (ZONQEj8ZjXQdE5x_Sz1jzms5U0PUbSVCW9qsNk5daa) 
+2026-11-09 18:07:14,955 82998 ERROR odoo18ce odoo.addons.base.models.ir_model: Missing model wd.preview.configuration 
+2026-11-09 18:07:14,955 82998 ERROR odoo18ce odoo.addons.base.models.ir_model: Missing model wd.qooling.inbound.form 
+2026-11-09 18:07:14,955 82998 ERROR odoo18ce odoo.addons.base.models.ir_model: Missing model wd.qooling.outbound.form 
+2026-11-09 18:07:14,955 82998 ERROR odoo18ce odoo.addons.base.models.ir_model: Missing model wd.qooling.temperature.record 
+2026-11-09 18:07:14,955 82998 ERROR odoo18ce odoo.addons.base.models.ir_model: Missing model wd.evidence.album 
+2026-11-09 18:07:14,955 82998 ERROR odoo18ce odoo.addons.base.models.ir_model: Missing model wd.evidence.album.source.config 
+2026-11-09 18:07:14,955 82998 ERROR odoo18ce odoo.addons.base.models.ir_model: Missing model wd.evidence.album.config.settings 
+2026-11-09 18:07:15,244 82998 INFO odoo18ce werkzeug: 127.0.0.1 - - [09/Nov/2026 18:07:15] "GET /odoo/action-631?debug=assets&active_id=llm.thread_15880 HTTP/1.1" 200 - 105 0.070 0.263
+2026-11-09 18:07:15,318 82998 INFO odoo18ce werkzeug: 127.0.0.1 - - [09/Nov/2026 18:07:15] "GET /web/assets/debug/web.assets_web.css HTTP/1.1" 304 - 3 0.001 0.022
+2026-11-09 18:07:15,325 82998 INFO odoo18ce werkzeug: 127.0.0.1 - - [09/Nov/2026 18:07:15] "GET /web/assets/debug/web.assets_web_print.css HTTP/1.1" 304 - 3 0.001 0.004
+2026-11-09 18:07:15,326 82998 INFO odoo18ce werkzeug: 127.0.0.1 - - [09/Nov/2026 18:07:15] "GET /web/assets/debug/web.assets_web.js HTTP/1.1" 304 - 3 0.003 0.027
+2026-11-09 18:07:15,479 82998 INFO odoo18ce werkzeug: 127.0.0.1 - - [09/Nov/2026 18:07:15] "GET /web/image?model=res.users&field=avatar_128&id=2 HTTP/1.1" 304 - 17 0.009 0.034
+2026-11-09 18:07:15,479 82998 INFO odoo18ce werkzeug: 127.0.0.1 - - [09/Nov/2026 18:07:15] "POST /web/action/load HTTP/1.1" 200 - 7 0.012 0.030
+2026-11-09 18:07:15,481 82998 INFO odoo18ce werkzeug: 127.0.0.1 - - [09/Nov/2026 18:07:15] "GET /websocket?version=18.0-7 HTTP/1.1" 101 - 1 0.001 0.036
+2026-11-09 18:07:15,487 82998 INFO odoo18ce werkzeug: 127.0.0.1 - - [09/Nov/2026 18:07:15] "POST /bus/has_missed_notifications HTTP/1.1" 200 - 2 0.001 0.001
+2026-11-09 18:07:15,542 82998 INFO odoo18ce werkzeug: 127.0.0.1 - - [09/Nov/2026 18:07:15] "POST /mail/data HTTP/1.1" 200 - 73 0.051 0.043
+2026-11-09 18:07:15,580 82998 INFO odoo18ce werkzeug: 127.0.0.1 - - [09/Nov/2026 18:07:15] "POST /web/dataset/call_kw/llm.provider/search_read HTTP/1.1" 200 - 2 0.001 0.003
+2026-11-09 18:07:15,580 82998 INFO odoo18ce werkzeug: 127.0.0.1 - - [09/Nov/2026 18:07:15] "POST /web/dataset/call_kw/llm.tool/search_read HTTP/1.1" 200 - 2 0.001 0.002
+2026-11-09 18:07:15,583 82998 INFO odoo18ce werkzeug: 127.0.0.1 - - [09/Nov/2026 18:07:15] "POST /web/dataset/call_kw/llm.model/search_read HTTP/1.1" 200 - 3 0.002 0.004
+2026-11-09 18:07:15,587 82998 INFO odoo18ce werkzeug: 127.0.0.1 - - [09/Nov/2026 18:07:15] "POST /web/dataset/call_kw/llm.assistant/search_read HTTP/1.1" 200 - 5 0.003 0.003
+2026-11-09 18:07:15,637 82998 INFO odoo18ce werkzeug: 127.0.0.1 - - [09/Nov/2026 18:07:15] "POST /mail/thread/messages HTTP/1.1" 200 - 23 0.016 0.011
+2026-11-09 18:07:15,889 82998 INFO ? odoo.addons.bus.models.bus: Bus.loop listen imbus on db postgres 
+2026-11-09 18:07:15,923 82998 INFO ? werkzeug: 127.0.0.1 - - [09/Nov/2026 18:07:15] "GET /mail/static/src/img/smiley/avatar.jpg HTTP/1.1" 304 - 0 0.000 0.200
+2026-11-09 18:07:15,923 82998 INFO ? werkzeug: 127.0.0.1 - - [09/Nov/2026 18:07:15] "GET /web/static/lib/odoo_ui_icons/fonts/odoo_ui_icons.woff2 HTTP/1.1" 304 - 0 0.000 0.484
+2026-11-09 18:07:15,924 82998 INFO ? werkzeug: 127.0.0.1 - - [09/Nov/2026 18:07:15] "GET /web/static/img/favicon.ico HTTP/1.1" 304 - 0 0.000 0.516
+2026-11-09 18:07:15,924 82998 INFO ? werkzeug: 127.0.0.1 - - [09/Nov/2026 18:07:15] "GET /web/static/src/libs/fontawesome/fonts/fontawesome-webfont.woff2?v=4.7.0 HTTP/1.1" 304 - 0 0.000 0.484
+2026-11-09 18:07:16,543 82998 INFO ? odoo.addons.queue_job.jobrunner.runner: starting 
+2026-11-09 18:07:17,621 82998 INFO odoo18ce werkzeug: 127.0.0.1 - - [09/Nov/2026 18:07:17] "GET /web/service-worker.js HTTP/1.1" 200 - 1 0.000 0.003
+2026-11-09 18:44:30,444 82998 INFO odoo18ce odoo.addons.llm_thread.models.llm_thread: Acquired advisory lock for thread 15880 
+2026-11-09 18:44:30,444 82998 INFO odoo18ce odoo.addons.llm_thread.models.llm_thread: Starting locked generation for thread 15880 
+2026-11-09 18:44:30,473 82998 INFO odoo18ce werkzeug: 127.0.0.1 - - [09/Nov/2026 18:44:30] "GET /llm/thread/generate?thread_id=15880&message=请通过%20office%20工具%20action%3Dstatus%20查询当前%20Thread%20的候选版本，只提供该%20Candidate%20的可点击下载链接、版本号和原始验证等级。不要生成、接受或拒绝%20Candidate，不调用%20office_finalize，不向外部发送工作簿文件。 HTTP/1.1" 200 - 51 0.038 0.024
+2026-11-09 18:44:30,496 82998 WARNING odoo18ce odoo.addons.llm_openai.models.openai_provider: Removing tool message with ID call_w6eTQZOmenFi5RfY0ftFdfUz because it has no matching assistant message with tool_calls 
+2026-11-09 18:44:33,132 82998 INFO odoo18ce httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK" 
+2026-11-09 18:44:33,144 82998 INFO odoo18ce odoo.addons.llm_openai.models.openai_provider: Processing non-streaming OpenAI response. 
+2026-11-09 18:44:34,778 82998 INFO odoo18ce httpx: HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK" 
+2026-11-09 18:44:34,779 82998 INFO odoo18ce odoo.addons.llm_openai.models.openai_provider: Processing non-streaming OpenAI response. 
+2026-11-09 18:44:34,800 82998 INFO odoo18ce odoo.addons.llm_thread.models.llm_thread: Released advisory lock for thread 15880 
+2026-11-09 18:44:34,800 82998 INFO odoo18ce odoo.addons.llm_thread.models.llm_thread: Finished locked generation for thread 15880 
+2026-11-09 19:19:20,384 82998 INFO odoo18ce odoo.addons.base.models.res_device: User 2 inserts device log (ZONQEj8ZjXQdE5x_Sz1jzms5U0PUbSVCW9qsNk5daa) 
+2026-11-09 19:19:20,406 82998 INFO odoo18ce odoo.addons.llm_thread.models.llm_thread: Acquired advisory lock for thread 15880 
+2026-11-09 19:19:20,406 82998 INFO odoo18ce odoo.addons.llm_thread.models.llm_thread: Starting locked generation for thread 15880 
+2026-11-09 19:19:20,434 82998 INFO odoo18ce werkzeug: 127.0.0.1 - - [09/Nov/2026 19:19:20] "GET /llm/thread/generate?thread_id=15880&message=请把上一条助手回复中的%20Candidate%20下载地址原样重新显示为一个%20Markdown%20可点击链接，不要调用任何工具，不要生成或修改文件，不要接受候选，也不要向外部发送工作簿。 HTTP/1.1" 200 - 36 0.046 0.030
+2026-11-09 19:19:20,451 82998 WARNING odoo18ce odoo.addons.llm_openai.models.openai_provider: Removing tool message with ID call_scMuqkMB6ykd75lw5fKyDc0j because it has no matching assistant message with tool_calls 
+2026-11-09 19:30:10,552 82998 INFO odoo18ce werkzeug: 127.0.0.1 - - [09/Nov/2026 19:30:10] "GET /websocket?version=18.0-7 HTTP/1.1" 101 - 1 0.001 0.018
+2026-11-09 19:30:10,557 82998 INFO odoo18ce werkzeug: 127.0.0.1 - - [09/Nov/2026 19:30:10] "POST /bus/has_missed_notifications HTTP/1.1" 200 - 2 0.001 0.001
+2026-11-09 19:35:29,061 82998 WARNING odoo18ce odoo.service.server: Thread <Thread(odoo.service.http.request.6185807872, started 6185807872)> virtual real time limit (968/120s) reached. 
+2026-11-09 19:35:29,061 82998 INFO odoo18ce odoo.service.server: Dumping stacktrace of limit exceeding threads before reloading 
+2026-11-09 19:35:29,079 82998 INFO odoo18ce odoo.tools.misc: 
+# Thread: <Thread(odoo.service.http.request.6185807872, started 6185807872)> (db:odoo18ce) (uid:2) (url:http://127.0.0.1:8092/llm/thread/generate?thread_id=15880&message=请把上一条助手回复中的%20Candidate%20下载地址原样重新显示为一个%20Markdown%20可点击链接，不要调用任何工具，不要生成或修改文件，不要接受候选，也不要向外部发送工作簿。) (qc:n/a qt:0.046 pt:968.657)
+File: "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/threading.py", line 1002, in _bootstrap
+  self._bootstrap_inner()
+File: "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/threading.py", line 1045, in _bootstrap_inner
+  self.run()
+File: "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/threading.py", line 982, in run
+  self._target(*self._args, **self._kwargs)
+File: "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/socketserver.py", line 691, in process_request_thread
+  self.finish_request(request, client_address)
+File: "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/socketserver.py", line 361, in finish_request
+  self.RequestHandlerClass(request, client_address, self)
+File: "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 128, in __init__
+  super().__init__(*args, **kwargs)
+File: "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/socketserver.py", line 755, in __init__
+  self.handle()
+File: "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/werkzeug/serving.py", line 363, in handle
+  super().handle()
+File: "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/http/server.py", line 436, in handle
+  self.handle_one_request()
+File: "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/http/server.py", line 424, in handle_one_request
+  method()
+File: "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/werkzeug/serving.py", line 335, in run_wsgi
+  execute(self.server.app)
+File: "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/werkzeug/serving.py", line 324, in execute
+  for data in application_iter:
+File: "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/odoo-llm/llm_thread/controllers/main.py", line 61, in _llm_thread_generate
+  for response in responses:
+File: "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/models/llm_thread.py", line 189, in generate
+  yield from super().generate(user_message_body, attachment_ids=attachment_ids, **kwargs)
+File: "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/llm_thread.py", line 103, in generate
+  yield from super().generate(user_message_body, attachment_ids=attachment_ids, **kwargs)
+File: "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/odoo-llm/llm_thread/models/llm_thread.py", line 410, in generate
+  last_message = yield from self.generate_messages(last_message)
+File: "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/odoo-llm/llm_assistant/models/llm_thread.py", line 266, in generate_messages
+  last_message = yield from self._generate_assistant_response()
+File: "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/models/llm_thread.py", line 423, in _generate_assistant_response
+  response = self.sudo().model_id.chat(**chat_kwargs)
+File: "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/odoo-llm/llm_tool/models/llm_model.py", line 9, in chat
+  return self.provider_id.chat(
+File: "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/odoo-llm/llm/models/llm_provider.py", line 106, in chat
+  return self._dispatch(
+File: "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/odoo-llm/llm/models/llm_provider.py", line 60, in _dispatch
+  return getattr(record, service_method)(*args, **kwargs)
+File: "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/odoo-llm/llm_openai/models/openai_provider.py", line 198, in openai_chat
+  response = self.client.chat.completions.create(**params)
+File: "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/openai/_utils/_utils.py", line 298, in wrapper
+  return func(*args, **kwargs)
+File: "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py", line 1296, in create
+  return self._post(
+File: "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/openai/_base_client.py", line 1375, in post
+  return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+File: "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/openai/_base_client.py", line 1080, in request
+  response = self._send_request(
+File: "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/openai/_client.py", line 491, in _send_request
+  response = self._send_with_auth_retry(request, stream=stream, **kwargs)
+File: "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/openai/_client.py", line 469, in _send_with_auth_retry
+  response = super()._send_request(request, stream=stream, **kwargs)
+File: "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/openai/_base_client.py", line 1005, in _send_request
+  return self._client.send(request, stream=stream, **kwargs)
+File: "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/httpx/_client.py", line 914, in send
+  response = self._send_handling_auth(
+File: "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/httpx/_client.py", line 942, in _send_handling_auth
+  response = self._send_handling_redirects(
+File: "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/httpx/_client.py", line 979, in _send_handling_redirects
+  response = self._send_single_request(request)
+File: "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/httpx/_client.py", line 1014, in _send_single_request
+  response = transport.handle_request(request)
+File: "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/httpx/_transports/default.py", line 250, in handle_request
+  resp = self._pool.handle_request(req)
+File: "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/httpcore/_sync/connection_pool.py", line 236, in handle_request
+  response = connection.handle_request(
+File: "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/httpcore/_sync/http_proxy.py", line 343, in handle_request
+  return self._connection.handle_request(request)
+File: "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/httpcore/_sync/http11.py", line 106, in handle_request
+  ) = self._receive_response_headers(**kwargs)
+File: "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/httpcore/_sync/http11.py", line 177, in _receive_response_headers
+  event = self._receive_event(timeout=timeout)
+File: "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/httpcore/_sync/http11.py", line 217, in _receive_event
+  data = self._network_stream.read(
+File: "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/httpcore/_backends/sync.py", line 128, in read
+  return self._sock.recv(max_bytes)
+File: "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/ssl.py", line 1295, in recv
+  return self.read(buflen)
+File: "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/ssl.py", line 1168, in read
+  return self._sslobj.read(len) 
+2026-11-09 19:35:29,079 82998 INFO odoo18ce odoo.addons.queue_job.jobrunner.runner: graceful stop requested 
+2026-11-09 19:35:29,079 82998 INFO odoo18ce odoo.service.server: Initiating server reload 
+2026-11-09 19:35:29,595 82998 INFO odoo18ce odoo.sql_db: ConnectionPool(read/write;used=0/count=0/max=64): Closed 3 connections  
+2026-11-09 19:35:30,280 82998 INFO ? odoo.addons.queue_job.jobrunner.runner: stopped 
+2026-11-09 19:35:30,702 82998 INFO ? odoo: Odoo version 18.0 
+2026-11-09 19:35:30,703 82998 INFO ? odoo: Using configuration file at /Users/lijianqiang/Documents/odoo18_global_search/odoo.conf 
+2026-11-09 19:35:30,703 82998 INFO ? odoo: addons paths: ['/Users/lijianqiang/Documents/odoo18_global_search/odoo/addons', '/Users/lijianqiang/Library/Application Support/Odoo/addons/18.0', '/Users/lijianqiang/Documents/odoo18_global_search/addons', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/odoo-llm', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/queue'] 
+2026-11-09 19:35:30,703 82998 INFO ? odoo: database: odoo@127.0.0.1:5555 
+2026-11-09 19:35:30,777 82998 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltopdf to print a pdf version of the reports. 
+2026-11-09 19:35:30,779 82998 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltoimage to generate images from html. 
+2026-11-09 19:35:30,881 82998 INFO ? odoo.addons.queue_job.post_load: Apply Request._get_session_and_dbname monkey patch to capture db from request with multiple databases 
+2026-11-09 19:35:30,883 82998 INFO ? odoo.service.server: HTTP service (werkzeug) running on localhost:8092 
+2026-11-09 19:35:30,883 82998 INFO ? odoo.addons.queue_job.jobrunner: starting jobrunner thread (in threaded server) 
+2026-11-09 19:35:30,883 82998 INFO ? odoo.addons.queue_job.jobrunner.channels: Configured channel: root(C:1,Q:0,R:0,F:0) 
+2026-11-09 19:35:30,908 82998 INFO odoo18ce odoo.modules.loading: loading 1 modules... 
+2026-11-09 19:35:30,910 82998 INFO odoo18ce odoo.modules.loading: 1 modules loaded in 0.00s, 0 queries (+0 extra) 
+2026-11-09 19:35:30,934 82998 WARNING odoo18ce odoo.modules.graph: module wd_qooling_app: not installable, skipped 
+2026-11-09 19:35:30,935 82998 WARNING odoo18ce odoo.modules.graph: module wd_advanced_m2o_record_panel: not installable, skipped 
+2026-11-09 19:35:30,953 82998 WARNING odoo18ce odoo.modules.graph: module wd_evidence_album: not installable, skipped 
+2026-11-09 19:35:30,955 82998 INFO odoo18ce odoo.modules.loading: loading 89 modules... 
+2026-11-09 19:35:31,660 82998 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x11d3f2140, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/llm_thread.py', line 14, code <module>> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/__init__.py", line 1, in <module>
+    from . import models
+  File "<frozen importlib._bootstrap>", line 1232, in _handle_fromlist
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/__init__.py", line 3, in <module>
+    from . import llm_thread
+  File "<frozen importlib._bootstrap>", line 1232, in _handle_fromlist
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/llm_thread.py", line 14, in <module>
+    _REJECT_MESSAGE = _(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-09 19:35:31,796 82998 ERROR odoo18ce odoo.tests.common: Importing test framework, avoid importing from business modules and when not running in test mode 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/wd_global_search/__init__.py", line 3, in <module>
+    from . import tests
+  File "<frozen importlib._bootstrap>", line 1232, in _handle_fromlist
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/wd_global_search/tests/__init__.py", line 1, in <module>
+    from . import test_configuration
+  File "<frozen importlib._bootstrap>", line 1232, in _handle_fromlist
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/wd_global_search/tests/test_configuration.py", line 4, in <module>
+    from odoo.tests.common import TransactionCase
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1126, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/__init__.py", line 8, in <module>
+    from . import common
+  File "<frozen importlib._bootstrap>", line 1232, in _handle_fromlist
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 100, in <module>
+    _logger.error(
+2026-11-09 19:35:31,804 82998 INFO odoo18ce odoo.modules.loading: 89 modules loaded in 0.85s, 0 queries (+0 extra) 
+2026-11-09 19:35:31,866 82998 ERROR odoo18ce odoo.modules.loading: Some modules are not loaded, some dependencies or manifest may be missing: ['wd_advanced_m2o_record_panel', 'wd_evidence_album', 'wd_qooling_app'] 
+2026-11-09 19:35:31,866 82998 INFO odoo18ce odoo.modules.loading: Modules loaded. 
+2026-11-09 19:35:31,948 82998 INFO odoo18ce odoo.modules.registry: Registry loaded in 1.065s 
+2026-11-09 19:35:31,949 82998 INFO odoo18ce odoo.addons.base.models.ir_http: Generating routing map for key None 
+2026-11-09 19:35:31,965 82998 INFO odoo18ce werkzeug: 127.0.0.1 - - [09/Nov/2026 19:35:31] "GET /websocket?version=18.0-7 HTTP/1.1" 101 - 6 0.007 0.748
+2026-11-09 19:35:31,969 82998 INFO odoo18ce werkzeug: 127.0.0.1 - - [09/Nov/2026 19:35:31] "POST /bus/has_missed_notifications HTTP/1.1" 200 - 2 0.001 0.001
+2026-11-09 19:35:32,321 82998 INFO ? odoo.addons.bus.models.bus: Bus.loop listen imbus on db postgres 
+2026-11-09 19:36:43,576 82998 INFO ? odoo.addons.queue_job.jobrunner.runner: starting 
+2026-11-09 20:46:40,230 82998 INFO odoo18ce odoo.addons.base.models.res_device: User 2 inserts device log (ZONQEj8ZjXQdE5x_Sz1jzms5U0PUbSVCW9qsNk5daa) 
+2026-11-09 20:46:40,235 82998 INFO odoo18ce werkzeug: 127.0.0.1 - - [09/Nov/2026 20:46:40] "GET /websocket?version=18.0-7 HTTP/1.1" 101 - 2 0.007 0.010
+2026-11-09 20:46:40,247 82998 INFO odoo18ce werkzeug: 127.0.0.1 - - [09/Nov/2026 20:46:40] "POST /bus/has_missed_notifications HTTP/1.1" 200 - 2 0.001 0.003
+2026-11-09 20:47:35,376 82998 INFO odoo18ce odoo.addons.queue_job.jobrunner.runner: graceful stop requested 
+2026-11-09 20:47:35,377 82998 INFO odoo18ce odoo.service.server: Initiating shutdown 
+2026-11-09 20:47:35,377 82998 INFO odoo18ce odoo.service.server: Hit CTRL-C again or send a second signal to force the shutdown. 
+2026-11-09 20:47:35,561 82998 INFO odoo18ce odoo.sql_db: ConnectionPool(read/write;used=0/count=0/max=64): Closed 1 connections  
+2026-11-09 20:47:38,457 82998 INFO ? odoo.addons.queue_job.jobrunner.runner: stopped 

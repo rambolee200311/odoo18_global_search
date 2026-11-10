@@ -42,6 +42,19 @@ XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
 
+def _finalize_inline_for_transactioncase(
+    env, thread_id, session_id, expected_revision, proposal_revision, *, confirmation_proof=None
+):
+    """Keep TransactionCase fixtures in their rollback cursor; Browser covers root-cursor commits."""
+    return env["office.mapping.tool"]._office_finalize(
+        session_id,
+        expected_revision,
+        proposal_revision,
+        expected_thread_id=thread_id,
+        confirmation_proof=confirmation_proof,
+    )
+
+
 def _xlsx():
     workbook = Workbook()
     workbook.active["A1"] = "Customer"
@@ -2468,6 +2481,69 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         self.assertFalse(_is_explicit_finalize_confirmation("请确认并生成正式文件"))
         self.assertFalse(_is_explicit_finalize_confirmation("确认并生成正式文件：S05457"))
 
+    def test_finalize_carries_current_turn_confirmation_into_isolated_transaction(self):
+        """The current user message is uncommitted while the LLM tool opens a root cursor."""
+        thread, _source, _upload = self._office_message("Generate the confirmed workbook")
+        confirmation = thread.message_post(
+            body="确认并生成正式文件",
+            llm_role="user",
+            author_id=self.env.user.partner_id.id,
+        )
+        preview = SimpleNamespace(
+            id=987654320,
+            raw=b"synthetic validated preview bytes",
+            check_access=lambda _mode: None,
+        )
+        session = SimpleNamespace(
+            id=700,
+            thread_id=thread,
+            owner_id=self.env.user,
+            revision=9,
+            proposal_revision=4,
+            preview_proposal_revision=4,
+            confirmed_revision=0,
+            state="confirmation_required",
+            preview_attachment_id=preview,
+            invalidate_recordset=lambda *_args: None,
+        )
+        tool_model = self.env["office.mapping.tool"].with_context(message=confirmation)
+        result_metadata = {
+            "status": "finalized",
+            "state": "completed",
+            "output_attachment_id": 987654321,
+            "filename": "office-output-verified.xlsx",
+            "mimetype": XLSX_MIME,
+            "delivery_message_id": 987654322,
+            "attachment_posted_to_thread": True,
+        }
+
+        with (
+            patch(
+                "odoo.addons.office_engine_m2.models.office_mapping_tools._owned_session",
+                return_value=session,
+            ),
+            patch(
+                "odoo.addons.office_engine_m2.models.office_mapping_tools.finalize_confirmed_mapping_in_isolated_transaction",
+                return_value=result_metadata,
+            ) as isolated_finalize,
+        ):
+            result = tool_model.office_finalize(session.id, session.revision, session.proposal_revision)
+
+        self.assertEqual(result["status"], "finalized")
+        self.assertIn(
+            "confirmation_proof",
+            isolated_finalize.call_args.kwargs,
+            "The root cursor cannot see the uncommitted user message, so the caller must pass an internal scoped proof.",
+        )
+        proof = isolated_finalize.call_args.kwargs["confirmation_proof"]
+        self.assertEqual(proof.thread_id, thread.id)
+        self.assertEqual(proof.session_id, session.id)
+        self.assertEqual(proof.owner_id, self.env.uid)
+        self.assertEqual(proof.user_message_id, confirmation.id)
+        self.assertEqual(proof.session_revision, session.revision)
+        self.assertEqual(proof.proposal_revision, session.proposal_revision)
+        self.assertEqual(proof.preview_attachment_id, preview.id)
+
     def test_finalize_uses_committed_output_metadata_without_reloading_stale_attachment(self):
         from types import SimpleNamespace
 
@@ -2486,6 +2562,11 @@ class TestNativeOfficeChatIntegration(TransactionCase):
             preview_proposal_revision=4,
             confirmed_revision=4,
             state="confirmation_required",
+            preview_attachment_id=SimpleNamespace(
+                id=987654320,
+                raw=b"synthetic validated preview bytes",
+                check_access=lambda _mode: None,
+            ),
             invalidate_recordset=lambda *_args: None,
         )
         tool_model = self.env["office.mapping.tool"].with_context(message=confirmation)
@@ -2498,6 +2579,10 @@ class TestNativeOfficeChatIntegration(TransactionCase):
             "delivery_message_id": 987654322,
         }
         with (
+            patch(
+                "odoo.addons.office_engine_m2.models.office_mapping_tools.finalize_confirmed_mapping_in_isolated_transaction",
+                side_effect=_finalize_inline_for_transactioncase,
+            ),
             patch(
                 "odoo.addons.office_engine_m2.models.office_mapping_tools._owned_session",
                 return_value=session,
@@ -2551,6 +2636,10 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         }
         with (
             patch(
+                "odoo.addons.office_engine_m2.models.office_mapping_tools.finalize_confirmed_mapping_in_isolated_transaction",
+                side_effect=_finalize_inline_for_transactioncase,
+            ),
+            patch(
                 "odoo.addons.office_engine_m2.models.office_mapping_tools._owned_session",
                 return_value=session,
             ),
@@ -2585,11 +2674,22 @@ class TestNativeOfficeChatIntegration(TransactionCase):
             preview_proposal_revision=5,
             confirmed_revision=5,
             state="confirmation_required",
+            preview_attachment_id=SimpleNamespace(
+                id=987654323,
+                raw=b"synthetic stale preview bytes",
+                check_access=lambda _mode: None,
+            ),
             invalidate_recordset=lambda *_args: None,
         )
-        with patch(
-            "odoo.addons.office_engine_m2.models.office_mapping_tools._owned_session",
-            return_value=session,
+        with (
+            patch(
+                "odoo.addons.office_engine_m2.models.office_mapping_tools.finalize_confirmed_mapping_in_isolated_transaction",
+                side_effect=_finalize_inline_for_transactioncase,
+            ),
+            patch(
+                "odoo.addons.office_engine_m2.models.office_mapping_tools._owned_session",
+                return_value=session,
+            ),
         ):
             result = self.env["office.mapping.tool"].with_context(message=confirmation).office_finalize(
                 session.id, expected_revision=12, proposal_revision=4
@@ -2616,9 +2716,18 @@ class TestNativeOfficeChatIntegration(TransactionCase):
             preview_proposal_revision=8,
             confirmed_revision=0,
             state="confirmation_required",
+            preview_attachment_id=SimpleNamespace(
+                id=987654324,
+                raw=b"synthetic pending-delivery preview bytes",
+                check_access=lambda _mode: None,
+            ),
             invalidate_recordset=lambda *_args: None,
         )
         with (
+            patch(
+                "odoo.addons.office_engine_m2.models.office_mapping_tools.finalize_confirmed_mapping_in_isolated_transaction",
+                side_effect=_finalize_inline_for_transactioncase,
+            ),
             patch(
                 "odoo.addons.office_engine_m2.models.office_mapping_tools._owned_session",
                 return_value=session,
@@ -2873,6 +2982,24 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         self.assertNotIn("<p>", plain)
         self.assertIn("preview_S05457.xlsx", plain)
         self.assertIn("<strong>Markdown</strong>", str(thread._process_llm_body("**Markdown**")))
+
+    def test_office_candidate_download_href_trailing_space_is_normalized(self):
+        from markupsafe import Markup
+
+        thread, _attachment, _message = self._office_message("Review this synthetic workbook")
+        response = (
+            '<p><a href="/web/content/38112?download=true%20">下载 Candidate</a> '
+            '<a href="https://example.invalid/?download=true%20">external</a></p>'
+        )
+
+        processed = thread._process_llm_body(response)
+        rendered = str(processed)
+
+        self.assertIsInstance(processed, Markup)
+        self.assertIn("<a ", rendered)
+        self.assertIn('href="/web/content/38112?download=true"', rendered)
+        self.assertNotIn('/web/content/38112?download=true%20', rendered)
+        self.assertIn('href="https://example.invalid/?download=true%20"', rendered)
 
     def test_preview_tool_streams_attachment_metadata_to_native_chat_store(self):
         thread, _source_attachment, _source_message = self._office_message(
@@ -3498,6 +3625,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         self.assertEqual(
             set(child._office_bind_tools().mapped("name")),
             {
+                "office",
                 "office_prepare_context",
                 "office_save_mapping_preview",
                 "office_restore_proposal_revision",
@@ -5310,6 +5438,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         self.assertEqual(
             tool_names,
             {
+                "office",
                 "office_prepare_context",
                 "office_save_mapping_preview",
                 "office_restore_proposal_revision",
@@ -5321,6 +5450,18 @@ class TestNativeOfficeChatIntegration(TransactionCase):
             tool.name: tool.get_input_schema()
             for tool in thread.tool_ids.filtered(lambda item: item.name in tool_names)
         }
+        self.assertEqual(schemas["office"]["required"], ["action"])
+        self.assertFalse(schemas["office"]["additionalProperties"])
+        self.assertEqual(
+            schemas["office"]["properties"]["action"]["enum"],
+            ["status", "plan", "edit", "accept", "reject"],
+        )
+        effect_schema = schemas["office"]["properties"]["expected_effect"]
+        self.assertEqual(
+            effect_schema["required"],
+            ["target_scopes", "allowed_change_kinds", "expected_assertions", "unknowns"],
+        )
+        self.assertIn("Do not send legacy targets/change/scope keys", effect_schema["description"])
         self.assertTrue(
             thread._office_is_active(),
             "an Office upload must activate Office-specific tools and instructions",

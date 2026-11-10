@@ -1,0 +1,2 @@
+V2_current sha256=5c5c35508f076884f6450ee04409a59796920ef3540297e268bd84a69efa95f4 zip_bad_member=None sheets=['Inventory', 'Notes'] A1=15 A2=None C1='=A1*2' dimension=A1:C2 A2_style_id=0
+V3_candidate sha256=f97014323e07563f7cbee3d0c37c3fd831e3cba48cbeaa8afc431ed312e909e9 zip_bad_member=None sheets=['Inventory', 'Notes'] A1=15 A2=20 C1='=A1*2' dimension=A1:C2 A2_style_id=0

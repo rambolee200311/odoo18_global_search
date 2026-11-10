@@ -123,6 +123,13 @@ class OfficeMappingSession(models.Model):
     )
     revision = fields.Integer(required=True, readonly=True, copy=False, default=1)
     proposal_revision = fields.Integer(required=True, readonly=True, copy=False, default=0)
+    document_revision = fields.Integer(required=True, readonly=True, copy=False, default=0)
+    current_version_id = fields.Many2one(
+        "office.workbook.version", readonly=True, copy=False, ondelete="restrict", index=True
+    )
+    last_valid_version_id = fields.Many2one(
+        "office.workbook.version", readonly=True, copy=False, ondelete="restrict", index=True
+    )
     mapping_rules_json = fields.Text(
         readonly=True,
         copy=False,
@@ -264,6 +271,65 @@ class OfficeMappingSession(models.Model):
         super(OfficeMappingSession, self).write(update)
         self.invalidate_recordset(["state", "revision", "error_code", "final_request_uuid"])
         return {"session_id": self.id, "state": target_state, "revision": current_revision + 1}
+
+    def _advance_document_version_from_service(
+        self, version, *, expected_document_revision, expected_current_version_id
+    ):
+        """Atomically move current/last-valid after caller ACL and proof checks.
+
+        SQL is used only to acquire the Session row lock. Values are invalidated
+        and re-read through the current user's ORM after the lock is held.
+        """
+        self.ensure_one()
+        self.check_access("write")
+        if self.owner_id.id != self.env.uid:
+            raise AccessError(_("The mapping session is unavailable."))
+        if type(expected_document_revision) is not int or expected_document_revision < 0:
+            raise ValidationError(_("Invalid document revision."))
+        if expected_current_version_id not in (False, None) and (
+            type(expected_current_version_id) is not int or expected_current_version_id < 1
+        ):
+            raise ValidationError(_("Invalid current workbook version."))
+        version.ensure_one()
+        version.check_access("write")
+        if (
+            version.session_id != self
+            or version.owner_id.id != self.env.uid
+            or version.company_id != self.company_id
+            or version.thread_id != self.thread_id
+            or version.state not in {"verified", "accepted_current"}
+        ):
+            raise AccessError(_("The workbook version is unavailable."))
+
+        self.flush_recordset(["document_revision", "current_version_id", "last_valid_version_id"])
+        self.env.cr.execute(
+            "SELECT id FROM office_mapping_session WHERE id = %s FOR UPDATE", [self.id]
+        )
+        if not self.env.cr.fetchone():
+            raise AccessError(_("The mapping session is unavailable."))
+        self.invalidate_recordset(["document_revision", "current_version_id", "last_valid_version_id"])
+        fresh = self.browse(self.id).exists()
+        fresh.check_access("write")
+        if (
+            fresh.document_revision != expected_document_revision
+            or (fresh.current_version_id.id or False) != (expected_current_version_id or False)
+        ):
+            raise ValidationError(_("WORKBOOK_VERSION_STALE: the current document version changed."))
+        next_document_revision = fresh.document_revision + 1
+        super(OfficeMappingSession, fresh).write(
+            {
+                "current_version_id": version.id,
+                "last_valid_version_id": version.id,
+                "document_revision": next_document_revision,
+            }
+        )
+        fresh.invalidate_recordset(["document_revision", "current_version_id", "last_valid_version_id"])
+        return {
+            "session_id": self.id,
+            "current_version_id": version.id,
+            "last_valid_version_id": version.id,
+            "document_revision": next_document_revision,
+        }
 
     def _set_context_from_service(self, context_json):
         """Persist server-owned schema metadata; never accept it through ORM write."""

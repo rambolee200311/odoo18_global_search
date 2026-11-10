@@ -11,3 +11,10 @@ from . import test_chat_entrypoint
 from . import test_xlsx_row_expansion
 from . import test_conversational_preview
 from . import test_native_chat_integration
+from . import test_workbook_version_contract
+from . import test_workbook_version_access
+from . import test_workbook_version_state
+from . import test_candidate_validator
+from . import test_intent_contract
+from . import test_edit_orchestration
+from . import test_office_retriever_integration

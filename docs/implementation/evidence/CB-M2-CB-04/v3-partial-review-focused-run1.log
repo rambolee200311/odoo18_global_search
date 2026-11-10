@@ -1,0 +1,625 @@
+2026-11-09 09:45:48,534 73429 INFO ? odoo: Odoo version 18.0 
+2026-11-09 09:45:48,534 73429 INFO ? odoo: Using configuration file at /Users/lijianqiang/Documents/odoo18_global_search/odoo.conf 
+2026-11-09 09:45:48,534 73429 INFO ? odoo: addons paths: ['/Users/lijianqiang/Documents/odoo18_global_search/odoo/addons', '/Users/lijianqiang/Library/Application Support/Odoo/addons/18.0', '/Users/lijianqiang/Documents/odoo18_global_search/addons', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/odoo-llm', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/queue'] 
+2026-11-09 09:45:48,535 73429 INFO ? odoo: database: odoo@127.0.0.1:5555 
+2026-11-09 09:45:48,535 73429 INFO ? odoo.sql_db: Connection to the database failed 
+2026-11-09 09:46:02,953 73533 INFO ? odoo: Odoo version 18.0 
+2026-11-09 09:46:02,953 73533 INFO ? odoo: Using configuration file at /Users/lijianqiang/Documents/odoo18_global_search/odoo.conf 
+2026-11-09 09:46:02,953 73533 INFO ? odoo: addons paths: ['/Users/lijianqiang/Documents/odoo18_global_search/odoo/addons', '/Users/lijianqiang/Library/Application Support/Odoo/addons/18.0', '/Users/lijianqiang/Documents/odoo18_global_search/addons', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/odoo-llm', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/queue'] 
+2026-11-09 09:46:02,953 73533 INFO ? odoo: database: odoo@127.0.0.1:5555 
+2026-11-09 09:46:03,055 73533 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltopdf to print a pdf version of the reports. 
+2026-11-09 09:46:03,057 73533 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltoimage to generate images from html. 
+2026-11-09 09:46:03,146 73533 INFO ? odoo.addons.queue_job.post_load: Apply Request._get_session_and_dbname monkey patch to capture db from request with multiple databases 
+2026-11-09 09:46:03,151 73533 INFO ? odoo.service.server: HTTP service (werkzeug) running on localhost:51563 
+2026-11-09 09:46:03,167 73533 INFO odoo18ce odoo.tests.common: Importing test framework 
+2026-11-09 09:46:03,207 73533 INFO odoo18ce odoo.modules.loading: loading 1 modules... 
+2026-11-09 09:46:03,209 73533 INFO odoo18ce odoo.modules.loading: 1 modules loaded in 0.00s, 0 queries (+0 extra) 
+2026-11-09 09:46:03,220 73533 INFO odoo18ce odoo.modules.loading: updating modules list 
+2026-11-09 09:46:03,222 73533 INFO odoo18ce odoo.addons.base.models.ir_module: ALLOW access to module.update_list on [] to user __system__ #1 via n/a 
+2026-11-09 09:46:03,958 73533 INFO odoo18ce odoo.addons.base.models.ir_module: ALLOW access to module.button_upgrade on ['Office Engine M2 Orchestration'] to user __system__ #1 via n/a 
+2026-11-09 09:46:03,959 73533 INFO odoo18ce odoo.addons.base.models.ir_module: ALLOW access to module.update_list on ['Office Engine M2 Orchestration'] to user __system__ #1 via n/a 
+2026-11-09 09:46:04,212 73533 INFO odoo18ce odoo.addons.base.models.ir_module: ALLOW access to module.button_install on [] to user __system__ #1 via n/a 
+2026-11-09 09:46:04,223 73533 WARNING odoo18ce odoo.modules.graph: module wd_qooling_app: not installable, skipped 
+2026-11-09 09:46:04,223 73533 WARNING odoo18ce odoo.modules.graph: module wd_advanced_m2o_record_panel: not installable, skipped 
+2026-11-09 09:46:04,224 73533 WARNING odoo18ce odoo.modules.graph: module wd_evidence_album: not installable, skipped 
+2026-11-09 09:46:04,225 73533 INFO odoo18ce odoo.modules.loading: loading 89 modules... 
+2026-11-09 09:46:04,873 73533 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x11d878b40, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/llm_thread.py', line 14, code <module>> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/__init__.py", line 1, in <module>
+    from . import models
+  File "<frozen importlib._bootstrap>", line 1232, in _handle_fromlist
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/__init__.py", line 3, in <module>
+    from . import llm_thread
+  File "<frozen importlib._bootstrap>", line 1232, in _handle_fromlist
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/llm_thread.py", line 14, in <module>
+    _REJECT_MESSAGE = _(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-09 09:46:04,908 73533 INFO odoo18ce odoo.modules.loading: Loading module office_engine_m2 (64/89) 
+2026-11-09 09:46:05,048 73533 INFO odoo18ce odoo.modules.registry: module office_engine_m2: creating or updating database tables 
+2026-11-09 09:46:05,146 73533 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/security/office_engine_m2_groups.xml 
+2026-11-09 09:46:05,152 73533 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/data/office_tools.xml 
+2026-11-09 09:46:05,154 73533 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/security/office_mapping_session_rules.xml 
+2026-11-09 09:46:05,161 73533 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/security/office_workbook_version_rules.xml 
+2026-11-09 09:46:05,165 73533 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/security/office_export_skill_rules.xml 
+2026-11-09 09:46:05,167 73533 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/security/ir.model.access.csv 
+2026-11-09 09:46:05,402 73533 INFO odoo18ce odoo.addons.base.models.ir_module: module office_engine_m2: no translation for language zh_CN 
+2026-11-09 09:46:05,402 73533 INFO odoo18ce odoo.addons.base.models.ir_module: module office_engine_m2: no translation for language nl_NL 
+2026-11-09 09:46:05,612 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_ambiguous_intent_requests_clarification_without_candidate ... 
+2026-11-09 09:46:05,743 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_arbitrary_worksheet_and_coordinate_are_not_special_cased ... 
+2026-11-09 09:46:06,208 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_browser_simulation_candidate_preserves_package_core_properties ... 
+2026-11-09 09:46:06,336 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_confirmation_decision_cannot_be_changed_between_plan_and_edit ... 
+2026-11-09 09:46:06,443 73533 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x11f0b1d20, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/edit_orchestrator.py', line 373, code _read_plan> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 284, in load_module_graph
+    test_results = loader.run_suite(suite, global_report=report)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/loader.py", line 118, in run_suite
+    suite(results)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/suite.py", line 47, in run
+    test(result)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/case.py", line 678, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 357, in run
+    super().run(result)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 216, in run
+    self._callTestMethod(testMethod)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 184, in _callTestMethod
+    method()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_edit_orchestration.py", line 447, in test_confirmation_decision_cannot_be_changed_between_plan_and_edit
+    self._execute(env, thread, interpretation, effect, adapter=adapter)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_edit_orchestration.py", line 263, in _execute
+    result = execute_planned_edit(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/edit_orchestrator.py", line 423, in execute_planned_edit
+    plan_message, plan_result, normalized, effect = _read_plan(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/edit_orchestrator.py", line 373, in _read_plan
+    raise ValidationError(_("The current file or requested effect differs from the planned operation."))
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-09 09:46:06,445 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_confirmed_broad_scope_runs_only_after_exact_reply_and_keeps_receipt_bound ... 
+2026-11-09 09:46:06,907 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_confirmed_plan_is_stale_after_current_version_advances ... 
+2026-11-09 09:46:07,314 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_corrupt_candidate_is_hard_blocked_and_never_current ... 
+2026-11-09 09:46:07,695 73533 WARNING odoo18ce odoo.addons.office_engine_m2.services.edit_orchestrator: Office Candidate technical validation failed candidate_id=937 result=FAILED error={'error_code': 'OFFICE_INVALID_OR_MISMATCHED', 'failed_stage': 'signature', 'message': 'Office 文件无效或与声明格式不一致。'} 
+2026-11-09 09:46:07,699 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_explicit_edit_uses_current_version_and_accepts_only_after_cb03_receipt ... 
+2026-11-09 09:46:08,110 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_explicit_header_replacement_has_no_extra_risk_confirmation ... 
+2026-11-09 09:46:08,523 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_facade_fails_closed_while_srs_external_processing_gate_is_open ... 
+2026-11-09 09:46:08,608 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_failed_candidate_is_never_reviewable_even_if_user_accepts ... 
+2026-11-09 09:46:08,983 73533 WARNING odoo18ce odoo.addons.office_engine_m2.services.edit_orchestrator: Office Candidate technical validation failed candidate_id=944 result=FAILED error=None 
+2026-11-09 09:46:09,008 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_llm_confirmation_request_gates_even_an_explicit_single_cell_edit ... 
+2026-11-09 09:46:09,457 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_llm_decides_confirmation_for_broad_scope_without_local_risk_rule ... 
+2026-11-09 09:46:09,858 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_model_unknowns_are_review_data_not_local_clarification_rule ... 
+2026-11-09 09:46:09,930 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_out_of_scope_candidate_is_not_accepted ... 
+2026-11-09 09:46:10,294 73533 WARNING odoo18ce odoo.addons.office_engine_m2.services.edit_orchestrator: Office Candidate technical validation failed candidate_id=951 result=FAILED error=None 
+2026-11-09 09:46:10,298 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_partial_candidate_can_be_accepted_without_changing_its_validation_grade ... 
+2026-11-09 09:46:10,714 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_partial_candidate_can_be_rejected_without_advancing_current ... 
+2026-11-09 09:46:11,121 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_provider_failure_does_not_register_candidate_or_advance_current ... 
+2026-11-09 09:46:11,225 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_two_successive_edits_use_successive_accepted_workbook_versions ... 
+2026-11-09 09:46:11,996 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_user_declines_model_confirmation_without_candidate_or_current_change ... 
+2026-11-09 09:46:12,104 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_verified_candidate_review_accept_and_reject_are_user_bound ... 
+2026-11-09 09:46:12,487 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_versioned_current_routes_chat_only_through_candidate_b_office_tool ... 
+2026-11-09 09:46:12,629 73533 INFO odoo18ce odoo.addons.base.models.ir_attachment: filestore gc 44 checked, 44 removed 
+2026-11-09 09:46:12,634 73533 WARNING odoo18ce odoo.tests.common: A child process was found, terminating it: psutil.Process(pid=73541, name='Python', status='running', started='09:46:05') 
+2026-11-09 09:46:22,695 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_private_skill: Starting TestPrivateOfficeExportSkill.test_skill_hit_uses_latest_data_through_m1_engine ... 
+2026-11-09 09:46:22,741 73533 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 28587]], fields=['name'], limit=1, offset=0, order=None 
+2026-11-09 09:46:24,143 73533 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 28587]], fields=['name'], limit=1, offset=0, order=None 
+2026-11-09 09:46:24,793 73533 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 28587]], fields=['name'], limit=1, offset=0, order=None 
+2026-11-09 09:46:24,796 73533 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 28587]], fields=['name'], limit=1, offset=0, order=None 
+2026-11-09 09:46:24,798 73533 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 28587]], fields=['name'], limit=1, offset=0, order=None 
+2026-11-09 09:46:25,479 73533 INFO odoo18ce odoo.addons.office_engine_m2.services.private_skill_service: SKILL_MATCHED: 1248 
+2026-11-09 09:46:25,480 73533 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x11f0ed930, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/private_skill_service.py', line 294, code match_for_request> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 284, in load_module_graph
+    test_results = loader.run_suite(suite, global_report=report)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/loader.py", line 118, in run_suite
+    suite(results)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/suite.py", line 47, in run
+    test(result)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/case.py", line 678, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 357, in run
+    super().run(result)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 216, in run
+    self._callTestMethod(testMethod)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 184, in _callTestMethod
+    method()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_private_skill.py", line 414, in test_skill_hit_uses_latest_data_through_m1_engine
+    match = match_for_request(self.env, second.id, selected_skill_id=_saved["skill_id"])
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/private_skill_service.py", line 294, in match_for_request
+    body=_(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-09 09:46:25,490 73533 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 28587]], fields=['name'], limit=1, offset=0, order=None 
+2026-11-09 09:46:26,435 73533 WARNING odoo18ce odoo.addons.office_engine_m2.services.render_bridge: M1 output could not be registered as V1; session_id=11900 reason=request_unavailable 
+2026-11-09 09:46:26,545 73533 INFO odoo18ce odoo.addons.base.models.ir_attachment: filestore gc 4 checked, 4 removed 
+2026-11-09 09:46:26,549 73533 WARNING odoo18ce odoo.tests.common: A child process was found, terminating it: psutil.Process(pid=73541, name='Python', status='running', started='09:46:05') 
+2026-11-09 09:46:36,733 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_workbook_version_state: Starting TestWorkbookVersionState.test_acceptance_rollback_preserves_prior_effective_version ... 
+2026-11-09 09:46:36,872 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_workbook_version_state: Starting TestWorkbookVersionState.test_candidate_attachment_creation_failure_rolls_back_metadata ... 
+2026-11-09 09:46:36,966 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_workbook_version_state: Starting TestWorkbookVersionState.test_failed_receipt_and_attachment_write_do_not_mutate_last_valid ... 
+2026-11-09 09:46:37,083 73533 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x11ecb1000, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py', line 241, code _validate_candidate_acceptance_authorization> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 284, in load_module_graph
+    test_results = loader.run_suite(suite, global_report=report)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/loader.py", line 118, in run_suite
+    suite(results)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/suite.py", line 47, in run
+    test(result)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/case.py", line 678, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 357, in run
+    super().run(result)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 216, in run
+    self._callTestMethod(testMethod)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 184, in _callTestMethod
+    method()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_workbook_version_state.py", line 279, in test_failed_receipt_and_attachment_write_do_not_mutate_last_valid
+    self._accept_candidate(env, candidate)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/support/__init__.py", line 220, in _accept_candidate
+    return accept_verified_candidate(env, candidate.id, authorization)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py", line 1195, in accept_verified_candidate
+    authorization_digest = _validate_candidate_acceptance_authorization(env, candidate, authorization)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py", line 241, in _validate_candidate_acceptance_authorization
+    raise ValidationError(_("Only a technically reviewable Candidate can use edit acceptance authorization."))
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-09 09:46:37,086 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_workbook_version_state: Starting TestWorkbookVersionState.test_finalization_rejects_mismatched_bytes_or_wrong_thread_message ... 
+2026-11-09 09:46:37,195 73533 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x11f99e5e0, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py', line 336, code _read_attachment> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 284, in load_module_graph
+    test_results = loader.run_suite(suite, global_report=report)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/loader.py", line 118, in run_suite
+    suite(results)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/suite.py", line 47, in run
+    test(result)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/case.py", line 678, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 357, in run
+    super().run(result)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 216, in run
+    self._callTestMethod(testMethod)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 184, in _callTestMethod
+    method()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_workbook_version_state.py", line 142, in test_finalization_rejects_mismatched_bytes_or_wrong_thread_message
+    record_finalize_reference(env, version.id, wrong_bytes.id, message.id)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py", line 961, in record_finalize_reference
+    content, actual_sha = _read_attachment(env, attachment, expected_sha=version.output_sha256)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py", line 336, in _read_attachment
+    raise ValidationError(_("The workbook attachment digest does not match its version."))
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-09 09:46:37,199 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_workbook_version_state: Starting TestWorkbookVersionState.test_finalized_reference_matches_current_bytes_and_is_immutable ... 
+2026-11-09 09:46:37,295 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_workbook_version_state: Starting TestWorkbookVersionState.test_new_current_supersedes_finalized_version_without_losing_delivery_reference ... 
+2026-11-09 09:46:37,440 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_workbook_version_state: Starting TestWorkbookVersionState.test_partial_receipt_waits_for_user_decision_and_failed_results_never_advance ... 
+2026-11-09 09:46:37,541 73533 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x11ecb1000, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py', line 219, code _validate_candidate_acceptance_authorization> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 284, in load_module_graph
+    test_results = loader.run_suite(suite, global_report=report)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/loader.py", line 118, in run_suite
+    suite(results)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/suite.py", line 47, in run
+    test(result)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/case.py", line 678, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 357, in run
+    super().run(result)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 216, in run
+    self._callTestMethod(testMethod)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 184, in _callTestMethod
+    method()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_workbook_version_state.py", line 95, in test_partial_receipt_waits_for_user_decision_and_failed_results_never_advance
+    accept_verified_candidate(env, candidate.id)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py", line 1195, in accept_verified_candidate
+    authorization_digest = _validate_candidate_acceptance_authorization(env, candidate, authorization)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py", line 219, in _validate_candidate_acceptance_authorization
+    raise AccessError(_("A trusted, scoped Candidate acceptance authorization is required."))
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-09 09:46:37,584 73533 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x11ecb1360, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py', line 241, code _validate_candidate_acceptance_authorization> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 284, in load_module_graph
+    test_results = loader.run_suite(suite, global_report=report)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/loader.py", line 118, in run_suite
+    suite(results)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/suite.py", line 47, in run
+    test(result)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/case.py", line 678, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 357, in run
+    super().run(result)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 216, in run
+    self._callTestMethod(testMethod)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 184, in _callTestMethod
+    method()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_workbook_version_state.py", line 98, in test_partial_receipt_waits_for_user_decision_and_failed_results_never_advance
+    self._accept_candidate(env, candidate)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/support/__init__.py", line 220, in _accept_candidate
+    return accept_verified_candidate(env, candidate.id, authorization)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py", line 1195, in accept_verified_candidate
+    authorization_digest = _validate_candidate_acceptance_authorization(env, candidate, authorization)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py", line 241, in _validate_candidate_acceptance_authorization
+    raise ValidationError(_("Only a technically reviewable Candidate can use edit acceptance authorization."))
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-09 09:46:37,624 73533 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x11ecb1240, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py', line 241, code _validate_candidate_acceptance_authorization> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 284, in load_module_graph
+    test_results = loader.run_suite(suite, global_report=report)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/loader.py", line 118, in run_suite
+    suite(results)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/suite.py", line 47, in run
+    test(result)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/case.py", line 678, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 357, in run
+    super().run(result)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 216, in run
+    self._callTestMethod(testMethod)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 184, in _callTestMethod
+    method()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_workbook_version_state.py", line 98, in test_partial_receipt_waits_for_user_decision_and_failed_results_never_advance
+    self._accept_candidate(env, candidate)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/support/__init__.py", line 220, in _accept_candidate
+    return accept_verified_candidate(env, candidate.id, authorization)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py", line 1195, in accept_verified_candidate
+    authorization_digest = _validate_candidate_acceptance_authorization(env, candidate, authorization)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py", line 241, in _validate_candidate_acceptance_authorization
+    raise ValidationError(_("Only a technically reviewable Candidate can use edit acceptance authorization."))
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-09 09:46:37,628 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_workbook_version_state: Starting TestWorkbookVersionState.test_restore_creates_new_child_and_requires_fresh_confirmation_and_proof ... 
+2026-11-09 09:46:37,842 73533 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_workbook_version_state: Starting TestWorkbookVersionState.test_restore_rejects_old_confirmation_and_stale_revision ... 
+2026-11-09 09:46:38,006 73533 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x11e1c7680, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py', line 814, code request_restore_candidate> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 284, in load_module_graph
+    test_results = loader.run_suite(suite, global_report=report)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/loader.py", line 118, in run_suite
+    suite(results)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/suite.py", line 47, in run
+    test(result)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/case.py", line 678, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 357, in run
+    super().run(result)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 216, in run
+    self._callTestMethod(testMethod)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 184, in _callTestMethod
+    method()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_workbook_version_state.py", line 250, in test_restore_rejects_old_confirmation_and_stale_revision
+    request_restore_candidate(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py", line 814, in request_restore_candidate
+    raise ValidationError(_("WORKBOOK_VERSION_STALE: the current version changed before restore."))
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-09 09:46:38,087 73533 INFO odoo18ce odoo.addons.base.models.ir_attachment: filestore gc 29 checked, 29 removed 
+2026-11-09 09:46:38,092 73533 WARNING odoo18ce odoo.tests.common: A child process was found, terminating it: psutil.Process(pid=73541, name='Python', status='running', started='09:46:05') 
+2026-11-09 09:46:48,134 73533 INFO odoo18ce odoo.modules.loading: Module office_engine_m2 loaded in 43.23s (incl. 42.66s test), 219 queries (+10769 test, +219 other) 
+2026-11-09 09:46:48,217 73533 INFO odoo18ce odoo.modules.loading: 89 modules loaded in 43.99s, 219 queries (+10988 extra) 
+2026-11-09 09:46:48,217 73533 WARNING odoo18ce odoo.modules.graph: module wd_qooling_app: not installable, skipped 
+2026-11-09 09:46:48,217 73533 WARNING odoo18ce odoo.modules.graph: module wd_advanced_m2o_record_panel: not installable, skipped 
+2026-11-09 09:46:48,217 73533 WARNING odoo18ce odoo.modules.graph: module wd_evidence_album: not installable, skipped 
+2026-11-09 09:46:48,218 73533 INFO odoo18ce odoo.modules.loading: loading 89 modules... 
+2026-11-09 09:46:48,218 73533 INFO odoo18ce odoo.modules.loading: 89 modules loaded in 0.00s, 0 queries (+0 extra) 
+2026-11-09 09:46:48,218 73533 WARNING odoo18ce odoo.modules.graph: module wd_qooling_app: not installable, skipped 
+2026-11-09 09:46:48,218 73533 WARNING odoo18ce odoo.modules.graph: module wd_advanced_m2o_record_panel: not installable, skipped 
+2026-11-09 09:46:48,218 73533 WARNING odoo18ce odoo.modules.graph: module wd_evidence_album: not installable, skipped 
+2026-11-09 09:46:48,219 73533 INFO odoo18ce odoo.modules.loading: loading 89 modules... 
+2026-11-09 09:46:48,219 73533 INFO odoo18ce odoo.modules.loading: 89 modules loaded in 0.00s, 0 queries (+0 extra) 
+2026-11-09 09:46:48,350 73533 ERROR odoo18ce odoo.modules.loading: Some modules are not loaded, some dependencies or manifest may be missing: ['wd_advanced_m2o_record_panel', 'wd_evidence_album', 'wd_qooling_app'] 
+2026-11-09 09:46:48,362 73533 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.page is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 09:46:48,363 73533 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.config.settings is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 09:46:48,363 73533 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.source.config is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 09:46:48,363 73533 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.source.record.option is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 09:46:48,363 73533 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.media is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 09:46:48,364 73533 INFO odoo18ce odoo.modules.loading: Model wd.preview.configuration is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 09:46:48,364 73533 INFO odoo18ce odoo.modules.loading: Model wd.preview.configuration.line is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 09:46:48,372 73533 INFO odoo18ce odoo.modules.loading: Model wd.qooling.inbound.form is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 09:46:48,372 73533 INFO odoo18ce odoo.modules.loading: Model wd.qooling.media.evidence.mixin is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 09:46:48,376 73533 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.extend.validity.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 09:46:48,376 73533 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 09:46:48,376 73533 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.create.page.upload.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 09:46:48,376 73533 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.source.page.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 09:46:48,376 73533 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.upload.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 09:46:48,379 73533 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.item is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 09:46:48,434 73533 INFO odoo18ce odoo.modules.loading: Model wd.qooling.outbound.form is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 09:46:48,434 73533 INFO odoo18ce odoo.modules.loading: Model wd.qooling.temperature.record is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 09:46:48,434 73533 INFO odoo18ce odoo.modules.loading: Model wd.qooling.temperature.record.line is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 09:46:48,434 73533 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.source.items.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-09 09:46:48,443 73533 INFO odoo18ce odoo.modules.registry: verifying fields for every extended model 
+2026-11-09 09:46:48,584 73533 INFO odoo18ce odoo.modules.loading: Modules loaded. 
+2026-11-09 09:46:48,665 73533 INFO odoo18ce odoo.modules.registry: Registry changed, signaling through the database 
+2026-11-09 09:46:48,665 73533 INFO odoo18ce odoo.modules.registry: Registry loaded in 45.514s 
+2026-11-09 09:46:48,665 73533 INFO odoo18ce odoo.service.server: Starting post tests 
+2026-11-09 09:46:48,666 73533 INFO odoo18ce odoo.service.server: 0 post-tests in 0.00s, 0 queries 
+2026-11-09 09:46:48,666 73533 INFO odoo18ce odoo.tests.stats: office_engine_m2: 38 tests 42.66s 10769 queries 
+2026-11-09 09:46:48,666 73533 INFO odoo18ce odoo.tests.result: 0 failed, 0 error(s) of 32 tests when loading database 'odoo18ce' 
+2026-11-09 09:46:48,666 73533 INFO odoo18ce odoo.service.server: Initiating shutdown 
+2026-11-09 09:46:48,666 73533 INFO odoo18ce odoo.service.server: Hit CTRL-C again or send a second signal to force the shutdown. 
+2026-11-09 09:46:48,849 73533 INFO odoo18ce odoo.sql_db: ConnectionPool(read/write;used=0/count=0/max=64): Closed 2 connections  
+2026-11-09 09:46:48,859 73533 INFO odoo18ce odoo.service.server: A child process was found, pid is psutil.Process(pid=73541, name='Python', status='running', started='09:46:05'), process may hang 

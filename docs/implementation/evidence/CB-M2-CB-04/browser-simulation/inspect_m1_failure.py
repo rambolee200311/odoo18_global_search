@@ -1,0 +1,6 @@
+request = env['office.document.request'].browse(2175).exists()
+session = env['office.mapping.session'].browse(11579).exists()
+print('REQUEST', request.id, request.request_uuid, request.state, request.error_code, request.failed_stage, request.owner_id.id, request.thread_id.id, request.input_message_id.id, request.source_attachment_id.id, request.output_attachment_id.id, request.input_sha256, request.output_sha256)
+print('SESSION', session.id, session.state, session.revision, session.proposal_revision, session.preview_proposal_revision, session.document_revision, session.final_request_uuid, session.preview_attachment_id.id, session.confirmed_revision)
+print('OUTPUTS', env['ir.attachment'].search([('res_model', '=', 'office.document.request'), ('res_id', '=', request.id)]).mapped(lambda a: (a.id, a.name, a.mimetype, a.public, a.company_id.id, a.file_size)))
+print('DELIVERY_MESSAGES', env['mail.message'].search([('model', '=', 'llm.thread'), ('res_id', '=', 15102), ('attachment_ids', 'in', [request.output_attachment_id.id] if request.output_attachment_id else [])]).mapped(lambda m: (m.id, m.llm_role, m.author_id.id, m.attachment_ids.ids)))

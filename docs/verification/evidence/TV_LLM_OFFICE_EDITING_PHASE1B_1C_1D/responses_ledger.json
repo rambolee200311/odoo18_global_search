@@ -1,0 +1,97 @@
+{
+  "attempts": [
+    {
+      "case_id": "phase1b",
+      "cleanup": {
+        "container": "not_found",
+        "response": "not_created"
+      },
+      "elapsed_seconds": 36.129,
+      "error": {
+        "class": "APIConnectionError",
+        "http_status": null,
+        "message": "redacted; exception text may contain request details",
+        "request_id": null
+      },
+      "failure_phase": "responses.create",
+      "finished_unix": 1793936992.53383,
+      "input": {
+        "bytes": 5953,
+        "name": "phase1b_input.xlsx",
+        "sha256": "38499b0f59737af2e11460a738602199aa2696d496b23ce8f6f4e652d1ab4d07",
+        "uncompressed_xlsx_member_bytes": 20679
+      },
+      "max_tool_calls_requested_but_not_treated_as_hard_cap": 1,
+      "model": "gpt-5.6-luna",
+      "output_expected": "phase1b_output.xlsx",
+      "output_token_cap": 4000,
+      "provider_preflight": {
+        "active_default_chat_model_count": 1,
+        "credential_present_without_reading_or_logging_value": true,
+        "endpoint_host_path_validated_without_logging_value": true,
+        "project_id": "UNVERIFIED: no project identifier field on llm.provider",
+        "service": "openai"
+      },
+      "provider_response": null,
+      "request_index": 1,
+      "request_timeout_seconds": 120,
+      "reserved_amount_for_response_usd": 0.35052,
+      "response_received": false,
+      "sdk_automatic_retries": 0,
+      "started_unix": 1793936236.068672,
+      "status": "api_connection_error",
+      "token_usage": "unavailable_no_response"
+    },
+    {
+      "case_id": "phase1b",
+      "cleanup": {
+        "container": "not_found",
+        "response": "not_created"
+      },
+      "elapsed_seconds": 38.689,
+      "error": {
+        "class": "APIConnectionError",
+        "http_status": null,
+        "message": "redacted; exception text may contain request details",
+        "request_id": null
+      },
+      "failure_phase": "responses.create",
+      "finished_unix": 1793938194.446931,
+      "input": {
+        "bytes": 5953,
+        "name": "phase1b_input.xlsx",
+        "sha256": "38499b0f59737af2e11460a738602199aa2696d496b23ce8f6f4e652d1ab4d07",
+        "uncompressed_xlsx_member_bytes": 20679
+      },
+      "max_tool_calls_requested_but_not_treated_as_hard_cap": 1,
+      "model": "gpt-5.6-luna",
+      "output_expected": "phase1b_output.xlsx",
+      "output_token_cap": 4000,
+      "provider_preflight": {
+        "active_default_chat_model_count": 1,
+        "credential_present_without_reading_or_logging_value": true,
+        "endpoint_host_path_validated_without_logging_value": true,
+        "project_id": "UNVERIFIED: no project identifier field on llm.provider",
+        "service": "openai"
+      },
+      "provider_response": null,
+      "request_index": 2,
+      "request_timeout_seconds": 120,
+      "reserved_amount_for_response_usd": 0.35052,
+      "response_received": false,
+      "sdk_automatic_retries": 0,
+      "started_unix": 1793937236.155197,
+      "status": "api_connection_error",
+      "token_usage": "unavailable_no_response"
+    }
+  ],
+  "authorization": "user authorized Candidate B Phase 1B-1D, synthetic XLSX only",
+  "budget_cap_usd": 2.0,
+  "budget_reserve_per_response_usd": 0.35052,
+  "max_responses_authorized": 8,
+  "model": "gpt-5.6-luna",
+  "planned_reserve_with_margin_usd": 1.7526,
+  "planned_response_count": 5,
+  "runner_response_ceiling": 5,
+  "sdk_automatic_retries": 0
+}

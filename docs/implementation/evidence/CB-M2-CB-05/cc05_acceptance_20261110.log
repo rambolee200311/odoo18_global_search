@@ -1,0 +1,179 @@
+2026-11-10 06:39:41,096 95240 INFO ? odoo: Odoo version 18.0 
+2026-11-10 06:39:41,096 95240 INFO ? odoo: Using configuration file at /Users/lijianqiang/Documents/odoo18_global_search/odoo.conf 
+2026-11-10 06:39:41,096 95240 INFO ? odoo: addons paths: ['/Users/lijianqiang/Documents/odoo18_global_search/odoo/addons', '/Users/lijianqiang/Library/Application Support/Odoo/addons/18.0', '/Users/lijianqiang/Documents/odoo18_global_search/addons', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/odoo-llm', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/queue'] 
+2026-11-10 06:39:41,096 95240 INFO ? odoo: database: odoo@127.0.0.1:5555 
+2026-11-10 06:39:41,170 95240 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltopdf to print a pdf version of the reports. 
+2026-11-10 06:39:41,173 95240 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltoimage to generate images from html. 
+2026-11-10 06:39:41,264 95240 INFO ? odoo.addons.queue_job.post_load: Apply Request._get_session_and_dbname monkey patch to capture db from request with multiple databases 
+2026-11-10 06:39:41,266 95240 INFO ? odoo.service.server: HTTP service (werkzeug) running on localhost:64703 
+2026-11-10 06:39:41,281 95240 INFO odoo18ce odoo.tests.common: Importing test framework 
+2026-11-10 06:39:41,313 95240 INFO odoo18ce odoo.modules.loading: loading 1 modules... 
+2026-11-10 06:39:41,315 95240 INFO odoo18ce odoo.modules.loading: 1 modules loaded in 0.00s, 0 queries (+0 extra) 
+2026-11-10 06:39:41,325 95240 INFO odoo18ce odoo.modules.loading: updating modules list 
+2026-11-10 06:39:41,327 95240 INFO odoo18ce odoo.addons.base.models.ir_module: ALLOW access to module.update_list on [] to user __system__ #1 via n/a 
+2026-11-10 06:39:42,073 95240 INFO odoo18ce odoo.addons.base.models.ir_module: ALLOW access to module.button_upgrade on ['Office Engine M2 Orchestration'] to user __system__ #1 via n/a 
+2026-11-10 06:39:42,073 95240 INFO odoo18ce odoo.addons.base.models.ir_module: ALLOW access to module.update_list on ['Office Engine M2 Orchestration'] to user __system__ #1 via n/a 
+2026-11-10 06:39:42,323 95240 INFO odoo18ce odoo.addons.base.models.ir_module: ALLOW access to module.button_install on [] to user __system__ #1 via n/a 
+2026-11-10 06:39:42,332 95240 WARNING odoo18ce odoo.modules.graph: module wd_qooling_app: not installable, skipped 
+2026-11-10 06:39:42,332 95240 WARNING odoo18ce odoo.modules.graph: module wd_advanced_m2o_record_panel: not installable, skipped 
+2026-11-10 06:39:42,333 95240 WARNING odoo18ce odoo.modules.graph: module wd_evidence_album: not installable, skipped 
+2026-11-10 06:39:42,334 95240 INFO odoo18ce odoo.modules.loading: loading 89 modules... 
+2026-11-10 06:39:42,953 95240 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x126b78b40, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/llm_thread.py', line 14, code <module>> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/__init__.py", line 1, in <module>
+    from . import models
+  File "<frozen importlib._bootstrap>", line 1232, in _handle_fromlist
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/__init__.py", line 3, in <module>
+    from . import llm_thread
+  File "<frozen importlib._bootstrap>", line 1232, in _handle_fromlist
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/llm_thread.py", line 14, in <module>
+    _REJECT_MESSAGE = _(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-10 06:39:42,988 95240 INFO odoo18ce odoo.modules.loading: Loading module office_engine_m2 (64/89) 
+2026-11-10 06:39:43,121 95240 INFO odoo18ce odoo.modules.registry: module office_engine_m2: creating or updating database tables 
+2026-11-10 06:39:43,209 95240 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/security/office_engine_m2_groups.xml 
+2026-11-10 06:39:43,212 95240 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/data/office_tools.xml 
+2026-11-10 06:39:43,214 95240 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/security/office_mapping_session_rules.xml 
+2026-11-10 06:39:43,219 95240 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/security/office_workbook_version_rules.xml 
+2026-11-10 06:39:43,221 95240 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/security/office_export_skill_rules.xml 
+2026-11-10 06:39:43,223 95240 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/security/ir.model.access.csv 
+2026-11-10 06:39:43,453 95240 INFO odoo18ce odoo.addons.base.models.ir_module: module office_engine_m2: no translation for language zh_CN 
+2026-11-10 06:39:43,453 95240 INFO odoo18ce odoo.addons.base.models.ir_module: module office_engine_m2: no translation for language nl_NL 
+2026-11-10 06:39:43,530 95240 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_native_chat_integration: Starting TestNativeOfficeChatIntegration.test_native_retriever_honors_model_limit_for_duplicate_matches ... 
+2026-11-10 06:39:43,567 95240 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['name', '=', 'Office duplicate d98fa94d5d27401eadd173772d4dbef5']], fields=['id', 'name'], limit=1, offset=0, order=None 
+2026-11-10 06:39:44,051 95240 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_native_chat_integration: Starting TestNativeOfficeChatIntegration.test_native_retriever_pages_with_stable_order_and_current_user_count ... 
+2026-11-10 06:39:44,083 95240 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', 'in', [29841, 29842, 29843, 29844, 29845]]], fields=['name'], limit=2, offset=0, order=name asc, id 
+2026-11-10 06:39:44,084 95240 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', 'in', [29841, 29842, 29843, 29844, 29845]]], fields=['name'], limit=2, offset=2, order=name asc, id 
+2026-11-10 06:39:44,085 95240 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', 'in', [29841, 29842, 29843, 29844, 29845]]], fields=['name'], limit=2, offset=4, order=name asc, id 
+2026-11-10 06:39:44,087 95240 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_native_chat_integration: Starting TestNativeOfficeChatIntegration.test_office_retriever_allows_acl_readable_records_before_prepare ... 
+2026-11-10 06:39:44,124 95240 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['parent_id', '=', 29846]], fields=['id', 'name', 'parent_id'], limit=10, offset=0, order=None 
+2026-11-10 06:39:44,132 95240 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 29849]], fields=['id', 'name'], limit=1, offset=0, order=None 
+2026-11-10 06:39:44,134 95240 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_native_chat_integration: Starting TestNativeOfficeChatIntegration.test_office_retriever_supports_acl_readable_relational_fields ... 
+2026-11-10 06:39:44,165 95240 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['name', '=', 'Office relation parent 11cd0a31ef3f4d509af44b0f3a995074']], fields=['id', 'name', 'child_ids'], limit=1, offset=0, order=None 
+2026-11-10 06:39:44,172 95240 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_native_chat_integration: Starting TestNativeOfficeChatIntegration.test_office_retriever_uses_current_user_permissions_without_environment_gate ... 
+2026-11-10 06:39:44,191 95240 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['name', '=', 'NO-SUCH-OFFICE-RECORD']], fields=['name'], limit=1, offset=0, order=None 
+2026-11-10 06:39:44,193 95240 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_native_chat_integration: Starting TestNativeOfficeChatIntegration.test_office_retriever_uses_native_search_read_for_relation_queries ... 
+2026-11-10 06:39:44,229 95240 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', 'in', [29853, 29854]]], fields=['id', 'name', 'parent_id'], limit=2, offset=0, order=None 
+2026-11-10 06:39:44,233 95240 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 29852]], fields=['id', 'name', 'contact_address'], limit=1, offset=0, order=None 
+2026-11-10 06:39:44,235 95240 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_native_chat_integration: Starting TestNativeOfficeChatIntegration.test_office_retriever_uses_requested_domain_inside_active_session ... 
+2026-11-10 06:39:44,280 95240 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['parent_id', '=', 29855]], fields=['id', 'name'], limit=2, offset=0, order=None 
+2026-11-10 06:39:44,286 95240 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 29858]], fields=['id', 'name'], limit=1, offset=0, order=None 
+2026-11-10 06:39:44,289 95240 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_native_chat_integration: Starting TestNativeOfficeChatIntegration.test_retriever_uses_current_user_model_and_field_rights ... 
+2026-11-10 06:39:44,310 95240 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['name', '=', 'NO-SUCH-OFFICE-ORDER']], fields=['email'], limit=1, offset=0, order=None 
+2026-11-10 06:39:44,386 95240 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=ir.config_parameter, domain=[['key', '=', 'database.uuid']], fields=['key'], limit=1, offset=0, order=None 
+2026-11-10 06:39:44,388 95240 INFO odoo18ce odoo.addons.base.models.ir_model: Access Denied by ACLs for operation: read, uid: 2346, model: ir.config_parameter 
+2026-11-10 06:39:44,474 95240 INFO odoo18ce odoo.addons.base.models.ir_attachment: filestore gc 3 checked, 3 removed 
+2026-11-10 06:39:44,480 95240 WARNING odoo18ce odoo.tests.common: A child process was found, terminating it: psutil.Process(pid=95261, name='Python', status='running', started='06:39:43') 
+2026-11-10 06:39:54,638 95240 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_office_retriever_integration: Starting TestOfficeRetrieverIntegration.test_automated_user_simulation_two_contact_reads_and_formal_accepts ... 
+2026-11-10 06:39:54,759 95240 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['email', 'like', 'cb05-21fa19c3a4934ba3a9763b7dce16bed6-%']], fields=['name', 'phone', 'email', 'id'], limit=3, offset=0, order=id 
+2026-11-10 06:39:55,204 95240 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 29862]], fields=['street', 'street2', 'city', 'state_id', 'zip', 'country_id', 'id'], limit=1, offset=0, order=id 
+2026-11-10 06:39:55,218 95240 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 29863]], fields=['street', 'street2', 'city', 'state_id', 'zip', 'country_id', 'id'], limit=1, offset=0, order=id 
+2026-11-10 06:39:55,232 95240 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 29864]], fields=['street', 'street2', 'city', 'state_id', 'zip', 'country_id', 'id'], limit=1, offset=0, order=id 
+2026-11-10 06:39:55,623 95240 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_office_retriever_integration: CC05_HVR_AUTOMATED_USER_SIMULATION thread=16710 session=12840 initial_v1=1571 contact_ids=[29862, 29863, 29864] first_rows=[(29862, 'CB05 Contact 0 21fa19c3a4934ba3a9763b7dce16bed6', '+12025550000', 'cb05-21fa19c3a4934ba3a9763b7dce16bed6-0@example.invalid'), (29863, 'CB05 Contact 1 21fa19c3a4934ba3a9763b7dce16bed6', '+12025550001', 'cb05-21fa19c3a4934ba3a9763b7dce16bed6-1@example.invalid'), (29864, 'CB05 Contact 2 21fa19c3a4934ba3a9763b7dce16bed6', '+12025550002', 'cb05-21fa19c3a4934ba3a9763b7dce16bed6-2@example.invalid')] stage1_candidate=1572 stage1_accept=accepted_current stage1_current=1572 stage1_last_valid=1572 stage1_revision=2 stage1_input_sha256=61c3275b38ba35115bb8f2d5eeb9aeb85f7dccb2474be3021f1e38d7cbb327b8 stage1_output_sha256=d8e38892afb885f988e3420007085e8e96d9be6a0f7613558d46d41071540c34 stage2_candidate=1573 stage2_accept=accepted_current stage2_parent=1572 stage2_current=1573 stage2_last_valid=1573 stage2_revision=3 stage2_input_sha256=d8e38892afb885f988e3420007085e8e96d9be6a0f7613558d46d41071540c34 stage2_output_sha256=17164aabbd2c9fd80a4858eb7225a333b54b56a407eefc1ee057999ac9731067 addresses=['100 Synthetic Street, Test City 0, 10000', '101 Synthetic Street, Unit 2, Test City 1, 10001', '102 Synthetic Street, Test City 2, 10002'] a_to_c_preserved=true contacts_unchanged=true 
+2026-11-10 06:39:55,625 95240 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_office_retriever_integration: Starting TestOfficeRetrieverIntegration.test_office_schema_exposes_retrieve_without_a_second_public_tool ... 
+2026-11-10 06:39:55,668 95240 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_office_retriever_integration: Starting TestOfficeRetrieverIntegration.test_retrieve_distinguishes_empty_result_from_missing_query ... 
+2026-11-10 06:39:55,724 95240 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['email', '=', 'missing-4b9f74c48dd24192b2d1f8b70ade2162@example.invalid']], fields=['name', 'id'], limit=1, offset=0, order=id 
+2026-11-10 06:39:55,761 95240 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_office_retriever_integration: Starting TestOfficeRetrieverIntegration.test_retrieve_rejects_a_user_who_does_not_own_the_thread ... 
+2026-11-10 06:39:55,831 95240 INFO odoo18ce odoo.addons.base.models.ir_rule: Access Denied by record rules for operation: read on record ids: [16713], uid: 2348, model: llm.thread 
+2026-11-10 06:39:55,836 95240 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_office_retriever_integration: Starting TestOfficeRetrieverIntegration.test_retrieve_reuses_bound_retriever_without_current_and_preserves_identity ... 
+2026-11-10 06:39:55,916 95240 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['email', 'like', 'cb05-da22d80b01c145e2bc78912a7db18459-%']], fields=['name', 'email', 'phone', 'id'], limit=3, offset=0, order=id 
+2026-11-10 06:39:55,942 95240 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 29865]], fields=['name', 'street', 'street2', 'city', 'state_id', 'zip', 'country_id', 'id'], limit=1, offset=0, order=id 
+2026-11-10 06:39:55,961 95240 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 29866]], fields=['name', 'street', 'street2', 'city', 'state_id', 'zip', 'country_id', 'id'], limit=1, offset=0, order=id 
+2026-11-10 06:39:55,978 95240 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool_record_retriever: Executing Odoo Record Retriever with model=res.partner, domain=[['id', '=', 29867]], fields=['name', 'street', 'street2', 'city', 'state_id', 'zip', 'country_id', 'id'], limit=1, offset=0, order=id 
+2026-11-10 06:39:56,063 95240 INFO odoo18ce odoo.addons.base.models.ir_attachment: filestore gc 10 checked, 10 removed 
+2026-11-10 06:39:56,068 95240 WARNING odoo18ce odoo.tests.common: A child process was found, terminating it: psutil.Process(pid=95261, name='Python', status='running', started='06:39:43') 
+2026-11-10 06:40:06,214 95240 INFO odoo18ce odoo.modules.loading: Module office_engine_m2 loaded in 23.23s (incl. 22.60s test), 219 queries (+2375 test, +219 other) 
+2026-11-10 06:40:06,282 95240 INFO odoo18ce odoo.modules.loading: 89 modules loaded in 23.95s, 219 queries (+2594 extra) 
+2026-11-10 06:40:06,282 95240 WARNING odoo18ce odoo.modules.graph: module wd_qooling_app: not installable, skipped 
+2026-11-10 06:40:06,282 95240 WARNING odoo18ce odoo.modules.graph: module wd_advanced_m2o_record_panel: not installable, skipped 
+2026-11-10 06:40:06,282 95240 WARNING odoo18ce odoo.modules.graph: module wd_evidence_album: not installable, skipped 
+2026-11-10 06:40:06,283 95240 INFO odoo18ce odoo.modules.loading: loading 89 modules... 
+2026-11-10 06:40:06,283 95240 INFO odoo18ce odoo.modules.loading: 89 modules loaded in 0.00s, 0 queries (+0 extra) 
+2026-11-10 06:40:06,283 95240 WARNING odoo18ce odoo.modules.graph: module wd_qooling_app: not installable, skipped 
+2026-11-10 06:40:06,283 95240 WARNING odoo18ce odoo.modules.graph: module wd_advanced_m2o_record_panel: not installable, skipped 
+2026-11-10 06:40:06,283 95240 WARNING odoo18ce odoo.modules.graph: module wd_evidence_album: not installable, skipped 
+2026-11-10 06:40:06,284 95240 INFO odoo18ce odoo.modules.loading: loading 89 modules... 
+2026-11-10 06:40:06,284 95240 INFO odoo18ce odoo.modules.loading: 89 modules loaded in 0.00s, 0 queries (+0 extra) 
+2026-11-10 06:40:06,387 95240 ERROR odoo18ce odoo.modules.loading: Some modules are not loaded, some dependencies or manifest may be missing: ['wd_advanced_m2o_record_panel', 'wd_evidence_album', 'wd_qooling_app'] 
+2026-11-10 06:40:06,399 95240 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.page is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 06:40:06,400 95240 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.config.settings is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 06:40:06,400 95240 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.source.config is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 06:40:06,400 95240 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.source.record.option is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 06:40:06,400 95240 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.media is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 06:40:06,400 95240 INFO odoo18ce odoo.modules.loading: Model wd.preview.configuration is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 06:40:06,400 95240 INFO odoo18ce odoo.modules.loading: Model wd.preview.configuration.line is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 06:40:06,405 95240 INFO odoo18ce odoo.modules.loading: Model wd.qooling.inbound.form is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 06:40:06,405 95240 INFO odoo18ce odoo.modules.loading: Model wd.qooling.media.evidence.mixin is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 06:40:06,408 95240 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.extend.validity.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 06:40:06,408 95240 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 06:40:06,408 95240 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.create.page.upload.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 06:40:06,408 95240 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.source.page.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 06:40:06,408 95240 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.upload.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 06:40:06,411 95240 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.item is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 06:40:06,459 95240 INFO odoo18ce odoo.modules.loading: Model wd.qooling.outbound.form is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 06:40:06,459 95240 INFO odoo18ce odoo.modules.loading: Model wd.qooling.temperature.record is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 06:40:06,459 95240 INFO odoo18ce odoo.modules.loading: Model wd.qooling.temperature.record.line is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 06:40:06,459 95240 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.source.items.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 06:40:06,470 95240 INFO odoo18ce odoo.modules.registry: verifying fields for every extended model 
+2026-11-10 06:40:06,641 95240 INFO odoo18ce odoo.modules.loading: Modules loaded. 
+2026-11-10 06:40:06,726 95240 INFO odoo18ce odoo.addons.llm_tool.models.llm_tool: Tool sync: 0 created, 1 updated, 0 deactivated 
+2026-11-10 06:40:06,727 95240 INFO odoo18ce odoo.modules.registry: Registry changed, signaling through the database 
+2026-11-10 06:40:06,727 95240 INFO odoo18ce odoo.modules.registry: Registry loaded in 25.461s 
+2026-11-10 06:40:06,727 95240 INFO odoo18ce odoo.service.server: Starting post tests 
+2026-11-10 06:40:06,728 95240 INFO odoo18ce odoo.service.server: 0 post-tests in 0.00s, 0 queries 
+2026-11-10 06:40:06,728 95240 INFO odoo18ce odoo.tests.stats: office_engine_m2: 17 tests 22.60s 2375 queries 
+2026-11-10 06:40:06,728 95240 INFO odoo18ce odoo.tests.result: 0 failed, 0 error(s) of 13 tests when loading database 'odoo18ce' 
+2026-11-10 06:40:06,728 95240 INFO odoo18ce odoo.service.server: Initiating shutdown 
+2026-11-10 06:40:06,728 95240 INFO odoo18ce odoo.service.server: Hit CTRL-C again or send a second signal to force the shutdown. 
+2026-11-10 06:40:06,821 95240 INFO odoo18ce odoo.sql_db: ConnectionPool(read/write;used=0/count=0/max=64): Closed 2 connections  
+2026-11-10 06:40:06,829 95240 INFO odoo18ce odoo.service.server: A child process was found, pid is psutil.Process(pid=95261, name='Python', status='running', started='06:39:43'), process may hang 

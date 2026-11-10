@@ -1,0 +1,6 @@
+SESSION 11628 CURRENT 687 LAST_VALID 687 REVISION 2
+V2 accepted_current VERIFIED 82607bc498439cebe5a5b0cfd94a1ca182726b3127ad71d10d3b8922f4c8f092 82607bc498439cebe5a5b0cfd94a1ca182726b3127ad71d10d3b8922f4c8f092
+ZIP_TEST None SHEETS ['Inventory', 'Notes']
+DIFF_COUNT 1
+DIFF ('Inventory', 'A1', ('Legacy Header', 's', 1, 'General'), ('产品编码', 's', 1, 'General'))
+VALUES 产品编码 10 20 =B2*2 =B3*2 Key Synthetic CB04 Browser Simulation

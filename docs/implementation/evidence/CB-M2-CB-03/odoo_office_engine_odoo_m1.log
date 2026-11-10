@@ -1,0 +1,299 @@
+2026-11-08 06:43:44,908 45252 INFO ? odoo: Odoo version 18.0 
+2026-11-08 06:43:44,909 45252 INFO ? odoo: Using configuration file at /Users/lijianqiang/Documents/odoo18_global_search/odoo.conf 
+2026-11-08 06:43:44,909 45252 INFO ? odoo: addons paths: ['/Users/lijianqiang/Documents/odoo18_global_search/odoo/addons', '/Users/lijianqiang/Library/Application Support/Odoo/addons/18.0', '/Users/lijianqiang/Documents/odoo18_global_search/addons', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/odoo-llm', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/queue'] 
+2026-11-08 06:43:44,909 45252 INFO ? odoo: database: odoo@127.0.0.1:5555 
+2026-11-08 06:43:45,011 45252 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltopdf to print a pdf version of the reports. 
+2026-11-08 06:43:45,012 45252 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltoimage to generate images from html. 
+2026-11-08 06:43:45,111 45252 INFO ? odoo.addons.queue_job.post_load: Apply Request._get_session_and_dbname monkey patch to capture db from request with multiple databases 
+2026-11-08 06:43:45,114 45252 INFO ? odoo.service.server: HTTP service (werkzeug) running on localhost:57398 
+2026-11-08 06:43:45,131 45252 INFO odoo18ce odoo.tests.common: Importing test framework 
+2026-11-08 06:43:45,159 45252 INFO odoo18ce odoo.modules.loading: loading 1 modules... 
+2026-11-08 06:43:45,188 45252 INFO odoo18ce odoo.modules.loading: 1 modules loaded in 0.03s, 0 queries (+0 extra) 
+2026-11-08 06:43:45,208 45252 WARNING odoo18ce odoo.modules.graph: module wd_qooling_app: not installable, skipped 
+2026-11-08 06:43:45,209 45252 WARNING odoo18ce odoo.modules.graph: module wd_advanced_m2o_record_panel: not installable, skipped 
+2026-11-08 06:43:45,227 45252 WARNING odoo18ce odoo.modules.graph: module wd_evidence_album: not installable, skipped 
+2026-11-08 06:43:45,240 45252 INFO odoo18ce odoo.modules.loading: loading 89 modules... 
+2026-11-08 06:43:46,059 45252 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x127ea7950, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/llm_thread.py', line 14, code <module>> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/__init__.py", line 1, in <module>
+    from . import models
+  File "<frozen importlib._bootstrap>", line 1232, in _handle_fromlist
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/__init__.py", line 3, in <module>
+    from . import llm_thread
+  File "<frozen importlib._bootstrap>", line 1232, in _handle_fromlist
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/llm_thread.py", line 14, in <module>
+    _REJECT_MESSAGE = _(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-08 06:43:46,136 45252 INFO odoo18ce odoo.addons.office_engine_odoo.tests.test_attachment_identity: Starting TestAttachmentIdentity.test_delivery_commit_recovery_returns_generated_state_without_false_publish ... 
+2026-11-08 06:43:46,260 45252 ERROR odoo18ce odoo.addons.office_engine_odoo.models.office_document_request: Generated Office output could not be attached to its chat; request_id=1789 
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/office_document_request.py", line 936, in _fail_request
+    delivery_message_id, created = _ensure_output_chat_message(env, request)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/mock.py", line 1124, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/mock.py", line 1128, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/mock.py", line 1183, in _execute_mock_call
+    raise effect
+odoo.exceptions.UserError: synthetic chat publish failure
+2026-11-08 06:43:46,264 45252 INFO odoo18ce odoo.addons.office_engine_odoo.tests.test_attachment_identity: Starting TestAttachmentIdentity.test_filestore_header_read_returns_at_most_2048_bytes ... 
+2026-11-08 06:43:46,303 45252 INFO odoo18ce odoo.addons.office_engine_odoo.tests.test_attachment_identity: Starting TestAttachmentIdentity.test_final_output_message_is_linked_once_with_download_metadata ... 
+2026-11-08 06:43:46,329 45252 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x112fa0140, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/office_document_request.py', line 166, code _ensure_output_chat_message> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 284, in load_module_graph
+    test_results = loader.run_suite(suite, global_report=report)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/loader.py", line 118, in run_suite
+    suite(results)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/suite.py", line 47, in run
+    test(result)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/case.py", line 678, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 357, in run
+    super().run(result)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 216, in run
+    self._callTestMethod(testMethod)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 184, in _callTestMethod
+    method()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/tests/test_attachment_identity.py", line 124, in test_final_output_message_is_linked_once_with_download_metadata
+    message_id, created = _ensure_output_chat_message(self.env, request)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/office_document_request.py", line 166, in _ensure_output_chat_message
+    body=_("已生成并归档正式 Office 文件。"),
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-08 06:43:46,340 45252 INFO odoo18ce odoo.addons.office_engine_odoo.tests.test_attachment_identity: Starting TestAttachmentIdentity.test_header_input_is_clamped_to_2048_bytes ... 
+2026-11-08 06:43:46,342 45252 INFO odoo18ce odoo.addons.office_engine_odoo.tests.test_attachment_identity: Starting TestAttachmentIdentity.test_header_read_uses_current_user_attachment_access ... 
+2026-11-08 06:43:46,434 45252 INFO odoo18ce odoo.addons.office_engine_odoo.tests.test_attachment_identity: Starting TestAttachmentIdentity.test_identity_matrix ... 
+2026-11-08 06:43:46,435 45252 INFO odoo18ce odoo.addons.office_engine_odoo.tests.test_attachment_identity: Starting TestAttachmentIdentity.test_malformed_office_candidate_is_rejected_before_provider ... 
+2026-11-08 06:43:46,461 45252 INFO odoo18ce odoo.addons.llm_thread.models.llm_thread: Acquired advisory lock for thread 14020 
+2026-11-08 06:43:46,462 45252 INFO odoo18ce odoo.addons.llm_thread.models.llm_thread: Starting locked generation for thread 14020 
+2026-11-08 06:43:46,469 45252 ERROR odoo18ce odoo.addons.llm_assistant.models.llm_thread: LLM API error in thread 14020 
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/odoo-llm/llm_assistant/models/llm_thread.py", line 309, in _generate_assistant_response
+    stream_response = self.sudo().model_id.chat(**chat_kwargs)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/mock.py", line 1124, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/mock.py", line 1128, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/mock.py", line 1183, in _execute_mock_call
+    raise effect
+AssertionError: malformed Office must not reach Provider
+2026-11-08 06:43:46,474 45252 INFO odoo18ce odoo.addons.llm_thread.models.llm_thread: Released advisory lock for thread 14020 
+2026-11-08 06:43:46,474 45252 INFO odoo18ce odoo.addons.llm_thread.models.llm_thread: Finished locked generation for thread 14020 
+2026-11-08 06:43:46,476 45252 INFO odoo18ce odoo.addons.llm_thread.models.llm_thread: Acquired advisory lock for thread 14020 
+2026-11-08 06:43:46,476 45252 INFO odoo18ce odoo.addons.llm_thread.models.llm_thread: Starting locked generation for thread 14020 
+2026-11-08 06:43:46,483 45252 ERROR odoo18ce odoo.addons.llm_assistant.models.llm_thread: LLM API error in thread 14020 
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/odoo-llm/llm_assistant/models/llm_thread.py", line 309, in _generate_assistant_response
+    stream_response = self.sudo().model_id.chat(**chat_kwargs)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/mock.py", line 1124, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/mock.py", line 1128, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/mock.py", line 1183, in _execute_mock_call
+    raise effect
+AssertionError: malformed Office must not reach Provider
+2026-11-08 06:43:46,488 45252 INFO odoo18ce odoo.addons.llm_thread.models.llm_thread: Released advisory lock for thread 14020 
+2026-11-08 06:43:46,488 45252 INFO odoo18ce odoo.addons.llm_thread.models.llm_thread: Finished locked generation for thread 14020 
+2026-11-08 06:43:46,489 45252 INFO odoo18ce odoo.addons.office_engine_odoo.tests.test_attachment_identity: Starting TestAttachmentIdentity.test_office_only_upload_remains_visible_to_provider_without_binary ... 
+2026-11-08 06:43:46,511 45252 INFO odoo18ce odoo.addons.llm_thread.models.llm_thread: Acquired advisory lock for thread 14021 
+2026-11-08 06:43:46,511 45252 INFO odoo18ce odoo.addons.llm_thread.models.llm_thread: Starting locked generation for thread 14021 
+2026-11-08 06:43:46,524 45252 INFO odoo18ce odoo.addons.llm_thread.models.llm_thread: Released advisory lock for thread 14021 
+2026-11-08 06:43:46,524 45252 INFO odoo18ce odoo.addons.llm_thread.models.llm_thread: Finished locked generation for thread 14021 
+2026-11-08 06:43:46,527 45252 INFO odoo18ce odoo.addons.office_engine_odoo.tests.test_attachment_identity: Starting TestAttachmentIdentity.test_ordinary_attachments_reach_real_openai_message_serializer ... 
+2026-11-08 06:43:46,546 45252 INFO odoo18ce odoo.addons.office_engine_odoo.tests.test_attachment_identity: Starting TestAttachmentIdentity.test_ordinary_text_and_png_are_not_rejected_by_gate ... 
+2026-11-08 06:43:46,558 45252 INFO odoo18ce odoo.addons.base.models.ir_attachment: Post processing ignored : This file could not be decoded as an image file. 
+2026-11-08 06:43:46,567 45252 INFO odoo18ce odoo.addons.office_engine_odoo.tests.test_attachment_identity: Starting TestAttachmentIdentity.test_ordinary_text_and_png_are_preserved_in_provider_stub_history ... 
+2026-11-08 06:43:46,580 45252 INFO odoo18ce odoo.addons.base.models.ir_attachment: Post processing ignored : This file could not be decoded as an image file. 
+2026-11-08 06:43:46,581 45252 INFO odoo18ce odoo.addons.llm_thread.models.llm_thread: Acquired advisory lock for thread 14024 
+2026-11-08 06:43:46,581 45252 INFO odoo18ce odoo.addons.llm_thread.models.llm_thread: Starting locked generation for thread 14024 
+2026-11-08 06:43:46,599 45252 INFO odoo18ce odoo.addons.llm_thread.models.llm_thread: Released advisory lock for thread 14024 
+2026-11-08 06:43:46,599 45252 INFO odoo18ce odoo.addons.llm_thread.models.llm_thread: Finished locked generation for thread 14024 
+2026-11-08 06:43:46,600 45252 INFO odoo18ce odoo.addons.office_engine_odoo.tests.test_attachment_identity: Starting TestAttachmentIdentity.test_provider_preparation_excludes_office_attachment_in_history ... 
+2026-11-08 06:43:46,620 45252 INFO odoo18ce odoo.addons.office_engine_odoo.tests.test_attachment_identity: Starting TestAttachmentIdentity.test_publish_failure_rolls_back_output_and_retry_publishes_same_request ... 
+2026-11-08 06:43:46,645 45252 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x112fa0f40, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/office_document_request.py', line 166, code _ensure_output_chat_message> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 284, in load_module_graph
+    test_results = loader.run_suite(suite, global_report=report)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/loader.py", line 118, in run_suite
+    suite(results)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/suite.py", line 47, in run
+    test(result)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/case.py", line 678, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 357, in run
+    super().run(result)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 216, in run
+    self._callTestMethod(testMethod)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 184, in _callTestMethod
+    method()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/tests/test_attachment_identity.py", line 238, in test_publish_failure_rolls_back_output_and_retry_publishes_same_request
+    retry = Request._deliver_result(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/office_document_request.py", line 891, in _deliver_result
+    delivery_message_id, _message_created = _ensure_output_chat_message(env, request)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/office_document_request.py", line 166, in _ensure_output_chat_message
+    body=_("已生成并归档正式 Office 文件。"),
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-08 06:43:46,649 45252 INFO odoo18ce odoo.addons.office_engine_odoo.models.office_document_request: Office attachment create-to-commit timing request_uuid=ce736934-74b4-4bd2-8787-d6236ca30dff db=odoo18ce uid=1 create_started_at=2026-11-08 06:43:46 commit_completed_at=2026-11-08 06:43:46 elapsed_ms=5.214 
+2026-11-08 06:43:46,651 45252 INFO odoo18ce odoo.addons.office_engine_odoo.tests.test_attachment_identity: Starting TestAttachmentIdentity.test_rpc_style_write_cannot_forge_persisted_m1_validation_proof ... 
+2026-11-08 06:43:46,673 45252 INFO odoo18ce odoo.addons.office_engine_odoo.tests.test_attachment_identity: Starting TestAttachmentIdentity.test_spoofed_office_posts_error_message_and_stays_out_of_next_round ... 
+2026-11-08 06:43:46,688 45252 INFO odoo18ce odoo.addons.llm_thread.models.llm_thread: Acquired advisory lock for thread 14028 
+2026-11-08 06:43:46,688 45252 INFO odoo18ce odoo.addons.llm_thread.models.llm_thread: Starting locked generation for thread 14028 
+2026-11-08 06:43:46,699 45252 INFO odoo18ce odoo.addons.llm_thread.models.llm_thread: Released advisory lock for thread 14028 
+2026-11-08 06:43:46,700 45252 INFO odoo18ce odoo.addons.llm_thread.models.llm_thread: Finished locked generation for thread 14028 
+2026-11-08 06:43:46,701 45252 INFO odoo18ce odoo.addons.office_engine_odoo.tests.test_attachment_identity: Starting TestAttachmentIdentity.test_valid_upload_preserves_instruction_without_office_binary ... 
+2026-11-08 06:43:47,149 45252 INFO odoo18ce odoo.addons.base.models.ir_attachment: filestore gc 17 checked, 17 removed 
+2026-11-08 06:43:47,155 45252 WARNING odoo18ce odoo.tests.common: A child process was found, terminating it: psutil.Process(pid=45278, name='Python', status='running', started='06:43:46') 
+2026-11-08 06:43:57,308 45252 INFO odoo18ce odoo.models.unlink: User #1 deleted mail.mail records with IDs: [331] 
+2026-11-08 06:43:57,325 45252 INFO odoo18ce odoo.models.unlink: User #1 deleted mail.message records with IDs: [85565] 
+2026-11-08 06:43:57,326 45252 INFO odoo18ce odoo.addons.auth_signup.models.res_users: Signup email sent for user <office-owner-ec9ccfa1b6fe4b619764742b2c6a47d8> to <office-owner-3143c271a0bb4ccc9bbb87b9d68f6b36@example.invalid> 
+2026-11-08 06:43:57,428 45252 INFO odoo18ce odoo.models.unlink: User #1 deleted mail.mail records with IDs: [332] 
+2026-11-08 06:43:57,436 45252 INFO odoo18ce odoo.models.unlink: User #1 deleted mail.message records with IDs: [85567] 
+2026-11-08 06:43:57,438 45252 INFO odoo18ce odoo.addons.auth_signup.models.res_users: Signup email sent for user <office-other-a7f377f031cc49a09a1cef2a60d4e399> to <office-other-45b1ab1c374c43bebc3e32d948c533f1@example.invalid> 
+2026-11-08 06:43:57,440 45252 INFO odoo18ce odoo.addons.office_engine_odoo.tests.test_office_document_request: Starting TestOfficeDocumentRequest.test_direct_create_and_mutation_are_rejected ... 
+2026-11-08 06:43:57,455 45252 INFO odoo18ce odoo.addons.office_engine_odoo.tests.test_office_document_request: Starting TestOfficeDocumentRequest.test_minimal_fields_and_owner_is_forced ... 
+2026-11-08 06:43:57,461 45252 INFO odoo18ce odoo.addons.office_engine_odoo.tests.test_office_document_request: Starting TestOfficeDocumentRequest.test_output_attachment_is_private_immutable_and_owner_scoped ... 
+2026-11-08 06:43:57,488 45252 INFO odoo18ce odoo.addons.base.models.ir_rule: Access Denied by record rules for operation: read on record ids: [1795], uid: 2001, model: office.document.request 
+2026-11-08 06:43:57,491 45252 INFO odoo18ce odoo.addons.base.models.ir_rule: Access Denied by record rules for operation: read on record ids: [32666], uid: 2001, model: ir.attachment 
+2026-11-08 06:43:57,495 45252 INFO odoo18ce odoo.addons.office_engine_odoo.tests.test_office_document_request: Starting TestOfficeDocumentRequest.test_owner_rule_hides_other_users_request_and_write ... 
+2026-11-08 06:43:57,503 45252 INFO odoo18ce odoo.addons.base.models.ir_rule: Access Denied by record rules for operation: read on record ids: [1796], uid: 2001, model: office.document.request 
+2026-11-08 06:43:57,512 45252 INFO odoo18ce odoo.addons.office_engine_odoo.tests.test_office_document_request: Starting TestOfficeDocumentRequest.test_spawn_core_and_independent_verify_golden_path ... 
+2026-11-08 06:43:58,471 45252 INFO odoo18ce odoo.addons.office_engine_odoo.tests.test_office_document_request: Starting TestOfficeDocumentRequest.test_state_transition_is_guarded ... 
+2026-11-08 06:43:58,481 45252 INFO odoo18ce odoo.addons.office_engine_odoo.tests.test_office_document_request: Starting TestOfficeDocumentRequest.test_uuid_database_constraint_rejects_duplicate ... 
+2026-11-08 06:43:58,490 45252 ERROR odoo18ce odoo.sql_db: bad query: b'INSERT INTO "office_document_request" ("create_date", "create_uid", "owner_id", "request_uuid", "started_at", "state", "write_date", "write_uid") VALUES (\'2026-11-08 06:43:57.171623\', 2000, 2000, \'2f1e7e6e-8930-4a86-8209-c584ab8fb349\', \'2026-10-21 00:00:00\', \'accepted\', \'2026-11-08 06:43:57.171623\', 2000) RETURNING "id"'
+ERROR: duplicate key value violates unique constraint "office_document_request_request_uuid_unique"
+DETAIL:  Key (request_uuid)=(2f1e7e6e-8930-4a86-8209-c584ab8fb349) already exists.
+ 
+2026-11-08 06:43:58,543 45252 INFO odoo18ce odoo.addons.base.models.ir_attachment: filestore gc 3 checked, 3 removed 
+2026-11-08 06:43:58,549 45252 WARNING odoo18ce odoo.tests.common: A child process was found, terminating it: psutil.Process(pid=45278, name='Python', status='running', started='06:43:46') 
+2026-11-08 06:44:08,837 45252 INFO odoo18ce odoo.modules.loading: 89 modules loaded in 23.60s, 2 queries (+1603 extra) 
+2026-11-08 06:44:08,887 45252 ERROR odoo18ce odoo.modules.loading: Some modules are not loaded, some dependencies or manifest may be missing: ['wd_advanced_m2o_record_panel', 'wd_evidence_album', 'wd_qooling_app'] 
+2026-11-08 06:44:08,888 45252 INFO odoo18ce odoo.modules.loading: Modules loaded. 
+2026-11-08 06:44:08,971 45252 INFO odoo18ce odoo.modules.registry: Registry loaded in 23.857s 
+2026-11-08 06:44:08,971 45252 INFO odoo18ce odoo.service.server: Starting post tests 
+2026-11-08 06:44:08,987 45252 INFO odoo18ce odoo.service.server: 0 post-tests in 0.02s, 0 queries 
+2026-11-08 06:44:08,987 45252 INFO odoo18ce odoo.tests.stats: office_engine_odoo: 27 tests 22.44s 1601 queries 
+2026-11-08 06:44:08,987 45252 INFO odoo18ce odoo.tests.result: 0 failed, 0 error(s) of 23 tests when loading database 'odoo18ce' 
+2026-11-08 06:44:08,987 45252 INFO odoo18ce odoo.service.server: Initiating shutdown 
+2026-11-08 06:44:08,987 45252 INFO odoo18ce odoo.service.server: Hit CTRL-C again or send a second signal to force the shutdown. 
+2026-11-08 06:44:09,165 45252 INFO odoo18ce odoo.sql_db: ConnectionPool(read/write;used=0/count=0/max=64): Closed 2 connections  
+2026-11-08 06:44:09,178 45252 INFO odoo18ce odoo.service.server: A child process was found, pid is psutil.Process(pid=45278, name='Python', status='running', started='06:43:46'), process may hang 

@@ -1,0 +1,59 @@
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 92, in __new__
+    return cls.registries[db_name]
+           ~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/lru.py", line 33, in __getitem__
+    a = self.d[obj]
+        ~~~~~~^^^^^
+KeyError: 'odoo18ce'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/docs/implementation/evidence/CB-M2-CB-02/run-concurrency-acceptance-shell.py", line 220, in <module>
+    registry = Registry(database)
+               ^^^^^^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 94, in __new__
+    return cls.new(db_name)
+           ^^^^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 102, in new
+    registry.init(db_name)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 196, in init
+    with closing(self.cursor()) as cr:
+                 ^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 1022, in cursor
+    return self._db.cursor()
+           ^^^^^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/sql_db.py", line 812, in cursor
+    return Cursor(self.__pool, self.__dbname, self.__dsn)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/sql_db.py", line 295, in __init__
+    self._cnx = pool.borrow(dsn)
+                ^^^^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/sql_db.py", line 739, in borrow
+    result = psycopg2.connect(
+             ^^^^^^^^^^^^^^^^^
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: connection to server at "127.0.0.1", port 5555 failed: Operation not permitted
+	Is the server running on that host and accepting TCP/IP connections?
+

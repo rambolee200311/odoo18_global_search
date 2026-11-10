@@ -1,0 +1,768 @@
+{
+  "defined_names": {},
+  "file": "phase1c_v1.xlsx",
+  "sha256": "578ba0caffd61da9866262cca42e9da14b7f1dbed90c41667426e013a505e909",
+  "sheetnames": [
+    "Inventory",
+    "Notes"
+  ],
+  "sheets": {
+    "Inventory": {
+      "cells": {
+        "A1": {
+          "alignment": {
+            "horizontal": "center",
+            "vertical": "center",
+            "wrap_text": true
+          },
+          "border_sides": {
+            "bottom": "thin",
+            "left": "thin",
+            "right": "thin",
+            "top": "thin"
+          },
+          "data_type": "s",
+          "fill": {
+            "color": "001F4E78",
+            "color_type": "rgb",
+            "type": "solid"
+          },
+          "font": {
+            "bold": true,
+            "color": "00FFFFFF",
+            "color_type": "rgb",
+            "italic": false,
+            "name": "Arial",
+            "size": 11.0
+          },
+          "number_format": "General",
+          "python_type": "str",
+          "style_id": 1,
+          "value": "Product"
+        },
+        "A2": {
+          "alignment": {
+            "horizontal": null,
+            "vertical": "center",
+            "wrap_text": null
+          },
+          "border_sides": {
+            "bottom": "thin",
+            "left": "thin",
+            "right": "thin",
+            "top": "thin"
+          },
+          "data_type": "s",
+          "fill": {
+            "color": "00000000",
+            "color_type": "rgb",
+            "type": null
+          },
+          "font": {
+            "bold": false,
+            "color": null,
+            "color_type": "theme",
+            "italic": false,
+            "name": "Calibri",
+            "size": 11.0
+          },
+          "number_format": "General",
+          "python_type": "str",
+          "style_id": 2,
+          "value": "ITEM-A"
+        },
+        "A3": {
+          "alignment": {
+            "horizontal": null,
+            "vertical": "center",
+            "wrap_text": null
+          },
+          "border_sides": {
+            "bottom": "thin",
+            "left": "thin",
+            "right": "thin",
+            "top": "thin"
+          },
+          "data_type": "s",
+          "fill": {
+            "color": "00000000",
+            "color_type": "rgb",
+            "type": null
+          },
+          "font": {
+            "bold": false,
+            "color": null,
+            "color_type": "theme",
+            "italic": false,
+            "name": "Calibri",
+            "size": 11.0
+          },
+          "number_format": "General",
+          "python_type": "str",
+          "style_id": 2,
+          "value": "ITEM-B"
+        },
+        "A4": {
+          "alignment": {
+            "horizontal": null,
+            "vertical": "center",
+            "wrap_text": null
+          },
+          "border_sides": {
+            "bottom": "thin",
+            "left": "thin",
+            "right": "thin",
+            "top": "thin"
+          },
+          "data_type": "s",
+          "fill": {
+            "color": "00000000",
+            "color_type": "rgb",
+            "type": null
+          },
+          "font": {
+            "bold": false,
+            "color": null,
+            "color_type": "theme",
+            "italic": false,
+            "name": "Calibri",
+            "size": 11.0
+          },
+          "number_format": "General",
+          "python_type": "str",
+          "style_id": 2,
+          "value": "ITEM-C"
+        },
+        "B1": {
+          "alignment": {
+            "horizontal": "center",
+            "vertical": "center",
+            "wrap_text": true
+          },
+          "border_sides": {
+            "bottom": "thin",
+            "left": "thin",
+            "right": "thin",
+            "top": "thin"
+          },
+          "data_type": "s",
+          "fill": {
+            "color": "001F4E78",
+            "color_type": "rgb",
+            "type": "solid"
+          },
+          "font": {
+            "bold": true,
+            "color": "00FFFFFF",
+            "color_type": "rgb",
+            "italic": false,
+            "name": "Arial",
+            "size": 11.0
+          },
+          "number_format": "General",
+          "python_type": "str",
+          "style_id": 1,
+          "value": "Quantity"
+        },
+        "B2": {
+          "alignment": {
+            "horizontal": null,
+            "vertical": "center",
+            "wrap_text": null
+          },
+          "border_sides": {
+            "bottom": "thin",
+            "left": "thin",
+            "right": "thin",
+            "top": "thin"
+          },
+          "data_type": "n",
+          "fill": {
+            "color": "00000000",
+            "color_type": "rgb",
+            "type": null
+          },
+          "font": {
+            "bold": false,
+            "color": null,
+            "color_type": "theme",
+            "italic": false,
+            "name": "Calibri",
+            "size": 11.0
+          },
+          "number_format": "0",
+          "python_type": "int",
+          "style_id": 3,
+          "value": 10
+        },
+        "B3": {
+          "alignment": {
+            "horizontal": null,
+            "vertical": "center",
+            "wrap_text": null
+          },
+          "border_sides": {
+            "bottom": "thin",
+            "left": "thin",
+            "right": "thin",
+            "top": "thin"
+          },
+          "data_type": "n",
+          "fill": {
+            "color": "00000000",
+            "color_type": "rgb",
+            "type": null
+          },
+          "font": {
+            "bold": false,
+            "color": null,
+            "color_type": "theme",
+            "italic": false,
+            "name": "Calibri",
+            "size": 11.0
+          },
+          "number_format": "0",
+          "python_type": "int",
+          "style_id": 3,
+          "value": 20
+        },
+        "B4": {
+          "alignment": {
+            "horizontal": null,
+            "vertical": "center",
+            "wrap_text": null
+          },
+          "border_sides": {
+            "bottom": "thin",
+            "left": "thin",
+            "right": "thin",
+            "top": "thin"
+          },
+          "data_type": "n",
+          "fill": {
+            "color": "00000000",
+            "color_type": "rgb",
+            "type": null
+          },
+          "font": {
+            "bold": false,
+            "color": null,
+            "color_type": "theme",
+            "italic": false,
+            "name": "Calibri",
+            "size": 11.0
+          },
+          "number_format": "0",
+          "python_type": "int",
+          "style_id": 3,
+          "value": 30
+        },
+        "C1": {
+          "alignment": {
+            "horizontal": "center",
+            "vertical": "center",
+            "wrap_text": true
+          },
+          "border_sides": {
+            "bottom": "thin",
+            "left": "thin",
+            "right": "thin",
+            "top": "thin"
+          },
+          "data_type": "s",
+          "fill": {
+            "color": "001F4E78",
+            "color_type": "rgb",
+            "type": "solid"
+          },
+          "font": {
+            "bold": true,
+            "color": "00FFFFFF",
+            "color_type": "rgb",
+            "italic": false,
+            "name": "Arial",
+            "size": 11.0
+          },
+          "number_format": "General",
+          "python_type": "str",
+          "style_id": 1,
+          "value": "Unit Price"
+        },
+        "C2": {
+          "alignment": {
+            "horizontal": null,
+            "vertical": "center",
+            "wrap_text": null
+          },
+          "border_sides": {
+            "bottom": "thin",
+            "left": "thin",
+            "right": "thin",
+            "top": "thin"
+          },
+          "data_type": "n",
+          "fill": {
+            "color": "00000000",
+            "color_type": "rgb",
+            "type": null
+          },
+          "font": {
+            "bold": false,
+            "color": null,
+            "color_type": "theme",
+            "italic": false,
+            "name": "Calibri",
+            "size": 11.0
+          },
+          "number_format": "0.00",
+          "python_type": "int",
+          "style_id": 4,
+          "value": 5
+        },
+        "C3": {
+          "alignment": {
+            "horizontal": null,
+            "vertical": "center",
+            "wrap_text": null
+          },
+          "border_sides": {
+            "bottom": "thin",
+            "left": "thin",
+            "right": "thin",
+            "top": "thin"
+          },
+          "data_type": "n",
+          "fill": {
+            "color": "00000000",
+            "color_type": "rgb",
+            "type": null
+          },
+          "font": {
+            "bold": false,
+            "color": null,
+            "color_type": "theme",
+            "italic": false,
+            "name": "Calibri",
+            "size": 11.0
+          },
+          "number_format": "0.00",
+          "python_type": "int",
+          "style_id": 4,
+          "value": 8
+        },
+        "C4": {
+          "alignment": {
+            "horizontal": null,
+            "vertical": "center",
+            "wrap_text": null
+          },
+          "border_sides": {
+            "bottom": "thin",
+            "left": "thin",
+            "right": "thin",
+            "top": "thin"
+          },
+          "data_type": "n",
+          "fill": {
+            "color": "00000000",
+            "color_type": "rgb",
+            "type": null
+          },
+          "font": {
+            "bold": false,
+            "color": null,
+            "color_type": "theme",
+            "italic": false,
+            "name": "Calibri",
+            "size": 11.0
+          },
+          "number_format": "0.00",
+          "python_type": "int",
+          "style_id": 4,
+          "value": 4
+        },
+        "D1": {
+          "alignment": {
+            "horizontal": "center",
+            "vertical": "center",
+            "wrap_text": true
+          },
+          "border_sides": {
+            "bottom": "thin",
+            "left": "thin",
+            "right": "thin",
+            "top": "thin"
+          },
+          "data_type": "s",
+          "fill": {
+            "color": "001F4E78",
+            "color_type": "rgb",
+            "type": "solid"
+          },
+          "font": {
+            "bold": true,
+            "color": "00FFFFFF",
+            "color_type": "rgb",
+            "italic": false,
+            "name": "Arial",
+            "size": 11.0
+          },
+          "number_format": "General",
+          "python_type": "str",
+          "style_id": 1,
+          "value": "Amount"
+        },
+        "D2": {
+          "alignment": {
+            "horizontal": null,
+            "vertical": "center",
+            "wrap_text": null
+          },
+          "border_sides": {
+            "bottom": "thin",
+            "left": "thin",
+            "right": "thin",
+            "top": "thin"
+          },
+          "data_type": "f",
+          "fill": {
+            "color": "00000000",
+            "color_type": "rgb",
+            "type": null
+          },
+          "font": {
+            "bold": false,
+            "color": null,
+            "color_type": "theme",
+            "italic": false,
+            "name": "Calibri",
+            "size": 11.0
+          },
+          "number_format": "0.00",
+          "python_type": "str",
+          "style_id": 4,
+          "value": "=B2*C2"
+        },
+        "D3": {
+          "alignment": {
+            "horizontal": null,
+            "vertical": "center",
+            "wrap_text": null
+          },
+          "border_sides": {
+            "bottom": "thin",
+            "left": "thin",
+            "right": "thin",
+            "top": "thin"
+          },
+          "data_type": "f",
+          "fill": {
+            "color": "00000000",
+            "color_type": "rgb",
+            "type": null
+          },
+          "font": {
+            "bold": false,
+            "color": null,
+            "color_type": "theme",
+            "italic": false,
+            "name": "Calibri",
+            "size": 11.0
+          },
+          "number_format": "0.00",
+          "python_type": "str",
+          "style_id": 4,
+          "value": "=B3*C3"
+        },
+        "D4": {
+          "alignment": {
+            "horizontal": null,
+            "vertical": "center",
+            "wrap_text": null
+          },
+          "border_sides": {
+            "bottom": "thin",
+            "left": "thin",
+            "right": "thin",
+            "top": "thin"
+          },
+          "data_type": "f",
+          "fill": {
+            "color": "00000000",
+            "color_type": "rgb",
+            "type": null
+          },
+          "font": {
+            "bold": false,
+            "color": null,
+            "color_type": "theme",
+            "italic": false,
+            "name": "Calibri",
+            "size": 11.0
+          },
+          "number_format": "0.00",
+          "python_type": "str",
+          "style_id": 4,
+          "value": "=B4*C4"
+        }
+      },
+      "column_dimensions": {
+        "A": {
+          "hidden": false,
+          "width": 18.0
+        },
+        "B": {
+          "hidden": false,
+          "width": 14.0
+        },
+        "C": {
+          "hidden": false,
+          "width": 14.0
+        },
+        "D": {
+          "hidden": false,
+          "width": 14.0
+        }
+      },
+      "conditional_formatting": [],
+      "data_validations": [],
+      "freeze_panes": "A2",
+      "max_column": 5,
+      "max_row": 4,
+      "merged_ranges": [],
+      "row_dimensions": {
+        "1": {
+          "height": 24.0,
+          "hidden": false
+        }
+      },
+      "state": "visible"
+    },
+    "Notes": {
+      "cells": {
+        "A1": {
+          "alignment": {
+            "horizontal": "center",
+            "vertical": "center",
+            "wrap_text": true
+          },
+          "border_sides": {
+            "bottom": "thin",
+            "left": "thin",
+            "right": "thin",
+            "top": "thin"
+          },
+          "data_type": "s",
+          "fill": {
+            "color": "001F4E78",
+            "color_type": "rgb",
+            "type": "solid"
+          },
+          "font": {
+            "bold": true,
+            "color": "00FFFFFF",
+            "color_type": "rgb",
+            "italic": false,
+            "name": "Arial",
+            "size": 11.0
+          },
+          "number_format": "General",
+          "python_type": "str",
+          "style_id": 1,
+          "value": "Key"
+        },
+        "A2": {
+          "alignment": {
+            "horizontal": null,
+            "vertical": null,
+            "wrap_text": null
+          },
+          "border_sides": {
+            "bottom": null,
+            "left": null,
+            "right": null,
+            "top": null
+          },
+          "data_type": "s",
+          "fill": {
+            "color": "00000000",
+            "color_type": "rgb",
+            "type": null
+          },
+          "font": {
+            "bold": false,
+            "color": null,
+            "color_type": "theme",
+            "italic": false,
+            "name": "Calibri",
+            "size": 11.0
+          },
+          "number_format": "General",
+          "python_type": "str",
+          "style_id": 0,
+          "value": "Source"
+        },
+        "A3": {
+          "alignment": {
+            "horizontal": null,
+            "vertical": null,
+            "wrap_text": null
+          },
+          "border_sides": {
+            "bottom": null,
+            "left": null,
+            "right": null,
+            "top": null
+          },
+          "data_type": "s",
+          "fill": {
+            "color": "00000000",
+            "color_type": "rgb",
+            "type": null
+          },
+          "font": {
+            "bold": false,
+            "color": null,
+            "color_type": "theme",
+            "italic": false,
+            "name": "Calibri",
+            "size": 11.0
+          },
+          "number_format": "General",
+          "python_type": "str",
+          "style_id": 0,
+          "value": "Status"
+        },
+        "B1": {
+          "alignment": {
+            "horizontal": "center",
+            "vertical": "center",
+            "wrap_text": true
+          },
+          "border_sides": {
+            "bottom": "thin",
+            "left": "thin",
+            "right": "thin",
+            "top": "thin"
+          },
+          "data_type": "s",
+          "fill": {
+            "color": "001F4E78",
+            "color_type": "rgb",
+            "type": "solid"
+          },
+          "font": {
+            "bold": true,
+            "color": "00FFFFFF",
+            "color_type": "rgb",
+            "italic": false,
+            "name": "Arial",
+            "size": 11.0
+          },
+          "number_format": "General",
+          "python_type": "str",
+          "style_id": 1,
+          "value": "Value"
+        },
+        "B2": {
+          "alignment": {
+            "horizontal": null,
+            "vertical": null,
+            "wrap_text": null
+          },
+          "border_sides": {
+            "bottom": null,
+            "left": null,
+            "right": null,
+            "top": null
+          },
+          "data_type": "s",
+          "fill": {
+            "color": "00000000",
+            "color_type": "rgb",
+            "type": null
+          },
+          "font": {
+            "bold": false,
+            "color": null,
+            "color_type": "theme",
+            "italic": false,
+            "name": "Calibri",
+            "size": 11.0
+          },
+          "number_format": "General",
+          "python_type": "str",
+          "style_id": 0,
+          "value": "Synthetic TV"
+        },
+        "B3": {
+          "alignment": {
+            "horizontal": null,
+            "vertical": null,
+            "wrap_text": null
+          },
+          "border_sides": {
+            "bottom": null,
+            "left": null,
+            "right": null,
+            "top": null
+          },
+          "data_type": "s",
+          "fill": {
+            "color": "00000000",
+            "color_type": "rgb",
+            "type": null
+          },
+          "font": {
+            "bold": false,
+            "color": null,
+            "color_type": "theme",
+            "italic": false,
+            "name": "Calibri",
+            "size": 11.0
+          },
+          "number_format": "General",
+          "python_type": "str",
+          "style_id": 0,
+          "value": "V1 baseline"
+        }
+      },
+      "column_dimensions": {
+        "A": {
+          "hidden": false,
+          "width": 16.0
+        },
+        "B": {
+          "hidden": false,
+          "width": 24.0
+        }
+      },
+      "conditional_formatting": [],
+      "data_validations": [],
+      "freeze_panes": null,
+      "max_column": 2,
+      "max_row": 3,
+      "merged_ranges": [],
+      "row_dimensions": {
+        "1": {
+          "height": 24.0,
+          "hidden": false
+        }
+      },
+      "state": "visible"
+    }
+  },
+  "size_bytes": 5887,
+  "zip_members": [
+    "[Content_Types].xml",
+    "_rels/.rels",
+    "docProps/app.xml",
+    "docProps/core.xml",
+    "xl/_rels/workbook.xml.rels",
+    "xl/styles.xml",
+    "xl/theme/theme1.xml",
+    "xl/workbook.xml",
+    "xl/worksheets/sheet1.xml",
+    "xl/worksheets/sheet2.xml"
+  ]
+}

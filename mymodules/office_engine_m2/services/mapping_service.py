@@ -110,6 +110,20 @@ def get_session_context(env, session_id):
     }
 
 
+def get_workbook_version_summary(env, session_id, version_id):
+    """Return authorized metadata for one immutable Workbook Version."""
+    from .workbook_version_service import get_workbook_version
+
+    return get_workbook_version(env, session_id, version_id)
+
+
+def list_workbook_version_summaries(env, session_id, *, limit=100):
+    """Return a bounded authorized version history without exposing file bytes."""
+    from .workbook_version_service import list_workbook_versions
+
+    return list_workbook_versions(env, session_id, limit=limit)
+
+
 def transition_session(env, session_id, target_state, expected_revision, *, error_code=None):
     """Apply one server-authorized state change with optimistic revision control."""
     session_id = _positive_id(session_id, "mapping session")

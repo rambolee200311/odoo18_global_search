@@ -1,0 +1,54 @@
+{
+  "evidence_class": "Odoo TransactionCase with Mock Provider and synthetic XLSX",
+  "independent_readback": {
+    "V2.Data!A1": 15,
+    "V3.Data!A1": 15,
+    "V3.Data!A2": 20
+  },
+  "provider_called": false,
+  "versions": [
+    {
+      "artifact": {
+        "path": "/Users/lijianqiang/Documents/odoo18_global_search/docs/implementation/evidence/CB-M2-CB-04/v3-partially-verified-v1.xlsx",
+        "sha256": "238d49f92244deaa0f4b426126547cf55d54cc0664ed0f964f93ca871569693f",
+        "sheetnames": [
+          "Data"
+        ],
+        "size": 4868
+      },
+      "sha256": "238d49f92244deaa0f4b426126547cf55d54cc0664ed0f964f93ca871569693f",
+      "version_id": 1507,
+      "version_no": 1
+    },
+    {
+      "artifact": {
+        "path": "/Users/lijianqiang/Documents/odoo18_global_search/docs/implementation/evidence/CB-M2-CB-04/v3-partially-verified-v2.xlsx",
+        "sha256": "10a6d5b6f19af77b9a797206fdf434fa2e64413ebe36e0cf201250982f87a598",
+        "sheetnames": [
+          "Data"
+        ],
+        "size": 4872
+      },
+      "input_sha256": "238d49f92244deaa0f4b426126547cf55d54cc0664ed0f964f93ca871569693f",
+      "parent_version_id": 1507,
+      "sha256": "10a6d5b6f19af77b9a797206fdf434fa2e64413ebe36e0cf201250982f87a598",
+      "version_id": 1508,
+      "version_no": 2
+    },
+    {
+      "artifact": {
+        "path": "/Users/lijianqiang/Documents/odoo18_global_search/docs/implementation/evidence/CB-M2-CB-04/v3-partially-verified-v3.xlsx",
+        "sha256": "3042088ce20c34895fc7dd0c11620ad053ee973928cf32043b46245bf4de7e4e",
+        "sheetnames": [
+          "Data"
+        ],
+        "size": 4874
+      },
+      "input_sha256": "10a6d5b6f19af77b9a797206fdf434fa2e64413ebe36e0cf201250982f87a598",
+      "parent_version_id": 1508,
+      "sha256": "3042088ce20c34895fc7dd0c11620ad053ee973928cf32043b46245bf4de7e4e",
+      "version_id": 1509,
+      "version_no": 3
+    }
+  ]
+}

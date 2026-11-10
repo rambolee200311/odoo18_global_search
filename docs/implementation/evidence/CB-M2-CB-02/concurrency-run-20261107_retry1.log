@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/docs/implementation/evidence/CB-M2-CB-02/run-concurrency-acceptance-shell.py", line 29, in <module>
+    from odoo.addons.office_engine_m2.tests.integration.test_workbook_version_race import (
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/__init__.py", line 1, in <module>
+    from . import models
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/models/__init__.py", line 7, in <module>
+    from . import office_mapping_tools
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/models/office_mapping_tools.py", line 12, in <module>
+    from office_mapping_verify import (
+ModuleNotFoundError: No module named 'office_mapping_verify'

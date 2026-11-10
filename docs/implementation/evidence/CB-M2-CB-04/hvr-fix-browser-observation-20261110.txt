@@ -1,0 +1,26 @@
+CC-M2-CB-04 HVR retest browser observation — 2026-11-10
+
+Environment: authenticated Odoo UI on 127.0.0.1:8092, database odoo18ce,
+thread 15880, user uid 2 (Mitchell Admin). 8091 was not restarted or accessed.
+
+The existing assistant message for Candidate version 1464 / attachment 39747
+contains the literal message text:
+
+  <a href="/web/content/39747?download=true">查看/下载 Candidate</a>
+
+The rendered page DOM inspection found no anchor whose href contains
+"/web/content/"; the assistant's HTML was displayed as escaped/plain text.
+The message had been stored before the Markup-preservation fix, so reloading
+the page cannot re-run the updated message-body sanitizer on it.
+
+A user message asked the assistant to re-present that existing link without
+editing the workbook. Odoo accepted the UI request, but the Chat Completions
+provider request did not return. The 8092 log records the generation request,
+then the Odoo real-time limit stack at
+`hvr-fix-live-8092-rerun-20261110.log`; no new assistant message/link was
+available to click. No XLSX bytes were sent to the Provider.
+
+Disposition: the post-fix UI click/download and HTTP 200 were NOT RUN. The
+Candidate was not downloaded through an actual UI anchor and was not accepted.
+The ORM-only attachment readback is recorded separately and is not HVR-02 or
+HVR-03 proof.
