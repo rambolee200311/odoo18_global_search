@@ -5,7 +5,7 @@
 | 基线 | `TDD_office_engine_m2_v2.1.0_LLM_Native.md`（冻结基线，原文保留） |
 | 相关既有修订 | V2.1.1 Tool Boundary amendment；CC-07 Route B simplification 已验收 |
 | 适用范围 | 仅限 CC-M2-CB-09 无源 XLSX 创建及其同 Thread 后续编辑 |
-| 状态 | **VERSIONED AS-BUILT AMENDMENT — CC-09 OWNER ACCEPTED / CLOSED** |
+| 状态 | **FROZEN — AS-BUILT AMENDMENT** |
 | 记录日期 | 2026-11-11 |
 | 效力边界 | 记录 CC-09 已实施并由负责人验收的行为；不授权生产部署或扩大外发权限 |
 
@@ -90,3 +90,17 @@ Finalize 继续只交付对应 Accepted Current 的真实文件字节，不重�
 - Odoo 的文件安全、可信 SHA/版本绑定、Candidate 验证、Finalize 和附件权限。
 - 不引入业务语义验证器、Excel DSL、Snapshot/CDC、第二套版本服务或新增公开 Tool。
 - 本地验证能力范围和 `PARTIALLY_VERIFIED`/`FAILED` 边界。
+
+## 7. 最终评审与冻结记录 — 2026-11-11
+
+| 项目 | 决定 |
+|---|---|
+| 评审结果 | **APPROVED — PASS** |
+| 冻结决定 | **APPROVED**；本文件状态正式标记为 `FROZEN — AS-BUILT AMENDMENT` |
+| 阻断问题 | 0 |
+| 必须修改项 | 0 |
+| CC-09 | **OWNER ACCEPTED / CLOSED** |
+| 实施授权 | 不新增 |
+| 生产发布授权 | 不包含 |
+
+冻结范围仅涵盖本文记录的 CC-09 Fileless XLSX Creation 实施语义。V2.1.0 冻结基线及 V2.1.1 修订记录保持原样；无源创建直接登记 V1 仅适用于 CC-09 首次初始化，不推广到普通编辑。独立 `odoo_record_retriever` 的工具边界遵循 V2.1.1。此次冻结不授权生产部署、额外数据外发或复杂 Excel 全保真能力。
