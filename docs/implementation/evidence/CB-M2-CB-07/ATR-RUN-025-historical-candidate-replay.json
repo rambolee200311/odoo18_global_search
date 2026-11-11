@@ -1,0 +1,131 @@
+[
+  {
+    "actual_effects": [],
+    "candidate_id": 2353,
+    "error": {
+      "error_code": "OFFICE_TARGET_MISMATCH",
+      "failed_stage": "expected_effect",
+      "message": "target=xlsx:Contacts!A2; rule=expected assertion did not match; expected={\"address\": \"A2\", \"kind\": \"cell_value\", \"sheet\": \"Contacts\", \"value\": \"CC07-SYN-42f92959aa-Ava Example\", \"value_type\": \"string\"}; actual={\"type\": \"blank\", \"value\": null}"
+    },
+    "input_sha256": "97b0c50c4bee214f469f03a1a5dcd70ff6c58266e9fb8d6ea9b6a4a219ae81da",
+    "output_sha256": "97b0c50c4bee214f469f03a1a5dcd70ff6c58266e9fb8d6ea9b6a4a219ae81da",
+    "validation_result": "FAILED"
+  },
+  {
+    "actual_effects": [
+      {
+        "after": {
+          "type": "string",
+          "value": "CC07-SYN-42f92959aa-Ava Example"
+        },
+        "before": {
+          "type": "blank",
+          "value": null
+        },
+        "change_kind": "cell_value",
+        "target": "xlsx:Contacts!A2"
+      },
+      {
+        "after": {
+          "type": "string",
+          "value": "CC07-SYN-42f92959aa-Mia Example"
+        },
+        "before": {
+          "type": "blank",
+          "value": null
+        },
+        "change_kind": "cell_value",
+        "target": "xlsx:Contacts!A3"
+      },
+      {
+        "after": {
+          "type": "string",
+          "value": "CC07-SYN-42f92959aa-Noah Example"
+        },
+        "before": {
+          "type": "blank",
+          "value": null
+        },
+        "change_kind": "cell_value",
+        "target": "xlsx:Contacts!A4"
+      },
+      {
+        "after": {
+          "type": "string",
+          "value": "+1-555-0101"
+        },
+        "before": {
+          "type": "blank",
+          "value": null
+        },
+        "change_kind": "cell_value",
+        "target": "xlsx:Contacts!B2"
+      },
+      {
+        "after": {
+          "type": "string",
+          "value": "+1-555-0103"
+        },
+        "before": {
+          "type": "blank",
+          "value": null
+        },
+        "change_kind": "cell_value",
+        "target": "xlsx:Contacts!B3"
+      },
+      {
+        "after": {
+          "type": "string",
+          "value": "+1-555-0102"
+        },
+        "before": {
+          "type": "blank",
+          "value": null
+        },
+        "change_kind": "cell_value",
+        "target": "xlsx:Contacts!B4"
+      },
+      {
+        "after": {
+          "type": "string",
+          "value": "cc07-syn-42f92959aa-ava@example.invalid"
+        },
+        "before": {
+          "type": "blank",
+          "value": null
+        },
+        "change_kind": "cell_value",
+        "target": "xlsx:Contacts!C2"
+      },
+      {
+        "after": {
+          "type": "string",
+          "value": "cc07-syn-42f92959aa-mia@example.invalid"
+        },
+        "before": {
+          "type": "blank",
+          "value": null
+        },
+        "change_kind": "cell_value",
+        "target": "xlsx:Contacts!C3"
+      },
+      {
+        "after": {
+          "type": "string",
+          "value": "cc07-syn-42f92959aa-noah@example.invalid"
+        },
+        "before": {
+          "type": "blank",
+          "value": null
+        },
+        "change_kind": "cell_value",
+        "target": "xlsx:Contacts!C4"
+      }
+    ],
+    "candidate_id": 2354,
+    "error": null,
+    "input_sha256": "97b0c50c4bee214f469f03a1a5dcd70ff6c58266e9fb8d6ea9b6a4a219ae81da",
+    "output_sha256": "9ec129fd916c49961642d4c9f3bf21d7751d4fd6641732d794bd0fc7986ebc7c",
+    "validation_result": "VERIFIED"
+  }
+]

@@ -1,0 +1,84 @@
+{
+  "run_id": "HVR-RUN-002",
+  "date_local": "2026-11-11",
+  "environment": {
+    "database": "odoo18ce",
+    "base_url": "http://127.0.0.1:8092",
+    "thread_id": 18271,
+    "provider": "OpenAI",
+    "model": "gpt-5.6-luna",
+    "enabled_tools": ["odoo_record_retriever", "office"]
+  },
+  "input_file": {
+    "name": "cc07-route-b-v1-input-42f92959aa.xlsx",
+    "attachment_id": 45075,
+    "sha256": "97b0c50c4bee214f469f03a1a5dcd70ff6c58266e9fb8d6ea9b6a4a219ae81da",
+    "worksheets": ["Contacts"],
+    "headers": ["Name", "Phone", "Email"]
+  },
+  "user_instruction": "请从 Odoo 联系人中选择本次测试专用的 3 条合成联系人记录（名称以 CC07-SYN-42f92959aa 开头），将姓名、电话和邮箱填写到我上传的工作簿中，保留原有表头及其他内容，生成文件让我查看。不要修改 Odoo 联系人数据。",
+  "agent_provider_path": {
+    "observed_api": "OpenAI Chat Completions for the Agent tool loop",
+    "chat_completions_http_200_count": 3,
+    "responses_api_called": false,
+    "hosted_code_interpreter_called": false,
+    "provider_response_id": null,
+    "note": "Server log did not expose a Responses API or Hosted Code Interpreter request, because office rejected the Expected Effect before edit dispatch."
+  },
+  "retriever": {
+    "tool_call_id": "call_wZJ76wkNCxo44yLiQnBnCD6T",
+    "request": {
+      "model": "res.partner",
+      "domain": [["name", "like", "CC07-SYN-42f92959aa%"]],
+      "fields": ["id", "name", "phone", "email"],
+      "limit": 3,
+      "offset": 0,
+      "order": "id asc",
+      "include_pagination": true
+    },
+    "records": [
+      {
+        "id": 31335,
+        "name": "CC07-SYN-42f92959aa-Ava Example",
+        "phone": "+1-555-0101",
+        "email": "cc07-syn-42f92959aa-ava@example.invalid"
+      },
+      {
+        "id": 31336,
+        "name": "CC07-SYN-42f92959aa-Noah Example",
+        "phone": "+1-555-0102",
+        "email": "cc07-syn-42f92959aa-noah@example.invalid"
+      },
+      {
+        "id": 31337,
+        "name": "CC07-SYN-42f92959aa-Mia Example",
+        "phone": "+1-555-0103",
+        "email": "cc07-syn-42f92959aa-mia@example.invalid"
+      }
+    ],
+    "odoo_business_data_modified": false
+  },
+  "office": {
+    "tool_call_id": "call_xD5ROm0hh13iGApJDqMycjFA",
+    "action": "edit",
+    "status": "clarification_required",
+    "operation_status": "intent_not_ready",
+    "operation_executed": false,
+    "error_code": "expected_effect_invalid",
+    "candidate_id": null,
+    "candidate_created": false,
+    "expected_effect_issue": {
+      "scope": "workbook_structure",
+      "placeholder_sheet": "<uploaded workbook>",
+      "placeholder_addresses": ["<contact name cell>", "<contact phone cell>", "<contact email cell>"],
+      "unknowns": ["具体单元格地址由上传工作簿结构解析确定。"]
+    }
+  },
+  "acceptance": "NOT RUN",
+  "download_and_independent_readback": "NOT RUN",
+  "provider_retry": false,
+  "evidence_sources": [
+    "HVR-RUN-001-provider-ui-server.log",
+    "Odoo Discuss UI Tool call trace for thread 18271"
+  ]
+}

@@ -7,7 +7,7 @@ import json
 import math
 import re
 from copy import deepcopy
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from decimal import Decimal, InvalidOperation
 
 from lxml import etree
@@ -19,6 +19,11 @@ from .security import CT_NS, Package, _is_safe_picture_drawing, _safe_xlsx_exten
 NS_REL_DOC = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}"
 NS_W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 NS_X = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
+NS_CP = "{http://schemas.openxmlformats.org/package/2006/metadata/core-properties}"
+NS_DC = "{http://purl.org/dc/elements/1.1/}"
+NS_DCTERMS = "{http://purl.org/dc/terms/}"
+NS_XSI = "{http://www.w3.org/2001/XMLSchema-instance}"
+NS_XML = "{http://www.w3.org/XML/1998/namespace}"
 
 
 def _fail(code: str, stage: str, message: str) -> OfficeVerifyError:
@@ -69,6 +74,69 @@ def _semantic_xml_signature(node: etree._Element) -> tuple[object, ...]:
         (node.text or "").strip(),
         tuple(_semantic_xml_signature(child) for child in node if isinstance(child.tag, str)),
     )
+
+
+def _core_properties_signature(
+    package: Package,
+) -> tuple[tuple[str, tuple[tuple[str, str], ...], str], ...] | None:
+    """Return a strict semantic signature for standard OOXML core properties.
+
+    The modified timestamp is volatile when an editor saves a workbook. Its
+    value may change, but the part's schema, date type, presence and all other
+    property values remain significant. Unknown fields/attributes are rejected
+    so this exception cannot become a blanket exemption for docProps/core.xml.
+    """
+    root = package.roots.get("docProps/core.xml")
+    if root is None:
+        return None
+    if root.tag != NS_CP + "coreProperties" or root.attrib:
+        raise _fail("OFFICE_INVALID_OR_MISMATCHED", "core_properties", "OOXML 核心属性根结构无效。")
+
+    allowed_names = {
+        NS_DC + name for name in ("title", "subject", "creator", "description", "keywords", "language", "identifier")
+    } | {
+        NS_CP + name for name in ("lastModifiedBy", "revision", "lastPrinted", "category", "contentStatus", "version")
+    } | {NS_DCTERMS + "created", NS_DCTERMS + "modified"}
+    values: dict[str, tuple[tuple[tuple[str, str], ...], str]] = {}
+    for child in root:
+        if not isinstance(child.tag, str) or child.tag not in allowed_names or len(child):
+            raise _fail("OFFICE_UNSUPPORTED_FEATURE", "core_properties", "OOXML 核心属性包含未支持的字段或嵌套结构。")
+        if child.tag in values:
+            raise _fail("OFFICE_INVALID_OR_MISMATCHED", "core_properties", "OOXML 核心属性字段重复。")
+
+        attributes = dict(child.attrib)
+        type_attribute = NS_XSI + "type"
+        space_attribute = NS_XML + "space"
+        allowed_attributes = {space_attribute}
+        if child.tag in {NS_DCTERMS + "created", NS_DCTERMS + "modified"}:
+            allowed_attributes.add(type_attribute)
+            declared_type = attributes.get(type_attribute)
+            if declared_type is not None:
+                prefix, separator, local_name = declared_type.partition(":")
+                namespace = child.nsmap.get(prefix) if separator else None
+                if (namespace, local_name) != (NS_DCTERMS[1:-1], "W3CDTF"):
+                    raise _fail("OFFICE_INVALID_OR_MISMATCHED", "core_properties", "OOXML 核心属性日期类型无效。")
+            attributes[type_attribute] = NS_DCTERMS + "W3CDTF"
+            text = child.text or ""
+            try:
+                parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+            except ValueError as exc:
+                raise _fail("OFFICE_INVALID_OR_MISMATCHED", "core_properties", "OOXML 核心属性日期值无效。") from exc
+            if parsed.tzinfo is not None:
+                parsed = parsed.astimezone(timezone.utc)
+                normalized = parsed.isoformat(timespec="microseconds").replace("+00:00", "Z")
+            else:
+                normalized = parsed.isoformat(timespec="microseconds")
+            if child.tag == NS_DCTERMS + "modified":
+                normalized = "<volatile-modified-timestamp>"
+        else:
+            normalized = child.text or ""
+        if set(attributes) - allowed_attributes or attributes.get(space_attribute) not in (None, "default", "preserve"):
+            raise _fail("OFFICE_UNSUPPORTED_FEATURE", "core_properties", "OOXML 核心属性包含未支持的属性。")
+        if attributes.get(space_attribute) == "default":
+            attributes.pop(space_attribute)
+        values[child.tag] = (tuple(sorted(attributes.items())), normalized)
+    return tuple((name, attributes, value) for name, (attributes, value) in sorted(values.items()))
 
 
 def _validate_plan(plan: object, source_sha: str, budget: VerificationBudget) -> list[dict[str, object]]:
@@ -671,7 +739,9 @@ def _canonical_effect(effect: object, source_sha: str, budget: VerificationBudge
     if not isinstance(effect, dict) or set(effect) != required or effect.get("schema_version") != "1":
         raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 结构或版本无效。")
     parent_id = effect.get("parent_version_id")
-    if type(parent_id) is not int or parent_id < 1:
+    # Parent 0 is the explicit, unversioned raw-upload source used only for
+    # the first Route B Candidate. Positive IDs remain required for edits.
+    if type(parent_id) is not int or parent_id < 0:
         raise _fail("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 父版本无效。")
     if effect.get("input_sha256") != source_sha:
         raise _fail("OFFICE_INVALID_OR_MISMATCHED", "effect", "Expected Effect 的输入文件指纹不匹配。")
@@ -992,7 +1062,7 @@ def verify_candidate_inline(
     def known_candidate_part(name: str) -> bool:
         return name in {
             "[Content_Types].xml", "xl/workbook.xml", "xl/_rels/workbook.xml.rels",
-            "xl/styles.xml", "xl/sharedStrings.xml", "xl/calcChain.xml",
+            "xl/styles.xml", "xl/sharedStrings.xml", "xl/calcChain.xml", "docProps/core.xml",
         } or bool(re.fullmatch(r"xl/worksheets/sheet[0-9]+\.xml", name))
 
     source_names, output_names = set(source.entries), set(output.entries)
@@ -1003,6 +1073,15 @@ def verify_candidate_inline(
     referenced_output_parts = set(output_parts.values())
     if (source_sheet_names ^ output_sheet_names) != (referenced_source_parts ^ referenced_output_parts):
         changes.append({"target": "xlsx:__package__!worksheet_parts", "change_kind": "unsupported_structure", "before": sorted(source_sheet_names), "after": sorted(output_sheet_names)})
+    source_core = _core_properties_signature(source)
+    output_core = _core_properties_signature(output)
+    if source_core != output_core:
+        changes.append({
+            "target": "xlsx:__package__!docProps/core.xml",
+            "change_kind": "unsupported_structure",
+            "before": source_core,
+            "after": output_core,
+        })
     for name in sorted(source_names | output_names):
         before_part, after_part = source.raw_parts.get(name), output.raw_parts.get(name)
         if before_part == after_part or known_candidate_part(name):
@@ -1024,14 +1103,39 @@ def verify_candidate_inline(
     for name in sorted(non_sheet_part_changes):
         changes.append({"target": f"xlsx:__package__!{name}", "change_kind": "unsupported_structure", "before": name in source_names, "after": name in output_names})
 
+    failures: list[dict[str, str]] = []
     for entry in changes:
         kind = entry["change_kind"]
         if kind not in effect["allowed_change_kinds"] or not any(_scope_contains(scope, entry["target"], kind) for scope in effect["target_scopes"]):
             valid = False
+            if kind == "unsupported_structure":
+                error_code, failed_stage, rule = "OFFICE_UNSUPPORTED_FEATURE", "unsupported_structure", "unapproved OOXML package change"
+            elif kind in {"workbook_structure", "worksheet_structure", "formula_cache"}:
+                error_code, failed_stage, rule = "OFFICE_STRUCTURE_MISMATCH", "structure", "unapproved workbook structure or formula-cache change"
+            else:
+                error_code, failed_stage, rule = "OFFICE_TARGET_MISMATCH", "expected_effect", "change is outside the authorized Expected Effect"
+            actual_change = json.dumps(entry, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
+            failures.append({
+                "error_code": error_code,
+                "failed_stage": failed_stage,
+                "message": f"target={entry['target']}; rule={rule}; actual_change={actual_change[:600]}",
+            })
 
-    expected_ok = all(_candidate_expected_matches(assertion, output_state) for assertion in effect["expected_assertions"])
-    if not expected_ok:
+    for assertion in effect["expected_assertions"]:
+        if _candidate_expected_matches(assertion, output_state):
+            continue
         valid = False
+        target = f"xlsx:{assertion.get('sheet', '')}!{assertion.get('address', '')}"
+        actual = output_cells.get(target)
+        failures.append({
+            "error_code": "OFFICE_TARGET_MISMATCH",
+            "failed_stage": "expected_effect",
+            "message": (
+                f"target={target}; rule=expected assertion did not match; "
+                f"expected={json.dumps(assertion, ensure_ascii=False, sort_keys=True, default=str)[:300]}; "
+                f"actual={json.dumps(_candidate_typed_value(actual), ensure_ascii=False, sort_keys=True, default=str)[:300]}"
+            ),
+        })
     if not valid:
         result = "FAILED"
     elif effect["unknowns"] or not effect["expected_assertions"]:
@@ -1055,6 +1159,7 @@ def verify_candidate_inline(
         risk_facts=tuple(risks),
         feature_results=features,
         unknowns=tuple(effect["unknowns"]),
+        error=failures[0] if failures else None,
     )
 
 

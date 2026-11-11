@@ -7,6 +7,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 from io import BytesIO
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 from uuid import uuid4
 
 from openpyxl import Workbook, load_workbook
@@ -161,22 +162,146 @@ class TestEditOrchestration(WorkbookVersionFixtures, TransactionCase):
         session.invalidate_recordset()
         return env, session, thread, version, bytes_v1
 
-    def test_versioned_current_routes_chat_only_through_candidate_b_office_tool(self):
+    def test_office_finalize_action_delivers_accepted_current(self):
+        env, session, thread, current, _input_bytes = self._versioned()
+        revision = session.document_revision
+        user_message = self._user(thread, "Please generate and deliver the accepted workbook.")
+        tool_message = self._tool(thread)
+
+        result = env["office.mapping.tool"].with_context(message=tool_message).office(action="finalize")
+
+        session.invalidate_recordset()
+        current.invalidate_recordset()
+        self.assertEqual(result["status"], "completed", result)
+        self.assertEqual(result["operation_status"], "finalized")
+        self.assertEqual(result["delivery_state"], "delivered")
+        self.assertTrue(result["attachment_posted_to_thread"])
+        self.assertEqual(result["validation_result"], "VERIFIED")
+        self.assertEqual(result["current_version_id"], current.id)
+        self.assertEqual(result["last_valid_version_id"], current.id)
+        self.assertEqual(result["document_revision"], revision)
+        self.assertEqual(current.final_message_id.attachment_ids.ids, [current.output_attachment_id.id])
+        self.assertEqual(current.final_message_id.llm_role, "assistant")
+        self.assertEqual(current.final_message_id.res_id, thread.id)
+        self.assertEqual(current.final_attachment_id, current.output_attachment_id)
+        self.assertEqual(hashlib.sha256(current.final_attachment_id.raw).hexdigest(), current.output_sha256)
+        self.assertGreater(user_message.id, current.source_message_id.id)
+        schema = env["llm.tool"].search([("name", "=", "office")], limit=1).get_input_schema()
+        self.assertIn("finalize", schema["properties"]["action"]["enum"])
+
+    def test_versioned_current_routes_chat_through_office_and_existing_retriever(self):
         _env, _session, thread, _parent, _input_bytes = self._versioned()
         thread._office_bind_tools()
 
         self.assertTrue(thread._office_has_versioned_current())
         kwargs = thread._prepare_chat_kwargs(thread.get_llm_messages(), use_streaming=False)
-        self.assertEqual(set(kwargs["tools"].mapped("name")), {"office"})
+        self.assertEqual(set(kwargs["tools"].mapped("name")), {"office", "odoo_record_retriever"})
 
         office_rules = next(
             item["content"]
             for item in kwargs["prepend_messages"]
-            if item.get("role") == "system" and "For a Thread with an accepted" in item.get("content", "")
+            if item.get("role") == "system" and "Use the Route B Office workflow" in item.get("content", "")
         )
-        self.assertIn("Do not use the M1 Mapping tools to edit a workbook", office_rules)
-        self.assertIn("action=retrieve", office_rules)
-        self.assertIn("Current/Revision gate", office_rules)
+        self.assertIn("Do not use M1 Mapping or row-expansion tools for Route B content production", office_rules)
+        self.assertIn("separate `odoo_record_retriever` Tool", office_rules)
+        self.assertNotIn("office(action='retrieve')", office_rules)
+        self.assertIn("office(action='finalize')", office_rules)
+        self.assertIn("without asking for another Accept", office_rules)
+        self.assertIn("The Candidate is not Current until the user reviews and accepts it", office_rules)
+
+    def test_raw_upload_candidate_is_accepted_as_first_route_b_version(self):
+        from odoo.addons.office_engine_m2.services.intent_contract import digest_json
+        from .support import attachment_values
+
+        env = self.env(user=self.owner.id, context={"allowed_company_ids": [self.owner.company_id.id]})
+        thread = env["llm.thread"].create({
+            "name": "Initial Route B upload " + uuid4().hex,
+            "provider_id": self.provider.id,
+            "model_id": self.model.id,
+        })
+        source_bytes = _xlsx(None)
+        attachment = env["ir.attachment"].create(attachment_values(
+            "route-b-initial-" + uuid4().hex + ".xlsx", source_bytes,
+            company_id=env.company.id,
+        ))
+        upload = thread.message_post(
+            body="Raw Route B workbook upload.", llm_role="user",
+            author_id=env.user.partner_id.id, attachment_ids=[attachment.id],
+        )
+        resolved_upload, resolved_attachment = thread._office_latest_upload()
+        self.assertEqual(resolved_upload, upload)
+        self.assertEqual(resolved_attachment, attachment)
+        intent = self._user(thread, "Set the uploaded workbook's A1 value to 15.")
+        self.assertTrue(thread._office_is_candidate_b_route())
+        thread._office_bind_tools()
+        tool = thread.tool_ids.filtered(lambda item: item.name == "office")[:1]
+        effect = {
+            "schema_version": "1",
+            "parent_version_id": 0,
+            "input_sha256": hashlib.sha256(source_bytes).hexdigest(),
+            "target_scopes": [{"kind": "cell", "sheet": "Data", "address": "A1"}],
+            "allowed_change_kinds": ["cell_value"],
+            "expected_assertions": [{
+                "kind": "cell_value", "sheet": "Data", "address": "A1",
+                "value_type": "number", "value": 15,
+            }],
+            "unknowns": [],
+        }
+        effect["effect_digest"] = digest_json(effect)
+        interpretation = {
+            "summary": "Set the explicitly requested value.",
+            "target_scope": {"description": "Data!A1", "basis": "explicit"},
+            "assumptions": [], "unknowns": [],
+        }
+        adapter = _FakeAdapter(_xlsx(15))
+        call = self._tool(thread)
+        dependencies = (adapter, object(), "synthetic-route-b", self._fake_limits)
+        with patch(
+            "odoo.addons.office_engine_m2.tests.support.browser_simulation.dependencies_for",
+            return_value=dependencies,
+        ):
+            candidate_result = tool.with_context(message=call).execute({
+                "action": "edit",
+                "interpretation": interpretation,
+                "expected_effect": effect,
+                "model_risk_claims": [],
+            })
+        call.write({"body_json": {
+            "type": "tool_execution", "tool_name": "office", "status": "completed",
+            "result": candidate_result,
+        }})
+        self.assertEqual(candidate_result["operation_status"], "candidate_review_required", candidate_result)
+        session = env["office.mapping.session"].search([
+            ("thread_id", "=", thread.id),
+            ("source_message_id", "=", upload.id),
+            ("source_attachment_id", "=", attachment.id),
+        ], limit=1)
+        candidate = env["office.workbook.version"].browse(candidate_result["candidate_version_id"])
+        self.assertTrue(session)
+        self.assertEqual(session.target_model, "ir.attachment")
+        self.assertFalse(session.current_version_id)
+        self.assertEqual(candidate.version_kind, "initial")
+        self.assertEqual(candidate.version_no, 1)
+        self.assertFalse(candidate.parent_version_id)
+        self.assertEqual(candidate.intent_message_id, intent)
+        self.assertEqual(candidate.input_sha256, hashlib.sha256(source_bytes).hexdigest())
+        self.assertEqual(session.document_revision, 0)
+
+        self._user(thread, "接受")
+        decision = self._tool(thread)
+        accepted = tool.with_context(message=decision).execute({
+            "action": "accept", "candidate_version_id": candidate.id,
+        })
+        session.invalidate_recordset()
+        candidate.invalidate_recordset()
+        self.assertEqual(accepted["operation_status"], "accepted_current", accepted)
+        self.assertEqual(accepted["validation_result"], candidate.validation_result)
+        self.assertEqual(session.current_version_id, candidate)
+        self.assertEqual(session.last_valid_version_id, candidate)
+        self.assertEqual(session.document_revision, 1)
+        self.assertEqual(candidate.version_no, 1)
+        workbook = load_workbook(BytesIO(candidate.output_attachment_id.raw), data_only=False)
+        self.assertEqual(workbook["Data"]["A1"].value, 15)
 
     def test_browser_simulation_candidate_preserves_package_core_properties(self):
         from .support.browser_simulation import ExpectedEffectWorkbookAdapter
@@ -474,7 +599,10 @@ class TestEditOrchestration(WorkbookVersionFixtures, TransactionCase):
         from odoo.addons.office_engine_m2.services.edit_orchestrator import review_candidate
 
         decision = self._user(thread, "接受")
-        accepted = review_candidate(env, thread, self._tool(thread), "接受")
+        # Reviewing an existing Candidate depends on its trusted Version and
+        # Session bindings, not reopening the original upload from the filestore.
+        with patch.object(type(thread), "_office_latest_upload", side_effect=AssertionError("review reopened upload")):
+            accepted = review_candidate(env, thread, self._tool(thread), "接受")
         session.invalidate_recordset()
         candidate.invalidate_recordset()
         self.assertEqual(accepted["status"], "completed", accepted)

@@ -2764,6 +2764,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         from types import SimpleNamespace
 
         thread, _source, _upload = self._office_message("Generate the confirmed workbook")
+        self._activate_legacy_m1_session(thread, _source, _upload)
         result = {
             "status": "finalized",
             "attachment_id": 901,
@@ -2803,6 +2804,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         from types import SimpleNamespace
 
         thread, _source, _upload = self._office_message("Generate the confirmed workbook")
+        self._activate_legacy_m1_session(thread, _source, _upload)
         tool_data = {
             "status": "completed",
             "result": {
@@ -2849,6 +2851,75 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         self.assertEqual(events[-1]["type"], "message_update")
         self.assertEqual(events[-1]["message"]["body_json"]["result"]["status"], "failed")
 
+    def test_candidate_b_office_finalize_streams_attachment_card_to_live_store(self):
+        thread, _source, _upload = self._office_message("Please deliver the accepted workbook")
+        attachment = self.env["ir.attachment"].create(
+            {
+                "name": "candidate-b-final.xlsx",
+                "type": "binary",
+                "mimetype": XLSX_MIME,
+                "raw": _xlsx(),
+                "company_id": self.env.company.id,
+                "public": False,
+            }
+        )
+        delivery_message = thread.message_post(
+            body="Finalized workbook: candidate-b-final.xlsx",
+            llm_role="assistant",
+            author_id=False,
+            attachment_ids=[attachment.id],
+        )
+        tool_call = {
+            "id": "call_candidate_b_finalize",
+            "type": "function",
+            "function": {"name": "office", "arguments": '{"action":"finalize"}'},
+        }
+        tool_data = {
+            "type": "tool_execution",
+            "tool_call_id": tool_call["id"],
+            "tool_call": tool_call,
+            "tool_name": "office",
+            "arguments": {"action": "finalize"},
+            "status": "completed",
+            "result": {
+                "action": "finalize",
+                "status": "completed",
+                "operation_status": "finalized",
+                "delivery_state": "delivered",
+                "attachment_posted_to_thread": True,
+                "attachment_id": attachment.id,
+                "delivery_message_id": delivery_message.id,
+            },
+        }
+        tool_result_message = thread.message_post(
+            body="Finalize tool result",
+            llm_role="tool",
+            body_json=tool_data,
+        )
+        assistant_message = thread.message_post(body="Finalize tool call", llm_role="assistant")
+
+        def execute_tool(_thread, _call, _assistant_message):
+            yield {"type": "message_create", "message": tool_result_message.to_store_format()}
+            return tool_result_message
+
+        with patch.object(AssistantThread, "_execute_tool_call", autospec=True, side_effect=execute_tool):
+            events = list(thread._execute_tool_call(tool_call, assistant_message))
+
+        attachment_events = [
+            event for event in events
+            if event.get("type") == "message_create"
+            and event.get("message", {}).get("id") == delivery_message.id
+        ]
+        self.assertEqual(len(attachment_events), 1)
+        event = attachment_events[0]
+        self.assertIn("mail.message", event["store_data"])
+        self.assertIn("ir.attachment", event["store_data"])
+        stored_attachment = next(
+            item for item in event["store_data"]["ir.attachment"] if item["id"] == attachment.id
+        )
+        self.assertEqual(stored_attachment["name"], attachment.name)
+        self.assertEqual(stored_attachment["mimetype"], XLSX_MIME)
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -2887,6 +2958,21 @@ class TestNativeOfficeChatIntegration(TransactionCase):
             attachment_ids=[attachment.id],
         )
         return thread, attachment, message
+
+    def _activate_legacy_m1_session(self, thread, attachment, upload):
+        """Keep legacy mapping-tool tests on the explicit M1 route."""
+        target = self.env["res.partner"].create({
+            "name": "M1 route test target " + uuid4().hex,
+            "company_id": self.env.company.id,
+        })
+        return create_session(
+            self.env,
+            thread_id=thread.id,
+            source_message_id=upload.id,
+            source_attachment_id=attachment.id,
+            target_model="res.partner",
+            target_record_id=target.id,
+        )
 
     def _save_repeat_rows_with_user_confirmation(
         self, tool, thread, session, proposal, **operation
@@ -3005,6 +3091,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         thread, _source_attachment, _source_message = self._office_message(
             "Fill this workbook"
         )
+        self._activate_legacy_m1_session(thread, _source_attachment, _source_message)
         preview = self.env["ir.attachment"].create(
             {
                 "name": "preview_store_payload.xlsx",
@@ -5434,6 +5521,24 @@ class TestNativeOfficeChatIntegration(TransactionCase):
     def test_office_thread_uses_native_tools_and_prepare_binds_current_upload_and_record(self):
         instruction = "用联系人记录填这个工作簿"
         thread, _attachment, user_message = self._office_message(instruction)
+        # This test covers the legacy M1 mapping prompt. An explicit active
+        # business-record Session keeps that compatibility route distinct from
+        # a fresh Route B upload, which now uses the native file lifecycle.
+        from odoo.addons.office_engine_m2.services.mapping_service import create_session
+
+        target = self.env["res.partner"].create({
+            "name": "M1 tool prompt target " + uuid4().hex,
+            "company_id": False,
+        })
+        latest_upload, upload_attachment = thread._office_latest_upload()
+        create_session(
+            self.env,
+            thread_id=thread.id,
+            source_message_id=latest_upload.id,
+            source_attachment_id=upload_attachment.id,
+            target_model="res.partner",
+            target_record_id=target.id,
+        )
         tool_names = set(thread._office_bind_tools().mapped("name"))
         self.assertEqual(
             tool_names,
@@ -5454,7 +5559,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         self.assertFalse(schemas["office"]["additionalProperties"])
         self.assertEqual(
             schemas["office"]["properties"]["action"]["enum"],
-            ["status", "plan", "edit", "accept", "reject"],
+            ["status", "plan", "edit", "accept", "reject", "finalize"],
         )
         effect_schema = schemas["office"]["properties"]["expected_effect"]
         self.assertEqual(
@@ -5519,8 +5624,8 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         self.assertIn("literal_value", office_system_message["content"])
         self.assertIn("date_offset", office_system_message["content"])
         self.assertNotIn("Retriever constrains the result to the current Session", office_system_message["content"])
-        self.assertIn("Call office_finalize only after the user explicitly confirms", office_system_message["content"])
-        self.assertIn("returns status=finalized", office_system_message["content"])
+        self.assertIn("retain the existing `office_finalize` action and its current confirmation behavior", office_system_message["content"])
+        self.assertIn("do not mix the two finalization paths", office_system_message["content"])
 
         target = self.env["res.partner"].create(
             {"name": "Authorized Office target", "company_id": self.env.company.id}
@@ -5712,6 +5817,7 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         )
         tools = thread._office_bind_tools()
         schemas = {tool.name: tool.get_input_schema() for tool in tools}
+        self.assertIn("finalize", schemas["office"]["properties"]["action"]["enum"])
         self.assertIn("model", schemas["odoo_record_retriever"]["properties"])
         self.assertIn("model", schemas["odoo_record_retriever"]["required"])
         for argument in ("offset", "order", "include_pagination"):

@@ -11,6 +11,7 @@ from .support.validator_stub import restore_confirmation, verified_receipt
 from ..models.office_mapping_session import OfficeMappingSession
 from ..services.workbook_version_service import (
     accept_verified_candidate,
+    finalize_accepted_current,
     record_validation_receipt,
     record_finalize_reference,
     request_restore_candidate,
@@ -18,6 +19,95 @@ from ..services.workbook_version_service import (
 
 
 class TestWorkbookVersionState(WorkbookVersionFixtures, TransactionCase):
+    def test_candidate_b_finalize_delivers_exact_current_and_is_idempotent(self):
+        env, session, thread, _upload, _source, _request, _m1_output, current = self._versioned_session_fixture()
+        initial_revision = session.document_revision
+        initial_sha = current.output_sha256
+        first_intent = thread.message_post(
+            body="Please deliver the accepted workbook.",
+            llm_role="user",
+            author_id=env.user.partner_id.id,
+        )
+
+        delivered = finalize_accepted_current(
+            env, session.id, current.id, initial_revision, first_intent.id
+        )
+        session.invalidate_recordset()
+        current.invalidate_recordset()
+        self.assertEqual(current.state, "finalized")
+        self.assertEqual(current.validation_result, "VERIFIED")
+        self.assertEqual(current.delivery_state, "delivered")
+        self.assertEqual(current.final_attachment_id, current.output_attachment_id)
+        self.assertEqual(current.final_message_id, delivered["message"])
+        self.assertEqual(delivered["message"].model, thread._name)
+        self.assertEqual(delivered["message"].res_id, thread.id)
+        self.assertEqual(delivered["message"].llm_role, "assistant")
+        self.assertIn(current.output_attachment_id, delivered["message"].attachment_ids)
+        self.assertEqual(delivered["output_sha256"], initial_sha)
+        self.assertEqual(session.current_version_id, current)
+        self.assertEqual(session.last_valid_version_id, current)
+        self.assertEqual(session.document_revision, initial_revision)
+
+        retry_intent = thread.message_post(
+            body="Please deliver the same accepted workbook again.",
+            llm_role="user",
+            author_id=env.user.partner_id.id,
+        )
+        repeated = finalize_accepted_current(
+            env, session.id, current.id, initial_revision, retry_intent.id
+        )
+        self.assertEqual(repeated["attachment"], delivered["attachment"])
+        self.assertEqual(repeated["message"], delivered["message"])
+        self.assertEqual(
+            env["mail.message"].search_count(
+                [
+                    ("model", "=", thread._name),
+                    ("res_id", "=", thread.id),
+                    ("llm_role", "=", "assistant"),
+                    ("attachment_ids", "in", [current.output_attachment_id.id]),
+                ]
+            ),
+            1,
+        )
+
+    def test_candidate_b_finalize_preserves_partially_verified_grade(self):
+        env, session, thread, _upload, _source, _request, _output, parent = self._versioned_session_fixture()
+        candidate = self._register_candidate(
+            env,
+            session,
+            parent_version_id=parent.id,
+            expected_document_revision=session.document_revision,
+            candidate_bytes=synthetic_xlsx("partial-finalize"),
+            filename="partial-finalize.xlsx",
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            idempotency_key="partial-finalize",
+            request_digest=hashlib.sha256(b"partial-finalize").hexdigest(),
+        )
+        receipt = verified_receipt(candidate)
+        object.__setattr__(receipt, "validation_result", "PARTIALLY_VERIFIED")
+        record_validation_receipt(env, candidate.id, receipt)
+        self._accept_candidate(env, candidate)
+        session.invalidate_recordset()
+        accepted_revision = session.document_revision
+        intent = thread.message_post(
+            body="Deliver the accepted workbook while retaining its validation status.",
+            llm_role="user",
+            author_id=env.user.partner_id.id,
+        )
+
+        delivered = finalize_accepted_current(
+            env, session.id, candidate.id, accepted_revision, intent.id
+        )
+        session.invalidate_recordset()
+        candidate.invalidate_recordset()
+        self.assertEqual(candidate.state, "finalized")
+        self.assertEqual(candidate.validation_result, "PARTIALLY_VERIFIED")
+        self.assertEqual(delivered["version"].validation_result, "PARTIALLY_VERIFIED")
+        self.assertEqual(session.current_version_id, candidate)
+        self.assertEqual(session.last_valid_version_id, candidate)
+        self.assertEqual(session.document_revision, accepted_revision)
+        self.assertEqual(candidate.final_attachment_id, candidate.output_attachment_id)
+
     def test_candidate_attachment_creation_failure_rolls_back_metadata(self):
         env, session, _thread, _message, _source, _request, _output, v1 = self._versioned_session_fixture()
         before_count = env["office.workbook.version"].search_count([("session_id", "=", session.id)])

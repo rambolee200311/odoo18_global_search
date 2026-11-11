@@ -27,6 +27,7 @@ class ExpectedEffectWorkbookAdapter:
         self.effect = effect
 
     def execute(self, *, input_xlsx, instruction, input_sha256, **_kwargs):
+        self.last_instruction = instruction
         actual_input_sha = hashlib.sha256(input_xlsx).hexdigest()
         if actual_input_sha != input_sha256 or self.effect.get("input_sha256") != actual_input_sha:
             return _result("failed", error="synthetic_input_binding_mismatch")
@@ -120,7 +121,7 @@ def _preserve_core_properties(source_xlsx, candidate_xlsx):
         candidate_names = set(candidate.namelist())
         if "docProps/core.xml" not in source_names or "docProps/core.xml" not in candidate_names:
             return candidate_xlsx
-        preserved_core = source.read("docProps/core.xml")
+        preserved_core = source.read("docProps/")
         output = BytesIO()
         with ZipFile(output, "w", ZIP_DEFLATED) as normalized:
             for entry in candidate.infolist():

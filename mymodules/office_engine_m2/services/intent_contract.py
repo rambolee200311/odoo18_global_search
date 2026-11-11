@@ -75,7 +75,8 @@ def canonicalize_expected_effect(effect: object, *, parent_version_id: int, inpu
 
     The public tool accepts the frozen effect semantics (targets, allowed
     change kinds, assertions and unknowns), while the service supplies the
-    current parent/hash and computes the canonical digest. A caller may replay
+    current parent/hash and computes the canonical digest. Parent version 0 is
+    reserved for a first Candidate based directly on the raw uploaded file. A caller may replay
     the complete canonical value returned by a prior plan; any supplied stale
     binding or digest is still rejected by CB-03.
     """

@@ -158,14 +158,17 @@ def _expand_xlsx_rows_append_only(
     sheet_name: str,
     first_row: int,
     row_count: int,
+    columns: tuple[str, ...],
     budget: ResourceBudget,
 ) -> tuple[bytes, int]:
-    """Clone a styled prototype into a structurally empty tail of a worksheet.
+    """Expand a repeated region into a structurally empty tail of a worksheet.
 
     This path is intentionally append-only: without an aggregation formula,
     there is no reliable anchor for moving content below the repeated region.
     Any populated cell, formula, merge, or Excel table below the first row
-    makes the layout ambiguous and is rejected.
+    makes the layout ambiguous and is rejected. A present prototype row keeps
+    its existing styles; when it is absent, default-style rows and requested
+    target cells are materialized.
     """
     budget.validate()
     if not isinstance(source, bytes) or not source or len(source) > budget.max_file_size:
@@ -193,8 +196,12 @@ def _expand_xlsx_rows_append_only(
             for node in sheet_data.findall(f"{{{_MAIN}}}row")
         }
         prototype = rows.get(first_row)
-        if prototype is None:
-            raise _fail("重复区域的样式原型行不存在。")
+        # A single record already fits a present template row. Preserve the
+        # historical no-op behavior in that case. If the row is absent, it
+        # still needs to be materialized so the mapping manifest can expose
+        # its target cells.
+        if row_count == 1 and prototype is not None:
+            return source, 0
 
         # No-summary layouts are safe only when the tail has no meaningful
         # worksheet content that would need to be shifted or reinterpreted.
@@ -221,15 +228,34 @@ def _expand_xlsx_rows_append_only(
         last_row = first_row + row_count - 1
         if last_row > 1_048_576:
             raise _fail("扩展后的行号超出工作表限制。", "OFFICE_RESOURCE_LIMIT")
+        from openpyxl.utils.cell import column_index_from_string
+
+        ordered_columns = tuple(sorted(columns, key=column_index_from_string))
+        created_rows = 0
+        if prototype is None:
+            prototype = ET.Element(f"{{{_MAIN}}}row", {"r": str(first_row)})
+            rows[first_row] = prototype
+            created_rows += 1
+
+        def ensure_target_cells(row, row_number):
+            existing = {cell.get("r") for cell in row.findall(f"{{{_MAIN}}}c")}
+            for column in ordered_columns:
+                reference = f"{column}{row_number}"
+                if reference not in existing:
+                    row.append(ET.Element(f"{{{_MAIN}}}c", {"r": reference}))
+                    existing.add(reference)
+
+        ensure_target_cells(prototype, first_row)
         formula_prototypes = _formula_prototypes(rows, first_row, first_row)
         replaced_rows = []
-        created_rows = 0
         for row_number in range(first_row + 1, last_row + 1):
             existing = rows.get(row_number)
             if existing is not None:
                 # Blank reserved rows retain their own styles and row height.
+                ensure_target_cells(existing, row_number)
                 continue
             new_row = _clone_formula_row(prototype, row_number, first_row)
+            ensure_target_cells(new_row, row_number)
             rows[row_number] = new_row
             replaced_rows.append(new_row)
             created_rows += 1
@@ -256,6 +282,8 @@ def _expand_xlsx_rows_append_only(
                 min_col, min_row, max_col, max_row = range_boundaries(dimension.get("ref", ""))
             except ValueError as exc:
                 raise _fail("工作表尺寸范围无效。", "OFFICE_INVALID_OR_MISMATCHED") from exc
+            if ordered_columns:
+                max_col = max(max_col, max(column_index_from_string(column) for column in ordered_columns))
             max_row = max(max_row, last_row)
             end = f"{get_column_letter(max_col)}{max_row}"
             start = f"{get_column_letter(min_col)}{min_row}"
@@ -596,22 +624,12 @@ def expand_repeat_rows(
         allow_missing=True,
     )
     if summary_row is None:
-        if record_count == 1:
-            return RepeatRowsResult(
-                content=source,
-                sheet=sheet,
-                start_row=start_row,
-                record_count=record_count,
-                columns=normalized_columns,
-                summary_row_before=None,
-                summary_row_after=None,
-                inserted_rows=0,
-            )
         content, inserted_rows = _expand_xlsx_rows_append_only(
             source,
             sheet_name=sheet,
             first_row=start_row,
             row_count=record_count,
+            columns=tuple(normalized_columns),
             budget=budget,
         )
         return RepeatRowsResult(

@@ -1546,34 +1546,10 @@ class LLMThreadOfficeTools(models.AbstractModel):
             "properties": {
                 "action": {
                     "type": "string",
-                    "enum": ["status", "retrieve", "plan", "edit", "accept", "reject"],
+                    "enum": ["status", "plan", "edit", "accept", "reject", "finalize"],
                     "description": "The bounded Office action. Candidate identity is resolved from this Thread's trusted tool history.",
                 },
-                "query_spec": {
-                    "type": ["object", "null"],
-                    "additionalProperties": False,
-                    "description": "Required only for action=retrieve. Uses the existing odoo_record_retriever query parameters; no workbook version is required for this read-only action.",
-                    "properties": {
-                        "model": {"type": "string", "minLength": 1},
-                        "domain": {
-                            "type": "array",
-                            "items": {
-                                "type": "array",
-                                "items": {"anyOf": [
-                                    {"type": "string"}, {"type": "integer"},
-                                    {"type": "number"}, {"type": "boolean"},
-                                    {"type": "null"},
-                                ]},
-                            },
-                        },
-                        "fields": {"type": "array", "items": {"type": "string"}},
-                        "limit": {"type": "integer", "minimum": 1, "maximum": 500},
-                        "offset": {"type": "integer", "minimum": 0},
-                        "order": {"type": ["string", "null"]},
-                        "include_pagination": {"type": "boolean"},
-                    },
-                    "required": ["model"],
-                },
+                "candidate_version_id": {"type": ["integer", "null"], "minimum": 1},
                 "interpretation": {
                     "type": ["object", "null"],
                     "additionalProperties": False,
@@ -1598,7 +1574,7 @@ class LLMThreadOfficeTools(models.AbstractModel):
                     "additionalProperties": False,
                     "description": (
                         "Use the frozen CB-03 Expected Effect shape: target_scopes, allowed_change_kinds, "
-                        "expected_assertions, and unknowns. For a plan, omit parent_version_id, input_sha256, "
+                        "expected_assertions, and unknowns. For a current-version edit plan, omit parent_version_id, input_sha256, "
                         "and effect_digest; the server binds those to the current accepted workbook and computes "
                         "the digest. Reuse the returned canonical expected_effect for edit. For a cell value change, "
                         "target_scopes contains {kind:'cell',sheet:'<worksheet>',address:'A1'}, allowed_change_kinds "
@@ -1608,7 +1584,7 @@ class LLMThreadOfficeTools(models.AbstractModel):
                     ),
                     "properties": {
                         "schema_version": {"type": "string", "enum": ["1"]},
-                        "parent_version_id": {"type": "integer", "minimum": 1},
+                        "parent_version_id": {"type": "integer", "minimum": 0},
                         "input_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
                         "effect_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
                         "target_scopes": {
@@ -1664,20 +1640,23 @@ class LLMThreadOfficeTools(models.AbstractModel):
         },
         destructive_hint=True,
         description=(
-            "The single Office facade. action=retrieve is a read-only call to the Thread-bound existing Odoo "
-            "Record Retriever and does not require an accepted workbook version. Candidate actions resolve the "
-            "current user's Thread, accepted workbook version, and persisted Office tool history. The LLM owns intent ambiguity and business-risk judgment; "
+            "The Office file lifecycle facade. Odoo data reads use the separate existing odoo_record_retriever tool. "
+            "For an initial uploaded workbook, action=edit creates a non-current Candidate; for a workbook with an "
+            "accepted Current, use plan then edit. Candidate review resolves the latest Candidate from this Thread's "
+            "persisted Office tool history and checks candidate_version_id as an assertion. The LLM owns intent ambiguity and business-risk judgment; "
             "for plan, explicitly provide confirmation_required and any confirmation_reason. The server binds that "
             "decision to the current user, Thread, Session, version, file SHA and request, then verifies a real user "
             "confirmation before execution when requested. A generated Candidate never advances Current until the "
             "user explicitly accepts it. Local checks remain authoritative for permissions, safety, versions and file "
-            "integrity. External Provider file processing remains disabled while the SRS/data-policy release gate is open."
+            "integrity. action=finalize delivers the exact accepted Current workbook to this Thread; it does not "
+            "edit, revalidate, or change the version pointers. External Provider file processing remains disabled "
+            "while the SRS/data-policy release gate is open."
         ),
     )
     def office(
         self,
         action: str,
-        query_spec: dict | None = None,
+        candidate_version_id: int | None = None,
         interpretation: dict | None = None,
         expected_effect: dict | None = None,
         model_risk_claims: list[dict] | None = None,
@@ -1691,7 +1670,7 @@ class LLMThreadOfficeTools(models.AbstractModel):
             thread,
             tool_message,
             action,
-            query_spec=query_spec,
+            candidate_version_id=candidate_version_id,
             interpretation=interpretation,
             expected_effect=expected_effect,
             model_risk_claims=model_risk_claims,
@@ -3561,6 +3540,28 @@ class LLMTool(models.Model):
         authorization, row-count confirmation, and execution checks.
         """
         self.ensure_one()
+        if self.name == "odoo_record_retriever":
+            message = self.env.context.get("message")
+            if message and getattr(message, "_name", None) == "mail.message" and message.model == "llm.thread":
+                thread = self.env["llm.thread"].browse(message.res_id).exists()
+                if thread:
+                    thread.check_access("read")
+                # M1's authorized preview/finalize services use the same ORM
+                # Retriever internally, but those legacy Threads intentionally
+                # bind only their M1 tools. Keep that path available only for
+                # this user's active M1 Session; Route B still requires the
+                # Retriever to be explicitly bound to its Thread.
+                internal_m1_call = bool(
+                    thread
+                    and thread._office_active_session()
+                    and not thread._office_is_candidate_b_route()
+                )
+                if (
+                    not thread
+                    or thread.user_id.id != self.env.uid
+                    or (self not in thread.tool_ids and not internal_m1_call)
+                ):
+                    raise AccessError(_("The Odoo Retriever Thread is unavailable."))
         if self.name == "office_save_mapping_preview" and isinstance(parameters, dict):
             repeat_rows = parameters.get("repeat_rows")
             if isinstance(repeat_rows, dict):

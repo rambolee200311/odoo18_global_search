@@ -7,7 +7,7 @@ import unittest
 import zipfile
 from openpyxl import load_workbook
 
-from office_verify import OfficeVerifyError, VerificationBudget, verify_candidate_output
+from office_verify import OfficeVerifyError, VerificationBudget, verify_candidate_output, verify_output
 from office_verify.verify import _canonical_effect
 
 
@@ -166,12 +166,162 @@ def replace_part(source: bytes, name: str, content: bytes) -> bytes:
     return output.getvalue()
 
 
+def core_properties_xml(*, modified: str, title: str = "Synthetic workbook") -> bytes:
+    return (
+        '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" '
+        'xmlns:dc="http://purl.org/dc/elements/1.1/" '
+        'xmlns:dcterms="http://purl.org/dc/terms/" '
+        'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
+        f"<dc:title>{title}</dc:title>"
+        "<dc:creator>Synthetic TV</dc:creator>"
+        '<dcterms:created xsi:type="dcterms:W3CDTF">2026-11-10T00:00:00Z</dcterms:created>'
+        f'<dcterms:modified xsi:type="dcterms:W3CDTF">{modified}</dcterms:modified>'
+        "</cp:coreProperties>"
+    ).encode()
+
+
+def with_core_properties(source: bytes, *, modified: str, title: str = "Synthetic workbook") -> bytes:
+    content_types = zip_part(source, "[Content_Types].xml")
+    content_types = content_types.replace(
+        b"</Types>",
+        b'<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>',
+    )
+    source = replace_part(source, "[Content_Types].xml", content_types)
+    root_relationships = zip_part(source, "_rels/.rels")
+    root_relationships = root_relationships.replace(
+        b"</Relationships>",
+        b'<Relationship Id="rIdCore" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>',
+    )
+    source = replace_part(source, "_rels/.rels", root_relationships)
+    return replace_part(source, "docProps/core.xml", core_properties_xml(modified=modified, title=title))
+
+
 class CandidateVerifyTests(unittest.TestCase):
     def verify(self, source, candidate, effect, **kwargs):
         return verify_candidate_output(
             source, candidate, "neutral.xlsx", MIME, effect,
             budget=kwargs.get("budget", VerificationBudget()),
         )
+
+    def test_core_modified_timestamp_change_is_semantic_metadata_not_an_effect(self):
+        source = with_core_properties(workbook("10"), modified="2026-11-10T00:00:00Z")
+        sheet = zip_part(source, "xl/worksheets/sheet1.xml").replace(b"<v>10</v>", b"<v>15</v>")
+        candidate = replace_part(source, "xl/worksheets/sheet1.xml", sheet)
+        candidate = replace_part(
+            candidate, "docProps/core.xml",
+            core_properties_xml(modified="2026-11-11T01:32:14Z"),
+        )
+
+        report = self.verify(source, candidate, effect_for(source))
+
+        self.assertEqual(report.validation_result, "VERIFIED", report.error)
+        self.assertEqual([item["change_kind"] for item in report.actual_effects], ["cell_value"])
+        self.assertIsNone(report.error)
+
+    def test_core_properties_namespace_prefix_serialization_is_semantically_ignored(self):
+        source = with_core_properties(workbook("10"), modified="2026-11-10T00:00:00Z")
+        sheet = zip_part(source, "xl/worksheets/sheet1.xml").replace(b"<v>10</v>", b"<v>15</v>")
+        candidate = replace_part(source, "xl/worksheets/sheet1.xml", sheet)
+        core = core_properties_xml(modified="2026-11-11T01:32:14Z")
+        core = core.replace(b"xmlns:dcterms=", b"xmlns:terms=").replace(b"dcterms:", b"terms:")
+        core = core.replace(b"xmlns:xsi=", b"xmlns:i=").replace(b"xsi:type", b"i:type")
+        candidate = replace_part(candidate, "docProps/core.xml", core)
+
+        report = self.verify(source, candidate, effect_for(source))
+
+        self.assertEqual(report.validation_result, "VERIFIED", report.error)
+        self.assertEqual([item["change_kind"] for item in report.actual_effects], ["cell_value"])
+
+    def test_core_metadata_change_does_not_authorize_non_target_cell_change(self):
+        source = with_core_properties(workbook("10"), modified="2026-11-10T00:00:00Z")
+        sheet = zip_part(source, "xl/worksheets/sheet1.xml")
+        sheet = sheet.replace(b"<v>10</v>", b"<v>15</v>").replace(b"<t>KEEP</t>", b"<t>UNAUTHORIZED</t>")
+        candidate = replace_part(source, "xl/worksheets/sheet1.xml", sheet)
+        candidate = replace_part(
+            candidate, "docProps/core.xml",
+            core_properties_xml(modified="2026-11-11T01:32:14Z"),
+        )
+
+        report = self.verify(source, candidate, effect_for(source))
+
+        self.assertEqual(report.validation_result, "FAILED")
+        self.assertTrue(any(item["target"] == "xlsx:Data!B1" for item in report.actual_effects))
+        self.assertEqual(report.error["error_code"], "OFFICE_TARGET_MISMATCH")
+        self.assertIn("target=xlsx:Data!B1", report.error["message"])
+        self.assertIn("actual_change=", report.error["message"])
+
+    def test_core_metadata_change_does_not_bypass_unsupported_ooxml_structure(self):
+        source = with_core_properties(workbook("10"), modified="2026-11-10T00:00:00Z")
+        candidate = replace_part(
+            source, "docProps/core.xml",
+            core_properties_xml(modified="2026-11-11T01:32:14Z"),
+        )
+        sheet = zip_part(candidate, "xl/worksheets/sheet1.xml")
+        sheet = sheet.replace(b"</worksheet>", b"<externalLink/></worksheet>")
+        candidate = replace_part(candidate, "xl/worksheets/sheet1.xml", sheet)
+
+        with self.assertRaises(OfficeVerifyError) as raised:
+            self.verify(source, candidate, effect_for(source))
+
+        self.assertEqual(raised.exception.code, "OFFICE_UNSUPPORTED_FEATURE")
+        self.assertEqual(raised.exception.stage, "structure")
+
+    def test_core_metadata_change_does_not_hide_unknown_package_part_change(self):
+        theme_before = b'<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:name>Before</a:name></a:theme>'
+        theme_after = theme_before.replace(b"Before", b"After")
+        source = with_core_properties(workbook("10"), modified="2026-11-10T00:00:00Z")
+        source = replace_part(source, "xl/theme/theme1.xml", theme_before)
+        sheet = zip_part(source, "xl/worksheets/sheet1.xml").replace(b"<v>10</v>", b"<v>15</v>")
+        candidate = replace_part(source, "xl/worksheets/sheet1.xml", sheet)
+        candidate = replace_part(candidate, "xl/theme/theme1.xml", theme_after)
+        candidate = replace_part(
+            candidate, "docProps/core.xml",
+            core_properties_xml(modified="2026-11-11T01:32:14Z"),
+        )
+
+        report = self.verify(source, candidate, effect_for(source))
+
+        self.assertEqual(report.validation_result, "FAILED")
+        self.assertEqual(report.error["error_code"], "OFFICE_UNSUPPORTED_FEATURE")
+        self.assertFalse(any(item["target"] == "xlsx:__package__!docProps/core.xml" for item in report.actual_effects))
+        self.assertIn("xl/theme/theme1.xml", report.error["message"])
+
+    def test_core_title_change_is_not_ignored_with_the_modified_timestamp(self):
+        source = with_core_properties(workbook("10"), modified="2026-11-10T00:00:00Z")
+        sheet = zip_part(source, "xl/worksheets/sheet1.xml").replace(b"<v>10</v>", b"<v>15</v>")
+        candidate = replace_part(source, "xl/worksheets/sheet1.xml", sheet)
+        candidate = replace_part(
+            candidate, "docProps/core.xml",
+            core_properties_xml(modified="2026-11-11T01:32:14Z", title="Unexpected title"),
+        )
+
+        report = self.verify(source, candidate, effect_for(source))
+
+        self.assertEqual(report.validation_result, "FAILED")
+        self.assertEqual(report.error["error_code"], "OFFICE_UNSUPPORTED_FEATURE")
+        core_change = next(item for item in report.actual_effects if item["target"] == "xlsx:__package__!docProps/core.xml")
+        self.assertEqual(core_change["change_kind"], "unsupported_structure")
+
+    def test_m1_mapping_keeps_its_existing_core_properties_behavior(self):
+        source = with_core_properties(workbook("10"), modified="2026-11-10T00:00:00Z")
+        sheet = zip_part(source, "xl/worksheets/sheet1.xml").replace(b"<v>10</v>", b"<v>15</v>")
+        candidate = replace_part(source, "xl/worksheets/sheet1.xml", sheet)
+        candidate = replace_part(
+            candidate, "docProps/core.xml",
+            core_properties_xml(modified="2026-11-11T01:32:14Z"),
+        )
+        mapping = {
+            "schema_version": "1",
+            "template_sha256": hashlib.sha256(source).hexdigest(),
+            "writes": [{
+                "element_id": "xlsx:Data!A1", "operation": "set_value",
+                "value": {"type": "number", "data": 15},
+            }],
+        }
+
+        report = verify_output(source, candidate, "neutral.xlsx", MIME, mapping)
+
+        self.assertEqual(report.status, "PASS")
 
     def test_in_scope_nonempty_value_change_is_verified_and_reported_as_risk_fact(self):
         source = workbook("10")

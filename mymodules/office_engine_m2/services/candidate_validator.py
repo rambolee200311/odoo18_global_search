@@ -15,6 +15,7 @@ from .workbook_version_service import (
     _check_version_attachment,
     _read_attachment,
     _require_session,
+    _require_user_thread_message,
     _require_version,
     record_validation_receipt,
 )
@@ -28,24 +29,46 @@ _XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 def _bound_candidate(env, session_id, candidate_version_id, expected_effect):
     session = _require_session(env, session_id, write=True)
     candidate = _require_version(env, session, candidate_version_id, write=True)
-    if candidate.version_kind != "edit" or candidate.state != "candidate_received" or not candidate.parent_version_id:
-        raise ValidationError(_("Only a received edit Candidate can be validated."))
-    parent = _require_version(env, session, candidate.parent_version_id.id)
-    if parent.state not in {"accepted_current", "finalized"}:
-        raise ValidationError(_("The Candidate parent version is no longer valid."))
-    if (
-        session.current_version_id != parent
-        or session.document_revision != candidate.document_revision
-        or session.revision != candidate.session_revision
-        or session.proposal_revision != candidate.proposal_revision
-        or parent.accepted_document_revision != candidate.document_revision
-    ):
-        raise ValidationError(_("WORKBOOK_VERSION_STALE: the Candidate no longer matches the current document."))
-    _check_version_attachment(parent, parent.output_attachment_id)
+    if candidate.state != "candidate_received":
+        raise ValidationError(_("Only a received Candidate can be validated."))
+    if candidate.version_kind == "initial":
+        if candidate.parent_version_id or candidate.source_request_id:
+            raise ValidationError(_("The initial Candidate source binding is invalid."))
+        if (
+            session.current_version_id
+            or session.document_revision != 0
+            or candidate.document_revision != 0
+            or candidate.input_attachment_id != session.source_attachment_id
+            or candidate.source_message_id != session.source_message_id
+        ):
+            raise ValidationError(_("WORKBOOK_VERSION_STALE: the initial Candidate no longer matches its upload."))
+        if not candidate.intent_message_id:
+            raise ValidationError(_("The initial Candidate has no bound user Intent message."))
+        _require_user_thread_message(env, session, candidate.intent_message_id.id, "Intent")
+        parent = False
+        input_attachment = session.source_attachment_id
+    elif candidate.version_kind == "edit" and candidate.parent_version_id:
+        parent = _require_version(env, session, candidate.parent_version_id.id)
+        if parent.state not in {"accepted_current", "finalized"}:
+            raise ValidationError(_("The Candidate parent version is no longer valid."))
+        if (
+            session.current_version_id != parent
+            or session.document_revision != candidate.document_revision
+            or session.revision != candidate.session_revision
+            or session.proposal_revision != candidate.proposal_revision
+            or parent.accepted_document_revision != candidate.document_revision
+        ):
+            raise ValidationError(_("WORKBOOK_VERSION_STALE: the Candidate no longer matches the current document."))
+        _check_version_attachment(parent, parent.output_attachment_id)
+        input_attachment = parent.output_attachment_id
+    else:
+        raise ValidationError(_("Only an initial or edit Candidate can be validated."))
     _check_version_attachment(candidate, candidate.output_attachment_id)
-    if candidate.input_attachment_id != parent.output_attachment_id:
+    if candidate.input_attachment_id != input_attachment:
         raise ValidationError(_("The Candidate input is not the recorded parent output."))
-    input_bytes, input_sha = _read_attachment(env, parent.output_attachment_id, expected_sha=parent.output_sha256)
+    input_bytes, input_sha = _read_attachment(
+        env, input_attachment, expected_sha=parent.output_sha256 if parent else False
+    )
     candidate_input, candidate_input_sha = _read_attachment(
         env, candidate.input_attachment_id, expected_sha=candidate.input_sha256
     )
@@ -61,7 +84,7 @@ def _bound_candidate(env, session_id, candidate_version_id, expected_effect):
     if not isinstance(expected_effect, dict):
         raise ValidationError(_("Expected Effect must be a structured object."))
     if (
-        expected_effect.get("parent_version_id") != parent.id
+        expected_effect.get("parent_version_id") != (parent.id if parent else 0)
         or expected_effect.get("input_sha256") != input_sha
         or expected_effect.get("effect_digest") != candidate.intent_effect_digest
     ):
@@ -107,7 +130,7 @@ def validate_workbook_candidate(env, session_id, candidate_version_id, expected_
             budget=budget,
         )
     except _office_verify.OfficeVerifyError as error:
-        report = _failed_report(source_sha, output_sha, parent.id, candidate.intent_effect_digest, error)
+        report = _failed_report(source_sha, output_sha, parent.id if parent else 0, candidate.intent_effect_digest, error)
         worker_metrics = getattr(error, "execution_metrics", None) or {
             "elapsed_seconds": max(0.0, time.monotonic() - started_monotonic),
             "rss_observed": False,
@@ -132,7 +155,7 @@ def validate_workbook_candidate(env, session_id, candidate_version_id, expected_
         "session_revision": candidate.session_revision,
         "proposal_revision": candidate.proposal_revision,
         "document_revision": candidate.document_revision,
-        "parent_version_id": parent.id,
+        "parent_version_id": parent.id if parent else 0,
         "validator_policy_version": _CANDIDATE_POLICY_VERSION,
         "source_sha256": source_sha,
         "candidate_output_sha256": output_sha,
@@ -167,7 +190,7 @@ def validate_workbook_candidate(env, session_id, candidate_version_id, expected_
         session_revision=candidate.session_revision,
         proposal_revision=candidate.proposal_revision,
         document_revision=candidate.document_revision,
-        parent_version_id=parent.id,
+        parent_version_id=parent.id if parent else False,
         input_sha256=source_sha,
         effect_digest=candidate.intent_effect_digest or False,
     )

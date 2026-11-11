@@ -227,8 +227,8 @@ def _validate_candidate_acceptance_authorization(env, candidate, authorization):
     ):
         raise ValidationError(_("The confirmation reference is invalid."))
     session = _require_session(env, candidate.session_id.id, write=True)
-    if candidate.version_kind != "edit":
-        raise ValidationError(_("Only an edit Candidate can use edit authorization."))
+    if candidate.version_kind not in {"initial", "edit"}:
+        raise ValidationError(_("Only a Route B initial or edit Candidate can use user-review authorization."))
     reviewable_result_states = {
         "VERIFIED": {"verified", "accepted_current", "superseded", "finalized"},
         "PARTIALLY_VERIFIED": {"partially_verified", "accepted_current", "superseded", "finalized"},
@@ -236,7 +236,7 @@ def _validate_candidate_acceptance_authorization(env, candidate, authorization):
     if (
         candidate.validation_result not in reviewable_result_states
         or candidate.state not in reviewable_result_states[candidate.validation_result]
-        or candidate.validation_result == "PARTIALLY_VERIFIED" and candidate.version_kind != "edit"
+        or candidate.validation_result == "PARTIALLY_VERIFIED" and candidate.version_kind not in {"initial", "edit"}
     ):
         raise ValidationError(_("Only a technically reviewable Candidate can use edit acceptance authorization."))
     if (
@@ -247,8 +247,9 @@ def _validate_candidate_acceptance_authorization(env, candidate, authorization):
             authorization.thread_id,
             authorization.intent_message_id,
             authorization.decision_message_id,
-            authorization.parent_version_id,
         ))
+        or type(authorization.parent_version_id) is not int
+        or authorization.parent_version_id < 0
         or type(authorization.document_revision) is not int
         or authorization.document_revision < 0
         or authorization.authorization_kind not in {"explicit_intent", "confirmed_intent", "candidate_review"}
@@ -257,7 +258,7 @@ def _validate_candidate_acceptance_authorization(env, candidate, authorization):
         or authorization.owner_id != env.uid
         or authorization.thread_id != session.thread_id.id
         or authorization.intent_message_id != candidate.intent_message_id.id
-        or authorization.parent_version_id != candidate.parent_version_id.id
+        or authorization.parent_version_id != (candidate.parent_version_id.id or 0)
         or authorization.document_revision != candidate.document_revision
         or authorization.output_sha256 != candidate.output_sha256
         or (authorization.effect_digest or False) != (candidate.intent_effect_digest or False)
@@ -632,6 +633,123 @@ def register_initial_v1(env, session_id, request_id):
         return version
 
 
+def register_initial_candidate(
+    env,
+    session_id,
+    *,
+    candidate_bytes,
+    filename,
+    mimetype,
+    idempotency_key,
+    request_digest,
+    intent_message_id,
+    intent_effect_digest=False,
+    provider_id=False,
+    provider_model=False,
+    provider_response_id=False,
+    provider_tool_call_id=False,
+    provider_file_id=False,
+    provider_usage_json=False,
+    provider_cleanup_state="not_applicable",
+):
+    """Persist a Route B first-pass Candidate without creating V1 or Current."""
+    session = _require_session(env, session_id, write=True)
+    if session.current_version_id or session.document_revision != 0:
+        raise ValidationError(_("The Session already has a current document version."))
+    idempotency_key = _require_idempotency_key(idempotency_key)
+    request_digest = _require_hash(request_digest, "request")
+    effect_digest = _require_hash(intent_effect_digest, "effect", optional=True)
+    intent = _require_user_thread_message(env, session, intent_message_id, "Intent")
+    filename, mimetype = _filename_and_mimetype(filename, mimetype)
+    if not isinstance(candidate_bytes, bytes) or not candidate_bytes or len(candidate_bytes) > MAX_VERSION_BYTES:
+        raise ValidationError(_("The candidate workbook bytes are empty or exceed the size limit."))
+    source_bytes, input_sha = _read_attachment(env, session.source_attachment_id)
+    if not source_bytes:
+        raise ValidationError(_("The initial workbook upload is empty."))
+    output_sha = hashlib.sha256(candidate_bytes).hexdigest()
+    existing = env["office.workbook.version"].search(
+        [("session_id", "=", session.id), ("idempotency_key", "=", idempotency_key)], limit=1
+    )
+    if existing:
+        existing = _same_idempotent_result(
+            existing,
+            parent_id=False,
+            input_sha=input_sha,
+            output_sha=output_sha,
+            request_digest=request_digest,
+            effect_digest=effect_digest,
+            kind="initial",
+            intent_message_id=intent.id,
+        )
+        _read_attachment(env, existing.output_attachment_id, expected_sha=output_sha)
+        return existing
+
+    with env.cr.savepoint():
+        locked = _lock_session(session)
+        if locked.current_version_id or locked.document_revision != 0:
+            raise ValidationError(_("WORKBOOK_VERSION_STALE: an initial Candidate can only use an unversioned Session."))
+        # Another transaction may already have registered this exact request.
+        existing = env["office.workbook.version"].search(
+            [("session_id", "=", session.id), ("idempotency_key", "=", idempotency_key)], limit=1
+        )
+        if existing:
+            existing = _same_idempotent_result(
+                existing,
+                parent_id=False,
+                input_sha=input_sha,
+                output_sha=output_sha,
+                request_digest=request_digest,
+                effect_digest=effect_digest,
+                kind="initial",
+                intent_message_id=intent.id,
+            )
+            _read_attachment(env, existing.output_attachment_id, expected_sha=output_sha)
+            return existing
+        version = _create_version_row(
+            env,
+            {
+                "session_id": session.id,
+                "source_message_id": session.source_message_id.id,
+                "intent_message_id": intent.id,
+                "candidate_review_watermark_message_id": _latest_thread_message(env, session).id,
+                "version_no": _next_version_number(env, session),
+                "version_kind": "initial",
+                "state": "candidate_received",
+                "idempotency_key": idempotency_key,
+                "request_digest": request_digest,
+                "intent_effect_digest": effect_digest,
+                "input_attachment_id": session.source_attachment_id.id,
+                "input_sha256": input_sha,
+                "filename": filename,
+                "mimetype": mimetype,
+                "session_revision": session.revision,
+                "proposal_revision": session.proposal_revision,
+                "document_revision": locked.document_revision,
+                "provider_id": _safe_metadata(provider_id, 128),
+                "provider_model": _safe_metadata(provider_model, 128),
+                "provider_response_id": _safe_metadata(provider_response_id, 255),
+                "provider_tool_call_id": _safe_metadata(provider_tool_call_id, 255),
+                "provider_file_id": _safe_metadata(provider_file_id, 255),
+                "provider_usage_json": _safe_usage(provider_usage_json),
+                "provider_cleanup_state": provider_cleanup_state,
+            },
+        )
+        attachment = _create_version_attachment(env, version, filename, mimetype, candidate_bytes)
+        _check_version_attachment(version, attachment)
+        stored_bytes, stored_sha = _read_attachment(env, attachment, expected_sha=output_sha)
+        if stored_bytes != candidate_bytes:
+            raise ValidationError(_("The initial Candidate attachment did not preserve the received bytes."))
+        _write_version(
+            version,
+            {
+                "output_attachment_id": attachment.id,
+                "output_sha256": stored_sha,
+                "file_size": len(stored_bytes),
+            },
+        )
+        return version
+
+
 def register_candidate(
     env,
     session_id,
@@ -986,6 +1104,121 @@ def record_finalize_reference(env, version_id, final_attachment_id, final_messag
     return version
 
 
+def finalize_accepted_current(
+    env, session_id, expected_current_version_id, expected_document_revision, user_message_id
+):
+    """Attach the accepted Current bytes to its Thread and register delivery.
+
+    This is an internal Candidate B service. Identity comes from the already
+    resolved Office context; the public Tool does not accept record IDs or
+    authorization flags. Finalize does not validate or promote a Candidate.
+    """
+    session = _require_session(env, session_id, write=True)
+    if type(expected_current_version_id) is not int or expected_current_version_id < 1:
+        raise AccessError(_("The accepted workbook is unavailable."))
+    if type(expected_document_revision) is not int or expected_document_revision < 0:
+        raise ValidationError(_("The accepted workbook revision is invalid."))
+    _require_user_thread_message(env, session, user_message_id, "Finalize instruction")
+    thread = session.thread_id
+    if thread.user_id.id != env.uid:
+        raise AccessError(_("The Office Thread is unavailable."))
+
+    with env.cr.savepoint():
+        locked = _lock_session(session)
+        if (
+            locked.current_version_id.id != expected_current_version_id
+            or locked.last_valid_version_id != locked.current_version_id
+            or locked.document_revision != expected_document_revision
+        ):
+            raise ValidationError(_("WORKBOOK_VERSION_STALE: the accepted workbook changed before delivery."))
+
+        version = _require_version(env, locked, expected_current_version_id, write=True)
+        version.invalidate_recordset(
+            ["state", "validation_result", "accepted_document_revision", "delivery_state",
+             "final_attachment_id", "final_message_id", "output_attachment_id", "output_sha256"]
+        )
+        if (
+            version.state not in {"accepted_current", "finalized"}
+            or version.version_kind not in {"initial", "edit", "restore"}
+            or version.validation_result not in {"VERIFIED", "PARTIALLY_VERIFIED"}
+            or version.accepted_document_revision != locked.document_revision
+        ):
+            raise ValidationError(_("Only an accepted, technically reviewable Current can be delivered."))
+
+        # Recheck that this Tool call is bound to the latest user-authored
+        # message in this Thread, after acquiring the Session lock.
+        env["mail.message"].flush_model(["subtype_id", "llm_role", "author_id", "model", "res_id", "is_error"])
+        latest_user = env["mail.message"].search(
+            [
+                ("model", "=", thread._name),
+                ("res_id", "=", thread.id),
+                ("llm_role", "=", "user"),
+                ("author_id", "=", env.user.partner_id.id),
+                ("is_error", "=", False),
+            ],
+            order="id desc",
+            limit=1,
+        )
+        _require_user_thread_message(env, locked, latest_user.id, "Finalize instruction")
+        if latest_user.id != user_message_id:
+            raise ValidationError(_("WORKBOOK_VERSION_STALE: a newer user instruction superseded this delivery request."))
+
+        attachment = _check_version_attachment(version, version.output_attachment_id)
+        content, output_sha256 = _read_attachment(env, attachment, expected_sha=version.output_sha256)
+        if not content or output_sha256 != version.output_sha256:
+            raise ValidationError(_("The accepted workbook bytes failed delivery integrity checks."))
+
+        if version.delivery_state == "delivered":
+            message = version.final_message_id.exists()
+            final_attachment = version.final_attachment_id.exists()
+            if not message or not final_attachment:
+                raise ValidationError(_("The existing final delivery reference is incomplete."))
+            if not hasattr(thread, "_office_message_store_payload"):
+                raise ValidationError(_("The Office attachment cannot be loaded into the Thread Store."))
+            thread._office_message_store_payload(message)
+            record_finalize_reference(env, version.id, final_attachment.id, message.id)
+        elif version.delivery_state == "not_finalized" and not version.final_attachment_id and not version.final_message_id:
+            # Reuse an already posted same-version message if a prior caller
+            # posted it before the version reference was recorded.
+            message = env["mail.message"].search(
+                [
+                    ("model", "=", thread._name),
+                    ("res_id", "=", thread.id),
+                    ("llm_role", "=", "assistant"),
+                    ("attachment_ids", "in", [attachment.id]),
+                ],
+                order="id desc",
+                limit=1,
+            )
+            if not message:
+                body = _("Finalized workbook: %(filename)s", filename=version.filename)
+                if version.validation_result == "PARTIALLY_VERIFIED":
+                    body += _(" — validation remains PARTIALLY_VERIFIED; unverified aspects remain unverified.")
+                message = thread.message_post(
+                    body=body,
+                    llm_role="assistant",
+                    attachment_ids=[attachment.id],
+                )
+            # Preflight the same Discuss Store serializer used by the live
+            # chat before the authoritative delivery receipt is written.
+            if not hasattr(thread, "_office_message_store_payload"):
+                raise ValidationError(_("The Office attachment cannot be loaded into the Thread Store."))
+            thread._office_message_store_payload(message)
+            record_finalize_reference(env, version.id, attachment.id, message.id)
+        else:
+            raise ValidationError(_("The existing final delivery state is inconsistent."))
+
+        version.invalidate_recordset()
+        session.invalidate_recordset(["current_version_id", "last_valid_version_id", "document_revision"])
+        return {
+            "version": version,
+            "session": locked,
+            "attachment": attachment,
+            "message": message,
+            "output_sha256": output_sha256,
+        }
+
+
 def _receipt_fields(candidate, receipt):
     if not isinstance(receipt, ValidationReceipt):
         raise ValidationError(_("A trusted in-process validation receipt is required."))
@@ -1087,7 +1320,7 @@ def _revalidate_stored_receipt(env, candidate):
     ) or (
         candidate.validation_result == "PARTIALLY_VERIFIED"
         and candidate.state == "partially_verified"
-        and candidate.version_kind == "edit"
+        and candidate.version_kind in {"initial", "edit"}
     )
     if not valid_state_result:
         raise ValidationError(_("The Candidate does not have a reviewable validation result for this operation."))
@@ -1120,9 +1353,9 @@ def _revalidate_stored_receipt(env, candidate):
         raise ValidationError(_("WORKBOOK_VERSION_STALE: the candidate no longer matches current state."))
     if candidate.version_kind == "restore" and not candidate.confirmation_receipt_id:
         raise ValidationError(_("The restore candidate has no fresh confirmation receipt."))
-    if candidate.version_kind == "edit":
+    if candidate.version_kind == "edit" or (candidate.version_kind == "initial" and not candidate.source_request_id):
         if not candidate.intent_message_id:
-            raise ValidationError(_("The edit candidate has no bound user Intent message."))
+            raise ValidationError(_("The Candidate has no bound user Intent message."))
         _require_user_thread_message(env, session, candidate.intent_message_id.id, "Intent")
     return session
 
@@ -1132,14 +1365,14 @@ def _accept_verified_version(
 ):
     session = _revalidate_stored_receipt(env, version)
     verified = version.state == "verified" and version.validation_result == "VERIFIED"
-    partial_edit = (
+    partial_candidate = (
         version.state == "partially_verified"
         and version.validation_result == "PARTIALLY_VERIFIED"
-        and version.version_kind == "edit"
+        and version.version_kind in {"initial", "edit"}
         and acceptance_authorization is not None
     )
-    if not (verified or partial_edit):
-        raise ValidationError(_("Only a verified Candidate or a user-authorized partially verified edit can become Current."))
+    if not (verified or partial_candidate):
+        raise ValidationError(_("Only a verified Candidate or a user-authorized partially verified Candidate can become Current."))
     with env.cr.savepoint():
         locked = _lock_session(session)
         if (
@@ -1150,7 +1383,7 @@ def _accept_verified_version(
         # Re-read proof, input/output bytes, and revisions under the Session lock.
         session = _revalidate_stored_receipt(env, version)
         authorization_digest = False
-        if version.version_kind == "edit":
+        if version.version_kind in {"initial", "edit"} and acceptance_authorization is not None:
             authorization_digest = _validate_candidate_acceptance_authorization(
                 env, version, acceptance_authorization
             )
@@ -1178,11 +1411,11 @@ def _accept_verified_version(
 
 
 def accept_verified_candidate(env, candidate_id, authorization=None):
-    """Atomically accept a VERIFIED Candidate or a user-authorized PARTIAL edit.
+    """Atomically accept a VERIFIED or user-authorized PARTIAL Route B Candidate.
 
     Acceptance preserves the receipt's validation grade. PARTIALLY_VERIFIED is
     never upgraded to VERIFIED and requires the same scoped human decision
-    binding as any edit Candidate.
+    binding for both initial and subsequent Route B Candidates.
     """
     if isinstance(candidate_id, bool) or not isinstance(candidate_id, int) or candidate_id < 1:
         raise AccessError(_("The workbook candidate is unavailable."))
@@ -1191,7 +1424,9 @@ def accept_verified_candidate(env, candidate_id, authorization=None):
         raise AccessError(_("The workbook candidate is unavailable."))
     candidate.check_access("write")
     _require_session(env, candidate.session_id.id, write=True)
-    if candidate.version_kind == "edit":
+    if candidate.version_kind in {"initial", "edit"} and (
+        candidate.version_kind == "edit" or not candidate.source_request_id or authorization is not None
+    ):
         authorization_digest = _validate_candidate_acceptance_authorization(env, candidate, authorization)
         if candidate.state in {"accepted_current", "superseded", "finalized"}:
             _check_version_attachment(candidate, candidate.output_attachment_id)
@@ -1227,16 +1462,16 @@ def reject_verified_candidate(env, candidate_id, decision):
             decision.owner_id,
             decision.intent_message_id,
             decision.decision_message_id,
-            decision.parent_version_id,
         ))
+        or type(decision.parent_version_id) is not int
+        or decision.parent_version_id < 0
         or type(decision.document_revision) is not int
         or decision.document_revision < 0
-        or candidate.version_kind == "initial"
         or decision.candidate_version_id != candidate.id
         or decision.session_id != session.id
         or decision.owner_id != env.uid
         or decision.intent_message_id != candidate.intent_message_id.id
-        or decision.parent_version_id != candidate.parent_version_id.id
+        or decision.parent_version_id != (candidate.parent_version_id.id or 0)
         or decision.document_revision != candidate.document_revision
         or decision.output_sha256 != candidate.output_sha256
         or (decision.effect_digest or False) != (candidate.intent_effect_digest or False)
@@ -1257,7 +1492,7 @@ def reject_verified_candidate(env, candidate_id, decision):
     ) or (
         candidate.state == "partially_verified"
         and candidate.validation_result == "PARTIALLY_VERIFIED"
-        and candidate.version_kind == "edit"
+        and candidate.version_kind in {"initial", "edit"}
     )
     if not reviewable_state:
         raise ValidationError(_("Only a technically reviewable, non-current Candidate can be rejected."))
@@ -1266,7 +1501,11 @@ def reject_verified_candidate(env, candidate_id, decision):
     with env.cr.savepoint():
         locked = _lock_session(session)
         candidate.invalidate_recordset()
-        if candidate.state not in {"verified", "partially_verified"} or locked.current_version_id == candidate:
+        if (
+            candidate.state not in {"verified", "partially_verified"}
+            or locked.current_version_id == candidate
+            or (candidate.version_kind == "initial" and (locked.current_version_id or locked.document_revision))
+        ):
             raise ValidationError(_("The Candidate is no longer available for rejection."))
         _revalidate_stored_receipt(env, candidate)
         _write_version(candidate, {

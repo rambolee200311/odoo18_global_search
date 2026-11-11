@@ -1,0 +1,23 @@
+CC-M2-CB-07 — Validator fix final targeted verification
+Date: 2026-11-11 (local)
+Database/runtime not used by Python pytest checks.
+
+$ PYTHONPATH=mymodules venv/bin/python -m pytest -q mymodules/office_verify/tests/test_candidate_verify.py
+.............................                                            [100%]
+29 passed, 1 warning in 1.55s
+Warning: openpyxl reports the existing synthetic blank-style fixture has no default style.
+Exit code: 0
+
+$ PYTHONPATH=mymodules venv/bin/python -m pytest -q mymodules/office_verify/tests/test_office_verify.py
+........................                                                 [100%]
+24 passed in 2.46s
+Exit code: 0
+
+$ venv/bin/python -m py_compile mymodules/office_verify/verify.py mymodules/office_verify/tests/test_candidate_verify.py
+PASS (exit code 0)
+
+$ git diff --check
+PASS (exit code 0)
+
+$ venv/bin/python -m json.tool docs/implementation/evidence/CB-M2-CB-07/HVR-RUN-002-ui-failure.json
+PASS (valid JSON; output redirected)

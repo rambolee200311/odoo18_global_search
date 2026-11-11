@@ -4,8 +4,9 @@ import hashlib
 from io import BytesIO
 
 from openpyxl import Workbook, load_workbook
+from openpyxl.styles import Font, PatternFill
 
-from office_core import ResourceBudget, execute_document_operations, expand_repeat_rows, inspect_document, render_candidate
+from office_core import OfficeCoreError, ResourceBudget, execute_document_operations, expand_repeat_rows, inspect_document, render_candidate
 
 
 MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -32,6 +33,17 @@ def _source():
     sheet.append(["Reference", "Amount", "Date", "Untouched"])
     sheet.append(["A-2", 0, "2026-11-03", "keep"])
     sheet["B2"].number_format = "0.00"
+    output = BytesIO()
+    workbook.save(output)
+    workbook.close()
+    return output.getvalue()
+
+
+def _header_only_source():
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Contacts"
+    sheet.append(["Name", "Phone", "Email"])
     output = BytesIO()
     workbook.save(output)
     workbook.close()
@@ -169,6 +181,130 @@ def test_legacy_mapping_writes_and_repeat_rows_use_the_same_core_operation_path(
     assert [workbook["Ledger"][f"B{row}"].value for row in (2, 3)] == [1, 2]
     workbook.close()
     assert candidate.verification["status"] == "PASS"
+
+
+def test_repeat_rows_materializes_default_targets_when_template_has_only_headers():
+    source = _header_only_source()
+    repeat = {
+        "action": "insert_repeat_rows",
+        "sheet": "Contacts",
+        "start_row": 2,
+        "record_count": 3,
+        "columns": {"A": "name", "B": "phone", "C": "email"},
+    }
+    result = expand_repeat_rows(source, repeat, _budget())
+
+    assert result.inserted_rows == 3
+    workbook = load_workbook(BytesIO(result.content), data_only=False)
+    try:
+        sheet = workbook["Contacts"]
+        assert [sheet.cell(1, col).value for col in range(1, 4)] == ["Name", "Phone", "Email"]
+        assert sheet.max_row == 4
+        assert sheet.max_column == 3
+        for row in range(2, 5):
+            for column in range(1, 4):
+                cell = sheet.cell(row, column)
+                assert cell.value is None
+                assert cell.style_id == 0
+    finally:
+        workbook.close()
+
+    expanded_inspection = inspect_document(result.content, "contacts.xlsx", MIME, _budget())
+    mapping = {
+        "schema_version": "1",
+        "template_sha256": expanded_inspection.template_sha256,
+        "writes": [
+            {"element_id": f"xlsx:Contacts!{cell}", "operation": "set_value", "value": {"type": "string", "data": value}}
+            for cell, value in (
+                ("A2", "Record One"), ("B2", "111"), ("C2", "one@example.invalid"),
+                ("A3", "Record Two"), ("B3", "222"), ("C3", "two@example.invalid"),
+                ("A4", "Record Three"), ("B4", "333"), ("C4", "three@example.invalid"),
+            )
+        ],
+    }
+    candidate = render_candidate(
+        source,
+        "contacts.xlsx",
+        MIME,
+        mapping,
+        _budget(),
+        preprocessing=repeat,
+    )
+    rendered = load_workbook(BytesIO(candidate.content), data_only=False)
+    try:
+        assert [rendered["Contacts"].cell(row, 1).value for row in range(2, 5)] == ["Record One", "Record Two", "Record Three"]
+        assert [rendered["Contacts"].cell(row, 2).value for row in range(2, 5)] == ["111", "222", "333"]
+        assert [rendered["Contacts"].cell(row, 3).value for row in range(2, 5)] == ["one@example.invalid", "two@example.invalid", "three@example.invalid"]
+    finally:
+        rendered.close()
+
+
+def test_repeat_rows_preserves_existing_style_prototype_copy_behavior():
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Contacts"
+    sheet.append(["Name", "Phone", "Email"])
+    sheet["A2"] = "prototype"
+    sheet["A2"].fill = PatternFill("solid", fgColor="D9EAF7")
+    sheet["B2"].number_format = "@"
+    sheet["C2"].font = Font(italic=True)
+    output = BytesIO()
+    workbook.save(output)
+    workbook.close()
+
+    result = expand_repeat_rows(
+        output.getvalue(),
+        {
+            "action": "insert_repeat_rows",
+            "sheet": "Contacts",
+            "start_row": 2,
+            "record_count": 3,
+            "columns": {"A": "name", "B": "phone", "C": "email"},
+        },
+        _budget(),
+    )
+
+    assert result.inserted_rows == 2
+    expanded = load_workbook(BytesIO(result.content), data_only=False)
+    try:
+        sheet = expanded["Contacts"]
+        assert sheet["A2"].value == "prototype"
+        assert sheet["A3"].value is None
+        assert sheet["A3"].fill.fgColor.rgb == sheet["A2"].fill.fgColor.rgb
+        assert sheet["B3"].number_format == "@"
+        assert sheet["C3"].font.italic is True
+        assert sheet["A4"].fill.fgColor.rgb == sheet["A2"].fill.fgColor.rgb
+    finally:
+        expanded.close()
+
+
+def test_repeat_rows_without_prototype_still_rejects_content_below_target_region():
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Contacts"
+    sheet["A1"] = "Name"
+    sheet["C5"] = "Existing notes"
+    output = BytesIO()
+    workbook.save(output)
+    workbook.close()
+
+    try:
+        expand_repeat_rows(
+            output.getvalue(),
+            {
+                "action": "insert_repeat_rows",
+                "sheet": "Contacts",
+                "start_row": 2,
+                "record_count": 3,
+                "columns": {"A": "name", "B": "phone", "C": "email"},
+            },
+            _budget(),
+        )
+    except OfficeCoreError as exc:
+        assert exc.code == "OFFICE_UNSUPPORTED_FEATURE"
+        assert "起始行下方已有内容" in exc.message
+    else:
+        raise AssertionError("repeat_rows must reject an occupied append-only target region")
 
 
 def test_mapping_candidate_runs_independent_office_verify_and_reports_both_checks():

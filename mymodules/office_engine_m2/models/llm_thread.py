@@ -60,17 +60,16 @@ class LLMThread(models.Model):
         return related
 
     def _office_upload_from_thread(self, source_thread):
-        messages = self.env["mail.message"].search(
-            [
-                ("model", "=", self._name),
-                ("res_id", "=", source_thread.id),
-                ("llm_role", "=", "user"),
-                ("author_id", "=", self.env.user.partner_id.id),
-                ("is_error", "=", False),
-            ],
-            order="id desc",
-            limit=25,
-        )
+        # Follow the owned Thread's message relation. Searching mail.message
+        # directly can hide the current user's own Thread messages behind
+        # mail.message record rules even when the Thread itself is readable.
+        messages = source_thread.message_ids.filtered(
+            lambda message: (
+                message.llm_role == "user"
+                and message.author_id == self.env.user.partner_id
+                and not message.is_error
+            )
+        ).sorted(key=lambda message: message.id, reverse=True)[:25]
         for message in messages:
             office = source_thread._office_engine_classify_attachments(message.attachment_ids)
             if not office:
@@ -172,6 +171,51 @@ class LLMThread(models.Model):
             and session.last_valid_version_id == version
         )
 
+    def _office_has_route_b_session(self):
+        """Return whether the latest upload is already owned by Route B.
+
+        Initial Route B creates a minimal Session before the first Candidate is
+        accepted. Its state is also used by legacy M1 Sessions, so state alone
+        cannot identify the workflow. Route B binds the upload attachment as
+        the Session target; M1 continues to bind its business record.
+        """
+        self.ensure_one()
+        if self.user_id.id != self.env.uid:
+            return False
+        upload, attachment = self._office_latest_upload()
+        if not upload or not attachment:
+            return False
+        session = self.env["office.mapping.session"].search(
+            [
+                ("thread_id", "=", self.id),
+                ("owner_id", "=", self.env.uid),
+                ("company_id", "in", self.env.companies.ids),
+                ("source_message_id", "=", upload.id),
+                ("source_attachment_id", "=", attachment.id),
+                ("target_model", "=", "ir.attachment"),
+                ("target_record_id", "=", attachment.id),
+            ],
+            order="id desc",
+            limit=1,
+        )
+        if session:
+            session.check_access("read")
+        return bool(session)
+
+    def _office_is_candidate_b_route(self):
+        """Use the native file workflow for new uploads and versioned Current workbooks.
+
+        An active M1 Mapping Session keeps its legacy tools. A fresh upload with
+        no M1 Session starts on Route B, so first-file creation does not depend
+        on a Mapping Proposal or repeat-row template.
+        """
+        self.ensure_one()
+        return (
+            self._office_has_versioned_current()
+            or self._office_has_route_b_session()
+            or not bool(self._office_active_session())
+        )
+
     def generate(self, user_message_body=None, attachment_ids=None, **kwargs):
         """Run the original generate loop after M1 preflight and tool binding."""
         self.ensure_one()
@@ -203,61 +247,30 @@ class LLMThread(models.Model):
         ):
             values["reasoning_effort"] = "none"
         if self._office_is_active():
-            if self._office_has_versioned_current():
-                # Candidate B owns every edit after M1 has accepted V1. Keep
-                # M1 mapping tools available only before a versioned current
-                # exists; the `office` facade is the sole edit entry point thereafter.
-                values["tools"] = self.tool_ids.filtered(lambda tool: tool.name == "office")
+            if self._office_is_candidate_b_route():
+                # Route B exposes the existing read-only Retriever separately
+                # from the Office file lifecycle facade, for initial and later
+                # edits alike. Active M1 Sessions retain their original tools.
+                values["tools"] = self.tool_ids.filtered(
+                    lambda tool: tool.name in {"office", "odoo_record_retriever"}
+                )
             else:
                 values["tools"] = self.tool_ids.filtered(lambda tool: tool.name in _OFFICE_TOOL_NAMES)
             office_rules = {
                 "role": "system",
                 "content": (
-                    "For a Thread with an accepted, versioned current workbook, use the single `office` facade "
-                    "for Candidate B actions (status, plan, edit, accept, reject). First submit a generic "
-                    "interpretation and the frozen CB-03 Expected Effect to `office` action=plan. Expected Effect "
-                    "is a bounded declaration for the existing deterministic Validator, not an Excel editing DSL; "
-                    "describe target scopes and allowed change kinds at the coarsest accurate level, include exact "
-                    "assertions only when known, and list business aspects that cannot be proven in `unknowns`. "
-                    "Do not invent exact cell outcomes for complex edits. The model, not local heuristics, decides "
-                    "whether the request is ambiguous (`target_scope.basis='ambiguous'`) and whether an un-authorized "
-                    "material business risk requires confirmation (`confirmation_required` and `confirmation_reason`). "
-                    "For every plan, explicitly send confirmation_required=true or false; when true, provide a concise "
-                    "confirmation_reason and repeat both values unchanged in edit. Never infer authorization from an "
-                    "old confirmation or from model claims. "
-                    "Nonempty original values, headers, formulas, broad scope, model risk claims, and unknowns do not "
-                    "by themselves trigger a local business decision. If clarification is required, ask one focused "
-                    "question and do not edit. If a plan returns operation_status=plan_ready with a model-requested "
-                    "confirmation, explain the model-provided risk and wait for the current user's exact 确认 or 拒绝; "
-                    "then call edit with the unchanged bound plan. A returned operation_status=candidate_review_required "
-                    "is a different decision: display verified_facts, actual_effects as observed deterministic differences, "
-                    "model_claims, and unverified_aspects; do not reinterpret a local difference label as business-risk judgment. Explain that "
-                    "the Candidate is not Current. For VERIFIED or PARTIALLY_VERIFIED, provide the authenticated candidate_download_url and ask the current user to reply exactly 接受 or 拒绝. "
-                    "When a PARTIALLY_VERIFIED Candidate is accepted, keep its grade unchanged and state that its unverified aspects remain unverified. "
-                    "Local code "
-                    "validates the real user's reply, identity, Thread, Session, parent version, file SHA and revisions, "
-                    "but does not reassess whether the business risk is real or already authorized. A confirmed plan "
-                    "permits candidate generation only; it does not accept the Candidate. External Provider file "
-                    "processing is currently blocked by the SRS/data-policy release gate; do not claim an edit occurred "
-                    "unless a real tool result contains a Candidate. Always distinguish local `verified_facts`, "
-                    "`model_claims`, and `unverified_aspects`. A PARTIALLY_VERIFIED Candidate may be shown for review "
-                    "when CB-03 reports no technical failure; it is not VERIFIED. A FAILED Candidate is blocked and "
-                    "cannot be made acceptable by user confirmation. A VERIFIED or PARTIALLY_VERIFIED Candidate remains non-current "
-                    "until the current user explicitly replies 接受; the risk-plan reply 确认 does not accept a Candidate. "
-                    "A scoped CB-02 acceptance may move a PARTIALLY_VERIFIED edit Candidate to Current without changing its validation grade; a scoped rejection leaves Current and Last Valid unchanged. "
-                    "Do not claim the "
-                    "user's complete natural-language intent is independently proven. Never claim Finalize, "
-                    "attachment delivery, or download: those remain a separate CB-06 lifecycle. The current accepted "
-                    "XLSX version, not chat history, is authoritative file content. Do not use the M1 Mapping "
-                    "tools to edit a workbook after it has an accepted Candidate B current version. "
-                    "When the user asks to add or refresh Odoo data in the current workbook, first call the single "
-                    "office facade with action=retrieve and a query_spec using only the fields and records needed. "
+                    "Use the existing M1 Office Context and mapping tools for this active M1 Session. "
+                    "New Route B uploads and accepted Route B workbooks receive separate workflow instructions. "
+                    "Odoo data reads use the independent `odoo_record_retriever` Tool; `retrieve` is not an `office` action. "
+                    "Keep using the bound M1 Session and its saved Proposal for edits. Do not switch an M1 Session "
+                    "to Candidate B actions or use `office(action='plan')` / `office(action='edit')` here. "
+                    "When the user asks to add or refresh Odoo data in the current workbook, call the separate "
+                    "odoo_record_retriever Tool using only the fields and records needed. "
                     "Use include_pagination=true for result sets and continue by offset while has_more is true. "
                     "Use returned record IDs for later reads; where the existing Retriever accepts only simple "
                     "domain clauses, retrieve multiple known IDs with separate exact id-equality calls rather than "
-                    "using spreadsheet row positions or guessed names. Retrieval is read-only and does not require "
-                    "a Current/Revision gate or change the workbook. After retrieval, use the existing plan/edit/review "
-                    "flow; do not claim an Excel change until that flow returns a Candidate. "
+                    "using spreadsheet row positions or guessed names. Retrieval is read-only and does not change "
+                    "the workbook. Do not claim an Excel change until the M1 preview flow returns a Preview. "
                     "For an initial Office mapping request, use odoo_record_retriever to identify the exact "
                     "business record from the user's request, then call office_prepare_context. Use only the "
                     "returned target_manifest and allowed_fields. "
@@ -390,15 +403,39 @@ class LLMThread(models.Model):
                     "A template formula stays unchanged unless the user explicitly maps or clears that target; "
                     "when explicitly selected in repeat_rows, the requested value or formula replaces it. Conditions, "
                     "arbitrary Excel functions, external/cross-sheet formulas and .docx mapping are unsupported. "
-                    "Call office_finalize only after the user explicitly confirms. If asking for confirmation, "
-                    "request the exact user reply '确认并生成正式文件'; this exact phrase is accepted by the "
-                    "server-side authorization gate. When office_finalize returns status=finalized and "
-                    "attachment_posted_to_thread=true, tell the user that the named file is attached in this "
-                    "chat and can be downloaded from its attachment card. Do not construct a Markdown link, "
-                    "web URL, or attachment:// URL from tool metadata. If the tool does not confirm that the "
-                    "attachment was posted, do not claim that the file is available for download."
+                    "For this M1 Session, retain the existing `office_finalize` action and its current confirmation "
+                    "behavior. Route B uses `office(action='finalize')` only when the separate Route B instructions "
+                    "are active; do not mix the two finalization paths."
                 ),
             }
+            if self._office_is_candidate_b_route():
+                office_rules["content"] = (
+                    "Use the Route B Office workflow for this Thread. The only file lifecycle Tool is `office`; "
+                    "Odoo data reads use the separate `odoo_record_retriever` Tool under the current user's ORM "
+                    "permissions. Do not use M1 Mapping or row-expansion tools for Route B content production. "
+                    "For a newly uploaded workbook with no accepted Current, inspect the uploaded XLSX and the "
+                    "current user's request, retrieve only needed Odoo fields if requested, then call "
+                    "office(action='edit') directly to create a non-current Candidate. Include a generic "
+                    "interpretation and bounded Expected Effect using parent_version_id=0 for the unversioned source; "
+                    "the server binds the source SHA. The Candidate is not Current until the user reviews and accepts it. "
+                    "Successful `odoo_record_retriever` results from this same user turn are attached by the server to the "
+                    "edit request as authorized data; use those returned record IDs and values without inventing missing data. "
+                    "For an existing Accepted Current, call office(action='plan') and then office(action='edit') with "
+                    "the unchanged bound plan. Subsequent edits use the server-resolved Current bytes, never chat history "
+                    "or a model-selected attachment. When a request requires new Odoo data, call the separate "
+                    "`odoo_record_retriever` first; successful results from the same user turn are attached to the edit request. "
+                    "For acceptance or rejection, call office(action='accept' or "
+                    "action='reject') with the candidate_version_id returned by the latest Candidate; the server "
+                    "checks it against this Thread's stored Tool result and the authenticated user's actual message. "
+                    "FAILED or technically blocked Candidates cannot be accepted. VERIFIED and PARTIALLY_VERIFIED "
+                    "grades remain unchanged after acceptance; explain unknowns and do not claim business correctness "
+                    "is proven. Current changes only after the user's explicit Accept. Reject leaves Current unchanged. "
+                    "When the user asks to generate or deliver the final file, call office(action='finalize') on the "
+                    "accepted Current without asking for another Accept. Claim delivery only after the tool reports "
+                    "completed/finalized/delivered and posts the attachment card. Never claim a file edit unless a real "
+                    "Office Tool result contains a Candidate. The Responses Provider dispatch is disabled by default; "
+                    "do not claim success if the service returns blocked."
+                )
             values["prepend_messages"] = [office_rules] + list(values.get("prepend_messages") or [])
         return values
 
@@ -542,15 +579,18 @@ class LLMThread(models.Model):
     def _execute_tool_call(self, tool_call, assistant_message):
         tool_name = (tool_call.get("function") or {}).get("name")
         if self._office_is_active():
-            candidate_b_current = self._office_has_versioned_current()
-            allowed_tool_names = {"office"} if candidate_b_current else _OFFICE_TOOL_NAMES
+            candidate_b_route = self._office_is_candidate_b_route()
+            allowed_tool_names = (
+                {"office", "odoo_record_retriever"}
+                if candidate_b_route else _OFFICE_TOOL_NAMES
+            )
             if tool_name not in allowed_tool_names:
                 error = self.env["mail.message"].create_tool_error_message(
                     tool_call,
                     _(
-                        "This M1 mapping tool is unavailable because this Thread already has an accepted versioned workbook. "
-                        "Use the office Candidate B facade for subsequent edits."
-                        if candidate_b_current
+                        "M1 Mapping tools are unavailable on the Route B Candidate workflow. "
+                        "Use the existing Retriever for Odoo reads and the office facade for file operations."
+                        if candidate_b_route
                         else "This tool is not available during an Office mapping session."
                     ),
                     thread_model=self,
@@ -634,6 +674,62 @@ class LLMThread(models.Model):
                         "attachment_posted_to_thread": False,
                         "error_code": "final_attachment_not_visible",
                         "message": tool_data["error"],
+                    }
+                    tool_message.write({"body_json": tool_data})
+                    yield {
+                        "type": "message_update",
+                        "message": tool_message.to_store_format(),
+                    }
+                else:
+                    yield {
+                        "type": "message_create",
+                        "message": message_data,
+                        "store_data": store_data,
+                    }
+        if tool_name == "office":
+            result = (tool_message.get_tool_data() or {}).get("result") or {}
+            if (
+                result.get("action") == "finalize"
+                and result.get("status") == "completed"
+                and result.get("operation_status") == "finalized"
+                and result.get("delivery_state") == "delivered"
+                and type(result.get("attachment_id")) is int
+                and type(result.get("delivery_message_id")) is int
+            ):
+                try:
+                    delivery_message = self.env["mail.message"].browse(
+                        result["delivery_message_id"]
+                    ).exists()
+                    attachment_id = result["attachment_id"]
+                    if (
+                        not delivery_message
+                        or delivery_message.model != self._name
+                        or delivery_message.res_id != self.id
+                        or delivery_message.llm_role != "assistant"
+                        or attachment_id not in delivery_message.attachment_ids.ids
+                    ):
+                        raise UserError(_("The finalized Office file is not attached to this chat."))
+                    delivery_message.check_access("read")
+                    attachment = self.env["ir.attachment"].browse(attachment_id).exists()
+                    if not attachment:
+                        raise UserError(_("The finalized Office attachment is unavailable."))
+                    attachment.check_access("read")
+                    message_data, store_data = self._office_message_store_payload(delivery_message)
+                except Exception:
+                    _logger.exception(
+                        "Candidate B final attachment could not be added to the live chat Store; "
+                        "thread_id=%s attachment_id=%s",
+                        self.id,
+                        result.get("attachment_id"),
+                    )
+                    tool_data = tool_message.get_tool_data() or {}
+                    tool_data["result"] = {
+                        **result,
+                        "attachment_posted_to_thread": False,
+                        "error_code": "final_attachment_not_visible",
+                        "message": _(
+                            "The accepted file is finalized, but its attachment card could not be loaded in this chat."
+                        ),
                     }
                     tool_message.write({"body_json": tool_data})
                     yield {

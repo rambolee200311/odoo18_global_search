@@ -1,0 +1,54 @@
+{
+  "evidence_class": "Synthetic non-production res.partner fixtures",
+  "database": "odoo18ce",
+  "owner_user_id": 2,
+  "company_id": 1,
+  "search_prefix": "CC07-SYN-42f92959aa",
+  "records": [
+    {
+      "id": 31335,
+      "name": "CC07-SYN-42f92959aa-Ava Example",
+      "phone": "+1-555-0101",
+      "email": "cc07-syn-42f92959aa-ava@example.invalid",
+      "street": "101 Synthetic Road",
+      "street2": "Unit A",
+      "city": "Test City",
+      "zip": "90001",
+      "country_id": "Netherlands"
+    },
+    {
+      "id": 31336,
+      "name": "CC07-SYN-42f92959aa-Noah Example",
+      "phone": "+1-555-0102",
+      "email": "cc07-syn-42f92959aa-noah@example.invalid",
+      "street": "202 Synthetic Avenue",
+      "street2": "",
+      "city": "Test Town",
+      "zip": "90002",
+      "country_id": "Netherlands"
+    },
+    {
+      "id": 31337,
+      "name": "CC07-SYN-42f92959aa-Mia Example",
+      "phone": "+1-555-0103",
+      "email": "cc07-syn-42f92959aa-mia@example.invalid",
+      "street": "303 Synthetic Lane",
+      "street2": "Suite C",
+      "city": "Sample Bay",
+      "zip": "90003",
+      "country_id": "Netherlands"
+    }
+  ],
+  "input_workbook": {
+    "path": "docs/implementation/evidence/CB-M2-CB-07/cc07-route-b-v1-input-42f92959aa.xlsx",
+    "sha256": "97b0c50c4bee214f469f03a1a5dcd70ff6c58266e9fb8d6ea9b6a4a219ae81da",
+    "sheet_names": [
+      "Contacts"
+    ],
+    "header_values": [
+      "Name",
+      "Phone",
+      "Email"
+    ]
+  }
+}

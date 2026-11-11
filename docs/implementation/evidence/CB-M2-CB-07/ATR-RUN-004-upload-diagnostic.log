@@ -1,0 +1,179 @@
+2026-11-10 12:02:13,058 12119 INFO ? odoo: Odoo version 18.0 
+2026-11-10 12:02:13,058 12119 INFO ? odoo: Using configuration file at /Users/lijianqiang/Documents/odoo18_global_search/odoo.conf 
+2026-11-10 12:02:13,058 12119 INFO ? odoo: addons paths: ['/Users/lijianqiang/Documents/odoo18_global_search/odoo/addons', '/Users/lijianqiang/Library/Application Support/Odoo/addons/18.0', '/Users/lijianqiang/Documents/odoo18_global_search/addons', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/odoo-llm', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/queue'] 
+2026-11-10 12:02:13,058 12119 INFO ? odoo: database: odoo@127.0.0.1:5555 
+2026-11-10 12:02:13,118 12119 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltopdf to print a pdf version of the reports. 
+2026-11-10 12:02:13,120 12119 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltoimage to generate images from html. 
+2026-11-10 12:02:13,178 12119 INFO ? odoo.addons.queue_job.post_load: Apply Request._get_session_and_dbname monkey patch to capture db from request with multiple databases 
+2026-11-10 12:02:13,181 12119 INFO ? odoo.service.server: HTTP service (werkzeug) running on lijianqiangs-MacBook-Air.local:58173 
+2026-11-10 12:02:13,190 12119 INFO odoo18ce odoo.tests.common: Importing test framework 
+2026-11-10 12:02:13,228 12119 INFO odoo18ce odoo.modules.loading: loading 1 modules... 
+2026-11-10 12:02:13,230 12119 INFO odoo18ce odoo.modules.loading: 1 modules loaded in 0.00s, 0 queries (+0 extra) 
+2026-11-10 12:02:13,240 12119 INFO odoo18ce odoo.modules.loading: updating modules list 
+2026-11-10 12:02:13,242 12119 INFO odoo18ce odoo.addons.base.models.ir_module: ALLOW access to module.update_list on [] to user __system__ #1 via n/a 
+2026-11-10 12:02:13,890 12119 INFO odoo18ce odoo.addons.base.models.ir_module: ALLOW access to module.button_upgrade on ['Office Engine M2 Orchestration'] to user __system__ #1 via n/a 
+2026-11-10 12:02:13,890 12119 INFO odoo18ce odoo.addons.base.models.ir_module: ALLOW access to module.update_list on ['Office Engine M2 Orchestration'] to user __system__ #1 via n/a 
+2026-11-10 12:02:14,148 12119 INFO odoo18ce odoo.addons.base.models.ir_module: ALLOW access to module.button_install on [] to user __system__ #1 via n/a 
+2026-11-10 12:02:14,157 12119 WARNING odoo18ce odoo.modules.graph: module wd_qooling_app: not installable, skipped 
+2026-11-10 12:02:14,157 12119 WARNING odoo18ce odoo.modules.graph: module wd_advanced_m2o_record_panel: not installable, skipped 
+2026-11-10 12:02:14,158 12119 WARNING odoo18ce odoo.modules.graph: module wd_evidence_album: not installable, skipped 
+2026-11-10 12:02:14,159 12119 INFO odoo18ce odoo.modules.loading: loading 89 modules... 
+2026-11-10 12:02:14,768 12119 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x13086cd50, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/llm_thread.py', line 14, code <module>> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/__init__.py", line 1, in <module>
+    from . import models
+  File "<frozen importlib._bootstrap>", line 1232, in _handle_fromlist
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/__init__.py", line 3, in <module>
+    from . import llm_thread
+  File "<frozen importlib._bootstrap>", line 1232, in _handle_fromlist
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/llm_thread.py", line 14, in <module>
+    _REJECT_MESSAGE = _(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-10 12:02:14,805 12119 INFO odoo18ce odoo.modules.loading: Loading module office_engine_m2 (64/89) 
+2026-11-10 12:02:14,937 12119 INFO odoo18ce odoo.modules.registry: module office_engine_m2: creating or updating database tables 
+2026-11-10 12:02:15,024 12119 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/security/office_engine_m2_groups.xml 
+2026-11-10 12:02:15,027 12119 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/data/office_tools.xml 
+2026-11-10 12:02:15,029 12119 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/security/office_mapping_session_rules.xml 
+2026-11-10 12:02:15,034 12119 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/security/office_workbook_version_rules.xml 
+2026-11-10 12:02:15,036 12119 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/security/office_export_skill_rules.xml 
+2026-11-10 12:02:15,038 12119 INFO odoo18ce odoo.modules.loading: loading office_engine_m2/security/ir.model.access.csv 
+2026-11-10 12:02:15,269 12119 INFO odoo18ce odoo.addons.base.models.ir_module: module office_engine_m2: no translation for language zh_CN 
+2026-11-10 12:02:15,269 12119 INFO odoo18ce odoo.addons.base.models.ir_module: module office_engine_m2: no translation for language nl_NL 
+2026-11-10 12:02:15,477 12119 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_raw_upload_candidate_is_accepted_as_first_route_b_version ... 
+2026-11-10 12:02:15,522 12119 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: ====================================================================== 
+2026-11-10 12:02:15,522 12119 ERROR odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: FAIL: TestEditOrchestration.test_raw_upload_candidate_is_accepted_as_first_route_b_version
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_edit_orchestration.py", line 232, in test_raw_upload_candidate_is_accepted_as_first_route_b_version
+    self.assertEqual((resolved_upload, resolved_attachment), (upload, attachment), {
+AssertionError: Tuples differ: (mail.message(), ir.attachment()) != (mail.message(102268,), ir.attachment(42098,))
+
+First differing element 0:
+mail.message()
+mail.message(102268,)
+
+- (mail.message(), ir.attachment())
++ (mail.message(102268,), ir.attachment(42098,))
+?               +++++++                 ++++++
+ : {'model': 'llm.thread', 'res_id': 17279, 'llm_role': 'user', 'author_id': 30470, 'expected_author_id': 30470, 'is_error': False, 'attachment_ids': [42098], 'classified_ids': [42098]}
+ 
+2026-11-10 12:02:15,598 12119 INFO odoo18ce odoo.addons.base.models.ir_attachment: filestore gc 3 checked, 3 removed 
+2026-11-10 12:02:15,724 12119 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_office_retriever_integration: Starting TestOfficeRetrieverIntegration.test_automated_user_simulation_two_contact_reads_and_formal_accepts ... 
+2026-11-10 12:02:15,775 12119 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_office_retriever_integration: ====================================================================== 
+2026-11-10 12:02:15,775 12119 ERROR odoo18ce odoo.addons.office_engine_m2.tests.test_office_retriever_integration: FAIL: TestOfficeRetrieverIntegration.test_automated_user_simulation_two_contact_reads_and_formal_accepts
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_office_retriever_integration.py", line 340, in test_automated_user_simulation_two_contact_reads_and_formal_accepts
+    self.assertEqual(resolved_upload, upload)
+AssertionError: mail.message() != mail.message(102277,)
+ 
+2026-11-10 12:02:15,777 12119 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_office_retriever_integration: Starting TestOfficeRetrieverIntegration.test_fresh_upload_and_pending_initial_candidate_keep_route_b_tools_visible ... 
+2026-11-10 12:02:15,814 12119 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_office_retriever_integration: ====================================================================== 
+2026-11-10 12:02:15,814 12119 ERROR odoo18ce odoo.addons.office_engine_m2.tests.test_office_retriever_integration: FAIL: TestOfficeRetrieverIntegration.test_fresh_upload_and_pending_initial_candidate_keep_route_b_tools_visible
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_office_retriever_integration.py", line 213, in test_fresh_upload_and_pending_initial_candidate_keep_route_b_tools_visible
+    self.assertEqual(
+AssertionError: Tuples differ: (mail.message(), ir.attachment()) != (mail.message(102279,), ir.attachment(42110,))
+
+First differing element 0:
+mail.message()
+mail.message(102279,)
+
+- (mail.message(), ir.attachment())
++ (mail.message(102279,), ir.attachment(42110,))
+?               +++++++                 ++++++
+ : {'model': 'llm.thread', 'res_id': 17281, 'llm_role': 'user', 'author_id': 30472, 'expected_author_id': 30472, 'is_error': False, 'attachment_ids': [42110]}
+ 
+2026-11-10 12:02:15,882 12119 INFO odoo18ce odoo.addons.base.models.ir_attachment: filestore gc 4 checked, 4 removed 
+2026-11-10 12:02:15,941 12119 INFO odoo18ce odoo.modules.loading: Module office_engine_m2 loaded in 1.14s (incl. 0.58s test), 219 queries (+692 test, +219 other) 
+2026-11-10 12:02:15,941 12119 ERROR odoo18ce odoo.modules.loading: Module office_engine_m2: 3 failures, 0 errors of 3 tests 
+2026-11-10 12:02:16,007 12119 INFO odoo18ce odoo.modules.loading: 89 modules loaded in 1.85s, 219 queries (+911 extra) 
+2026-11-10 12:02:16,008 12119 WARNING odoo18ce odoo.modules.graph: module wd_qooling_app: not installable, skipped 
+2026-11-10 12:02:16,008 12119 WARNING odoo18ce odoo.modules.graph: module wd_advanced_m2o_record_panel: not installable, skipped 
+2026-11-10 12:02:16,008 12119 WARNING odoo18ce odoo.modules.graph: module wd_evidence_album: not installable, skipped 
+2026-11-10 12:02:16,009 12119 INFO odoo18ce odoo.modules.loading: loading 89 modules... 
+2026-11-10 12:02:16,009 12119 INFO odoo18ce odoo.modules.loading: 89 modules loaded in 0.00s, 0 queries (+0 extra) 
+2026-11-10 12:02:16,009 12119 WARNING odoo18ce odoo.modules.graph: module wd_qooling_app: not installable, skipped 
+2026-11-10 12:02:16,009 12119 WARNING odoo18ce odoo.modules.graph: module wd_advanced_m2o_record_panel: not installable, skipped 
+2026-11-10 12:02:16,009 12119 WARNING odoo18ce odoo.modules.graph: module wd_evidence_album: not installable, skipped 
+2026-11-10 12:02:16,010 12119 INFO odoo18ce odoo.modules.loading: loading 89 modules... 
+2026-11-10 12:02:16,010 12119 INFO odoo18ce odoo.modules.loading: 89 modules loaded in 0.00s, 0 queries (+0 extra) 
+2026-11-10 12:02:16,107 12119 ERROR odoo18ce odoo.modules.loading: Some modules are not loaded, some dependencies or manifest may be missing: ['wd_advanced_m2o_record_panel', 'wd_evidence_album', 'wd_qooling_app'] 
+2026-11-10 12:02:16,119 12119 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.page is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 12:02:16,120 12119 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.config.settings is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 12:02:16,120 12119 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.source.config is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 12:02:16,120 12119 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.source.record.option is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 12:02:16,120 12119 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.media is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 12:02:16,121 12119 INFO odoo18ce odoo.modules.loading: Model wd.preview.configuration is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 12:02:16,121 12119 INFO odoo18ce odoo.modules.loading: Model wd.preview.configuration.line is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 12:02:16,126 12119 INFO odoo18ce odoo.modules.loading: Model wd.qooling.inbound.form is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 12:02:16,126 12119 INFO odoo18ce odoo.modules.loading: Model wd.qooling.media.evidence.mixin is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 12:02:16,129 12119 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.extend.validity.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 12:02:16,129 12119 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 12:02:16,129 12119 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.create.page.upload.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 12:02:16,129 12119 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.source.page.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 12:02:16,129 12119 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.upload.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 12:02:16,132 12119 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.item is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 12:02:16,182 12119 INFO odoo18ce odoo.modules.loading: Model wd.qooling.outbound.form is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 12:02:16,182 12119 INFO odoo18ce odoo.modules.loading: Model wd.qooling.temperature.record is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 12:02:16,182 12119 INFO odoo18ce odoo.modules.loading: Model wd.qooling.temperature.record.line is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 12:02:16,182 12119 INFO odoo18ce odoo.modules.loading: Model wd.evidence.album.source.items.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2026-11-10 12:02:16,191 12119 INFO odoo18ce odoo.modules.registry: verifying fields for every extended model 
+2026-11-10 12:02:16,341 12119 ERROR odoo18ce odoo.modules.loading: At least one test failed when loading the modules. 
+2026-11-10 12:02:16,421 12119 INFO odoo18ce odoo.modules.registry: Registry changed, signaling through the database 
+2026-11-10 12:02:16,421 12119 INFO odoo18ce odoo.modules.registry: Registry loaded in 3.240s 
+2026-11-10 12:02:16,422 12119 INFO odoo18ce odoo.service.server: Starting post tests 
+2026-11-10 12:02:16,422 12119 INFO odoo18ce odoo.service.server: 0 post-tests in 0.00s, 0 queries 
+2026-11-10 12:02:16,422 12119 INFO odoo18ce odoo.tests.stats: office_engine_m2: 7 tests 0.58s 692 queries 
+2026-11-10 12:02:16,422 12119 ERROR odoo18ce odoo.tests.result: 3 failed, 0 error(s) of 3 tests when loading database 'odoo18ce' 
+2026-11-10 12:02:16,422 12119 INFO odoo18ce odoo.service.server: Initiating shutdown 
+2026-11-10 12:02:16,422 12119 INFO odoo18ce odoo.service.server: Hit CTRL-C again or send a second signal to force the shutdown. 
+2026-11-10 12:02:16,713 12119 INFO odoo18ce odoo.sql_db: ConnectionPool(read/write;used=0/count=0/max=64): Closed 2 connections  

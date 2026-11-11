@@ -1,0 +1,318 @@
+2026-11-10 07:41:14,106 98849 INFO ? odoo: Odoo version 18.0 
+2026-11-10 07:41:14,106 98849 INFO ? odoo: Using configuration file at /Users/lijianqiang/Documents/odoo18_global_search/odoo.conf 
+2026-11-10 07:41:14,106 98849 INFO ? odoo: addons paths: ['/Users/lijianqiang/Documents/odoo18_global_search/odoo/addons', '/Users/lijianqiang/Library/Application Support/Odoo/addons/18.0', '/Users/lijianqiang/Documents/odoo18_global_search/addons', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/odoo-llm', '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/queue'] 
+2026-11-10 07:41:14,106 98849 INFO ? odoo: database: odoo@127.0.0.1:5555 
+2026-11-10 07:41:14,178 98849 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltopdf to print a pdf version of the reports. 
+2026-11-10 07:41:14,180 98849 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltoimage to generate images from html. 
+2026-11-10 07:41:14,264 98849 INFO ? odoo.addons.queue_job.post_load: Apply Request._get_session_and_dbname monkey patch to capture db from request with multiple databases 
+2026-11-10 07:41:14,266 98849 INFO ? odoo.service.server: HTTP service (werkzeug) running on localhost:53200 
+2026-11-10 07:41:14,281 98849 INFO odoo18ce odoo.tests.common: Importing test framework 
+2026-11-10 07:41:14,308 98849 INFO odoo18ce odoo.modules.loading: loading 1 modules... 
+2026-11-10 07:41:14,335 98849 INFO odoo18ce odoo.modules.loading: 1 modules loaded in 0.03s, 0 queries (+0 extra) 
+2026-11-10 07:41:14,354 98849 WARNING odoo18ce odoo.modules.graph: module wd_qooling_app: not installable, skipped 
+2026-11-10 07:41:14,354 98849 WARNING odoo18ce odoo.modules.graph: module wd_advanced_m2o_record_panel: not installable, skipped 
+2026-11-10 07:41:14,366 98849 WARNING odoo18ce odoo.modules.graph: module wd_evidence_album: not installable, skipped 
+2026-11-10 07:41:14,367 98849 INFO odoo18ce odoo.modules.loading: loading 89 modules... 
+2026-11-10 07:41:15,114 98849 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x11124bc10, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/llm_thread.py', line 14, code <module>> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 186, in load_module_graph
+    load_openerp_module(package.name)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/module.py", line 384, in load_openerp_module
+    __import__(qualname)
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/__init__.py", line 1, in <module>
+    from . import models
+  File "<frozen importlib._bootstrap>", line 1232, in _handle_fromlist
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/__init__.py", line 3, in <module>
+    from . import llm_thread
+  File "<frozen importlib._bootstrap>", line 1232, in _handle_fromlist
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_odoo/models/llm_thread.py", line 14, in <module>
+    _REJECT_MESSAGE = _(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-10 07:41:15,503 98849 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_edit_orchestration: Starting TestEditOrchestration.test_office_finalize_action_delivers_accepted_current ... 
+2026-11-10 07:41:15,649 98849 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x111c3aa40, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py', line 1076, code finalize_accepted_current> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 284, in load_module_graph
+    test_results = loader.run_suite(suite, global_report=report)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/loader.py", line 118, in run_suite
+    suite(results)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/suite.py", line 47, in run
+    test(result)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/case.py", line 678, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 357, in run
+    super().run(result)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 216, in run
+    self._callTestMethod(testMethod)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 184, in _callTestMethod
+    method()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_edit_orchestration.py", line 170, in test_office_finalize_action_delivers_accepted_current
+    result = env["office.mapping.tool"].with_context(message=tool_message).office(action="finalize")
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/odoo-llm/llm_tool/decorators.py", line 127, in wrapper
+    return f(*args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/models/office_mapping_tools.py", line 1691, in office
+    return dispatch_office_action(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/edit_orchestrator.py", line 931, in dispatch_office_action
+    delivered = finalize_accepted_current(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py", line 1076, in finalize_accepted_current
+    body = _("Finalized workbook: %(filename)s", filename=version.filename)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-10 07:41:15,753 98849 INFO odoo18ce odoo.addons.base.models.ir_attachment: filestore gc 4 checked, 4 removed 
+2026-11-10 07:41:15,780 98849 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_native_chat_integration: Starting TestNativeOfficeChatIntegration.test_candidate_b_office_finalize_streams_attachment_card_to_live_store ... 
+2026-11-10 07:41:15,828 98849 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_native_chat_integration: Starting TestNativeOfficeChatIntegration.test_office_thread_uses_native_tools_and_prepare_binds_current_upload_and_record ... 
+2026-11-10 07:41:15,856 98849 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_native_chat_integration: ====================================================================== 
+2026-11-10 07:41:15,856 98849 ERROR odoo18ce odoo.addons.office_engine_m2.tests.test_native_chat_integration: FAIL: TestNativeOfficeChatIntegration.test_office_thread_uses_native_tools_and_prepare_binds_current_upload_and_record
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_native_chat_integration.py", line 5591, in test_office_thread_uses_native_tools_and_prepare_binds_current_upload_and_record
+    self.assertIn("Call office_finalize only after the user explicitly confirms", office_system_message["content"])
+AssertionError: 'Call office_finalize only after the user explicitly confirms' not found in "For a Thread with an accepted, versioned current workbook, use the single `office` facade for Candidate B actions (status, retrieve, plan, edit, accept, reject, finalize). First submit a generic interpretation and the frozen CB-03 Expected Effect to `office` action=plan. Expected Effect is a bounded declaration for the existing deterministic Validator, not an Excel editing DSL; describe target scopes and allowed change kinds at the coarsest accurate level, include exact assertions only when known, and list business aspects that cannot be proven in `unknowns`. Do not invent exact cell outcomes for complex edits. The model, not local heuristics, decides whether the request is ambiguous (`target_scope.basis='ambiguous'`) and whether an un-authorized material business risk requires confirmation (`confirmation_required` and `confirmation_reason`). For every plan, explicitly send confirmation_required=true or false; when true, provide a concise confirmation_reason and repeat both values unchanged in edit. Never infer authorization from an old confirmation or from model claims. Nonempty original values, headers, formulas, broad scope, model risk claims, and unknowns do not by themselves trigger a local business decision. If clarification is required, ask one focused question and do not edit. If a plan returns operation_status=plan_ready with a model-requested confirmation, explain the model-provided risk and wait for the current user's exact 确认 or 拒绝; then call edit with the unchanged bound plan. A returned operation_status=candidate_review_required is a different decision: display verified_facts, actual_effects as observed deterministic differences, model_claims, and unverified_aspects; do not reinterpret a local difference label as business-risk judgment. Explain that the Candidate is not Current. For VERIFIED or PARTIALLY_VERIFIED, provide the authenticated candidate_download_url and ask the current user to reply exactly 接受 or 拒绝. When a PARTIALLY_VERIFIED Candidate is accepted, keep its grade unchanged and state that its unverified aspects remain unverified. Local code validates the real user's reply, identity, Thread, Session, parent version, file SHA and revisions, but does not reassess whether the business risk is real or already authorized. A confirmed plan permits candidate generation only; it does not accept the Candidate. External Provider file processing is currently blocked by the SRS/data-policy release gate; do not claim an edit occurred unless a real tool result contains a Candidate. Always distinguish local `verified_facts`, `model_claims`, and `unverified_aspects`. A PARTIALLY_VERIFIED Candidate may be shown for review when CB-03 reports no technical failure; it is not VERIFIED. A FAILED Candidate is blocked and cannot be made acceptable by user confirmation. A VERIFIED or PARTIALLY_VERIFIED Candidate remains non-current until the current user explicitly replies 接受; the risk-plan reply 确认 does not accept a Candidate. A scoped CB-02 acceptance may move a PARTIALLY_VERIFIED edit Candidate to Current without changing its validation grade; a scoped rejection leaves Current and Last Valid unchanged. Do not claim the user's complete natural-language intent is independently proven. Never claim Finalize, attachment delivery, or download until the Candidate B `office(action='finalize')` result confirms delivery; those remain a separate CB-06 lifecycle. The current accepted XLSX version, not chat history, is authoritative file content. Do not use the M1 Mapping tools to edit a workbook after it has an accepted Candidate B current version. When the user asks to add or refresh Odoo data in the current workbook, first call the single office facade with action=retrieve and a query_spec using only the fields and records needed. Use include_pagination=true for result sets and continue by offset while has_more is true. Use returned record IDs for later reads; where the existing Retriever accepts only simple domain clauses, retrieve multiple known IDs with separate exact id-equality calls rather than using spreadsheet row positions or guessed names. Retrieval is read-only and does not require a Current/Revision gate or change the workbook. After retrieval, use the existing plan/edit/review flow; do not claim an Excel change until that flow returns a Candidate. For an initial Office mapping request, use odoo_record_retriever to identify the exact business record from the user's request, then call office_prepare_context. Use only the returned target_manifest and allowed_fields. For repeat-row mappings, if an exact scalar Many2one path needed from a readable related collection is missing from that collection's allowed_fields, pass the exact path under requested_fields_by_collection when calling office_prepare_context; the server will check each requested path with the current user's ORM access before adding it. For a follow-up in a Thread that already has an active Office Session, continue that Session and its saved Proposal; do not start a new mapping task or discard prior rules. Reuse the bound target_model and target_record_id from the prior Office context. If those identifiers are not present in the conversation context, call office_prepare_context with target_model='unknown' and target_record_id=0 so the server can resolve only the existing Thread-bound Session. Resolve record identifiers stated by the user directly with the Retriever. For an identifier or name lookup, request at least two results so duplicate matches remain visible. When the user asks for one record, proceed to office_prepare_context only when exactly one authorized record matches. If the Retriever returns no match or multiple matches for a singular request, ask one concise natural-language question in this chat. Never direct the user to a record-picker dialog, dropdown, or separate selection UI. When the user requests a set of records without narrowing criteria, do not silently select one or invent filters: retrieve all matching pages with include_pagination=true, advance offset until has_more is false, and pass the ordered IDs in target_record_ids to office_prepare_context. If the result exceeds the Office batch limit, report the exact returned/total counts and ask the user to narrow the request. For requests to undo or restore a previous saved Proposal, use office_restore_proposal_revision with a revision listed in available_proposal_revisions; the service revalidates the saved version and creates a fresh preview. For template labels asking for an address, full address, or detailed address, compare the returned field label and help metadata and prefer fields whose names or descriptions indicate contact_address, street, city, or postal address. Do not use display_name or name as a postal address merely because it is available; if no suitable address field is available, explain the gap or ask for clarification. This is a semantic selection rule, not permission to use a field absent from allowed_fields. For a returned repeat_row_collections entry, retrieve its rows with odoo_record_retriever using the exact inverse_field = target_record_id filter. If collection_field is selected_records, use the already retrieved records and pass all their IDs as target_record_ids; the server reauthorizes that ordered set in the current Session. If fields returned by the Retriever for those selected records are missing from Office Context's allowed_fields, call office_prepare_context with their exact paths in requested_fields before mapping; do not replace them with a guessed field or an out-of-manifest cell. The native Retriever uses search_read, whose fields argument accepts only direct fields on the requested model, not dotted paths. If Office Context lists a related path such as relation.field, first retrieve the relation field itself from the parent record, then retrieve the linked record using its returned ID and the direct field name on that related model. For a one2many collection, retrieve its rows with the inverse-field domain and direct fields, then follow returned many2one IDs in separate Retriever calls when needed. Odoo's current-user ACLs, field access rights, and record rules apply to every call; do not assume dotted fields are accepted by search_read. Return a complete m2.mapping-proposal.v1 mapping to office_save_mapping_preview. When the user asks to fill the uploaded template, that request authorizes a draft preview: once the business record and a valid supported Proposal are available, call office_save_mapping_preview immediately. Do not ask the user to separately approve or confirm a preview. Ask a focused clarification only when a required source or rule is genuinely ambiguous or unavailable; do not block a preview for optional targets the user permits to remain blank. For a valid natural-language correction, update the Proposal and create the replacement preview in the same turn. Its proposal object must have exactly these root keys: schema_version, mappings, clarifications, skipped_targets, with optional clear_targets and cell_edits. Pass explicit coordinate value changes as the separate top-level cell_edits tool argument. For a fixed coordinate use {element_id, value, value_type}. For an edit that must follow one row record after sorting, use {record_target: {group_id, record_id, column}, value, value_type}; take record_id from the current authorized Retriever result and group_id from the current repeat-row mapping context. The server resolves its final row only after the current sort is applied. Repeat-row mapping runs before explicit cell edits, so an explicitly requested edit may replace that record's mapped value. Empty string means clear; do not substitute null, zero, or false. Use it only for a coordinate listed in the current TargetManifest and explicitly requested by the user. Whenever the user explicitly asks to change or clear an existing coordinate, first call office_save_mapping_preview with the exact cell_edits so the server can inspect the current file. Do not issue an overwrite confirmation request from your own guess or a visual/text description; only a tool result with status needs_confirmation authorizes you to ask the user to confirm. Do not omit the requested cell_edits and return an unchanged result after the user confirms. If office_save_mapping_preview returns status needs_confirmation, explain its risks, old/new values and exact operation_scope, ask the returned confirmation_question, and stop without writing. Only after a new user message that is exactly 确认, repeat the identical operation and set force_override=true. If the user explicitly declines with 拒绝, 取消, or 不同意, repeat the identical pending operation so the server records status blocked; do not retry the write. The server binds confirmation to this Thread, user, Session, Proposal revision, preview, current document bytes, targets and values; force_override by itself never authorizes a write. A stale confirmation returns needs_confirmation again and requires a fresh user reply. After confirmation, the edit can replace the existing literal or formula at that exact coordinate, including a detected table header, without changing the cell's style or any other source mapping. Normal field mappings remain restricted to writable data targets. If the same target also has a stale model-generated unsupported-target clarification or skip, omit that stale no-op for the target. Each mapping must use exactly one shape: direct element_id/source_field/value_type; ordered fallback element_id/source_fields/value_type; safe arithmetic formula element_id/formula/value_type, or a typed scalar value element_id/literal_value/value_type when the user specifies a value or asks for a deterministic calculation from retrieved data. To explicitly clear a target, you may also use the compact shape element_id/value with value exactly an empty string. Do not invent values or use a literal instead of a requested live field mapping. Use the exact IDs and field names returned by Office Context. For repeated detail rows, pass the collection, worksheet, first row and column-to-field choices in the separate repeat_rows argument; do not enumerate repeated cells in proposal.mappings. The server derives row count and target cells. For a selected record set, use repeat_rows for its row mapping and never put a cell outside the current TargetManifest into mappings, clarifications, or skips. If the server returns repeat_rows_required, refresh the exact missing source fields and resubmit a complete repeat_rows mapping. If the row count requires structural insertion beyond the template's existing row capacity, the server returns needs_confirmation without writing; explain the exact added rows and formula impacts, wait for the user's exact 确认, then retry the identical repeat_rows and Proposal with force_override=true. That confirmation is bound to this user, Thread, Session, file bytes, revision, selected rows, columns and operation; it cannot authorize a changed range. When the user explicitly requests an ordering, pass sort_by and sort_direction together in repeat_rows; sort_by must be one of the selected collection's allowed_fields, and direction is asc or desc. Empty values remain last. If no order is requested, retain the relation's current order. Do not substitute keys such as field or type. Do not claim an operation succeeded unless a tool returns status success. For a generated preview, require operation_status=preview_ready and attachment_posted_to_thread=true; for a reused current preview, require operation_status=unchanged. Answer questions from the current Session/tool history without changing the Proposal. Never put a target absent from target_manifest into mappings, clarifications, or skipped_targets. Use clear_targets or the compact empty-value mapping only when the user explicitly asks to blank a cell; for a whole detected table column, use clear_columns with its exact sheet and column letter; the server expands it only to table_data cells, never the header. Use format_patches to change Excel display formatting while preserving values; a whole table column uses sheet, column, and number_format (for example 0.0). A value mapping and a format patch may target the same cell because they change separate properties. an omitted target is left unchanged. Template labels are not mandatory business requirements. Explain unsupported user requests in normal text; submit valid supported mappings independently when possible. Direct mappings, same-type ordered source fallbacks, typed date/datetime values, bounded date offsets, and restricted same-sheet arithmetic formulas are supported. When the user requests a date shift, do not refuse because the source is a date: use a typed date/datetime literal if you have calculated the result from retrieved ISO values, or attach transform={type:'date_offset',days:7} to a date/datetime source mapping. This is a bounded server-side date operation, not Python or arbitrary expression execution. For repeat_rows, the same transform may be attached to a date/datetime source column. Preserve date values as typed Excel dates; do not convert them to display-only text. Formula syntax allows only cell references, numbers, parentheses and + - * /. Every repeat-row column object must include its destination Excel column letter in `column` (for example {'column':'C','source_field':'product_id.default_code'}); never omit `column`. Then choose exactly one of source_field, fallback_fields, concat_fields, or formula. Use fallback_fields only for first-nonempty selection; use concat_fields to join multiple authorized string fields in order, with an optional separator (empty by default). In a formula template, {row} is the row number and must appear inside cell references, for example =E{row}*D{row}*2 (not {row}*{row}*2). Inspect mapping_limits.template_formula_cells to understand which targets currently contain formulas. A template formula stays unchanged unless the user explicitly maps or clears that target; when explicitly selected in repeat_rows, the requested value or formula replaces it. Conditions, arbitrary Excel functions, external/cross-sheet formulas and .docx mapping are unsupported. For Candidate B, when the current user explicitly asks to generate or deliver the final file, call office(action='finalize') on the accepted Current. Do not ask for a fixed phrase and do not request another Accept. Only when the result has status=completed, operation_status=finalized, delivery_state=delivered, and attachment_posted_to_thread=true, tell the user that the named file is attached in this chat and can be downloaded from its attachment card. Do not construct a Markdown link, web URL, or attachment:// URL from tool metadata. For the separate M1 mapping flow only, retain office_finalize's existing exact confirmation behavior. If the Candidate B Tool does not confirm that the attachment was posted, do not claim the file is available for download."
+ 
+2026-11-10 07:41:15,857 98849 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_native_chat_integration: Starting TestNativeOfficeChatIntegration.test_office_tool_provider_schemas_include_required_arguments ... 
+2026-11-10 07:41:15,923 98849 INFO odoo18ce odoo.addons.base.models.ir_attachment: filestore gc 1 checked, 1 removed 
+2026-11-10 07:41:16,079 98849 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_workbook_version_state: Starting TestWorkbookVersionState.test_candidate_b_finalize_delivers_exact_current_and_is_idempotent ... 
+2026-11-10 07:41:16,160 98849 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x111c3b220, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py', line 1076, code finalize_accepted_current> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 284, in load_module_graph
+    test_results = loader.run_suite(suite, global_report=report)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/loader.py", line 118, in run_suite
+    suite(results)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/suite.py", line 47, in run
+    test(result)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/case.py", line 678, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 357, in run
+    super().run(result)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 216, in run
+    self._callTestMethod(testMethod)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 184, in _callTestMethod
+    method()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_workbook_version_state.py", line 32, in test_candidate_b_finalize_delivers_exact_current_and_is_idempotent
+    delivered = finalize_accepted_current(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py", line 1076, in finalize_accepted_current
+    body = _("Finalized workbook: %(filename)s", filename=version.filename)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-10 07:41:16,193 98849 INFO odoo18ce odoo.addons.office_engine_m2.tests.test_workbook_version_state: Starting TestWorkbookVersionState.test_candidate_b_finalize_preserves_partially_verified_grade ... 
+2026-11-10 07:41:16,331 98849 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x111c3aa40, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py', line 1076, code finalize_accepted_current> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 284, in load_module_graph
+    test_results = loader.run_suite(suite, global_report=report)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/loader.py", line 118, in run_suite
+    suite(results)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/suite.py", line 47, in run
+    test(result)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/case.py", line 678, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 357, in run
+    super().run(result)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 216, in run
+    self._callTestMethod(testMethod)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 184, in _callTestMethod
+    method()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_workbook_version_state.py", line 98, in test_candidate_b_finalize_preserves_partially_verified_grade
+    delivered = finalize_accepted_current(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py", line 1076, in finalize_accepted_current
+    body = _("Finalized workbook: %(filename)s", filename=version.filename)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-10 07:41:16,331 98849 WARNING odoo18ce odoo.tools.translate: no translation language detected, skipping translation <frame at 0x111c3aa40, file '/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py', line 1078, code finalize_accepted_current> 
+Stack (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/./odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/command.py", line 76, in main
+    o.run(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 182, in run
+    main(args)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/cli/server.py", line 175, in main
+    rc = odoo.service.server.start(preload=preload, stop=stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1480, in start
+    rc = server.run(preload, stop)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 627, in run
+    rc = preload_registries(preload)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/service/server.py", line 1384, in preload_registries
+    registry = Registry.new(dbname, update_module=update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/venv/lib/python3.11/site-packages/decorator.py", line 232, in fun
+    return caller(func, *(extras + args), **kw)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/func.py", line 97, in locked
+    return func(inst, *args, **kwargs)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/registry.py", line 115, in new
+    odoo.modules.load_modules(registry, force_demo, status, update_module)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 485, in load_modules
+    processed_modules += load_marked_modules(env, graph,
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 365, in load_marked_modules
+    loaded, processed = load_module_graph(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/modules/loading.py", line 284, in load_module_graph
+    test_results = loader.run_suite(suite, global_report=report)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/loader.py", line 118, in run_suite
+    suite(results)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/suite.py", line 47, in run
+    test(result)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/unittest/case.py", line 678, in __call__
+    return self.run(*args, **kwds)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/common.py", line 357, in run
+    super().run(result)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 216, in run
+    self._callTestMethod(testMethod)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tests/case.py", line 184, in _callTestMethod
+    method()
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_workbook_version_state.py", line 98, in test_candidate_b_finalize_preserves_partially_verified_grade
+    delivered = finalize_accepted_current(
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/services/workbook_version_service.py", line 1078, in finalize_accepted_current
+    body += _(" — validation remains PARTIALLY_VERIFIED; unverified aspects remain unverified.")
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 634, in get_text_alias
+    module, lang = _get_translation_source(1)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 623, in _get_translation_source
+    lang = lang or _get_lang(frame, default_lang)
+  File "/Users/lijianqiang/Documents/odoo18_global_search/odoo/tools/translate.py", line 614, in _get_lang
+    _logger.log(log_level, 'no translation language detected, skipping translation %s', frame, stack_info=True)
+2026-11-10 07:41:16,425 98849 INFO odoo18ce odoo.addons.base.models.ir_attachment: filestore gc 7 checked, 7 removed 
+2026-11-10 07:41:16,430 98849 ERROR odoo18ce odoo.modules.loading: Module office_engine_m2: 1 failures, 0 errors of 6 tests 
+2026-11-10 07:41:16,528 98849 INFO odoo18ce odoo.modules.loading: 89 modules loaded in 2.16s, 2 queries (+1561 extra) 
+2026-11-10 07:41:16,577 98849 ERROR odoo18ce odoo.modules.loading: Some modules are not loaded, some dependencies or manifest may be missing: ['wd_advanced_m2o_record_panel', 'wd_evidence_album', 'wd_qooling_app'] 
+2026-11-10 07:41:16,578 98849 ERROR odoo18ce odoo.modules.loading: At least one test failed when loading the modules. 
+2026-11-10 07:41:16,659 98849 INFO odoo18ce odoo.modules.registry: Registry loaded in 2.393s 
+2026-11-10 07:41:16,659 98849 INFO odoo18ce odoo.service.server: Starting post tests 
+2026-11-10 07:41:16,676 98849 INFO odoo18ce odoo.service.server: 0 post-tests in 0.02s, 0 queries 
+2026-11-10 07:41:16,676 98849 INFO odoo18ce odoo.tests.stats: office_engine_m2: 12 tests 1.12s 1559 queries 
+2026-11-10 07:41:16,676 98849 ERROR odoo18ce odoo.tests.result: 1 failed, 0 error(s) of 6 tests when loading database 'odoo18ce' 
+2026-11-10 07:41:16,676 98849 INFO odoo18ce odoo.service.server: Initiating shutdown 
+2026-11-10 07:41:16,676 98849 INFO odoo18ce odoo.service.server: Hit CTRL-C again or send a second signal to force the shutdown. 
+2026-11-10 07:41:16,772 98849 INFO odoo18ce odoo.sql_db: ConnectionPool(read/write;used=0/count=0/max=64): Closed 2 connections  
