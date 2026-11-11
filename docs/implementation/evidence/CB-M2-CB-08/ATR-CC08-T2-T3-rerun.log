@@ -1,0 +1,17 @@
+2026-11-11 09:13:13,064 40534 ERROR odoo18ce odoo.addons.office_engine_m2.tests.test_office_retriever_integration: FAIL: TestOfficeRetrieverIntegration.test_cc08_revoked_record_rule_returns_no_data_or_office_side_effect
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_office_retriever_integration.py", line 304, in test_cc08_revoked_record_rule_returns_no_data_or_office_side_effect
+    self.assertEqual(len(edit_context), 1)
+AssertionError: 0 != 1
+ 
+2026-11-11 09:13:13,211 40534 ERROR odoo18ce odoo.addons.office_engine_m2.tests.test_office_retriever_integration: ERROR: TestOfficeRetrieverIntegration.test_cc08_second_read_fresh_value_reaches_edit_adapter
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_office_retriever_integration.py", line 232, in test_cc08_second_read_fresh_value_reaches_edit_adapter
+    edit_result = office.with_context(message=tool_message).office(action="edit")
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'llm.tool' object has no attribute 'office'
+ 
+2026-11-11 09:13:13,311 40534 ERROR odoo18ce odoo.modules.loading: Module office_engine_m2: 1 failures, 1 errors of 2 tests 
+2026-11-11 09:13:13,513 40534 ERROR odoo18ce odoo.modules.loading: Some modules are not loaded, some dependencies or manifest may be missing: ['wd_advanced_m2o_record_panel', 'wd_evidence_album', 'wd_qooling_app'] 
+2026-11-11 09:13:13,745 40534 ERROR odoo18ce odoo.modules.loading: At least one test failed when loading the modules. 
+2026-11-11 09:13:13,826 40534 ERROR odoo18ce odoo.tests.result: 1 failed, 1 error(s) of 2 tests when loading database 'odoo18ce' 

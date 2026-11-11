@@ -18,3 +18,4 @@ from . import test_candidate_validator
 from . import test_intent_contract
 from . import test_edit_orchestration
 from . import test_office_retriever_integration
+from . import test_cb08_integrated_readiness

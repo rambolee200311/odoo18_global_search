@@ -1,0 +1,48 @@
+{
+  "accept_result": {
+    "candidate_state": "accepted_current",
+    "candidate_version_id": 3109,
+    "current_version_id": 3109,
+    "document_revision": 1,
+    "last_valid_version_id": 3109,
+    "operation_status": "accepted_current",
+    "validation_result": "PARTIALLY_VERIFIED"
+  },
+  "accepted_state": {
+    "accepted_bytes_match_provider_candidate": true,
+    "accepted_sha256": "8f8e06a6f6f3e5cc1cf8888c0c35f7d505119ec79e435975332a1d9d0289d88a",
+    "candidate_validation_result_unchanged": true,
+    "current_version_id": 3109,
+    "decision_message_id": 113154,
+    "document_revision": 1,
+    "last_valid_version_id": 3109
+  },
+  "database": "odoo18ce",
+  "edit_result": {
+    "candidate_output_sha256": "8f8e06a6f6f3e5cc1cf8888c0c35f7d505119ec79e435975332a1d9d0289d88a",
+    "candidate_state": "partially_verified",
+    "candidate_version_id": 3109,
+    "operation_status": "candidate_review_required",
+    "validation_result": "PARTIALLY_VERIFIED"
+  },
+  "input_sha256": "2315994a4e2514d61ef2ba69ca0db942802d4b217d3b385864fc068a8fd0ba58",
+  "layer": "real Provider bytes replayed through Office Tool, Candidate Validator, and formal Accept",
+  "operation": "pass",
+  "provider_candidate_sha256": "8f8e06a6f6f3e5cc1cf8888c0c35f7d505119ec79e435975332a1d9d0289d88a",
+  "provider_requests_in_this_run": 0,
+  "provider_response_id_source": "resp_0cb5523293f2196f016af433cfe4f887d2aedab066b798ba18",
+  "readback": {
+    "candidate_attachment_sha256": "8f8e06a6f6f3e5cc1cf8888c0c35f7d505119ec79e435975332a1d9d0289d88a",
+    "formula_c2": "=B2*2",
+    "non_target_style_ids_preserved": true,
+    "sheet_names_preserved": true,
+    "target_format_is_usd_two_decimals": true,
+    "target_number_format": "\"$\"#,##0.00",
+    "values_and_formulas_preserved": true,
+    "xlsx_opens": true
+  },
+  "recorded_at_utc": "2026-11-11T09:30:36.690053+00:00",
+  "scenario": "CB08-T1-replay-accept",
+  "synthetic_only": true,
+  "trusted_dispatch_enabled": true
+}

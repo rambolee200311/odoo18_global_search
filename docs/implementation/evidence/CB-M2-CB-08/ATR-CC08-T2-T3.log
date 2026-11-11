@@ -1,0 +1,18 @@
+2026-11-11 09:12:39,729 40488 ERROR odoo18ce odoo.addons.office_engine_m2.tests.test_office_retriever_integration: ERROR: TestOfficeRetrieverIntegration.test_cc08_revoked_record_rule_returns_no_data_or_office_side_effect
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_office_retriever_integration.py", line 266, in test_cc08_revoked_record_rule_returns_no_data_or_office_side_effect
+    self.assertEqual(before["records"][0]["name"], secret_name)
+                     ~~~~~~^^^^^^^^^^^
+TypeError: list indices must be integers or slices, not str
+ 
+2026-11-11 09:12:39,824 40488 ERROR odoo18ce odoo.addons.office_engine_m2.tests.test_office_retriever_integration: ERROR: TestOfficeRetrieverIntegration.test_cc08_second_read_fresh_value_reaches_edit_adapter
+Traceback (most recent call last):
+  File "/Users/lijianqiang/Documents/odoo18_global_search/mymodules/office_engine_m2/tests/test_office_retriever_integration.py", line 175, in test_cc08_second_read_fresh_value_reaches_edit_adapter
+    self.assertEqual(first["records"][0]["name"], "CC08 old name " + suffix)
+                     ~~~~~^^^^^^^^^^^
+TypeError: list indices must be integers or slices, not str
+ 
+2026-11-11 09:12:39,935 40488 ERROR odoo18ce odoo.modules.loading: Module office_engine_m2: 0 failures, 2 errors of 2 tests 
+2026-11-11 09:12:40,154 40488 ERROR odoo18ce odoo.modules.loading: Some modules are not loaded, some dependencies or manifest may be missing: ['wd_advanced_m2o_record_panel', 'wd_evidence_album', 'wd_qooling_app'] 
+2026-11-11 09:12:40,400 40488 ERROR odoo18ce odoo.modules.loading: At least one test failed when loading the modules. 
+2026-11-11 09:12:40,478 40488 ERROR odoo18ce odoo.tests.result: 0 failed, 2 error(s) of 2 tests when loading database 'odoo18ce' 

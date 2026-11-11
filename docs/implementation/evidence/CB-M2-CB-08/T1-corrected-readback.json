@@ -1,0 +1,22 @@
+{
+  "candidate_id_in_rolled_back_provider_run": 3107,
+  "candidate_sha256": "8f8e06a6f6f3e5cc1cf8888c0c35f7d505119ec79e435975332a1d9d0289d88a",
+  "candidate_validation_result": "PARTIALLY_VERIFIED",
+  "cell_values_and_formulas_preserved": true,
+  "formula_c2": "=B2*2",
+  "input_sha256": "2315994a4e2514d61ef2ba69ca0db942802d4b217d3b385864fc068a8fd0ba58",
+  "non_target_style_ids_preserved": true,
+  "provider_call_count": 1,
+  "provider_candidate_sha_matches_bytes": true,
+  "provider_request_id": "req_5f111368bb8c4e2683a0ba3bd06042f7",
+  "provider_response_id": "resp_0cb5523293f2196f016af433cfe4f887d2aedab066b798ba18",
+  "readback_pass": true,
+  "recorded_at_utc": "2026-11-11T09:31:19.266287+00:00",
+  "scenario": "CB08-T1-real-provider-output-corrected-independent-readback",
+  "sheet_names_preserved": true,
+  "target_number_format": "\"$\"#,##0.00",
+  "target_style_is_usd_two_decimals": true,
+  "targeted_note": "Candidate was returned and registered during the real Provider shell run; its DB transaction rolled back before Accept because the initial readback harness compared StyleProxy objects across workbooks. Corrected semantic readback is recorded here. Formal Accept was verified separately by replaying these exact Provider bytes through the existing Office edit/Validator/Accept services with zero Provider requests.",
+  "xlsx_opens": true,
+  "zip_test_ok": true
+}

@@ -1,0 +1,38 @@
+{
+  "scenario": "CC-M2-CB-08-T2-T3-focused-transactioncase",
+  "database": "odoo18ce",
+  "test_file": "mymodules/office_engine_m2/tests/test_cb08_integrated_readiness.py",
+  "process_exit_code": 0,
+  "tests_started": 2,
+  "tests": [
+    {
+      "name": "test_revoked_record_rule_yields_empty_fresh_context_without_candidate",
+      "result": "PASS",
+      "synthetic_partner_id": 32379,
+      "assertions": [
+        "first authorized Retriever result contains synthetic record",
+        "Record Rule hides record on second read",
+        "second result has no rows and count zero",
+        "fresh edit context contains empty second result, not prior data",
+        "no Candidate or Current/Last Valid/Revision change"
+      ]
+    },
+    {
+      "name": "test_second_read_fresh_value_reaches_edit_adapter",
+      "result": "PASS",
+      "synthetic_partner_id": 32380,
+      "assertions": [
+        "two independent Retriever calls use the same record ID",
+        "second result reflects updated synthetic value",
+        "latest value reaches Office edit adapter instruction; old value is absent",
+        "Candidate input SHA equals Current attachment SHA and parent is current version",
+        "Current/Last Valid/Revision do not advance before user acceptance"
+      ]
+    }
+  ],
+  "provider_calls": 0,
+  "data_kind": "synthetic only",
+  "transaction_cleanup": "Odoo TransactionCase rollback",
+  "summary_limitation": "--test-file run produced no tests.result aggregate; result is based on two Starting Test entries, assertion completion, and process exit code 0.",
+  "evidence_log": "ATR-CC08-T2-T3-focused-final.log"
+}
