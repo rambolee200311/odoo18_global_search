@@ -1546,94 +1546,21 @@ class LLMThreadOfficeTools(models.AbstractModel):
             "properties": {
                 "action": {
                     "type": "string",
-                    "enum": ["status", "plan", "edit", "accept", "reject", "finalize"],
-                    "description": "The bounded Office action. Candidate identity is resolved from this Thread's trusted tool history.",
+                    "enum": ["status", "create", "edit", "accept", "reject", "finalize"],
+                    "description": (
+                        "The bounded Office action. Use create only when the user requests a new XLSX without a source workbook; "
+                        "use edit for a private uploaded workbook or Accepted Current. Candidate identity is resolved from this Thread's trusted tool history."
+                    ),
                 },
                 "candidate_version_id": {"type": ["integer", "null"], "minimum": 1},
-                "interpretation": {
-                    "type": ["object", "null"],
-                    "additionalProperties": False,
-                    "properties": {
-                        "summary": {"type": "string", "maxLength": 2000},
-                        "target_scope": {
-                            "type": "object",
-                            "additionalProperties": False,
-                            "required": ["description", "basis"],
-                            "properties": {
-                                "description": {"type": "string", "maxLength": 1000},
-                                "basis": {"type": "string", "enum": ["explicit", "inferred", "ambiguous"]},
-                            },
-                        },
-                        "assumptions": {"type": "array", "maxItems": 32, "items": {"type": "string", "maxLength": 512}},
-                        "unknowns": {"type": "array", "maxItems": 32, "items": {"type": "string", "maxLength": 512}},
-                    },
-                    "required": ["summary", "target_scope", "assumptions", "unknowns"],
-                },
-                "expected_effect": {
-                    "type": ["object", "null"],
-                    "additionalProperties": False,
-                    "description": (
-                        "Use the frozen CB-03 Expected Effect shape: target_scopes, allowed_change_kinds, "
-                        "expected_assertions, and unknowns. For a current-version edit plan, omit parent_version_id, input_sha256, "
-                        "and effect_digest; the server binds those to the current accepted workbook and computes "
-                        "the digest. Reuse the returned canonical expected_effect for edit. For a cell value change, "
-                        "target_scopes contains {kind:'cell',sheet:'<worksheet>',address:'A1'}, allowed_change_kinds "
-                        "contains 'cell_value', and expected_assertions contains {kind:'cell_value',sheet:'<worksheet>', "
-                        "address:'A1',value_type:'string',value:'new value'}. Do not send legacy targets/change/scope "
-                        "keys. This is a bounded verification declaration, not an Excel editing DSL."
-                    ),
-                    "properties": {
-                        "schema_version": {"type": "string", "enum": ["1"]},
-                        "parent_version_id": {"type": "integer", "minimum": 0},
-                        "input_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-                        "effect_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-                        "target_scopes": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "additionalProperties": False,
-                                "properties": {
-                                    "kind": {"type": "string", "enum": ["cell", "range", "worksheet_structure", "workbook_structure"]},
-                                    "sheet": {"type": "string"},
-                                    "address": {"type": "string", "pattern": "^[A-Z]{1,3}[1-9][0-9]*$"},
-                                    "start": {"type": "string", "pattern": "^[A-Z]{1,3}[1-9][0-9]*$"},
-                                    "end": {"type": "string", "pattern": "^[A-Z]{1,3}[1-9][0-9]*$"},
-                                },
-                                "required": ["kind"],
-                            },
-                        },
-                        "allowed_change_kinds": {
-                            "type": "array",
-                            "items": {"type": "string", "enum": ["cell_value", "formula_text", "cell_style", "worksheet_structure", "workbook_structure"]},
-                        },
-                        "expected_assertions": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "additionalProperties": False,
-                                "properties": {
-                                    "kind": {"type": "string", "enum": ["cell_value"]},
-                                    "sheet": {"type": "string"},
-                                    "address": {"type": "string", "pattern": "^[A-Z]{1,3}[1-9][0-9]*$"},
-                                    "value_type": {"type": "string", "enum": ["string", "number", "boolean", "blank", "date", "datetime"]},
-                                    "value": {"type": ["string", "number", "boolean", "null"]},
-                                },
-                                "required": ["kind", "sheet", "address", "value_type", "value"],
-                            },
-                        },
-                        "unknowns": {"type": "array", "items": {"type": "string"}},
-                    },
-                    "required": ["target_scopes", "allowed_change_kinds", "expected_assertions", "unknowns"],
-                },
-                "model_risk_claims": {"type": ["array", "null"], "maxItems": 32, "items": {"type": "object"}, "description": "Unverified model-generated claims to display separately from locally verified facts. Their presence does not trigger local business-risk policy."},
                 "confirmation_required": {
                     "type": ["boolean", "null"],
-                    "description": "For plan/edit, the LLM's explicit judgment whether a material business risk not already authorized by the user's request needs a real user confirmation. The server binds this value and does not infer business risk. Required for plan and must be repeated unchanged for edit.",
+                    "description": "Optional. Set true only when the user request leaves a material business-risk decision unresolved; include a clear confirmation_reason. Ordinary explicit edits do not need a second confirmation.",
                 },
                 "confirmation_reason": {
                     "type": ["string", "null"],
                     "maxLength": 2000,
-                    "description": "User-facing explanation supplied by the LLM when confirmation_required=true. It is a model claim, not a locally verified business fact. Must be repeated unchanged with edit.",
+                    "description": "A concise user-facing description of the unresolved business risk, required only when confirmation_required=true.",
                 },
             },
             "required": ["action"],
@@ -1641,25 +1568,25 @@ class LLMThreadOfficeTools(models.AbstractModel):
         destructive_hint=True,
         description=(
             "The Office file lifecycle facade. Odoo data reads use the separate existing odoo_record_retriever tool. "
-            "For an initial uploaded workbook, action=edit creates a non-current Candidate; for a workbook with an "
-            "accepted Current, use plan then edit. Candidate review resolves the latest Candidate from this Thread's "
+            "When the user requests a new XLSX from scratch without a workbook, call action=create; the service generates actual file bytes, "
+            "performs bounded integrity checks, registers V1/Current directly, and delivers it without a user Candidate/Accept event. "
+            "It never invents an input attachment, input SHA, or parent version. "
+            "Call action=edit once with the user's current request; the server selects the private uploaded workbook "
+            "or Accepted Current. An initial uploaded workbook "
+            "creates a non-current Candidate; a workbook with an accepted Current is resolved by the server. Candidate review resolves the latest Candidate from this Thread's "
             "persisted Office tool history and checks candidate_version_id as an assertion. The LLM owns intent ambiguity and business-risk judgment; "
-            "for plan, explicitly provide confirmation_required and any confirmation_reason. The server binds that "
-            "decision to the current user, Thread, Session, version, file SHA and request, then verifies a real user "
-            "confirmation before execution when requested. A generated Candidate never advances Current until the "
-            "user explicitly accepts it. Local checks remain authoritative for permissions, safety, versions and file "
+            "when a material business risk is not already authorized by the request, it may ask the user to confirm. "
+            "The server binds that request to the authenticated user, Thread, Session, source version, and actual file bytes. "
+            "An edit Candidate never advances Current until the user explicitly accepts it; fileless create is the scoped direct-V1 exception. "
+            "Local checks remain authoritative for permissions, safety, versions and file "
             "integrity. action=finalize delivers the exact accepted Current workbook to this Thread; it does not "
-            "edit, revalidate, or change the version pointers. External Provider file processing remains disabled "
-            "while the SRS/data-policy release gate is open."
+            "edit, revalidate, or change the version pointers. External Provider processing is controlled by trusted server configuration and defaults closed."
         ),
     )
     def office(
         self,
         action: str,
         candidate_version_id: int | None = None,
-        interpretation: dict | None = None,
-        expected_effect: dict | None = None,
-        model_risk_claims: list[dict] | None = None,
         confirmation_required: bool | None = None,
         confirmation_reason: str | None = None,
     ) -> dict:
@@ -1671,9 +1598,6 @@ class LLMThreadOfficeTools(models.AbstractModel):
             tool_message,
             action,
             candidate_version_id=candidate_version_id,
-            interpretation=interpretation,
-            expected_effect=expected_effect,
-            model_risk_claims=model_risk_claims,
             confirmation_required=confirmation_required,
             confirmation_reason=confirmation_reason,
         )

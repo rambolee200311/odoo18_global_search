@@ -1,6 +1,6 @@
 # ATR-M2-CB-07 — 自动化测试记录
 
-**状态：PARTIAL — TARGETED VALIDATOR PASS; ROUTE B HVR BLOCKED BEFORE CANDIDATE CREATION**
+**状态：PASS — 236 ODOO TESTS; FINAL CC-07 CLOSURE EVIDENCE APPENDED**
 **契约：** `CC-M2-CB-07_Route_B_End-to-End_Integration_v0.2.md`
 **记录日期：** 2026-11-10
 
@@ -14,7 +14,7 @@
 
 逐条命令及原始摘要见 [`evidence/CB-M2-CB-07/LOCAL-VALIDATION.md`](evidence/CB-M2-CB-07/LOCAL-VALIDATION.md)。
 
-## 未运行
+## 初次记录时未运行（历史状态；最终执行结果见文末）
 
 | 层级 | 结果 | 说明 |
 |---|---|---|
@@ -59,3 +59,22 @@
 ### 验收口径
 
 确认的 `docProps/core.xml` 误拦截已修复并有定向自动化证据；真实 UI 端到端 HVR 因前置 Intent/Expected Effect 不合法而未能到达 Validator/候选生成。不得据此报告 Candidate 2354 在 UI 中被接受，也不得报告 CC-07 HVR、Finalize 或下载 PASS。
+
+
+## 2026-11-11 — 最终自动化回归与证据索引
+
+早期“未运行”及部分失败段落是当时的历史状态，原文保留；最终执行结果如下：
+
+| 验证项 | 最终结果 | 证据 |
+|---|---|---|
+| Odoo 完整回归 | PASS：`tests.result` 236 tests，0 failed，0 errors | 本地原始日志：`evidence/CB-M2-CB-07/ATR-RUN-042-full-regression.log` |
+| office_verify 定向测试 | PASS：34 passed | 本地原始日志：`evidence/CB-M2-CB-07/ATR-RUN-043-office-verify-unit.log` |
+| Responses Adapter / Chat Completions 兼容回归 | PASS：28 passed | 本地原始日志：`evidence/CB-M2-CB-07/ATR-RUN-047-responses-adapter-isolated.log` |
+
+原始自动化日志保留在执行工作区但不随本次 Git 推送发布，因为其中包含测试运行联系信息。测试命令、结果数量和验收结论保留在本报告中。
+| Codex 真实 UI HVR | PASS：V4、V5、Reject、Finalize | [`evidence/CB-M2-CB-07/ROUTE-B-SIMPLIFICATION-HVR-REPORT-2026-11-11.md`](evidence/CB-M2-CB-07/ROUTE-B-SIMPLIFICATION-HVR-REPORT-2026-11-11.md) |
+| 8091 人工 UAT | PASS（负责人报告；Thread/ORM/XLSX 回读旁证） | [`evidence/CB-M2-CB-07/HVR-RUN-010-8091-human-uat-20261111.md`](evidence/CB-M2-CB-07/HVR-RUN-010-8091-human-uat-20261111.md) |
+
+**保留的计数差异：**同一完整回归日志的 `tests.stats` 报 `office_engine_m2=252`、`office_engine_odoo=28`（合计 280），而 `tests.result` 报 236。差异原因未解释；验收通过数仅采用最终 `tests.result` 的 236，不把 280 计为通过数。
+
+**范围限制：**本次 HVR 覆盖普通 XLSX 多轮编辑和交付，不证明所有复杂 Excel 特性保真。三个 8091 版本的验证等级均为 `PARTIALLY_VERIFIED`；Accept/Finalize 未提升等级。历史失败、Browser HttpCase skip 和 worker 清理观察项保持原样记录。

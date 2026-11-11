@@ -45,7 +45,7 @@ class ValidationReceipt:
     proposal_revision: int
     document_revision: int
     parent_version_id: int | bool
-    input_sha256: str
+    input_sha256: str | bool
     effect_digest: str | bool
 
 
@@ -644,6 +644,7 @@ def register_initial_candidate(
     request_digest,
     intent_message_id,
     intent_effect_digest=False,
+    confirmation_receipt_id=False,
     provider_id=False,
     provider_model=False,
     provider_response_id=False,
@@ -659,6 +660,7 @@ def register_initial_candidate(
     idempotency_key = _require_idempotency_key(idempotency_key)
     request_digest = _require_hash(request_digest, "request")
     effect_digest = _require_hash(intent_effect_digest, "effect", optional=True)
+    confirmation_receipt_id = _require_confirmation_reference(confirmation_receipt_id)
     intent = _require_user_thread_message(env, session, intent_message_id, "Intent")
     filename, mimetype = _filename_and_mimetype(filename, mimetype)
     if not isinstance(candidate_bytes, bytes) or not candidate_bytes or len(candidate_bytes) > MAX_VERSION_BYTES:
@@ -680,6 +682,7 @@ def register_initial_candidate(
             effect_digest=effect_digest,
             kind="initial",
             intent_message_id=intent.id,
+            confirmation_receipt_id=confirmation_receipt_id,
         )
         _read_attachment(env, existing.output_attachment_id, expected_sha=output_sha)
         return existing
@@ -702,6 +705,7 @@ def register_initial_candidate(
                 effect_digest=effect_digest,
                 kind="initial",
                 intent_message_id=intent.id,
+                confirmation_receipt_id=confirmation_receipt_id,
             )
             _read_attachment(env, existing.output_attachment_id, expected_sha=output_sha)
             return existing
@@ -718,6 +722,8 @@ def register_initial_candidate(
                 "idempotency_key": idempotency_key,
                 "request_digest": request_digest,
                 "intent_effect_digest": effect_digest,
+                "confirmation_receipt_id": confirmation_receipt_id or False,
+                "requires_confirmation": bool(confirmation_receipt_id),
                 "input_attachment_id": session.source_attachment_id.id,
                 "input_sha256": input_sha,
                 "filename": filename,
@@ -1240,7 +1246,9 @@ def _receipt_fields(candidate, receipt):
     _require_hash(receipt.candidate_output_sha256, "candidate output")
     _require_hash(receipt.validation_report_id, "validation report")
     _require_hash(receipt.validation_report_sha256, "validation report")
-    _require_hash(receipt.input_sha256, "validation input")
+    session = candidate.session_id
+    fileless_creation = session.origin_kind == "fileless" and candidate.version_kind == "initial"
+    _require_hash(receipt.input_sha256, "validation input", optional=fileless_creation)
     _require_hash(receipt.effect_digest, "effect", optional=True)
     if not isinstance(receipt.validator_policy_version, str) or not _POLICY.fullmatch(receipt.validator_policy_version):
         raise ValidationError(_("The validator policy version is invalid."))
@@ -1253,7 +1261,7 @@ def _receipt_fields(candidate, receipt):
         or receipt.proposal_revision != candidate.proposal_revision
         or receipt.document_revision != candidate.document_revision
         or (receipt.parent_version_id or False) != (candidate.parent_version_id.id or False)
-        or receipt.input_sha256 != candidate.input_sha256
+        or (receipt.input_sha256 or False) != (candidate.input_sha256 or False)
         or (receipt.effect_digest or False) != (candidate.intent_effect_digest or False)
     ):
         raise ValidationError(_("The validation receipt is not bound to this candidate and revision."))
@@ -1263,11 +1271,26 @@ def _receipt_fields(candidate, receipt):
     )
     if not content or actual_sha != receipt.candidate_output_sha256:
         raise ValidationError(_("The validation receipt candidate bytes do not match."))
-    input_content, actual_input_sha = _read_attachment(
-        candidate.env, candidate.input_attachment_id, expected_sha=candidate.input_sha256
-    )
-    if not input_content or actual_input_sha != receipt.input_sha256:
-        raise ValidationError(_("The validation receipt input bytes do not match."))
+    if fileless_creation:
+        if (
+            candidate.state != "verifying"
+            or candidate.parent_version_id
+            or candidate.source_request_id
+            or candidate.input_attachment_id
+            or candidate.input_sha256
+            or receipt.input_sha256
+            or session.source_attachment_id
+            or session.current_version_id
+            or session.document_revision != 0
+        ):
+            raise ValidationError(_("The fileless creation receipt has an invalid source binding."))
+        _require_user_thread_message(candidate.env, session, candidate.intent_message_id.id, "Create intent")
+    else:
+        input_content, actual_input_sha = _read_attachment(
+            candidate.env, candidate.input_attachment_id, expected_sha=candidate.input_sha256
+        )
+        if not input_content or actual_input_sha != receipt.input_sha256:
+            raise ValidationError(_("The validation receipt input bytes do not match."))
     if candidate.version_kind != "initial":
         parent = _require_version(candidate.env, candidate.session_id, candidate.parent_version_id.id)
         _check_version_attachment(parent, candidate.input_attachment_id)
@@ -1306,11 +1329,200 @@ def record_validation_receipt(env, candidate_id, receipt):
         raise AccessError(_("The workbook candidate is unavailable."))
     candidate.check_access("write")
     session = _require_session(env, candidate.session_id.id, write=True)
-    if candidate.state != "candidate_received":
+    fileless_verification = (
+        candidate.state == "verifying"
+        and candidate.session_id.origin_kind == "fileless"
+        and candidate.version_kind == "initial"
+    )
+    if candidate.state != "candidate_received" and not fileless_verification:
         raise ValidationError(_("Only a received candidate can accept a validation result."))
     values = _receipt_fields(candidate, receipt)
     _write_version(candidate, values)
     return candidate
+
+
+def register_fileless_creation_request(
+    env, session_id, *, intent_message_id, idempotency_key, request_digest, model,
+):
+    """Persist a source-less create attempt before dispatch to prevent silent replay."""
+    session = _require_session(env, session_id, write=True)
+    if session.origin_kind != "fileless" or session.source_attachment_id:
+        raise ValidationError(_("The creation Session has an unexpected file source."))
+    intent = _require_user_thread_message(env, session, intent_message_id, "Create intent")
+    if intent != session.source_message_id:
+        raise ValidationError(_("The fileless creation Session is bound to a different user instruction."))
+    idempotency_key = _require_idempotency_key(idempotency_key)
+    request_digest = _require_hash(request_digest, "request")
+    model = _safe_metadata(model, 128)
+    with env.cr.savepoint():
+        locked = _lock_session(session)
+        existing = env["office.workbook.version"].search(
+            [("session_id", "=", session.id), ("idempotency_key", "=", idempotency_key)], limit=1
+        )
+        if existing:
+            if (
+                existing.version_kind != "initial"
+                or existing.parent_version_id
+                or existing.input_attachment_id
+                or existing.input_sha256
+                or existing.source_request_id
+            ):
+                raise ValidationError(_("The create idempotency key is bound to a different operation."))
+            if existing.request_digest != request_digest or existing.intent_message_id != intent:
+                raise ValidationError(_("The create idempotency key is bound to a different request."))
+            return existing, False
+        if locked.current_version_id or locked.document_revision:
+            raise ValidationError(_("The fileless creation Session already has a Current workbook."))
+        version = _create_version_row(env, {
+            "session_id": session.id,
+            "source_message_id": intent.id,
+            "intent_message_id": intent.id,
+            "version_no": _next_version_number(env, session),
+            "version_kind": "initial",
+            "state": "verifying",
+            "idempotency_key": idempotency_key,
+            "request_digest": request_digest,
+            "session_revision": session.revision,
+            "proposal_revision": session.proposal_revision,
+            "document_revision": locked.document_revision,
+            "provider_id": "openai-responses",
+            "provider_model": model,
+            "provider_cleanup_state": "pending",
+        })
+        return version, True
+
+
+def fail_fileless_creation_request(env, version_id, error_code):
+    """Close a source-less attempt that received a definite preflight/Provider failure."""
+    version = env["office.workbook.version"].browse(version_id).exists()
+    if not version:
+        raise AccessError(_("The workbook version is unavailable."))
+    version.check_access("write")
+    session = _require_session(env, version.session_id.id, write=True)
+    if (
+        session.origin_kind != "fileless"
+        or version.version_kind != "initial"
+        or version.state != "verifying"
+        or version.output_attachment_id
+        or not isinstance(error_code, str)
+        or not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", error_code)
+    ):
+        raise ValidationError(_("The fileless creation attempt cannot be marked failed."))
+    _write_version(version, {"state": "failed", "error_code": error_code})
+    return version
+
+
+def store_fileless_creation_output(
+    env, version_id, *, content, filename, mimetype, provider_response_id=False,
+    provider_tool_call_id=False, provider_file_id=False, provider_usage_json=False,
+    provider_cleanup_state="pending",
+):
+    """Bind actual Provider output bytes to the private source-less version attempt."""
+    version = env["office.workbook.version"].browse(version_id).exists()
+    if not version:
+        raise AccessError(_("The workbook version is unavailable."))
+    version.check_access("write")
+    session = _require_session(env, version.session_id.id, write=True)
+    if (
+        session.origin_kind != "fileless"
+        or version.version_kind != "initial"
+        or version.state != "verifying"
+        or version.parent_version_id
+        or version.input_attachment_id
+        or version.input_sha256
+        or session.source_attachment_id
+        or session.current_version_id
+        or session.document_revision != 0
+    ):
+        raise ValidationError(_("The fileless creation attempt is no longer available."))
+    _require_user_thread_message(env, session, version.intent_message_id.id, "Create intent")
+    filename, mimetype = _filename_and_mimetype(filename, mimetype)
+    if not isinstance(content, bytes) or not content or len(content) > MAX_VERSION_BYTES:
+        raise ValidationError(_("The created workbook bytes are empty or exceed the size limit."))
+    output_sha = hashlib.sha256(content).hexdigest()
+    with env.cr.savepoint():
+        locked = _lock_session(session)
+        if locked.current_version_id or locked.document_revision or version.state != "verifying":
+            raise ValidationError(_("WORKBOOK_VERSION_STALE: the creation attempt is no longer current."))
+        attachment = _create_version_attachment(env, version, filename, mimetype, content)
+        stored_bytes, stored_sha = _read_attachment(env, attachment, expected_sha=output_sha)
+        if stored_bytes != content:
+            raise ValidationError(_("The created workbook attachment did not preserve the returned bytes."))
+        _write_version(version, {
+            "output_attachment_id": attachment.id,
+            "filename": filename,
+            "mimetype": mimetype,
+            "output_sha256": stored_sha,
+            "file_size": len(stored_bytes),
+            "provider_response_id": _safe_metadata(provider_response_id, 255),
+            "provider_tool_call_id": _safe_metadata(provider_tool_call_id, 255),
+            "provider_file_id": _safe_metadata(provider_file_id, 255),
+            "provider_usage_json": _safe_usage(provider_usage_json),
+            "provider_cleanup_state": provider_cleanup_state,
+        })
+    return version
+
+
+def publish_fileless_initial_version(env, version_id):
+    """Atomically promote a receipt-bound fileless creation to V1/Current."""
+    version = env["office.workbook.version"].browse(version_id).exists()
+    if not version:
+        raise AccessError(_("The workbook version is unavailable."))
+    version.check_access("write")
+    session = _require_session(env, version.session_id.id, write=True)
+    if session.origin_kind != "fileless" or version.version_kind != "initial":
+        raise ValidationError(_("Only a fileless initial version can be directly published."))
+    if version.validation_result not in {"VERIFIED", "PARTIALLY_VERIFIED"} or version.state not in {
+        "verified", "partially_verified", "accepted_current", "finalized"
+    }:
+        raise ValidationError(_("The created workbook has no acceptable technical validation result."))
+    _revalidate_fileless_creation_receipt(env, session, version)
+    with env.cr.savepoint():
+        locked = _lock_session(session)
+        if locked.current_version_id == version:
+            return version
+        if locked.current_version_id or locked.document_revision != 0:
+            raise ValidationError(_("WORKBOOK_VERSION_STALE: the initial Current already exists."))
+        _revalidate_fileless_creation_receipt(env, locked, version)
+        if version.state != "accepted_current":
+            _write_version(version, {
+                "state": "accepted_current",
+                "accepted_document_revision": 1,
+            })
+        locked._advance_document_version_from_service(
+            version,
+            expected_document_revision=0,
+            expected_current_version_id=False,
+        )
+    return version
+
+
+def _revalidate_fileless_creation_receipt(env, session, version):
+    session.check_access("write")
+    if (
+        version.session_id != session
+        or version.owner_id.id != env.uid
+        or version.thread_id != session.thread_id
+        or version.state not in {"verified", "partially_verified", "accepted_current", "finalized"}
+        or version.validation_result not in {"VERIFIED", "PARTIALLY_VERIFIED"}
+        or version.input_attachment_id
+        or version.input_sha256
+        or version.parent_version_id
+        or not version.validator_policy_version
+        or not _HASH.fullmatch(version.validation_report_id or "")
+        or version.validation_report_sha256 != version.validation_report_id
+        or version.validated_candidate_sha256 != version.output_sha256
+    ):
+        raise ValidationError(_("The fileless creation proof is incomplete or mismatched."))
+    _check_version_attachment(version, version.output_attachment_id)
+    content, actual_sha = _read_attachment(env, version.output_attachment_id, expected_sha=version.output_sha256)
+    if not content or actual_sha != version.validated_candidate_sha256:
+        raise ValidationError(_("The fileless creation output changed after validation."))
+    _require_user_thread_message(env, session, version.intent_message_id.id, "Create intent")
+    current_version_id = session.current_version_id.id or False
+    if current_version_id not in (False, version.id) or session.document_revision not in (0, 1):
+        raise ValidationError(_("The fileless creation Session has an inconsistent Current revision."))
+    return actual_sha
 
 
 def _revalidate_stored_receipt(env, candidate):

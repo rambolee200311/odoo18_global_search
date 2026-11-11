@@ -1,12 +1,6 @@
 from .usage_service import record_usage
 from .candidate_validator import validate_workbook_candidate
-from .edit_orchestrator import dispatch_office_action, execute_planned_edit, plan_edit, review_candidate
-from .intent_contract import (
-    IntentContractError,
-    bind_intent,
-    canonicalize_expected_effect,
-    normalize_interpretation,
-)
+from .edit_orchestrator import dispatch_office_action, execute_candidate_edit, review_candidate
 from .render_bridge import render_confirmed_mapping
 from .mapping_service import (
     confirm_mapping,
@@ -34,13 +28,8 @@ __all__ = [
     "confirm_mapping",
     "validate_workbook_candidate",
     "dispatch_office_action",
-    "execute_planned_edit",
-    "plan_edit",
+    "execute_candidate_edit",
     "review_candidate",
-    "IntentContractError",
-    "bind_intent",
-    "canonicalize_expected_effect",
-    "normalize_interpretation",
     "get_mapping_card_context",
     "get_mapping_status",
     "get_session_context",

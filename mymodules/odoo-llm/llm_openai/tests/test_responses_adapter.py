@@ -201,6 +201,45 @@ def test_candidate_download_request_shape_hashes_and_independent_readback():
         assert archive.testzip() is None
 
 
+def test_fileless_create_uses_only_instruction_input_and_returns_real_xlsx_bytes():
+    output = make_xlsx(7)
+    client, request_client = make_clients(candidate=output)
+    result = ResponsesAdapter().execute(
+        provider_client=client,
+        model="model-approved-by-caller",
+        input_xlsx=None,
+        instruction="Create a new XLSX workbook from scratch.",
+        operation="create",
+        limits=make_limits(),
+    )
+
+    assert result.operation_status == "candidate_received"
+    assert result.candidate_bytes == output
+    assert result.input_sha256 is None
+    assert result.candidate_sha256 == hashlib.sha256(output).hexdigest()
+    content = request_client.responses.create.call_args.kwargs["input"][0]["content"]
+    assert content == [{"type": "input_text", "text": "Create a new XLSX workbook from scratch."}]
+    book = load_workbook(BytesIO(result.candidate_bytes), data_only=False)
+    assert book["Inventory"]["B2"].value == 7
+    book.close()
+
+
+def test_fileless_create_rejects_claimed_source_bytes_before_provider_call():
+    source = make_xlsx(1)
+    client, request_client = make_clients(candidate=make_xlsx(2))
+    result = ResponsesAdapter().execute(
+        provider_client=client,
+        model="model-approved-by-caller",
+        input_xlsx=source,
+        instruction="Create a new XLSX workbook from scratch.",
+        operation="create",
+        limits=make_limits(),
+    )
+    assert result.operation_status == "blocked"
+    assert result.error.category == "creation_must_not_claim_source_file"
+    request_client.responses.create.assert_not_called()
+
+
 def test_adapter_is_independent_of_worksheet_name_and_cell_layout():
     source = make_xlsx(10, sheet_name="Unrelated Tab Name")
     candidate = make_xlsx(11, sheet_name="Unrelated Tab Name")

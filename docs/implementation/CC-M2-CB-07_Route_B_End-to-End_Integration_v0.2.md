@@ -5,7 +5,7 @@
 | 项目 | Odoo 18 CE / Office Engine M2 |
 | 契约编号 | CC-M2-CB-07 — Route B End-to-End Integration & Cross-layer Regression |
 | 版本 | v0.2 |
-| 状态 | **FROZEN — AUTHORIZED FOR IMPLEMENTATION** |
+| 状态 | **CLOSED — UAT PASSED** |
 | 技术设计 | Frozen Office Engine M2 TDD V2.1.0；Route B ADR `ADR-OFFICE-20261110-001_v1.0.md` |
 | 前置计划 | Implementation Plan V2.0.1 的 CB-07 Cross-layer Regression & Release Readiness；本 CC 将其与 Route B 集成验收合并为唯一 CC-M2-CB-07 |
 | 范围 | CB-01～CB-06 兼容性回归、Route B 首次生成与多轮编辑、Accept/Reject、Finalize/附件交付及真实 Odoo UI 端到端集成 |
@@ -13,6 +13,8 @@
 > 本 CC 已获负责人冻结并进入实施。按 §3 和 §13，实施首先完成 ADR/TDD/Implementation Plan 版本化同步；此授权不自动开启 Provider dispatch、不授权真实数据外发、服务/数据库操作或生产发布。既有工作区改动及历史证据不得清理或覆盖。
 
 ## 1. Contract Goal
+
+> 以下首轮 HVR 结果为历史记录；最终关闭依据及当前状态以 §16 为准。
 
 完成 Implementation Plan V2.0.1 原 CB-07 的 Cross-layer Regression & Release Readiness，并将 Route B 集成验收并入同一 CC-M2-CB-07，避免重复契约。范围内既包含 M1/M2 既有能力的跨层兼容回归，也包含 Route B 的 Odoo 产品闭环：用户上传 Office 文件，Agent 使用经授权的 Odoo 数据和 OpenAI Hosted Code Interpreter 生成首个 Candidate；用户明确接受后登记 V1；后续编辑始终以服务端 Accepted Current 的实际字节为输入；用户可接受、拒绝并最终 Finalize/下载正式附件。
 
@@ -336,3 +338,18 @@
 |---|---|---|---|
 | v0.1 | 2026-11-10 | **DRAFT — NOT AUTHORIZED FOR IMPLEMENTATION** | Route B 集成初稿，尚未并入原 CB-07。历史文件保留为 `CC-07_Route_B_End-to-End_Integration_v0.1.md`。 |
 | v0.2 | 2026-11-10 | **FROZEN — AUTHORIZED FOR IMPLEMENTATION** | 按评审决定统一为 CC-M2-CB-07，合并原 Cross-layer Regression & Release Readiness；明确双工具所需 ADR/TDD 最小修订及授权后受控服务端 Provider 启用。负责人批准冻结并进入实施；上游基线通过独立版本化 amendment 同步。 |
+
+
+## 16. Owner-Approved Closure Record — 2026-11-11
+
+**最终状态：`CLOSED — UAT PASSED`**，依据负责人本轮明确关闭决定。
+
+关闭标准按负责人决定收敛为：普通 XLSX 多轮编辑、用户 Accept/Reject、Finalize 与可交付文件链路通过；不要求本 CC 覆盖全部 Excel 特性。该关闭记录不改变已冻结 TDD/架构，不表示所有复杂工作簿结构均已验证，也不构成生产发布授权。
+
+验收证据：
+
+- Codex 真实 UI HVR V4、V5、Reject、Finalize：见 [`evidence/CB-M2-CB-07/ROUTE-B-SIMPLIFICATION-HVR-REPORT-2026-11-11.md`](evidence/CB-M2-CB-07/ROUTE-B-SIMPLIFICATION-HVR-REPORT-2026-11-11.md)，含 Candidate 3016–3018、独立回读和下载证据。
+- 8091 真实人工 UAT 三轮联系人、地址和国家编辑：见 [`evidence/CB-M2-CB-07/HVR-RUN-010-8091-human-uat-20261111.md`](evidence/CB-M2-CB-07/HVR-RUN-010-8091-human-uat-20261111.md)。其中人工操作结论来自负责人报告，Thread/ORM 版本轨迹及 XLSX 字节回读作旁证。
+- Odoo 全量回归：`tests.result` 为 236 tests、0 failed、0 errors，见 [`evidence/CB-M2-CB-07/ATR-RUN-042-full-regression.log`](evidence/CB-M2-CB-07/ATR-RUN-042-full-regression.log)。分模块 `tests.stats` 为 252 + 28，与最终计数 236 不一致，原因未解释，按已知限制保留。
+
+已知限制继续有效：候选验证等级保持 `PARTIALLY_VERIFIED`；未覆盖的复杂 Excel 特性不因本次关闭而获得完整保真承诺；测试统计差异保持未解释。历史失败记录仍保留，不用本次成功结果覆盖。

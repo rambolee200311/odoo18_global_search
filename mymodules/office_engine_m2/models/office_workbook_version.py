@@ -26,7 +26,7 @@ _VERSION_STATES = {
     "stale",
 }
 _TRANSITIONS = {
-    "verifying": {"verified", "failed", "rejected"},
+    "verifying": {"verified", "partially_verified", "failed", "rejected"},
     "candidate_received": {
         "awaiting_confirmation", "verified", "partially_verified", "failed", "rejected", "stale"
     },
@@ -200,11 +200,14 @@ class OfficeWorkbookVersion(models.Model):
             raise AccessError(_("Workbook version fields are managed by the internal version service."))
         allowed = {
             "state", "output_attachment_id", "output_sha256", "file_size", "validator_policy_version",
+            "filename", "mimetype",
             "validation_report_id", "validation_report_sha256", "validated_candidate_sha256",
             "validation_result", "validation_completed_at", "accepted_document_revision", "error_code",
             "delivery_state", "final_attachment_id", "final_message_id", "finalized_at",
             "acceptance_authorization_kind", "acceptance_authorization_message_id",
             "acceptance_authorization_digest", "rejection_message_id", "rejection_digest", "rejected_at",
+            "provider_response_id", "provider_tool_call_id", "provider_file_id",
+            "provider_usage_json", "provider_cleanup_state",
         }
         if set(vals) - allowed:
             raise ValidationError(_("The workbook version update contains unsupported fields."))
@@ -309,8 +312,11 @@ class OfficeWorkbookVersion(models.Model):
             if version.version_kind == "initial":
                 if version.parent_version_id or version.restored_from_version_id:
                     raise ValidationError(_("An initial version cannot have a parent or restore source."))
-                if version.input_attachment_id != session.source_attachment_id:
-                    raise ValidationError(_("An initial version must use the Session source attachment."))
+                if session.origin_kind == "fileless":
+                    if version.input_attachment_id or version.input_sha256 or session.source_attachment_id:
+                        raise ValidationError(_("A fileless initial version cannot claim source file bytes."))
+                elif version.input_attachment_id != session.source_attachment_id:
+                    raise ValidationError(_("An uploaded initial version must use the Session source attachment."))
             elif version.parent_version_id:
                 parent = version.parent_version_id
                 if not parent.output_attachment_id or version.input_attachment_id != parent.output_attachment_id:

@@ -31,6 +31,7 @@ class Package:
     raw_parts: dict[str, bytes]
     roots: dict[str, etree._Element]
     relationships: dict[str, tuple[tuple[str, str, str], ...]]
+    unclassified_parts: tuple[str, ...] = ()
 
 
 def _invalid(stage: str) -> OfficeVerifyError:
@@ -82,6 +83,21 @@ def _allowed_part(kind: str, name: str) -> bool:
         or re.fullmatch(r"word/_rels/(document|header\d+|footer\d+)\.xml\.rels", name)
         or re.fullmatch(r"word/_rels/(styles|settings|numbering|fontTable|webSettings)\.xml\.rels", name)
     )
+
+
+def _safe_candidate_part_name(name: str) -> bool:
+    """Allow opaque XLSX feature parts while excluding active/external content."""
+    lower = name.lower()
+    blocked_fragments = (
+        "xl/activex/", "xl/embeddings/", "xl/externallinks/", "xl/webextensions/",
+        "xl/macrosheets/", "xl/dialogsheets/",
+        "customui/", "vbaproject", "oleobject", "externalLink".lower(),
+    )
+    if any(fragment in lower for fragment in blocked_fragments):
+        return False
+    if lower.endswith((".bin", ".vba")):
+        return False
+    return name.startswith(("xl/", "docProps/")) or name in {"[Content_Types].xml", "_rels/.rels"}
 
 
 def _parse_xml(data: bytes, budget: VerificationBudget) -> etree._Element:
@@ -212,7 +228,7 @@ def _is_safe_picture_drawing(node: etree._Element, part_name: str, package: Pack
     return True
 
 
-def _validate_content_types(root: etree._Element, names: set[str]) -> None:
+def _validate_content_types(root: etree._Element, names: set[str], *, allow_candidate_features: bool = False) -> None:
     if root.tag != CT_NS + "Types":
         raise _invalid("content_types")
     defaults: dict[str, str] = {}
@@ -221,7 +237,11 @@ def _validate_content_types(root: etree._Element, names: set[str]) -> None:
         if node.tag == CT_NS + "Default":
             extension = node.get("Extension", "").lower()
             content_type = node.get("ContentType", "")
-            if not extension or extension in defaults or extension not in {"xml", "rels", "png", "jpeg", "jpg"} or not content_type:
+            if (
+                not extension or extension in defaults
+                or (not allow_candidate_features and extension not in {"xml", "rels", "png", "jpeg", "jpg"})
+                or not content_type
+            ):
                 raise _unsupported("content_types")
             defaults[extension] = content_type
         elif node.tag == CT_NS + "Override":
@@ -262,7 +282,10 @@ def _validate_docx_content_types(root: etree._Element, names: set[str]) -> None:
                 raise _invalid("content_types")
 
 
-def read_package(data: bytes, filename: str, mime_type: str, budget: VerificationBudget) -> Package:
+def read_package(
+    data: bytes, filename: str, mime_type: str, budget: VerificationBudget,
+    *, allow_candidate_features: bool = False,
+) -> Package:
     budget.validate()
     if not isinstance(data, bytes) or not data or not isinstance(filename, str) or not isinstance(mime_type, str):
         raise _invalid("input")
@@ -286,6 +309,7 @@ def read_package(data: bytes, filename: str, mime_type: str, budget: Verificatio
         raise _resource("container")
     names: set[str] = set()
     seen_members: set[str] = set()
+    unclassified_parts: list[str] = []
     declared_total = 0
     for info in infos:
         if not _safe_name(info.filename) or info.filename in seen_members:
@@ -304,7 +328,9 @@ def read_package(data: bytes, filename: str, mime_type: str, budget: Verificatio
             continue
         names.add(info.filename)
         if not _allowed_part(kind, info.filename):
-            raise _unsupported("container")
+            if kind != "xlsx" or not allow_candidate_features or not _safe_candidate_part_name(info.filename):
+                raise _unsupported("container")
+            unclassified_parts.append(info.filename)
     document_part = "xl/workbook.xml" if kind == "xlsx" else "word/document.xml"
     required = {"[Content_Types].xml", "_rels/.rels", document_part}
     if not required.issubset(names):
@@ -343,7 +369,10 @@ def read_package(data: bytes, filename: str, mime_type: str, budget: Verificatio
     except (zipfile.BadZipFile, RuntimeError, EOFError, zlib.error) as exc:
         raise _invalid("container") from exc
     relationships: dict[str, tuple[tuple[str, str, str], ...]] = {}
-    _validate_content_types(roots["[Content_Types].xml"], names)
+    _validate_content_types(
+        roots["[Content_Types].xml"], names,
+        allow_candidate_features=(kind == "xlsx" and allow_candidate_features),
+    )
     if kind == "docx":
         _validate_docx_content_types(roots["[Content_Types].xml"], names)
     for part_name, root in roots.items():
@@ -357,7 +386,7 @@ def read_package(data: bytes, filename: str, mime_type: str, budget: Verificatio
         raise _invalid("container")
     if kind == "docx":
         _validate_docx_media_signatures(raw_parts)
-    return Package(kind, tuple(sorted(names)), raw_parts, roots, relationships)
+    return Package(kind, tuple(sorted(names)), raw_parts, roots, relationships, tuple(sorted(unclassified_parts)))
 
 
 BLOCKED_LOCAL_NAMES = {

@@ -402,6 +402,6 @@ class TestOfficeMappingSession(TransactionCase):
         returned = get_session_context(user_env, session.id)
         self.assertEqual(set(returned), {
             "session_id", "owner_id", "company_id", "thread_id", "source_message_id",
-            "source_attachment_id", "target_model", "target_record_id", "state",
+            "source_attachment_id", "origin_kind", "target_model", "target_record_id", "state",
             "revision", "error_code",
         })

@@ -6,7 +6,7 @@ import re
 
 from markupsafe import Markup
 
-from odoo import _, api, models
+from odoo import _, api, models, tools
 from odoo.exceptions import UserError
 from odoo.modules.registry import Registry
 
@@ -22,6 +22,14 @@ _OFFICE_TOOL_NAMES = {
     "office_finalize",
     "odoo_record_retriever",
 }
+
+_OFFICE_FILE_FORMAT_TERMS = (
+    "xlsx", "excel", "spreadsheet", "workbook", "电子表格", "工作簿", "表格",
+)
+_OFFICE_FILE_ACTION_TERMS = (
+    "create", "generate", "export", "make", "build", "edit", "modify", "fill", "populate",
+    "创建", "生成", "导出", "制作", "新建", "输出", "编辑", "修改", "填写", "填充", "补充",
+)
 
 
 class LLMThread(models.Model):
@@ -92,6 +100,42 @@ class LLMThread(models.Model):
             return self._office_upload_from_thread(parent)
         return upload, attachment
 
+    def _office_latest_user_message(self):
+        """Return the latest non-error user message authored by this Thread's owner."""
+        self.ensure_one()
+        if self.user_id.id != self.env.uid:
+            return self.env["mail.message"]
+        return self.message_ids.filtered(
+            lambda message: (
+                message.llm_role == "user"
+                and message.author_id == self.env.user.partner_id
+                and not message.is_error
+            )
+        ).sorted(key=lambda message: message.id, reverse=True)[:1]
+
+    def _office_requests_fileless_workbook(self, body):
+        """Recognize a fileless spreadsheet task so later turns keep its tools available."""
+        self.ensure_one()
+        if self.user_id.id != self.env.uid or not isinstance(body, str) or not body:
+            return False
+
+        recent_user_messages = self.message_ids.filtered(
+            lambda message: (
+                message.llm_role == "user"
+                and message.author_id == self.env.user.partner_id
+                and not message.is_error
+            )
+        ).sorted(key=lambda message: message.id, reverse=True)[:25]
+        requests = [body, *(message.body or "" for message in recent_user_messages)]
+        for request in requests:
+            text = tools.html2plaintext(request).casefold()
+            if (
+                any(term in text for term in _OFFICE_FILE_FORMAT_TERMS)
+                and any(term in text for term in _OFFICE_FILE_ACTION_TERMS)
+            ):
+                return True
+        return False
+
     def _office_linked_template_attachment_ids(self, attachment_ids):
         """Attach a linked parent's template to the first child-chat user turn."""
         self.ensure_one()
@@ -129,7 +173,32 @@ class LLMThread(models.Model):
         if incoming_office:
             return True
         upload, _attachment = self._office_latest_upload()
-        return bool(upload) or bool(self._office_active_session())
+        if upload or self._office_active_session() or self._office_has_fileless_session():
+            return True
+        latest_user_message = self._office_latest_user_message()
+        return bool(
+            latest_user_message
+            and self._office_requests_fileless_workbook(latest_user_message.body or "")
+        )
+
+    def _office_has_fileless_session(self):
+        """Keep Route B tools available after source-less creation, including a retryable failure."""
+        self.ensure_one()
+        if self.user_id.id != self.env.uid:
+            return False
+        session = self.env["office.mapping.session"].search(
+            [
+                ("thread_id", "=", self.id),
+                ("owner_id", "=", self.env.uid),
+                ("company_id", "in", self.env.companies.ids),
+                ("origin_kind", "=", "fileless"),
+            ],
+            order="id desc",
+            limit=1,
+        )
+        if session:
+            session.check_access("read")
+        return bool(session)
 
     def _office_has_versioned_current(self):
         """Return whether this Thread has an accepted Candidate B workbook.
@@ -143,20 +212,22 @@ class LLMThread(models.Model):
         if self.user_id.id != self.env.uid:
             return False
         upload, attachment = self._office_latest_upload()
-        if not upload or not attachment:
+        if upload and not attachment:
             return False
-        session = self.env["office.mapping.session"].search(
-            [
-                ("thread_id", "=", self.id),
-                ("owner_id", "=", self.env.uid),
-                ("company_id", "in", self.env.companies.ids),
+        domain = [
+            ("thread_id", "=", self.id),
+            ("owner_id", "=", self.env.uid),
+            ("company_id", "in", self.env.companies.ids),
+            ("current_version_id", "!=", False),
+        ]
+        if upload:
+            domain.extend([
                 ("source_message_id", "=", upload.id),
                 ("source_attachment_id", "=", attachment.id),
-                ("current_version_id", "!=", False),
-            ],
-            order="id desc",
-            limit=1,
-        )
+            ])
+        else:
+            domain.append(("origin_kind", "=", "fileless"))
+        session = self.env["office.mapping.session"].search(domain, order="id desc", limit=1)
         if not session:
             return False
         session.check_access("read")
@@ -229,6 +300,12 @@ class LLMThread(models.Model):
             except Exception:
                 # M1's native generate preflight owns the user-visible reject path.
                 incoming_office = False
+        elif self._office_requests_fileless_workbook(user_message_body):
+            # A fileless XLSX request has no attachment or Session to activate
+            # Office. Bind the existing tools before the native Agent builds its
+            # Provider schema; actual create/edit authorization remains in the
+            # trusted Office service.
+            incoming_office = True
         if self._office_is_active(incoming_office):
             self._office_bind_tools()
         yield from super().generate(user_message_body, attachment_ids=attachment_ids, **kwargs)
@@ -413,16 +490,23 @@ class LLMThread(models.Model):
                     "Use the Route B Office workflow for this Thread. The only file lifecycle Tool is `office`; "
                     "Odoo data reads use the separate `odoo_record_retriever` Tool under the current user's ORM "
                     "permissions. Do not use M1 Mapping or row-expansion tools for Route B content production. "
-                    "For a newly uploaded workbook with no accepted Current, inspect the uploaded XLSX and the "
-                    "current user's request, retrieve only needed Odoo fields if requested, then call "
-                    "office(action='edit') directly to create a non-current Candidate. Include a generic "
-                    "interpretation and bounded Expected Effect using parent_version_id=0 for the unversioned source; "
-                    "the server binds the source SHA. The Candidate is not Current until the user reviews and accepts it. "
+                    "When the user asks to create a new XLSX from scratch and provides no source workbook, call "
+                    "office(action='create') once. The service generates an actual XLSX, performs bounded file integrity "
+                    "checks, registers initial V1/Current and delivers it. Do not invent an input file, source SHA, parent "
+                    "version, or Candidate/Accept event; report PARTIALLY_VERIFIED and its unverified scope honestly. "
+                    "For an edit, call office(action='edit') once with the current user's natural-language request. "
+                    "Do not submit workbook inspection IDs, Expected Effect coordinates, effect digests, hashes, "
+                    "revision values, or other server-owned fields. The trusted service resolves the private uploaded "
+                    "workbook for the first Candidate and the Accepted Current bytes for later edits. The Responses "
+                    "Adapter and Hosted Code Interpreter perform the edit and return actual XLSX bytes. "
+                    "If a material business-risk choice is not already authorized by the user's request, set "
+                    "confirmation_required=true with a concrete explanation and wait for the authenticated user's "
+                    "confirmation before editing. Do not ask the user for sheet names or coordinates when the workbook "
+                    "and request can establish them. A generated Candidate is not Current until the user reviews and "
+                    "accepts it. "
                     "Successful `odoo_record_retriever` results from this same user turn are attached by the server to the "
                     "edit request as authorized data; use those returned record IDs and values without inventing missing data. "
-                    "For an existing Accepted Current, call office(action='plan') and then office(action='edit') with "
-                    "the unchanged bound plan. Subsequent edits use the server-resolved Current bytes, never chat history "
-                    "or a model-selected attachment. When a request requires new Odoo data, call the separate "
+                    "When a request requires new Odoo data, call the separate "
                     "`odoo_record_retriever` first; successful results from the same user turn are attached to the edit request. "
                     "For acceptance or rejection, call office(action='accept' or "
                     "action='reject') with the candidate_version_id returned by the latest Candidate; the server "

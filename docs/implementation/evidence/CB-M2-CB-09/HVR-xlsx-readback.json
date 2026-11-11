@@ -1,0 +1,52 @@
+{
+  "verification_method": "Odoo Discuss download control HTTP response plus independent openpyxl readback of the exact linked attachment bytes",
+  "local_browser_download_path_exposed": false,
+  "delivery_attachment_id": 49337,
+  "delivery_message_id": 116185,
+  "finalize_result": {
+    "session_id": 15301,
+    "version_id": 3282,
+    "current_version_id": 3282,
+    "last_valid_version_id": 3282,
+    "document_revision": 2,
+    "validation_result": "PARTIALLY_VERIFIED"
+  },
+  "download_controller": {
+    "route": "/web/content/49337?filename=CC09_Synthetic_Candidate.xlsx&download=true",
+    "http_status": 200,
+    "successful_ui_requests_observed": 3
+  },
+  "files": [
+    {
+      "evidence_file": "CC09_Synthetic_V1.xlsx",
+      "attachment_id": 49336,
+      "size_bytes": 5122,
+      "sha256": "2c723f7cc28c0fec0bc48148e0e1f07afa5017114ead897e99f1327aad565807",
+      "zip_integrity": "PASS",
+      "openpyxl_readback": {
+        "sheets": ["Items"],
+        "cells": {"A1":"Item","B1":"Quantity","A2":"Synthetic Marker A","B2":2,"A3":"Synthetic Marker B","B3":5}
+      }
+    },
+    {
+      "evidence_file": "CC09_Synthetic_Final_V2.xlsx",
+      "attachment_id": 49337,
+      "size_bytes": 5122,
+      "sha256": "595976044944a600094190d0fadb69ffa080eb1c8ab9cda2f12d4c3f5e9a5586",
+      "sha_matches_candidate_and_finalize": true,
+      "zip_integrity": "PASS",
+      "openpyxl_readback": {
+        "sheets": ["Items"],
+        "cells": {"A1":"Item","B1":"Quantity","A2":"Synthetic Marker A","B2":3,"A3":"Synthetic Marker B","B3":5}
+      }
+    }
+  ],
+  "assertions": {
+    "v1_contents_match_create_instruction": true,
+    "v2_contains_requested_edit": true,
+    "v2_preserves_other_cells": true,
+    "v1_sha_is_v2_input_sha": true,
+    "candidate_and_finalize_sha_match": true
+  },
+  "scope": "synthetic workbook only; no Odoo business records read or changed"
+}

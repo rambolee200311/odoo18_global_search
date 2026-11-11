@@ -100,10 +100,14 @@ class OfficeMappingSession(models.Model):
         "mail.message", required=True, readonly=True, copy=False, ondelete="restrict"
     )
     source_attachment_id = fields.Many2one(
-        "ir.attachment", required=True, readonly=True, copy=False, ondelete="restrict"
+        "ir.attachment", readonly=True, copy=False, ondelete="restrict"
     )
-    target_model = fields.Char(required=True, readonly=True, copy=False, index=True)
-    target_record_id = fields.Integer(required=True, readonly=True, copy=False, index=True)
+    origin_kind = fields.Selection(
+        [("uploaded", "Uploaded Workbook"), ("fileless", "Fileless Creation")],
+        required=True, readonly=True, copy=False, default="uploaded", index=True,
+    )
+    target_model = fields.Char(readonly=True, copy=False, index=True)
+    target_record_id = fields.Integer(readonly=True, copy=False, index=True)
     state = fields.Selection(
         [
             ("analyzing", "Analyzing"),
@@ -153,8 +157,13 @@ class OfficeMappingSession(models.Model):
         ("revision_positive", "CHECK(revision > 0)", "Revision must be positive."),
         (
             "target_record_positive",
-            "CHECK(target_record_id > 0)",
-            "Target record ID must be positive.",
+            "CHECK((origin_kind = 'uploaded' AND target_record_id > 0) OR (origin_kind = 'fileless' AND COALESCE(target_record_id, 0) = 0))",
+            "Uploaded workbooks require a positive target record ID; fileless creation has no target record.",
+        ),
+        (
+            "origin_binding_consistent",
+            "CHECK((origin_kind = 'uploaded' AND source_attachment_id IS NOT NULL AND target_model IS NOT NULL AND target_record_id > 0) OR (origin_kind = 'fileless' AND source_attachment_id IS NULL AND target_model IS NULL AND COALESCE(target_record_id, 0) = 0))",
+            "The workbook Session origin binding is inconsistent.",
         ),
     ]
 
@@ -218,6 +227,39 @@ class OfficeMappingSession(models.Model):
             "revision": 1,
         }
         return super(OfficeMappingSession, self).create(values)
+
+    @api.model
+    def _create_fileless_from_office_service(self, thread, message):
+        """Create a source-less Session from a checked current-user instruction."""
+        if not thread or len(thread) != 1 or not message or len(message) != 1:
+            raise AccessError(_("The Office chat context is unavailable."))
+        thread.check_access("read")
+        message.check_access("read")
+        if (
+            thread.user_id.id != self.env.uid
+            or message.model != thread._name
+            or message.res_id != thread.id
+            or message not in thread.message_ids
+            or message.llm_role != "user"
+            or message.author_id != self.env.user.partner_id
+            or message.is_error
+            or message.attachment_ids
+        ):
+            raise AccessError(_("The Office chat context is unavailable."))
+        self.browse().check_access("create")
+        return super(OfficeMappingSession, self).create({
+            "owner_id": self.env.uid,
+            "company_id": self.env.company.id,
+            "thread_id": thread.id,
+            # This is the actual create instruction, not a fabricated file source.
+            "source_message_id": message.id,
+            "source_attachment_id": False,
+            "origin_kind": "fileless",
+            "target_model": False,
+            "target_record_id": False,
+            "state": "analyzing",
+            "revision": 1,
+        })
 
     def write(self, vals):
         raise AccessError(_("Mapping session fields are managed by the mapping service."))

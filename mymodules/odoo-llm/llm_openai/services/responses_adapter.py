@@ -23,7 +23,6 @@ from openai import APIConnectionError, APIStatusError, APITimeoutError
 
 
 OperationStatus = Literal["candidate_received", "blocked", "failed", "indeterminate"]
-
 _XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 _REQUIRED_XLSX_PARTS = frozenset(
     {"[Content_Types].xml", "xl/workbook.xml", "xl/_rels/workbook.xml.rels"}
@@ -135,9 +134,10 @@ class ResponsesAdapter:
         *,
         provider_client: Any,
         model: str,
-        input_xlsx: bytes,
+        input_xlsx: bytes | None,
         instruction: str,
         limits: AdapterLimits,
+        operation: str = "edit",
         input_sha256: str | None = None,
         correlation_id: str | None = None,
     ) -> AdapterResult:
@@ -150,6 +150,7 @@ class ResponsesAdapter:
             input_xlsx=input_xlsx,
             instruction=instruction,
             limits=limits,
+            operation=operation,
             input_digest=input_digest,
             claimed_digest=input_sha256,
             correlation_id=correlation_id,
@@ -181,17 +182,18 @@ class ResponsesAdapter:
                 timeout=limits.timeout_seconds,
                 max_retries=0,
             )
-            file_data = "data:" + _XLSX_MIME + ";base64," + base64.b64encode(input_xlsx).decode("ascii")
+            content = []
+            if input_xlsx is not None:
+                file_data = "data:" + _XLSX_MIME + ";base64," + base64.b64encode(input_xlsx).decode("ascii")
+                content.append({"type": "input_file", "filename": "input.xlsx", "file_data": file_data})
+            content.append({"type": "input_text", "text": instruction})
             request_started = True
             response = active_client.responses.create(
                 model=model,
                 input=[
                     {
                         "role": "user",
-                        "content": [
-                            {"type": "input_file", "filename": "input.xlsx", "file_data": file_data},
-                            {"type": "input_text", "text": instruction},
-                        ],
+                        "content": content,
                     }
                 ],
                 tools=[
@@ -359,7 +361,7 @@ class ResponsesAdapter:
     @staticmethod
     def _preflight(
         *, provider_client: Any, model: str, input_xlsx: Any, instruction: Any,
-        limits: AdapterLimits, input_digest: str | None, claimed_digest: str | None,
+        limits: AdapterLimits, operation: Any, input_digest: str | None, claimed_digest: str | None,
         correlation_id: str | None,
     ) -> str | None:
         if provider_client is None or not callable(getattr(provider_client, "with_options", None)):
@@ -374,8 +376,12 @@ class ResponsesAdapter:
             or model not in limits.allowed_models
         ):
             return "model_not_approved"
-        if not isinstance(input_xlsx, bytes) or not input_xlsx:
+        if operation not in {"edit", "create"}:
+            return "operation_invalid"
+        if operation == "edit" and (not isinstance(input_xlsx, bytes) or not input_xlsx):
             return "input_xlsx_invalid"
+        if operation == "create" and (input_xlsx is not None or claimed_digest is not None):
+            return "creation_must_not_claim_source_file"
         if not isinstance(instruction, str) or not instruction.strip():
             return "instruction_invalid"
         if correlation_id is not None and (
@@ -401,16 +407,17 @@ class ResponsesAdapter:
             return "resource_policy_invalid"
         if limits.remote_cleanup_required:
             return "remote_cleanup_guarantee_unsupported"
-        if len(input_xlsx) > limits.max_input_bytes:
+        if input_xlsx is not None and len(input_xlsx) > limits.max_input_bytes:
             return "input_size_limit_exceeded"
         if claimed_digest is not None:
             if not isinstance(claimed_digest, str) or not _SHA256_RE.fullmatch(claimed_digest):
                 return "input_sha256_invalid"
             if input_digest is None or claimed_digest.lower() != input_digest:
                 return "input_sha256_mismatch"
-        check = _check_xlsx(input_xlsx, limits, max_bytes=limits.max_input_bytes)
-        if not check.valid:
-            return check.reason or "input_xlsx_invalid"
+        if input_xlsx is not None:
+            check = _check_xlsx(input_xlsx, limits, max_bytes=limits.max_input_bytes)
+            if not check.valid:
+                return check.reason or "input_xlsx_invalid"
         return None
 
     @staticmethod

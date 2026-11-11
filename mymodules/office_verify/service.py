@@ -55,7 +55,9 @@ def _worker(send_conn, args: tuple[Any, ...]) -> None:
         if mode == "mapping":
             source, candidate, filename, mime_type, mapping, policy, budget, authorized_blank_targets = payload
         elif mode == "candidate":
-            source, candidate, filename, mime_type, expected_effect, policy, budget = payload
+            source, candidate, filename, mime_type, policy, budget = payload
+        elif mode == "created":
+            source, candidate, filename, mime_type, policy, budget = payload
         else:
             raise ValueError("unsupported verification mode")
         _validate_worker_budget(budget.max_memory_bytes, budget.timeout_seconds)
@@ -72,10 +74,16 @@ def _worker(send_conn, args: tuple[Any, ...]) -> None:
                 budget,
                 authorized_blank_targets=authorized_blank_targets,
             )
-        else:
+        elif mode == "candidate":
             from .verify import verify_candidate_inline
 
-            report = verify_candidate_inline(source, candidate, filename, mime_type, expected_effect, policy, budget)
+            report = verify_candidate_inline(source, candidate, filename, mime_type, policy, budget)
+        elif mode == "created":
+            from .verify import verify_created_inline
+
+            report = verify_created_inline(candidate, filename, mime_type, policy, budget)
+        else:
+            raise ValueError("unsupported verification mode")
         send_conn.send(("ok", report))
     except OfficeVerifyError as exc:
         try:
@@ -218,7 +226,6 @@ def _verify_candidate_output(
     candidate_bytes: bytes,
     filename: str,
     mime_type: str,
-    expected_effect: dict[str, object],
     policy: VerificationPolicy | None = None,
     budget: VerificationBudget | None = None,
     *,
@@ -236,11 +243,9 @@ def _verify_candidate_output(
         raise OfficeVerifyError("OFFICE_INVALID_OR_MISMATCHED", "input", "源文件和候选文件必须以字节传入。")
     if len(source_bytes) > selected_budget.max_file_size or len(candidate_bytes) > selected_budget.max_file_size:
         raise OfficeVerifyError("OFFICE_RESOURCE_LIMIT", "input", "文件超过输入大小限制。")
-    if not isinstance(expected_effect, dict):
-        raise OfficeVerifyError("OFFICE_MAPPING_INVALID", "effect", "Expected Effect 必须为结构化对象。")
     return _run_worker(
         "candidate",
-        (source_bytes, candidate_bytes, filename, mime_type, expected_effect, selected_policy, selected_budget),
+        (source_bytes, candidate_bytes, filename, mime_type, selected_policy, selected_budget),
         selected_budget,
         capture_metrics=capture_metrics,
     )
@@ -251,13 +256,12 @@ def verify_candidate_output(
     candidate_bytes: bytes,
     filename: str,
     mime_type: str,
-    expected_effect: dict[str, object],
     policy: VerificationPolicy | None = None,
     budget: VerificationBudget | None = None,
 ) -> CandidateValidationReport:
     """Verify XLSX candidate bytes using the existing bounded worker."""
     return _verify_candidate_output(
-        source_bytes, candidate_bytes, filename, mime_type, expected_effect, policy, budget,
+        source_bytes, candidate_bytes, filename, mime_type, policy, budget,
         capture_metrics=False,
     )
 
@@ -267,12 +271,38 @@ def verify_candidate_output_with_metrics(
     candidate_bytes: bytes,
     filename: str,
     mime_type: str,
-    expected_effect: dict[str, object],
     policy: VerificationPolicy | None = None,
     budget: VerificationBudget | None = None,
 ) -> tuple[CandidateValidationReport, dict[str, int | float | bool | None]]:
     """Verify a Candidate and return parent-observed worker timing/RSS data."""
     return _verify_candidate_output(
-        source_bytes, candidate_bytes, filename, mime_type, expected_effect, policy, budget,
+        source_bytes, candidate_bytes, filename, mime_type, policy, budget,
+        capture_metrics=True,
+    )
+
+
+def verify_created_output_with_metrics(
+    candidate_bytes: bytes,
+    filename: str,
+    mime_type: str,
+    policy: VerificationPolicy | None = None,
+    budget: VerificationBudget | None = None,
+) -> tuple[CandidateValidationReport, dict[str, int | float | bool | None]]:
+    """Validate a newly created XLSX without inventing an input workbook."""
+    selected_policy = policy or VerificationPolicy(enabled_formats=("xlsx",))
+    selected_budget = budget or VerificationBudget()
+    try:
+        selected_policy.validate()
+        selected_budget.validate()
+    except (AttributeError, TypeError, ValueError) as exc:
+        raise OfficeVerifyError("OFFICE_INVALID_OR_MISMATCHED", "input", "验证策略或资源预算无效。") from exc
+    if not isinstance(candidate_bytes, bytes):
+        raise OfficeVerifyError("OFFICE_INVALID_OR_MISMATCHED", "input", "新建文件必须以字节传入。")
+    if len(candidate_bytes) > selected_budget.max_file_size:
+        raise OfficeVerifyError("OFFICE_RESOURCE_LIMIT", "input", "文件超过输入大小限制。")
+    return _run_worker(
+        "created",
+        (None, candidate_bytes, filename, mime_type, selected_policy, selected_budget),
+        selected_budget,
         capture_metrics=True,
     )

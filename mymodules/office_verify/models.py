@@ -6,6 +6,18 @@ import math
 from dataclasses import dataclass
 
 
+def _candidate_json_value(value):
+    """Make nested OOXML structural evidence JSON-compatible for receipts."""
+    if isinstance(value, bytes):
+        # Structural byte values are canonical UTF-8 OOXML fragments.
+        return value.decode("utf-8", errors="replace")
+    if isinstance(value, dict):
+        return {key: _candidate_json_value(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_candidate_json_value(item) for item in value]
+    return value
+
+
 @dataclass(frozen=True)
 class VerificationBudget:
     max_file_size: int = 32 * 1024 * 1024
@@ -16,10 +28,6 @@ class VerificationBudget:
     max_cells: int = 500_000
     max_paragraphs: int = 100_000
     max_mapping_bytes: int = 1 * 1024 * 1024
-    # Candidate validation metadata is not an M1 Mapping Plan. Keep a separate
-    # serialized-input ceiling; the initial value reuses the existing bounded
-    # control-payload ceiling and must be reviewed independently if changed.
-    max_expected_effect_bytes: int = 1 * 1024 * 1024
     max_memory_bytes: int = 4 * 1024 * 1024 * 1024
     timeout_seconds: float = 15.0
 
@@ -27,7 +35,7 @@ class VerificationBudget:
         for name in (
             "max_file_size", "max_expanded_size", "max_zip_entries", "max_entry_size",
             "max_xml_elements", "max_cells", "max_paragraphs", "max_mapping_bytes",
-            "max_expected_effect_bytes", "max_memory_bytes",
+            "max_memory_bytes",
         ):
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
@@ -93,10 +101,8 @@ class CandidateValidationReport:
     """Read-only facts comparing one XLSX candidate with its bound parent."""
 
     validation_result: str
-    input_sha256: str
+    input_sha256: str | None
     output_sha256: str
-    parent_version_id: int
-    effect_digest: str
     actual_effects: tuple[dict[str, object], ...]
     risk_facts: tuple[dict[str, object], ...]
     feature_results: tuple[dict[str, object], ...]
@@ -108,11 +114,9 @@ class CandidateValidationReport:
             "validation_result": self.validation_result,
             "input_sha256": self.input_sha256,
             "output_sha256": self.output_sha256,
-            "parent_version_id": self.parent_version_id,
-            "effect_digest": self.effect_digest,
-            "actual_effects": [dict(item) for item in self.actual_effects],
-            "risk_facts": [dict(item) for item in self.risk_facts],
-            "feature_results": [dict(item) for item in self.feature_results],
+            "actual_effects": [_candidate_json_value(item) for item in self.actual_effects],
+            "risk_facts": [_candidate_json_value(item) for item in self.risk_facts],
+            "feature_results": [_candidate_json_value(item) for item in self.feature_results],
             "unknowns": list(self.unknowns),
             "error": dict(self.error) if self.error else None,
         }

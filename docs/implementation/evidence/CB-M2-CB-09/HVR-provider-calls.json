@@ -1,0 +1,59 @@
+{
+  "evidence_type": "sanitized_provider_call_summary",
+  "environment": "non-production Odoo 18 CE / odoo18ce",
+  "thread_id": 19720,
+  "provider": "OpenAI Responses API + Hosted Code Interpreter",
+  "model": "gpt-5.6-luna",
+  "secrets_recorded": false,
+  "calls": [
+    {
+      "office_tool_call_id": "call_sVHez1LAJ25OoE1gKKdlGRDI",
+      "action": "create",
+      "response_id": "resp_068aa06d02542bb6016af452e6516487d2a5cb12a323b07187",
+      "request_id": "req_6faa4df659fb4273867674f9ca02cc2e",
+      "download_request_id": "req_20f97391a3eb4ac3936617bdf1dbbc3d",
+      "code_interpreter_call_ids": [
+        "ci_068aa06d02542bb6016af452e8c40c87d28d4668935bcd57a3",
+        "ci_068aa06d02542bb6016af452eb565c87d2a836ad2e45a5a968",
+        "ci_068aa06d02542bb6016af452eeb0e487d2a123e9b0fa18732a"
+      ],
+      "container_id": "cntr_6af452e69afc81919fe6d97a0ee82d4c03e39a44a560e27b",
+      "provider_file_ids": ["cfile_6af452f525108191a01fecaa197681d7"],
+      "provider_filename": "CC09_Synthetic.xlsx",
+      "input_sha256": null,
+      "output_sha256": "2c723f7cc28c0fec0bc48148e0e1f07afa5017114ead897e99f1327aad565807",
+      "usage": {"input_tokens": 2329, "output_tokens": 926, "total_tokens": 3255, "reasoning_tokens": 299},
+      "duration_ms": 21157,
+      "cleanup_state": "completed"
+    },
+    {
+      "office_tool_call_id": "call_LoOLpT7ISOGXddVnaFUEhshV",
+      "action": "edit",
+      "response_id": "resp_08d446786fe68e1f016af4533418c087d29f8654b3be542476",
+      "request_id": "req_7f4a1817935549d4a9ddc6f0cb354394",
+      "download_request_id": "req_f8d4e8239f804f03b3a5678ee346f929",
+      "code_interpreter_call_ids": [
+        "ci_08d446786fe68e1f016af45338f56c87d2b510c174d2a6f416",
+        "ci_08d446786fe68e1f016af4533ac25c87d2857f71a647e127ce",
+        "ci_08d446786fe68e1f016af4533d455087d2b26f3853e4e04b0c",
+        "ci_08d446786fe68e1f016af4533f327087d29d6753a579553399",
+        "ci_08d446786fe68e1f016af45340f64887d28f94e88f13df5f4c",
+        "ci_08d446786fe68e1f016af453431d4c87d2b7c51a0cdb2e8941",
+        "ci_08d446786fe68e1f016af45344e5e887d2b93046d3df6c2838",
+        "ci_08d446786fe68e1f016af45349367c87d2b8f3b10522f3d7a6",
+        "ci_08d446786fe68e1f016af4534cc22c87d2924bc998140ceb5a",
+        "ci_08d446786fe68e1f016af453510e0c87d2a6916e382106bf55"
+      ],
+      "container_id": "cntr_6af453361a9c8191bd5ee40127eea41e0a8b59f3bd8af61d",
+      "provider_file_ids": ["cfile_6af4535659bc8191b1483f94eb6f3413"],
+      "provider_filename": "CC09_Synthetic_Candidate.xlsx",
+      "input_sha256": "2c723f7cc28c0fec0bc48148e0e1f07afa5017114ead897e99f1327aad565807",
+      "output_sha256": "595976044944a600094190d0fadb69ffa080eb1c8ab9cda2f12d4c3f5e9a5586",
+      "usage": {"input_tokens": 9245, "output_tokens": 1561, "total_tokens": 10806, "reasoning_tokens": 1112},
+      "duration_ms": 40552,
+      "cleanup_state": "completed"
+    }
+  ],
+  "billing_amount": "not_verified",
+  "data_scope": "synthetic workbook only; no Odoo business data"
+}

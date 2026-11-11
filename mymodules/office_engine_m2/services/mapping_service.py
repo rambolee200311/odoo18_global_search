@@ -88,6 +88,67 @@ def create_session(
     return get_session_context(env, session.id)
 
 
+def create_fileless_session(env, *, thread_id, intent_message_id):
+    """Create a source-less Route B Session for one authenticated Office request."""
+    thread_id = _positive_id(thread_id, "thread")
+    intent_message_id = _positive_id(intent_message_id, "intent message")
+    thread = env["llm.thread"].browse(thread_id).exists()
+    message = env["mail.message"].browse(intent_message_id).exists()
+    if not thread or not message:
+        raise AccessError(_(_UNAVAILABLE))
+    thread.check_access("read")
+    message.check_access("read")
+    if thread.user_id.id != env.uid or env.company.id not in env.companies.ids:
+        raise AccessError(_(_UNAVAILABLE))
+    if (
+        message.model != thread._name
+        or message.res_id != thread.id
+        or message not in thread.message_ids
+        or message.llm_role != "user"
+        or message.author_id.id != env.user.partner_id.id
+        or message.is_error
+    ):
+        raise AccessError(_(_UNAVAILABLE))
+    messages = thread.message_ids.filtered(
+        lambda item: item.llm_role == "user"
+        and item.author_id == env.user.partner_id
+        and not item.is_error
+    )
+    if not messages or max(messages.ids) != message.id:
+        raise ValidationError(_("A fileless Office Session must bind the latest user instruction."))
+    if message.attachment_ids:
+        raise ValidationError(_("Use Office edit when the create instruction includes an attachment."))
+    upload, attachment = thread._office_latest_upload()
+    if upload and attachment:
+        raise ValidationError(_("Use Office edit when this Thread already has an uploaded workbook."))
+    existing_attempt = env["office.mapping.session"].search(
+        [
+            ("thread_id", "=", thread.id),
+            ("owner_id", "=", env.uid),
+            ("company_id", "in", env.companies.ids),
+            ("source_message_id", "=", message.id),
+            ("origin_kind", "=", "fileless"),
+        ],
+        limit=1,
+    )
+    if existing_attempt:
+        existing_attempt.check_access("write")
+        return get_session_context(env, existing_attempt.id)
+    existing = env["office.mapping.session"].search(
+        [
+            ("thread_id", "=", thread.id),
+            ("owner_id", "=", env.uid),
+            ("company_id", "in", env.companies.ids),
+            ("current_version_id", "!=", False),
+        ],
+        limit=1,
+    )
+    if existing:
+        raise ValidationError(_("Use Office edit when this Thread already has an accepted Current workbook."))
+    session = env["office.mapping.session"]._create_fileless_from_office_service(thread, message)
+    return get_session_context(env, session.id)
+
+
 def get_session_context(env, session_id):
     """Return allowlisted metadata for a session owned by the current user."""
     session_id = _positive_id(session_id, "mapping session")
@@ -102,6 +163,7 @@ def get_session_context(env, session_id):
         "thread_id": session.thread_id.id,
         "source_message_id": session.source_message_id.id,
         "source_attachment_id": session.source_attachment_id.id,
+        "origin_kind": session.origin_kind,
         "target_model": session.target_model,
         "target_record_id": session.target_record_id,
         "state": session.state,

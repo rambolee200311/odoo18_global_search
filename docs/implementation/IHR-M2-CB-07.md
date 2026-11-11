@@ -1,6 +1,6 @@
 # IHR-M2-CB-07 — Route B Integration
 
-**状态：IMPLEMENTATION IN PROGRESS — VALIDATOR FIX COMPLETE; ROUTE B HVR FAILED BEFORE FILE DISPATCH**
+**状态：CLOSED — UAT PASSED (负责人批准；普通 XLSX 多轮编辑与交付范围)**
 **契约：** `CC-M2-CB-07_Route_B_End-to-End_Integration_v0.2.md`
 **记录日期：** 2026-11-10
 
@@ -26,7 +26,7 @@
 
 上述文件可能包含本 CC 之前已存在的工作区改动；本记录不把那些既有改动重新归因于本轮，也未清理或覆盖它们。
 
-## 未完成门禁
+## 初始实施记录中的未完成门禁（历史状态；最终关闭证据见文末）
 
 - Odoo TransactionCase / M1 Odoo 回归、模块升级与 Runtime 检查：`NOT RUN`，依 CC §10.2、§13.3、§14 需要单独运行环境授权。
 - 真实 Responses Provider 集成：`NOT RUN`；外发门保持关闭，需 CC §7/§13.4 所述单独授权。
@@ -45,3 +45,10 @@
 - 真实 UI HVR 在新 Thread `llm.thread_18271` 以普通用户指令执行一次。Retriever 成功读取 3 条合成联系人。随后模型提交的 `office(action="edit")` Expected Effect 使用 `workbook_structure` 全工作簿目标以及占位表名/单元格地址（例如 `<uploaded workbook>`、`<contact name cell>`）；服务端按 CB-03 契约拒绝为 `expected_effect_invalid`，`operation_executed=false`，未调用 Responses/Hosted Code Interpreter 编辑路径，未生成 Candidate。没有重试 Provider。
 - 本次实际 HVR 未通过；未发生 Accept、Current/V1 推进、Candidate 下载或文件回读。直接阻断位于 Intent/Expected Effect 契约输入，不是已修复的核心元数据 Validator 误判。证据见 [`evidence/CB-M2-CB-07/HVR-RUN-002-ui-failure.json`](evidence/CB-M2-CB-07/HVR-RUN-002-ui-failure.json) 与 [`evidence/CB-M2-CB-07/HVR-RUN-001-provider-ui-server.log`](evidence/CB-M2-CB-07/HVR-RUN-001-provider-ui-server.log)。
 - HVR TestCase 类级运行另有 1 个测试辅助器错误：测试模拟器对不存在的 ZIP 目录项 `docProps/` 做索引并触发 `KeyError`（24 tests, 0 failures, 1 error）。该错误不是 Candidate Validator 的失败；未扩大范围修复。单个初始版本接受 TransactionCase 通过。完整 CC-07/真实 UI 验收仍未完成。
+
+
+## 2026-11-11 — 最终关闭记录
+
+负责人确认 CC-M2-CB-07 关闭，状态为 `CLOSED — UAT PASSED`。本结论依据 Codex 8092 HVR 的 V4/V5/Reject/Finalize 证据，以及负责人报告的 8091 同一 Discuss Thread 三轮真实人工 UAT。8091 的 Thread `llm.thread_19293`、Session 14951、版本 3096→3097→3098、Current/Last Valid=3098、Document Revision=3 和最终附件 SHA 已通过 ORM/XLSX 只读回读核对；详见 [`evidence/CB-M2-CB-07/HVR-RUN-010-8091-human-uat-20261111.md`](evidence/CB-M2-CB-07/HVR-RUN-010-8091-human-uat-20261111.md)。
+
+全量 Odoo 回归按 `tests.result` 为 236 tests、0 failed、0 errors；`tests.stats` 的分模块 252 + 28 与最终 236 的差异仍未解释。验证等级仍为 `PARTIALLY_VERIFIED`，复杂 Excel 特性覆盖有限。以上限制均保留，不影响负责人按普通 XLSX 多轮编辑与交付标准作出的关闭决定。生产发布不在本关闭范围内。

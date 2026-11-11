@@ -17,6 +17,7 @@ from lxml import etree
 from odoo import tools
 from odoo.exceptions import AccessError, UserError
 from odoo.addons.llm_assistant.models.llm_thread import LLMThread as AssistantThread
+from odoo.addons.llm_thread.models.llm_thread import LLMThread as NativeThread
 from odoo.addons.llm_thread.controllers.main import LLMThreadController
 from odoo.tests import TransactionCase
 from office_core import inspect_document
@@ -5518,6 +5519,67 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         )
         self.assertEqual(result, [])
 
+    def test_fileless_xlsx_request_binds_route_b_tools_for_create_and_followup_turns(self):
+        thread = self.env["llm.thread"].create(
+            {
+                "name": "Fileless Office create thread " + uuid4().hex,
+                "provider_id": self.provider.id,
+                "model_id": self.model.id,
+            }
+        )
+        self.assertFalse(thread._office_is_active())
+
+        first_request = "导出本公司的产品档案到 Excel，任意选择 5 条并生成 XLSX。"
+        with patch.object(
+            NativeThread, "generate", autospec=True, return_value=iter(())
+        ) as native_generate:
+            list(thread.generate(first_request, attachment_ids=[]))
+
+        self.assertTrue(native_generate.called)
+        self.assertEqual(
+            set(thread.tool_ids.mapped("name")) & {"office", "odoo_record_retriever"},
+            {"office", "odoo_record_retriever"},
+        )
+
+        # The native generate loop stores the incoming user message before it
+        # builds the provider request. Reproduce that boundary and verify the
+        # actual Route B schema and create guidance are now active.
+        thread.message_post(
+            body=first_request,
+            llm_role="user",
+            author_id=self.env.user.partner_id.id,
+        )
+        self.assertTrue(thread._office_is_active())
+        self.assertTrue(thread._office_is_candidate_b_route())
+        values = thread._prepare_chat_kwargs(thread.get_llm_messages(), use_streaming=False)
+        self.assertEqual(
+            set(values["tools"].mapped("name")),
+            {"office", "odoo_record_retriever"},
+        )
+        route_b_prompt = next(
+            message["content"]
+            for message in values["prepend_messages"]
+            if message.get("role") == "system"
+            and "office(action='create')" in message.get("content", "")
+        )
+        self.assertIn("call office(action='create') once", route_b_prompt)
+
+        # A natural-language follow-up can omit the word Excel: the unresolved
+        # workbook request in this same user-owned Thread keeps the same tools
+        # available without another upload or a new Office session.
+        followup = "从本公司的产品档案里任意选择 5 个产品。"
+        with patch.object(
+            NativeThread, "generate", autospec=True, return_value=iter(())
+        ) as native_generate:
+            list(thread.generate(followup, attachment_ids=[]))
+        self.assertTrue(native_generate.called)
+        self.assertTrue(thread._office_is_active())
+        values = thread._prepare_chat_kwargs(thread.get_llm_messages(), use_streaming=False)
+        self.assertEqual(
+            set(values["tools"].mapped("name")),
+            {"office", "odoo_record_retriever"},
+        )
+
     def test_office_thread_uses_native_tools_and_prepare_binds_current_upload_and_record(self):
         instruction = "用联系人记录填这个工作簿"
         thread, _attachment, user_message = self._office_message(instruction)
@@ -5559,14 +5621,12 @@ class TestNativeOfficeChatIntegration(TransactionCase):
         self.assertFalse(schemas["office"]["additionalProperties"])
         self.assertEqual(
             schemas["office"]["properties"]["action"]["enum"],
-            ["status", "plan", "edit", "accept", "reject", "finalize"],
+            ["status", "create", "edit", "accept", "reject", "finalize"],
         )
-        effect_schema = schemas["office"]["properties"]["expected_effect"]
-        self.assertEqual(
-            effect_schema["required"],
-            ["target_scopes", "allowed_change_kinds", "expected_assertions", "unknowns"],
-        )
-        self.assertIn("Do not send legacy targets/change/scope keys", effect_schema["description"])
+        self.assertNotIn("expected_effect", schemas["office"]["properties"])
+        self.assertNotIn("interpretation", schemas["office"]["properties"])
+        self.assertNotIn("effect_digest", schemas["office"]["properties"])
+        self.assertNotIn("workbook_inspection_id", schemas["office"]["properties"])
         self.assertTrue(
             thread._office_is_active(),
             "an Office upload must activate Office-specific tools and instructions",

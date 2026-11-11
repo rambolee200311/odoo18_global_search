@@ -1,8 +1,7 @@
 """Odoo integration tests for the internal Candidate Validator boundary."""
 
-import hashlib
-import json
 import logging
+import hashlib
 from io import BytesIO
 from uuid import uuid4
 
@@ -29,26 +28,8 @@ def _xlsx(value):
     return output.getvalue()
 
 
-def _effect(parent, input_bytes, *, expected=15, unknowns=None):
-    effect = {
-        "schema_version": "1",
-        "parent_version_id": parent.id,
-        "input_sha256": hashlib.sha256(input_bytes).hexdigest(),
-        "target_scopes": [{"kind": "cell", "sheet": "Data", "address": "A1"}],
-        "allowed_change_kinds": ["cell_value"],
-        "expected_assertions": [{
-            "kind": "cell_value", "sheet": "Data", "address": "A1",
-            "value_type": "number", "value": expected,
-        }] if expected is not None else [],
-        "unknowns": list(unknowns or []),
-    }
-    encoded = json.dumps(effect, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode()
-    effect["effect_digest"] = hashlib.sha256(encoded).hexdigest()
-    return effect
-
-
 class TestCandidateValidator(WorkbookVersionFixtures, TransactionCase):
-    def _candidate(self, candidate_bytes=None, *, effect=None, expected=15, unknowns=None, tag=None):
+    def _candidate(self, candidate_bytes=None, *, tag=None):
         from ..services.workbook_version_service import register_initial_v1
 
         env, session, thread, message, source_attachment = self._session_fixture()
@@ -56,7 +37,6 @@ class TestCandidateValidator(WorkbookVersionFixtures, TransactionCase):
         request, _output = self._m1_request_fixture(env, session, output_bytes=input_bytes)
         parent = register_initial_v1(env, session.id, request.id)
         candidate_bytes = candidate_bytes or _xlsx(15)
-        effect = effect or _effect(parent, input_bytes, expected=expected, unknowns=unknowns)
         candidate = self._register_candidate(
             env,
             session,
@@ -67,21 +47,21 @@ class TestCandidateValidator(WorkbookVersionFixtures, TransactionCase):
             mimetype=MIME,
             idempotency_key="candidate-" + (tag or uuid4().hex),
             request_digest=hashlib.sha256((tag or uuid4().hex).encode()).hexdigest(),
-            intent_effect_digest=effect["effect_digest"],
+            intent_effect_digest=False,
         )
-        return env, session, parent, candidate, input_bytes, effect
+        return env, session, parent, candidate, input_bytes
 
     def test_verified_receipt_is_bound_and_does_not_advance_current(self):
         from ..services.candidate_validator import validate_workbook_candidate
 
-        env, session, parent, candidate, input_bytes, effect = self._candidate()
+        env, session, parent, candidate, input_bytes = self._candidate()
         prior = (session.current_version_id.id, session.last_valid_version_id.id, session.document_revision)
-        outcome = validate_workbook_candidate(env, session.id, candidate.id, effect)
+        outcome = validate_workbook_candidate(env, session.id, candidate.id)
         candidate.invalidate_recordset()
         session.invalidate_recordset()
-        self.assertEqual(outcome["report"]["validation_result"], "VERIFIED")
-        self.assertEqual(candidate.validation_result, "VERIFIED")
-        self.assertEqual(candidate.state, "verified")
+        self.assertEqual(outcome["report"]["validation_result"], "PARTIALLY_VERIFIED")
+        self.assertEqual(candidate.validation_result, "PARTIALLY_VERIFIED")
+        self.assertEqual(candidate.state, "partially_verified")
         self.assertEqual(candidate.validation_report_id, outcome["receipt_sha256"])
         self.assertEqual(
             (session.current_version_id.id, session.last_valid_version_id.id, session.document_revision),
@@ -93,7 +73,7 @@ class TestCandidateValidator(WorkbookVersionFixtures, TransactionCase):
         _logger.info(
             "CB03_RESOURCE_EVIDENCE elapsed_seconds=%.6f timeout_seconds=%s "
             "rss_observed=%s max_observed_rss_bytes=%s worker_exited=%s "
-            "source_bytes=%s candidate_bytes=%s expected_effect_budget_bytes=%s",
+            "source_bytes=%s candidate_bytes=%s",
             execution["elapsed_seconds"],
             outcome["budget"]["timeout_seconds"],
             execution["rss_observed"],
@@ -101,7 +81,6 @@ class TestCandidateValidator(WorkbookVersionFixtures, TransactionCase):
             execution["worker_exited"],
             outcome["budget"]["source_file_size"],
             outcome["budget"]["candidate_file_size"],
-            outcome["budget"]["max_expected_effect_bytes"],
         )
         self.assertGreaterEqual(execution["elapsed_seconds"], 0)
         self.assertLessEqual(execution["elapsed_seconds"], outcome["budget"]["timeout_seconds"])
@@ -109,7 +88,7 @@ class TestCandidateValidator(WorkbookVersionFixtures, TransactionCase):
         self.assertGreater(execution["max_observed_rss_bytes"], 0)
         self.assertTrue(execution["worker_exited"])
 
-    def test_out_of_scope_difference_records_failed_receipt_without_advancing(self):
+    def test_all_valid_workbook_differences_are_recorded_without_range_rejection(self):
         from ..services.candidate_validator import validate_workbook_candidate
 
         candidate_bytes = _xlsx(15)
@@ -122,39 +101,29 @@ class TestCandidateValidator(WorkbookVersionFixtures, TransactionCase):
         sheet["C1"] = "=A1*2"
         output = BytesIO()
         workbook.save(output)
-        env, session, parent, candidate, _input, effect = self._candidate(candidate_bytes=output.getvalue())
-        outcome = validate_workbook_candidate(env, session.id, candidate.id, effect)
+        env, session, parent, candidate, _input = self._candidate(candidate_bytes=output.getvalue())
+        outcome = validate_workbook_candidate(env, session.id, candidate.id)
         candidate.invalidate_recordset()
         session.invalidate_recordset()
-        self.assertEqual(outcome["report"]["validation_result"], "FAILED")
-        self.assertEqual(candidate.state, "failed")
+        self.assertEqual(outcome["report"]["validation_result"], "PARTIALLY_VERIFIED")
+        self.assertEqual(candidate.state, "partially_verified")
+        self.assertTrue(any(item.get("target") == "xlsx:Data!B1" for item in outcome["report"]["actual_effects"]))
         self.assertEqual(session.current_version_id, parent)
         self.assertEqual(session.document_revision, 1)
-
-    def test_effect_digest_mismatch_is_rejected_before_receipt_registration(self):
-        from ..services.candidate_validator import validate_workbook_candidate
-
-        env, session, parent, candidate, input_bytes, effect = self._candidate()
-        effect["effect_digest"] = "0" * 64
-        with self.assertRaises(ValidationError):
-            validate_workbook_candidate(env, session.id, candidate.id, effect)
-        candidate.invalidate_recordset()
-        self.assertEqual(candidate.state, "candidate_received")
-        self.assertFalse(candidate.validation_result)
 
     def test_other_session_owner_cannot_read_or_validate_candidate(self):
         from ..services.candidate_validator import validate_workbook_candidate
 
-        env, session, _parent, candidate, _input, effect = self._candidate()
+        env, session, _parent, candidate, _input = self._candidate()
         other_env = self.env(user=self.other_user.id, context={"allowed_company_ids": [self.other_user.company_id.id]})
         with self.assertRaises(AccessError):
-            validate_workbook_candidate(other_env, session.id, candidate.id, effect)
+            validate_workbook_candidate(other_env, session.id, candidate.id)
 
     def test_malformed_candidate_registers_failed_receipt_and_keeps_parent_current(self):
         from ..services.candidate_validator import validate_workbook_candidate
 
-        env, session, parent, candidate, _input, effect = self._candidate(candidate_bytes=b"not-a-workbook")
-        outcome = validate_workbook_candidate(env, session.id, candidate.id, effect)
+        env, session, parent, candidate, _input = self._candidate(candidate_bytes=b"not-a-workbook")
+        outcome = validate_workbook_candidate(env, session.id, candidate.id)
         candidate.invalidate_recordset()
         session.invalidate_recordset()
         self.assertEqual(outcome["report"]["validation_result"], "FAILED")
@@ -165,14 +134,12 @@ class TestCandidateValidator(WorkbookVersionFixtures, TransactionCase):
         self.assertTrue(outcome["execution"]["rss_observed"])
         self.assertTrue(outcome["execution"]["worker_exited"])
 
-    def test_missing_precise_expectation_records_partial_without_advancing_current(self):
+    def test_no_agent_effect_contract_is_needed_to_register_validation(self):
         from ..services.candidate_validator import validate_workbook_candidate
 
-        env, session, parent, candidate, _input, effect = self._candidate(
-            expected=None, unknowns=("The requested result is not precise enough to assert.",)
-        )
+        env, session, parent, candidate, _input = self._candidate()
         before = (session.current_version_id.id, session.last_valid_version_id.id, session.document_revision)
-        outcome = validate_workbook_candidate(env, session.id, candidate.id, effect)
+        outcome = validate_workbook_candidate(env, session.id, candidate.id)
         candidate.invalidate_recordset()
         session.invalidate_recordset()
         self.assertEqual(outcome["report"]["validation_result"], "PARTIALLY_VERIFIED")
